@@ -131,3 +131,24 @@ function mod_kahoodle_check_updates_since(cm_info $cm, $from, $filter = []) {
     $updates = course_check_module_updates_since($cm, $from, ['content'], $filter);
     return $updates;
 }
+
+/**
+ * Callback for tool_realtime
+ *
+ * @param tool_realtime\channel $channel
+ * @param mixed $payload
+ * @return array
+ */
+function mod_kahoodle_realtime_event_received($channel, $payload) {
+    global $DB;
+    $context = context::instance_by_id($channel->get_properties()['contextid']);
+    if ($context->contextlevel != CONTEXT_MODULE) {
+        throw new \moodle_exception('invalidcontext');
+    }
+    $cmid = $context->instanceid;
+    [$course, $cm] = get_course_and_cm_from_cmid($cmid, 'kahoodle');
+    $activity = $DB->get_record('kahoodle', ['id' => $cm->instance], '*', MUST_EXIST);
+
+    (new \mod_kahoodle\api($cm, $activity))->handle_realtime_event($payload);
+    return [];
+}

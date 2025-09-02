@@ -15,25 +15,12 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_kahoodle/lobby
+    @template mod_kahoodle/donescreen
 
-    TODO describe template lobby
+    TODO describe template donescreen
 
     Example context (json):
     {
-        "title": "Lobby",
-        "players": [
-            {"name": "Player 1"},
-            {"name": "Player 2"},
-            {"name": "Player 3"}
-        ]
     }
 }}
-<h3>{{{title}}}</h3>
-<p>Waiting for players to join...</p>
-<ul>
-{{#players}}
-    <li>{{{name}}}</li>
-{{/players}}
-</ul>
-<div><button data-action="transition">Start the game</button></div>
+<p>This game has finished!</p>

@@ -45,10 +45,16 @@ require_login($course, true, $cm);
 
 \mod_kahoodle\event\course_module_viewed::create_from_record($moduleinstance, $cm, $course)->trigger();
 
+$api = new \mod_kahoodle\api($PAGE->cm, $PAGE->activityrecord);
+$api->process_simple_action();
+
 $PAGE->set_url('/mod/kahoodle/view.php', ['id' => $cm->id]);
 $PAGE->set_title(format_string($moduleinstance->name));
 $PAGE->set_heading(format_string($course->fullname));
 
 echo $OUTPUT->header();
+
+$renderer = $PAGE->get_renderer('mod_kahoodle');
+echo $renderer->game($api);
 
 echo $OUTPUT->footer();

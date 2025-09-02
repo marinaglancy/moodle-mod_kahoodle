@@ -4,7 +4,7 @@
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
-    <TABLE NAME="kahoodle" COMMENT="">
+    <TABLE NAME="kahoodle" COMMENT="Main table for kahoodle module">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
@@ -12,8 +12,8 @@
         <FIELD NAME="intro" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="state" TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT="PREPARATION" SEQUENCE="false" COMMENT="PREPARATION, WAITING (waiting for players), RUNNING, DONE (before and after playing the kahoodle)"/>
-        <FIELD NAME="configuration" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="state" TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT="PREPARATION" SEQUENCE="false" COMMENT="PREPARATION, WAITING (waiting for players), INPROGRESS, DONE (before and after playing the kahoodle)"/>
+        <FIELD NAME="configuration" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="current_question_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
@@ -23,7 +23,7 @@
         <INDEX NAME="course" UNIQUE="false" FIELDS="course"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="kahoodle_questions" COMMENT="">
+    <TABLE NAME="kahoodle_questions" COMMENT="Questions for the game">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="kahoodle_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
@@ -37,19 +37,21 @@
         <KEY NAME="kahoodle_id" TYPE="foreign" FIELDS="kahoodle_id" REFTABLE="kahoodle" REFFIELDS="id"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="kahoodle_players" COMMENT="">
+    <TABLE NAME="kahoodle_players" COMMENT="Game players">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="user_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="session_id" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="kahoodle_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
         <KEY NAME="user_id" TYPE="foreign" FIELDS="user_id" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="kahoodle_id" TYPE="foreign" FIELDS="kahoodle_id" REFTABLE="kahoodle" REFFIELDS="id"/>
       </KEYS>
     </TABLE>
-    <TABLE NAME="kahoodle_answers" COMMENT="">
+    <TABLE NAME="kahoodle_answers" COMMENT="Player answers to questions">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="question_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>

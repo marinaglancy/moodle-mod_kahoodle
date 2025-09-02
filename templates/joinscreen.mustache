@@ -15,25 +15,21 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_kahoodle/lobby
+    @template mod_kahoodle/joinscreen
 
-    TODO describe template lobby
+    TODO describe template joinscreen
 
     Example context (json):
     {
-        "title": "Lobby",
-        "players": [
-            {"name": "Player 1"},
-            {"name": "Player 2"},
-            {"name": "Player 3"}
-        ]
     }
 }}
-<h3>{{{title}}}</h3>
-<p>Waiting for players to join...</p>
-<ul>
-{{#players}}
-    <li>{{{name}}}</li>
-{{/players}}
-</ul>
-<div><button data-action="transition">Start the game</button></div>
+<form action="{{url}}" method="post">
+<input type="hidden" name="sesskey" value="{{sesskey}}" />
+<input type="hidden" name="action" value="join" />
+<label>Your name:
+<input type="text" name="name" placeholder="Enter your name" />
+</label>
+<div>
+<button type="submit">Join Game</button>
+</div>
+</form>

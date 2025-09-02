@@ -14,22 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace mod_kahoodle;
+
 /**
- * English language pack for Kahoodle
+ * Class constants
  *
  * @package    mod_kahoodle
- * @category   string
  * @copyright  Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+class constants {
+    public const STATE_PREPARATION = 'PREPARATION';
+    public const STATE_WAITING = 'WAITING';
+    public const STATE_INPROGRESS = 'INPROGRESS';
+    public const STATE_DONE = 'DONE';
 
-defined('MOODLE_INTERNAL') || die();
-
-$string['kahoodle:addinstance'] = 'Add a new Kahoodle';
-$string['kahoodle:answer'] = 'Answer Kahoodle';
-$string['kahoodle:transition'] = 'Transition Kahoodle';
-$string['kahoodle:view'] = 'View Kahoodle';
-$string['modulename'] = 'Kahoodle';
-$string['modulenameplural'] = 'Kahoodles';
-$string['pluginadministration'] = 'Kahoodle administration';
-$string['pluginname'] = 'Kahoodle';
+}

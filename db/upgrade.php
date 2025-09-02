@@ -127,5 +127,28 @@ function xmldb_kahoodle_upgrade($oldversion) {
     }
 
 
+    if ($oldversion < 2025090206) {
+
+        // Define field kahoodle_id to be added to kahoodle_players.
+        $table = new xmldb_table('kahoodle_players');
+        $field = new xmldb_field('kahoodle_id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'session_id');
+
+        // Conditionally launch add field kahoodle_id.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+
+        // Define key kahoodle_id (foreign) to be added to kahoodle_players.
+        $table = new xmldb_table('kahoodle_players');
+        $key = new xmldb_key('kahoodle_id', XMLDB_KEY_FOREIGN, ['kahoodle_id'], 'kahoodle', ['id']);
+
+        // Launch add key kahoodle_id.
+        $dbman->add_key($table, $key);
+
+        // Kahoodle savepoint reached.
+        upgrade_mod_savepoint(true, 2025090206, 'kahoodle');
+    }
+
     return true;
 }
