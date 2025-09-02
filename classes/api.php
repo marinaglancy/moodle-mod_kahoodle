@@ -28,13 +28,12 @@ use moodle_url;
  */
 class api {
     protected $playerid = null;
+    protected game $game;
 
-    public function __construct(protected \cm_info $cm, protected \stdClass $game) {
+    public function __construct(\cm_info $cm, \stdClass $activity) {
+        $this->game = new game($cm, $activity);
     }
 
-    protected function get_url(): moodle_url {
-        return new moodle_url('/mod/kahoodle/view.php', ['id' => $this->cm->id]);
-    }
     public function get_game_state() {
         global $USER;
         $cantransition = self::can_transition();
@@ -45,11 +44,11 @@ class api {
                 'template' => 'mod_kahoodle/joinscreen',
                 'data' => [
                     'name' => (isloggedin() && !isguestuser()) ? fullname($USER) : '',
-                    'url' => $this->get_url()->out(false),
+                    'url' => $this->game->get_url()->out(false),
                     'sesskey' => sesskey(),
                 ],
             ];
-        } else if ($this->game->state === constants::STATE_DONE) {
+        } else if ($this->game->is_done()) {
             return [
                 'template' => 'mod_kahoodle/donescreen',
                 'data' => [
@@ -84,12 +83,12 @@ class api {
     }
 
     protected function get_game_state_gamemaster() {
-        if ($this->game->state == constants::STATE_PREPARATION) {
+        if ($this->game->is_in_preparation()) {
             return [
                 'template' => 'mod_kahoodle/preparation',
                 'data' => [],
             ];
-        } else if ($this->game->state == constants::STATE_WAITING) {
+        } else if ($this->game->is_in_lobby()) {
             return [
                 'template' => 'mod_kahoodle/lobby',
                 'data' => [
@@ -121,21 +120,21 @@ class api {
     }
 
     public function can_join() {
-        return ($this->game->state === constants::STATE_INPROGRESS || $this->game->state === constants::STATE_WAITING) &&
+        return ($this->game->is_in_progress() || $this->game->is_in_lobby()) &&
             !self::get_player_id() && has_capability('mod/kahoodle:answer', $this->get_context());
     }
 
     public function can_answer() {
-        return $this->game->state === constants::STATE_INPROGRESS &&
+        return $this->game->is_in_progress() &&
             self::get_player_id() && has_capability('mod/kahoodle:answer', $this->get_context());
     }
 
     public function get_cm(): \cm_info {
-        return $this->cm;
+        return $this->game->get_cm();
     }
 
     public function get_context(): \context {
-        return context_module::instance($this->cm->id);
+        return $this->game->get_context();
     }
 
     public function get_player_id(): int {
@@ -146,10 +145,10 @@ class api {
 
         if (isloggedin() && !isguestuser()) {
             $playerrecord = $DB->get_record('kahoodle_players',
-                ['user_id' => $USER->id, 'kahoodle_id' => $this->game->id]);
+                ['user_id' => $USER->id, 'kahoodle_id' => $this->game->get_id()]);
         } else {
             $playerrecord = $DB->get_record('kahoodle_players',
-                ['session_id' => session_id(), 'kahoodle_id' => $this->game->id]);
+                ['session_id' => session_id(), 'kahoodle_id' => $this->game->get_id()]);
         }
         $this->playerid = $playerrecord ? $playerrecord->id : 0;
         return $this->playerid;
@@ -164,7 +163,7 @@ class api {
             'name' => $name,
             'user_id' => (isloggedin() && !isguestuser()) ? $USER->id : null,
             'session_id' => session_id(),
-            'kahoodle_id' => $this->game->id,
+            'kahoodle_id' => $this->game->get_id(),
             'timejoined' => time(), // TODO add a field to the database
         ]);
         $this->notify_gamemaster();
@@ -174,7 +173,7 @@ class api {
         global $DB;
         return $DB->get_records(
             'kahoodle_players',
-            ['kahoodle_id' => $this->game->id],
+            ['kahoodle_id' => $this->game->get_id()],
             '', // TODO 'timejoined'
             $fields
         );
@@ -183,13 +182,13 @@ class api {
     public function process_simple_action() {
         $action = optional_param('action', '', PARAM_TEXT);
         if ($action == 'reset' && $this->can_transition() && confirm_sesskey()) {
-            $this->reset_game();
-            redirect($this->get_url());
+            $this->game->reset_game();
+            redirect($this->game->get_url());
         } else if ($action == 'join' && $this->can_join() && confirm_sesskey()) {
             $name = required_param('name', PARAM_TEXT);
             // TODO validate, trim name
             $this->do_join($name);
-            redirect($this->get_url());
+            redirect($this->game->get_url());
         }
     }
 
@@ -200,17 +199,6 @@ class api {
         }
 
         // TODO
-    }
-
-    protected function update_game_state(string $newstate, ?int $questionid = null) {
-        global $DB;
-        $DB->update_record('kahoodle', [
-            'state' => $newstate,
-            'id' => $this->game->id,
-            'current_question_id' => $questionid,
-        ]);
-        $this->game->state = $newstate;
-        $this->game->current_question_id = $questionid;
     }
 
     protected function notify_gamemaster() {
@@ -229,54 +217,9 @@ class api {
     }
 
     protected function transition_game() {
-        global $DB;
-        if ($this->game->state == constants::STATE_PREPARATION) {
-            $this->update_game_state(constants::STATE_WAITING);
-        } else if ($this->game->state == constants::STATE_WAITING) {
-
-        }
+        $this->game->transition_game();
 
         $this->notify_gamemaster();
         $this->notify_all_players();
-    }
-
-    protected function reset_game() {
-        global $DB;
-        $this->update_game_state(constants::STATE_PREPARATION, null);
-        $DB->execute('DELETE FROM {kahoodle_answers}
-            WHERE question_id IN (SELECT id FROM {kahoodle_questions} WHERE kahoodle_id = ?)',
-            [$this->game->id]);
-        $DB->delete_records('kahoodle_players', ['kahoodle_id' => $this->game->id]);
-        $DB->delete_records('kahoodle_questions', ['kahoodle_id' => $this->game->id]);
-
-        $questions = [
-            [
-                'text' => 'What is the color of the sky?',
-                'answers' => ['Red', 'Green', 'Blue', 'Purple'],
-                'correctanswer' => 2, // 0-based.
-            ],
-            [
-                'text' => 'What is the capital of France?',
-                'answers' => ['Berlin', 'Madrid', 'Paris', 'Rome'],
-                'correctanswer' => 2, // 0-based.
-            ],
-            [
-                'text' => 'What is 2+2?',
-                'answers' => ['3', '4', '5', '22'],
-                'correctanswer' => 1, // 0-based.
-            ],
-        ];
-
-        foreach ($questions as $i => $question) {
-            $DB->insert_record('kahoodle_questions', [
-                'kahoodle_id' => $this->game->id,
-                'question' => json_encode($question),
-                'duration' => 60,
-                'sortorder' => $i,
-                'timecreated' => time(),
-                'timemodified' => time(),
-                'started_at' => 0, // TODO make nullable
-            ]);
-        }
     }
 }
