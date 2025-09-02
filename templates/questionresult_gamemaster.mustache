@@ -15,12 +15,17 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_kahoodle/waitscreen
+    @template mod_kahoodle/questionresult_gamemaster
 
-    TODO describe template waitscreen
+    TODO describe template questionresult_gamemaster
 
     Example context (json):
     {
     }
 }}
-<p>Please look at the screen</p>
+{{#options}}
+<div class="mod_kahoodle_option{{id}} {{#iscorrect}}mod_kahoodle_option_correct{{/iscorrect}}">
+    {{{text}}}
+</div>
+{{/options}}
+<div><button data-action="transition">Next</button></div>

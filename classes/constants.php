@@ -29,4 +29,9 @@ class constants {
     public const STATE_INPROGRESS = 'INPROGRESS';
     public const STATE_DONE = 'DONE';
 
+
+    public const QSTATE_ASKING = 'ASKING';
+    public const QSTATE_RESULTS = 'RESULTS';
+    public const QSTATE_LEADERBOARD = 'LEADERBOARD';
+
 }

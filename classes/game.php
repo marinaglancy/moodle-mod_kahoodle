@@ -17,6 +17,7 @@
 namespace mod_kahoodle;
 
 use moodle_url;
+use stdClass;
 
 /**
  * Class game
@@ -26,6 +27,7 @@ use moodle_url;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class game {
+    protected $questions = null;
     public function __construct(protected \cm_info $cm, protected \stdClass $game) {
     }
 
@@ -61,27 +63,87 @@ class game {
         return $this->game->state === constants::STATE_INPROGRESS;
     }
 
+    public function get_current_question_id(): int|null {
+        return $this->game->state === constants::STATE_INPROGRESS && $this->game->current_question_id ?
+            $this->game->current_question_id : null;
+    }
+
+    public function is_current_question_state_asking(): bool {
+        return $this->get_current_question_id() > 0 &&
+            $this->game->current_question_state === constants::QSTATE_ASKING;
+    }
+
+    public function is_current_question_state_results(): bool {
+        return $this->get_current_question_id() > 0 &&
+            $this->game->current_question_state === constants::QSTATE_RESULTS;
+    }
+
+    public function is_current_question_state_leaderboard(): bool {
+        return $this->get_current_question_id() > 0 &&
+            $this->game->current_question_state === constants::QSTATE_LEADERBOARD;
+    }
+
     public function get_id(): int {
         return $this->game->id;
     }
-    public function update_game_state(string $newstate, ?int $questionid = null) {
+    public function update_game_state(string $newstate, ?int $questionid = null, string $qstate = constants::QSTATE_ASKING) {
         global $DB;
         $DB->update_record('kahoodle', [
             'state' => $newstate,
             'id' => $this->game->id,
             'current_question_id' => $questionid,
+            'current_question_state' => $qstate,
         ]);
         $this->game->state = $newstate;
         $this->game->current_question_id = $questionid;
+        $this->game->current_question_state = $qstate;
     }
+
+    protected function get_questions() {
+        if ($this->questions === null) {
+            global $DB;
+            $this->questions = $DB->get_records('kahoodle_questions', ['kahoodle_id' => $this->game->id],
+                'sortorder ASC');
+        }
+        return $this->questions;
+    }
+
+    protected function get_next_question_id(?int $currentquestionid): int|null {
+        $questionids = array_keys($this->get_questions());
+        if ($currentquestionid === null) {
+            return reset($questionids);
+        }
+        $currentindex = array_search($currentquestionid, $questionids);
+        return $currentindex !== false && isset($questionids[$currentindex + 1]) ? $questionids[$currentindex + 1] : null;
+    }
+
     public function transition_game() {
         global $DB;
         if ($this->game->state == constants::STATE_PREPARATION) {
             $this->update_game_state(constants::STATE_WAITING);
         } else if ($this->game->state == constants::STATE_WAITING) {
-
+            $this->update_game_state(constants::STATE_INPROGRESS, $this->get_next_question_id(null));
+        } else if ($this->game->state == constants::STATE_INPROGRESS) {
+            if ($currentquestionid = $this->get_current_question_id()) {
+                if ($this->is_current_question_state_asking()) {
+                    $this->update_game_state(constants::STATE_INPROGRESS, $currentquestionid,
+                        constants::QSTATE_RESULTS);
+                    return;
+                } else if ($this->is_current_question_state_results()) {
+                    $this->update_game_state(constants::STATE_INPROGRESS, $currentquestionid,
+                        constants::QSTATE_LEADERBOARD);
+                    return;
+                } else if ($nextquestionid = $this->get_next_question_id($currentquestionid)) {
+                    // Move on to the next question.
+                    $this->update_game_state(constants::STATE_INPROGRESS, $nextquestionid, constants::QSTATE_ASKING);
+                    $DB->update_record('kahoodle_questions', ['started_at' => time(), 'id' => $nextquestionid]);
+                    $questions = null;
+                } else {
+                    // This was the last question.
+                    $this->update_game_state(constants::STATE_DONE, $currentquestionid, constants::QSTATE_LEADERBOARD);
+                }
+            }
         }
-
     }
 
     public function reset_game() {
@@ -122,5 +184,32 @@ class game {
                 'started_at' => 0, // TODO make nullable
             ]);
         }
+    }
+
+    public function get_current_question(bool $withanswers = false) {
+        $question = $this->get_current_question_id() ? $this->get_questions()[$this->get_current_question_id()] : null;
+
+        if (!$question) {
+            return null;
+        }
+        $questiondata = json_decode($question->question, true);
+
+        $options = [];
+        foreach ($questiondata['answers'] as $i => $answer) {
+            $option = [
+                'id' => $i + 1,
+                'text' => $answer,
+            ];
+            if ($withanswers) {
+                $option['iscorrect'] = ($i === ($questiondata['correctanswer'] ?? -1));
+            }
+            $options[] = $option;
+        }
+
+        return [
+            'questionid' => $question->id,
+            'question' => $questiondata['text'] ?? '',
+            'options' => $options,
+        ];
     }
 }

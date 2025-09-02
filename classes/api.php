@@ -48,32 +48,10 @@ class api {
                     'sesskey' => sesskey(),
                 ],
             ];
-        } else if ($this->game->is_done()) {
-            return [
-                'template' => 'mod_kahoodle/donescreen',
-                'data' => [
-                ],
-            ];
-        // } else if ($this->game->state === constants::STATE_INPROGRESS) {
-        //     // TODO implement.
-        //     return [
-        //         'template' => 'mod_kahoodle/notready',
-        //         'data' => [
-        //         ],
-        //     ];
-        // } else if ($this->game->state === constants::STATE_WAITING) {
-        //     if (self::can_answer()) {
-        //         return $this->get_game_state_player();
-        //     } else {
-        //         return [
-        //             'template' => 'mod_kahoodle/waitingroom',
-        //             'data' => [
-        //             ],
-        //         ];
-        //     }
-        } else if (self::can_answer()) {
-            return $this->get_game_state_player($this->get_player_id());
+        } else if ($playerid = $this->get_player_id()) {
+            return $this->get_game_state_player($playerid);
         } else {
+            // TODO this is also displayed for people who did not play after the game has finished
             return [
                 'template' => 'mod_kahoodle/notready',
                 'data' => [
@@ -83,7 +61,14 @@ class api {
     }
 
     protected function get_game_state_gamemaster() {
-        if ($this->game->is_in_preparation()) {
+        if ($this->game->is_done()) {
+            return [
+                'template' => 'mod_kahoodle/donescreen',
+                'data' => [
+                    // TODO total leaderboard
+                ],
+            ];
+        } else if ($this->game->is_in_preparation()) {
             return [
                 'template' => 'mod_kahoodle/preparation',
                 'data' => [],
@@ -95,10 +80,25 @@ class api {
                     'players' => array_values($this->get_players('name')),
                 ],
             ];
-        // } else if ($this->game->state == constants::STATE_INPROGRESS) {
-
-        // } else if ($this->game->state == constants::STATE_DONE) {
-
+        } else if ($this->game->is_in_progress() && $this->game->get_current_question_id()) {
+            if ($this->game->is_current_question_state_asking()) {
+                return [
+                    'template' => 'mod_kahoodle/question_gamemaster',
+                    'data' => $this->game->get_current_question(false),
+                ];
+            } else if ($this->game->is_current_question_state_results()) {
+                return [
+                    'template' => 'mod_kahoodle/questionresult_gamemaster',
+                    'data' => $this->game->get_current_question(true), // TODO plus stats
+                ];
+            } else if ($this->game->is_current_question_state_leaderboard()) {
+                return [
+                    'template' => 'mod_kahoodle/questionleaderboard_gamemaster',
+                    'data' => [
+                        // TODO
+                    ],
+                ];
+            }
         }
         return [
             'template' => 'mod_kahoodle/notready',
@@ -108,6 +108,31 @@ class api {
     }
 
     protected function get_game_state_player(int $playerid) {
+        if ($this->game->is_done()) {
+            return [
+                'template' => 'mod_kahoodle/donescreen_player',
+                'data' => [
+                    // TODO player-specific data and leaderboard
+                ],
+            ];
+        } else if ($this->game->is_in_progress() && $this->game->get_current_question_id()) {
+            if ($this->game->is_current_question_state_asking()) {
+                return [
+                    'template' => 'mod_kahoodle/question_player',
+                    'data' => $this->game->get_current_question(false),
+                ];
+            } else if ($this->game->is_current_question_state_results()) {
+                return [
+                    'template' => 'mod_kahoodle/questionresult_player',
+                    'data' => $this->game->get_current_question(true), // TODO plus stats
+                ];
+            } else {
+                return [
+                    'template' => 'mod_kahoodle/questionleaderboard_player',
+                    'data' => $this->game->get_current_question(true), // TODO plus stats
+                ];
+            }
+        }
         return [
             'template' => 'mod_kahoodle/waitscreen',
             'data' => [
