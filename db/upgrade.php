@@ -35,8 +35,7 @@ function xmldb_kahoodle_upgrade($oldversion) {
     global $DB;
     $dbman = $DB->get_manager();
 
-
-    if ($oldversion < 2025090204 ) {
+    if ($oldversion < 2025090204) {
 
         // Define table kahoodle_questions to be created.
         $table = new xmldb_table('kahoodle_questions');
@@ -45,9 +44,9 @@ function xmldb_kahoodle_upgrade($oldversion) {
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
         $table->add_field('kahoodle_id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
         $table->add_field('started_at', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
-        $table->add_field('question', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+        $table->add_field('question', XMLDB_TYPE_TEXT, null, null, null, null, null);
         $table->add_field('duration', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '60');
-        $table->add_field('order', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('sortorder', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
 
         // Adding keys to table kahoodle_questions.
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
@@ -76,7 +75,10 @@ function xmldb_kahoodle_upgrade($oldversion) {
             $dbman->create_table($table);
         }
 
-	// Adding fields to table kahoodle_answers.
+        // Define table kahoodle_answers to be created.
+        $table = new xmldb_table('kahoodle_answers');
+
+        // Adding fields to table kahoodle_answers.
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
         $table->add_field('question_id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
         $table->add_field('player_id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
@@ -100,22 +102,22 @@ function xmldb_kahoodle_upgrade($oldversion) {
         // Conditionally launch add field state.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
-	}
-        $field = new xmldb_field('configuration', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null, 'state');
+        }
+
+        // Define field configuration to be added to kahoodle.
+        $table = new xmldb_table('kahoodle');
+        $field = new xmldb_field('configuration', XMLDB_TYPE_TEXT, null, null, null, null, null, 'state');
 
         // Conditionally launch add field configuration.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
-        $field = new xmldb_field('question_state', XMLDB_TYPE_CHAR, '32', null, null, null, null, 'configuration');
 
-        // Conditionally launch add field question_state.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-	}
-        $field = new xmldb_field('question_id', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'question_state');
+        // Define field current_question_id to be added to kahoodle.
+        $table = new xmldb_table('kahoodle');
+        $field = new xmldb_field('current_question_id', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'configuration');
 
-        // Conditionally launch add field question_id.
+        // Conditionally launch add field current_question_id.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
