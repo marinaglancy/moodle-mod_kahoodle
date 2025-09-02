@@ -24,9 +24,9 @@
         "title": "Question",
         "source": "https://",
         "answers": [
-            {"answer": "Answer 1"},
-            {"answer": "Answer 2"},
-            {"answer": "Answer 3"}
+            {"text": "Answer 1", "id": 1 },
+            {"text": "Answer 2", "id": 2 },
+            {"text": "Answer 3", "id": 3 }
         ]
     }
 }}
@@ -37,7 +37,11 @@
 <h3>{{{title}}}</h3>
 <ul>
 {{#answers}}
-    <li>{{{answer}}}</li>
+    <li >
+			<button class="question" data-id="{{answer.id}}">
+				{{{answer.text}}}
+			</button>
+		</li>
 {{/answers}}
 </ul>
 <div><button>Next</button></div>
