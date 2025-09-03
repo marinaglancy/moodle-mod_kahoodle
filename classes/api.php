@@ -174,9 +174,9 @@ class api {
         $score = $DB->get_records_sql('SELECT a.player_id AS playerid, p.name AS name, SUM(a.points) AS points 
             FROM {kahoodle_answers} a
             JOIN {kahoodle_questions} q ON a.question_id = q.id
-            JOIN {kahoodle_player} p on u.id = a.player_id
+            JOIN {kahoodle_players} p on p.id = a.player_id
             WHERE q.kahoodle_id = :kahoodleid
-            GROUP BY a.player_id, u.name
+            GROUP BY a.player_id, p.name
             ORDER BY points', [
                 'kahoodleid' => $this->game->get_id(),
             ], 0, 10);
