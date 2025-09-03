@@ -24,3 +24,20 @@
     }
 }}
 <p>Here you will see whether your answer to the last question was correct</p>
+{{#options}}
+    {{#isanswer}}
+        <div class="mod_kahoodle_answer{{id}}">
+            <p>Your answer: {{{text}}} {{#iscorrect}}(Correct){{/iscorrect}}</p>
+        </div>
+    {{/isanswer}}
+{{/options}}
+
+{{#options}}
+    {{#iscorrect}}
+        <div class="mod_kahoodle_answer{{id}}">
+            <p>Correct answer: {{{text}}}</p>
+        </div>
+    {{/iscorrect}}
+{{/options}}
+
+<p>You get {{points}} points</p>

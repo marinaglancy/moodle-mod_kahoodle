@@ -30,7 +30,7 @@ import Templates from 'core/templates';
 const SELECTORS = {
     MAINDIV: '#mod_kahoodle_game[data-cmid][data-contextid]',
     TRANSITIONBUTTON: '[data-action="transition"]',
-    JOINBUTTON: '[data-action="join"]',
+    ANSWERBUTTON: '[data-action="answer"][data-questionid]',
 
 };
 
@@ -83,10 +83,10 @@ export const init = () => {
     });
 
     document.addEventListener('click', (e) => {
-        // const joinButton = e.target.closest(SELECTORS.MAINDIV + " " + SELECTORS.JOINBUTTON);
-        // if (joinButton) {
-        //     doJoin();
-        // }
+        const answerButton = e.target.closest(SELECTORS.MAINDIV + " " + SELECTORS.ANSWERBUTTON);
+        if (answerButton) {
+            doAnswer(parseInt(answerButton.dataset.questionid), parseInt(answerButton.dataset.optionid));
+        }
         const transitionButton = e.target.closest(SELECTORS.MAINDIV + " " + SELECTORS.TRANSITIONBUTTON);
         if (transitionButton) {
             doTransition();

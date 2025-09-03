@@ -160,16 +160,19 @@ class game {
                 'text' => 'What is the color of the sky?',
                 'answers' => ['Red', 'Green', 'Blue', 'Purple'],
                 'correctanswer' => 2, // 0-based.
+                'points' => 100,
             ],
             [
                 'text' => 'What is the capital of France?',
                 'answers' => ['Berlin', 'Madrid', 'Paris', 'Rome'],
                 'correctanswer' => 2, // 0-based.
+                'points' => 100,
             ],
             [
                 'text' => 'What is 2+2?',
                 'answers' => ['3', '4', '5', '22'],
                 'correctanswer' => 1, // 0-based.
+                'points' => 100,
             ],
         ];
 
@@ -177,7 +180,7 @@ class game {
             $DB->insert_record('kahoodle_questions', [
                 'kahoodle_id' => $this->game->id,
                 'question' => json_encode($question),
-                'duration' => 60,
+                'duration' => 10,
                 'sortorder' => $i,
                 'timecreated' => time(),
                 'timemodified' => time(),
@@ -186,30 +189,54 @@ class game {
         }
     }
 
-    public function get_current_question(bool $withanswers = false) {
-        $question = $this->get_current_question_id() ? $this->get_questions()[$this->get_current_question_id()] : null;
+    public function get_current_question(bool $withcorrect = false, ?int $studentanswer = null) {
+        $question = $this->get_current_raw_question();
 
         if (!$question) {
             return null;
         }
         $questiondata = json_decode($question->question, true);
 
-        $options = [];
-        foreach ($questiondata['answers'] as $i => $answer) {
-            $option = [
-                'id' => $i + 1,
-                'text' => $answer,
-            ];
-            if ($withanswers) {
-                $option['iscorrect'] = ($i === ($questiondata['correctanswer'] ?? -1));
-            }
-            $options[] = $option;
-        }
-
-        return [
+        $result = [
             'questionid' => $question->id,
             'question' => $questiondata['text'] ?? '',
-            'options' => $options,
+            'options' => [],
+            'isanswered' => $studentanswer !== null,
         ];
+        if ($withcorrect) {
+            $result['correctanswer'] = $questiondata['correctanswer'];
+        }
+        foreach ($questiondata['answers'] as $i => $answer) {
+            $option = [
+                'id' => $i,
+                'text' => $answer,
+            ];
+            if ($withcorrect) {
+                $option['iscorrect'] = ($i == $questiondata['correctanswer']);
+            }
+            if ($studentanswer !== null) {
+                $option['isanswer'] = $studentanswer == $i;
+            }
+            $result['options'][] = $option;
+        }
+
+        return $result;
+    }
+
+    protected function get_current_raw_question(): ?stdClass {
+        return $this->get_current_question_id() ? $this->get_questions()[$this->get_current_question_id()] : null;
+    }
+
+    public function calculate_score(int $optionidx) {
+        $rawquestion = $this->get_current_raw_question();
+        $questiondata = json_decode($rawquestion->question, true);
+        if ($optionidx != $questiondata['correctanswer']) {
+            return 0;
+        }
+
+        $timetaken = time() - $rawquestion->started_at;
+        $penalty = $rawquestion->duration > 0 ?
+            0.5 * min($timetaken, $rawquestion->duration)/$rawquestion->duration : 0;
+        return $questiondata['points'] * (1 - $penalty);
     }
 }

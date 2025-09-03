@@ -28,6 +28,7 @@ use moodle_url;
  */
 class api {
     protected $playerid = null;
+    protected $answers = null;
     protected game $game;
 
     public function __construct(\cm_info $cm, \stdClass $activity) {
@@ -116,20 +117,25 @@ class api {
                 ],
             ];
         } else if ($this->game->is_in_progress() && $this->game->get_current_question_id()) {
+            $answers = $this->get_player_answers($playerid);
+            $studentanswer = $answers[$this->game->get_current_question_id()] ?? null;
+            $optionidx = $studentanswer !== null ? $studentanswer->answer['option'] : null;
             if ($this->game->is_current_question_state_asking()) {
                 return [
                     'template' => 'mod_kahoodle/question_player',
-                    'data' => $this->game->get_current_question(false),
+                    'data' => $this->game->get_current_question(false, $optionidx),
                 ];
             } else if ($this->game->is_current_question_state_results()) {
                 return [
                     'template' => 'mod_kahoodle/questionresult_player',
-                    'data' => $this->game->get_current_question(true), // TODO plus stats
+                    'data' => $this->game->get_current_question(true, $optionidx) +
+                    ['points' => $studentanswer?->points],
                 ];
             } else {
                 return [
                     'template' => 'mod_kahoodle/questionleaderboard_player',
-                    'data' => $this->game->get_current_question(true), // TODO plus stats
+                    'data' => $this->game->get_current_question(true, $studentanswer) +
+                    ['points' => $studentanswer?->points ?: 0, 'score' => $this->get_player_score($playerid)],
                 ];
             }
         }
@@ -138,6 +144,37 @@ class api {
             'data' => [
             ],
         ];
+    }
+
+    protected function get_player_answers(?int $playerid): array {
+        global $DB;
+        if ($playerid === null) {
+            return [];
+        }
+        if ($this->answers != null) {
+            return $this->answers;
+        }
+        $this->answers = $DB->get_records_sql('SELECT a.question_id, a.points, a.answer
+            FROM {kahoodle_answers} a
+            JOIN {kahoodle_questions} q ON a.question_id = q.id
+            WHERE q.kahoodle_id = :kahoodleid AND a.player_id = :playerid
+            ORDER BY q.sortorder', [
+                'kahoodleid' => $this->game->get_id(),
+                'playerid' => $playerid,
+            ]);
+        $totalscore = 0;
+        foreach ($this->answers as $answer) {
+            $answer->answer = json_decode($answer->answer, true);
+            $totalscore += (int)$answer->points;
+            $answer->score = $totalscore;
+        }
+        return $this->answers;
+    }
+
+    protected function get_player_score(int $playerid): int {
+        $answers = $this->get_player_answers($playerid);
+        $qids = array_keys($answers);
+        return $answers ? $answers[$qids[sizeof($qids) - 1]]->score : 0;
     }
 
     public function can_transition() {
@@ -223,9 +260,42 @@ class api {
             $this->transition_game();
         }
 
-        // TODO
+        if ($action == 'answer') {
+            $questionid = $payload['questionid'] ?? null;
+            $optionidx = $payload['answer'] ?? null;
+            if ($questionid && $optionidx !== null) {
+                $this->do_answer($questionid, $optionidx);
+            }
+        }
     }
 
+    protected function do_answer(int $questionid, int $optionidx) {
+        global $DB;
+        if (!$this->can_answer() || !$this->game->is_current_question_state_asking() ||
+            $this->game->get_current_question_id() != $questionid) {
+            return;
+        }
+        $playerid = $this->get_player_id();
+        if (!$playerid) {
+            return;
+        }
+        $answers = $this->get_player_answers($playerid);
+        // Check if already answered.
+        if (array_key_exists($questionid, $answers)) {
+            return;
+        }
+        $points = $this->game->calculate_score($optionidx);
+        $DB->insert_record('kahoodle_answers', [
+            'question_id' => $questionid,
+            'player_id' => $playerid,
+            'points' => $points,
+            'answer' => json_encode(['option' => $optionidx]),
+        ]);
+        // Invalidate cached answers.
+        $this->answers = null;
+
+        $this->notify_player($playerid);
+    }
     protected function notify_gamemaster() {
         $channel = new \tool_realtime\channel($this->get_context(),
             'mod_kahoodle', 'gamemaster', 0);
@@ -235,10 +305,14 @@ class api {
     protected function notify_all_players() {
         // TODO if content does not depend on the player, push only one event to itemid = 0
         foreach ($this->get_players() as $player) {
-            $channel = new \tool_realtime\channel($this->get_context(),
-                'mod_kahoodle', 'game', $player->id);
-            $channel->notify($this->get_game_state_player($player->id));
+            $this->notify_player($player->id);
         }
+    }
+
+    protected function notify_player(int $playerid) {
+        $channel = new \tool_realtime\channel($this->get_context(),
+                'mod_kahoodle', 'game', $playerid);
+        $channel->notify($this->get_game_state_player($playerid));
     }
 
     protected function transition_game() {

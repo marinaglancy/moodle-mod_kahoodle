@@ -25,6 +25,10 @@
 }}
 {{#options}}
 <div class="mod_kahoodle_option{{id}}">
-    <button data-action="answer" data-questionid="{{questionid}}" data-optionid="{{id}}">{{{text}}}</button>
+    <button data-action="answer" data-questionid="{{questionid}}"
+            data-optionid="{{id}}" {{#isanswered}}disabled{{/isanswered}}>
+            {{#isanswer}} X {{/isanswer}}
+        {{{text}}}
+    </button>
 </div>
 {{/options}}
