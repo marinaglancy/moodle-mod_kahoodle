@@ -31,10 +31,10 @@
     }
 }}
 <p>This game has finished!</p>
-<ul>
+<ul class="list-unstyled">
     {{#players}}
-        <li class="list-unstyled">
-            <i class="fa-solid fa-star" aria-hidden="true"></i>
+        <li class="border rounded p-2 mb-2">
+            <i class="fa-solid fa-star text-warning" aria-hidden="true"></i>
             {{name}}: {{points}} points
         </li>
     {{/players}}
