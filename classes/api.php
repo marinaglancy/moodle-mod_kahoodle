@@ -236,7 +236,7 @@ class api {
             JOIN {kahoodle_players} p on p.id = a.player_id
             WHERE q.kahoodle_id = :kahoodleid
             GROUP BY a.player_id, p.name
-            ORDER BY points', [
+            ORDER BY points DESC', [
                 'kahoodleid' => $this->game->get_id(),
             ], 0, 10);
         foreach ($score as $key => $value) {
