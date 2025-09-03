@@ -157,32 +157,92 @@ class game {
 
         $questions = [
             [
-                'text' => 'Our team members are …',
+                'text' => '
+                    <div class="d-flex row align-items-center p-3 border rounded shadow-sm">
+                        <div class="col-12">
+                            <div class="col-4">
+                                <img src="https://marina.ninja/pluginfile.php/2/course/section/1/kahoodle_team%20%283%29.jpg" class="img-fluid rounded">
+                            </div>
+                            <div class="col-8">&nbsp;</div>
+                        </div>
+                        <div class="col-12">
+                            <span class="fw-bold display-4">Our team members are …</span>
+                        </div>
+                    </div>                
+                ',
                 'answers' => ['Kathleen, Jan, Vasco, Pascal, Lars, Marina, Monika', 'Peter, Heike, Klaus', 'Sabine, Tom, Anna, Otto, Hannah', 'Donald Duck, Goofy, Micky Mouse'],
                 'correctanswer' => 0, // 0-based.
                 'points' => 100,
             ],
             [
-                'text' => 'What is the price for the MoodleMoot DACH T-Shirt?',
-                'answers' => ['29€', '50€', '19€', '25€'],
-                'correctanswer' => 2, // 0-based.
+                'text' => '
+                    <div class="d-flex row align-items-center p-3 border rounded shadow-sm">
+                        <div class="col-12">
+                            <div class="col-4">
+                                <img src="https://marina.ninja/pluginfile.php/2/course/section/1/kahoodle_tshirt_station.jpg class="img-fluid rounded">
+                            </div>
+                            <div class="col-8">&nbsp;</div>
+                        </div>
+                        <div class="col-12">
+                            <span class="fw-bold display-4">What is the price of the MoodleMoot DACH T-Shirt?</span>
+                        </div>
+                    </div>    
+                ',
+                'answers' => ['19€', '25€', '29€', '50€'],
+                'correctanswer' => 0, // 0-based.
                 'points' => 100,
             ],
             [
-                'text' => 'How many groups are there at the DevCamp?',
-                'answers' => ['17', '4', '35', '22'],
-                'correctanswer' => 3, // 0-based.
-                'points' => 100,
-            ],
-            [
-                'text' => 'There was a session room called Trave.',
+                'text' => '
+                    <div class="d-flex row align-items-center p-3 border rounded shadow-sm">
+                        <div class="col-12">
+                            <div class="col-4">
+                                <img src="https://marina.ninja/pluginfile.php/2/course/section/1/kahoodle_session_rooms.jpg" class="img-fluid rounded">
+                            </div>
+                            <div class="col-8">&nbsp;</div>
+                        </div>
+                        <div class="col-12">
+                            <span class="fw-bold display-4">There was a session room called Trave?</span>
+                        </div>
+                    </div> 
+                ',
                 'answers' => ['True', 'False' ],
                 'correctanswer' => 1, // 0-based.
                 'points' => 100,
             ],
             [
-                'text' => 'The MoodleMoot DACH in 2024 took place in Vienna?',
+                'text' => '
+                    <div class="d-flex row align-items-center p-3 border rounded shadow-sm">
+                        <div class="col-12">
+                            <div class="col-4">
+                                <img src="https://marina.ninja/pluginfile.php/2/course/section/1/kahoodle_wien.jpg" class="img-fluid rounded">
+                            </div>
+                            <div class="col-8">&nbsp;</div>
+                        </div>
+                        <div class="col-12">
+                            <span class="fw-bold display-4">The MoodleMoot DACH in 2024 took place in Vienna?</span>
+                        </div>
+                    </div>   
+                ',
                 'answers' => ['True', 'False' ],
+                'correctanswer' => 0, // 0-based.
+                'points' => 100,
+            ],
+            [
+                'text' => '
+                    <div class="d-flex row align-items-center p-3 border rounded shadow-sm">
+                        <div class="col-12">
+                            <div class="col-4">
+                                <img src="https://marina.ninja/pluginfile.php/2/course/section/1/kahoodle_devcamp_groups.jpg" class="img-fluid rounded">
+                            </div>
+                            <div class="col-8">&nbsp;</div>
+                        </div>
+                        <div class="col-12">
+                            <span class="fw-bold display-4">How many groups are there at the DevCamp?</span>
+                        </div>
+                    </div>   
+                ',
+                'answers' => ['22', '10', '50', '35' ],
                 'correctanswer' => 0, // 0-based.
                 'points' => 100,
             ],
