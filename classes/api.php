@@ -111,9 +111,8 @@ class api {
         if ($this->game->is_done()) {
             return [
                 'template' => 'mod_kahoodle/donescreen_player',
-                'data' => [
-                    // TODO player-specific data and leaderboard
-                ],
+                // 'data' => [ 'player' => array_keys($this->get_player_aggregated_points($playerid))],
+                'data' => [ 'player' => $this->get_player_aggregated_points($playerid)],
             ];
         } else if ($this->game->is_in_progress() && $this->game->get_current_question_id()) {
             $answers = $this->get_player_answers($playerid);
@@ -199,6 +198,21 @@ class api {
             ORDER BY points', [
                 'kahoodleid' => $this->game->get_id(),
             ], 0, 10);
+        return $score;
+    }
+
+    protected function get_player_aggregated_points(int $playerid): object {
+        global $DB;
+        $score = $DB->get_record_sql('SELECT a.player_id AS playerid, p.name AS name, SUM(a.points) AS points 
+            FROM {kahoodle_answers} a
+            JOIN {kahoodle_questions} q ON a.question_id = q.id
+            JOIN {kahoodle_players} p on p.id = a.player_id
+            WHERE q.kahoodle_id = :kahoodleid AND a.player_id = :playerid
+            GROUP BY a.player_id, p.name', 
+            [
+                'kahoodleid' => $this->game->get_id(),
+                'playerid' => $playerid,
+            ]);
         return $score;
     }
 
