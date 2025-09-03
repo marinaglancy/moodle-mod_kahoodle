@@ -51,10 +51,13 @@ export const init = () => {
 
     PubSub.subscribe(RealTimeEvents.EVENT, (data) => {
         window.console.log('received event ' + JSON.stringify(data));
-        const {context, component, payload} = data;
-        window.console.log('-details-: '+JSON.stringify({contextid: context.id, component, payload}));
+        var {context, contextid, component, payload} = data;
+        if (!contextid && context?.id) {
+            contextid = context.id;
+        }
+        window.console.log('-details-: '+JSON.stringify({contextid: contextid, component, payload}));
         const node = document.querySelector(SELECTORS.MAINDIV);
-        if (!payload || component != 'mod_kahoodle' || context.id != node.dataset.contextid) {
+        if (!payload || component != 'mod_kahoodle' || contextid != node.dataset.contextid) {
             window.console.log('Ignoring event for different context or component');
             return;
         }
