@@ -21,6 +21,18 @@
 
     Example context (json):
     {
+        "players": [
+            {
+                "playerid": 10,
+                "name" "Max Mustermann",
+                "points": 100,
+            },
+        ]
     }
 }}
 <p>This game has finished!</p>
+<ul>
+    {{#players}}
+        <li>{{name}}: {{points}} points</li>
+    {{/players}}
+</ul>
