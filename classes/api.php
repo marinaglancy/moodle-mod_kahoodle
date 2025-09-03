@@ -98,9 +98,7 @@ class api {
             } else if ($this->game->is_current_question_state_leaderboard()) {
                 return [
                     'template' => 'mod_kahoodle/questionleaderboard_gamemaster',
-                    'data' => [
-                        // TODO
-                    ],
+                    'data' => [ 'players' => array_values($this->get_leaderboard())],
                 ];
             }
         }
@@ -190,6 +188,20 @@ class api {
             $res[$answer['option']]['count']++;
         }
         return array_values($res);
+    }
+
+    protected function get_leaderboard(): array {
+        global $DB;
+        $score = $DB->get_records_sql('SELECT a.player_id AS playerid, p.name AS name, SUM(a.points) AS points 
+            FROM {kahoodle_answers} a
+            JOIN {kahoodle_questions} q ON a.question_id = q.id
+            JOIN {kahoodle_players} p on p.id = a.player_id
+            WHERE q.kahoodle_id = :kahoodleid
+            GROUP BY a.player_id, p.name
+            ORDER BY points', [
+                'kahoodleid' => $this->game->get_id(),
+            ], 0, 10);
+        return $score;
     }
 
     protected function get_player_score(int $playerid): int {

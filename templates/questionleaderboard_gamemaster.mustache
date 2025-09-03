@@ -21,7 +21,18 @@
 
     Example context (json):
     {
+        "players": [
+            {
+                "playerid": 10,
+                "name" "Max Mustermann",
+                "points": 100,
+            },
+        ]
     }
 }}
 <p>This is the leaderboard after the question.</p>
+<ul>
+    {{#players}}
+        <li>{{name}}: {{points}} points</li>
+    {{/players}}
 <div><button data-action="transition">Next</button></div>
