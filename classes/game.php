@@ -202,7 +202,7 @@ class game {
                             <div class="col-8">&nbsp;</div>
                         </div>
                         <div class="col-12">
-                            <span class="fw-bold display-5">There was a session room called Trave?</span>
+                            <span class="fw-bold display-5">There was a session room called Trave.</span>
                         </div>
                     </div> 
                 ',
@@ -220,7 +220,7 @@ class game {
                             <div class="col-8">&nbsp;</div>
                         </div>
                         <div class="col-12">
-                            <span class="fw-bold display-5">The MoodleMoot DACH in 2024 took place in Vienna?</span>
+                            <span class="fw-bold display-5">The MoodleMoot DACH in 2024 took place in Vienna.</span>
                         </div>
                     </div>   
                 ',
