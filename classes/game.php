@@ -117,7 +117,7 @@ class game {
         return $currentindex !== false && isset($questionids[$currentindex + 1]) ? $questionids[$currentindex + 1] : null;
     }
 
-    public function transition_game() {
+    public function transition_game(): bool {
         global $DB;
         if ($this->game->state == constants::STATE_PREPARATION) {
             $this->update_game_state(constants::STATE_WAITING);
@@ -128,22 +128,22 @@ class game {
                 if ($this->is_current_question_state_asking()) {
                     $this->update_game_state(constants::STATE_INPROGRESS, $currentquestionid,
                         constants::QSTATE_RESULTS);
-                    return;
                 } else if ($this->is_current_question_state_results()) {
                     $this->update_game_state(constants::STATE_INPROGRESS, $currentquestionid,
                         constants::QSTATE_LEADERBOARD);
-                    return;
                 } else if ($nextquestionid = $this->get_next_question_id($currentquestionid)) {
                     // Move on to the next question.
                     $this->update_game_state(constants::STATE_INPROGRESS, $nextquestionid, constants::QSTATE_ASKING);
                     $DB->update_record('kahoodle_questions', ['started_at' => time(), 'id' => $nextquestionid]);
                     $questions = null;
+                    return true;
                 } else {
                     // This was the last question.
                     $this->update_game_state(constants::STATE_DONE, $currentquestionid, constants::QSTATE_LEADERBOARD);
                 }
             }
         }
+        return false;
     }
 
     public function reset_game() {

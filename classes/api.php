@@ -350,10 +350,12 @@ class api {
             $this->game->reset_game();
             redirect($this->game->get_url());
         } else if ($action == 'join' && $this->can_join() && confirm_sesskey()) {
-            $name = required_param('name', PARAM_TEXT);
-            // TODO validate, trim name
-            $this->do_join($name);
-            redirect($this->game->get_url());
+            $name = trim(required_param('name', PARAM_TEXT));
+            // TODO validate name better.
+            if (strlen($name) > 0) {
+                $this->do_join(substr($name, 0, 20));
+                redirect($this->game->get_url());
+            }
         }
     }
 
@@ -405,8 +407,12 @@ class api {
         $channel->notify($this->get_game_state_gamemaster());
     }
 
-    protected function notify_all_players() {
-        // TODO if content does not depend on the player, push only one event to itemid = 0
+    protected function notify_all_players(bool $easytransition = false) {
+        // if content does not depend on the player, push only one event to itemid = 0
+        if ($easytransition) {
+            $this->notify_player(0);
+            return;
+        }
         foreach ($this->get_players() as $player) {
             $this->notify_player($player->id);
         }
@@ -419,10 +425,10 @@ class api {
     }
 
     protected function transition_game() {
-        $this->game->transition_game();
+        $easytransition = $this->game->transition_game();
 
         $this->notify_gamemaster();
-        $this->notify_all_players();
+        $this->notify_all_players($easytransition);
     }
 
     protected function get_next_border_color(): string {
