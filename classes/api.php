@@ -18,6 +18,7 @@ namespace mod_kahoodle;
 
 use context_module;
 use moodle_url;
+use stdClass;
 
 /**
  * Class api
@@ -236,7 +237,7 @@ class api {
             JOIN {kahoodle_players} p on p.id = a.player_id
             WHERE q.kahoodle_id = :kahoodleid
             GROUP BY a.player_id, p.name
-            ORDER BY points', [
+            ORDER BY points DESC', [
                 'kahoodleid' => $this->game->get_id(),
             ], 0, 10);
         foreach ($score as $key => $value) {
@@ -245,7 +246,7 @@ class api {
         return $score;
     }
 
-    protected function get_player_aggregated_points(int $playerid): object {
+    protected function get_player_aggregated_points(int $playerid): ?stdClass {
         global $DB;
         $score = $DB->get_record_sql('SELECT a.player_id AS playerid, p.name AS name, SUM(a.points) AS points 
             FROM {kahoodle_answers} a
@@ -257,7 +258,7 @@ class api {
                 'kahoodleid' => $this->game->get_id(),
                 'playerid' => $playerid,
             ]);
-        return $score;
+        return $score?:null;
     }
 
     protected function get_player_score(int $playerid): int {
