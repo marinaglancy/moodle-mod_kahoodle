@@ -13,7 +13,7 @@
         <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="state" TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT="PREPARATION" SEQUENCE="false" COMMENT="PREPARATION, WAITING (waiting for players), INPROGRESS, DONE (before and after playing the kahoodle)"/>
-        <FIELD NAME="configuration" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="configuration" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="current_question_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="current_question_state" TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT="ASKING" SEQUENCE="false" COMMENT="options: ASKING, RESULTS, LEADERBOARD"/>
       </FIELDS>
