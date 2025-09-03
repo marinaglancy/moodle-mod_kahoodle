@@ -166,11 +166,11 @@ class game {
                             <div class="col-8">&nbsp;</div>
                         </div>
                         <div class="col-12">
-                            <span class="fw-bold display-4">Our team members are …</span>
+                            <span class="fw-bold display-5">Our team members are …</span>
                         </div>
                     </div>                
                 ',
-                'answers' => ['Kathleen, Jan, Vasco, Pascal, Lars, Marina, Monika', 'Peter, Heike, Klaus', 'Sabine, Tom, Anna, Otto, Hannah', 'Donald Duck, Goofy, Micky Mouse'],
+                'answers' => ['Kathleen, Jan, Vasco, Immanuel, Pascal, Lars, Marina, Monika', 'Peter, Heike, Klaus', 'Sabine, Tom, Anna, Otto, Hannah', 'Donald Duck, Goofy, Micky Mouse'],
                 'correctanswer' => 0, // 0-based.
                 'points' => 100,
             ],
@@ -179,12 +179,12 @@ class game {
                     <div class="d-flex row align-items-center p-3 border rounded shadow-sm">
                         <div class="col-12">
                             <div class="col-4">
-                                <img src="https://marina.ninja/pluginfile.php/2/course/section/1/kahoodle_tshirt_station.jpg class="img-fluid rounded">
+                                <img src="https://marina.ninja/pluginfile.php/2/course/section/1/kahoodle_tshirt_station.jpg" class="img-fluid rounded">
                             </div>
                             <div class="col-8">&nbsp;</div>
                         </div>
                         <div class="col-12">
-                            <span class="fw-bold display-4">What is the price of the MoodleMoot DACH T-Shirt?</span>
+                            <span class="fw-bold display-5">What is the price of the MoodleMoot DACH T-Shirt?</span>
                         </div>
                     </div>    
                 ',
@@ -202,7 +202,7 @@ class game {
                             <div class="col-8">&nbsp;</div>
                         </div>
                         <div class="col-12">
-                            <span class="fw-bold display-4">There was a session room called Trave?</span>
+                            <span class="fw-bold display-5">There was a session room called Trave?</span>
                         </div>
                     </div> 
                 ',
@@ -220,7 +220,7 @@ class game {
                             <div class="col-8">&nbsp;</div>
                         </div>
                         <div class="col-12">
-                            <span class="fw-bold display-4">The MoodleMoot DACH in 2024 took place in Vienna?</span>
+                            <span class="fw-bold display-5">The MoodleMoot DACH in 2024 took place in Vienna?</span>
                         </div>
                     </div>   
                 ',
@@ -238,7 +238,7 @@ class game {
                             <div class="col-8">&nbsp;</div>
                         </div>
                         <div class="col-12">
-                            <span class="fw-bold display-4">How many groups are there at the DevCamp?</span>
+                            <span class="fw-bold display-5">How many groups are there at the DevCamp?</span>
                         </div>
                     </div>   
                 ',
