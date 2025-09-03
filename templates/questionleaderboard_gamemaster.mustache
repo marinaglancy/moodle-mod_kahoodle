@@ -31,11 +31,14 @@
     }
 }}
 <p>This is the leaderboard after the question.</p>
+<h4>Current Score</h4>
 <ul class="list-unstyled">
     {{#players}}
-        <li class="border border-5 border-{{color}} p-2 mb-2">
-            <i class="fa-solid fa-star text-{{color}}" aria-hidden="true"></i>
-            {{name}}: {{points}} points
+        <li class="border border-5 border-{{color}} p-2 mb-3 mt-3" style="border-width: 5px !important;">
+            <i class="fa-solid fa-star fa-2x text-{{color}}" aria-hidden="true"></i>
+            <span style="font-size: 2em; font-weight: 400;" class="text-{{color}} ml-3">
+                {{name}}: {{points}} points
+            </span>
         </li>
     {{/players}}
 </ul>
