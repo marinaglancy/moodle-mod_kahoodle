@@ -30,6 +30,7 @@ class api {
     protected $playerid = null;
     protected $answers = null;
     protected game $game;
+    protected string $bordercolorindex = 0;
 
     public function __construct(\cm_info $cm, \stdClass $activity) {
         $this->game = new game($cm, $activity);
@@ -418,5 +419,19 @@ class api {
 
         $this->notify_gamemaster();
         $this->notify_all_players();
+    }
+
+    protected function get_next_border_color(): string {
+        $colors = [
+            'border-primary',
+            'border-secondary',
+            'border-success',
+            'border-danger',
+            'border-warning',
+            'border-info',
+        ];
+        $color = $colors[$this->bordercolorindex % count($colors)];
+        $this->bordercolorindex++;
+        return $color;
     }
 }
