@@ -95,7 +95,7 @@ class api {
             } else if ($this->game->is_current_question_state_leaderboard()) {
                 return [
                     'template' => 'mod_kahoodle/questionleaderboard_gamemaster',
-                    'data' => [ 'players' => $this->get_leaderboard()],
+                    'data' => [ 'players' => array_values($this->get_leaderboard())],
                 ];
             }
         }
