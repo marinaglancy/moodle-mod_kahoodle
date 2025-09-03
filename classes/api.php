@@ -90,7 +90,10 @@ class api {
             } else if ($this->game->is_current_question_state_results()) {
                 return [
                     'template' => 'mod_kahoodle/questionresult_gamemaster',
-                    'data' => $this->game->get_current_question(true), // TODO plus stats
+                    'data' => [
+                        'data' => $this->game->get_current_question(true),
+                        'statistics' => $this->get_statistics()
+                    ] // TODO plus stats
                 ];
             } else if ($this->game->is_current_question_state_leaderboard()) {
                 return [
@@ -169,6 +172,24 @@ class api {
             $answer->score = $totalscore;
         }
         return $this->answers;
+    }
+
+    protected function get_statistics(): array {
+        global $DB;
+        $answers = $DB->get_records_sql('SELECT a.player_id, a.answer
+            FROM {kahoodle_answers} a
+            JOIN {kahoodle_questions} q ON a.question_id = q.id
+            WHERE q.id = ?', [$this->game->get_current_question_id()]
+            );
+        $res = [];
+        foreach ($this->game->get_current_question()['options'] as $option) {
+            $res[] = ['text' => $option['text'], 'count' => 0];
+        }
+        foreach ($answers as &$answer) {
+            $answer = json_decode($answer->answer, true); // jetzt ist es ein Array
+            $res[$answer['option']]['count']++;
+        }
+        return array_values($res);
     }
 
     protected function get_player_score(int $playerid): int {

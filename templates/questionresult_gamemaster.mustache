@@ -23,6 +23,16 @@
     {
     }
 }}
+
+<ul>
+
+{{#statistics}}
+  <li>
+    {{text}} {{count}}
+  </li>
+{{/statistics}}
+
+</ul>
 {{#options}}
 <div class="mod_kahoodle_option{{id}} {{#iscorrect}}mod_kahoodle_option_correct{{/iscorrect}}">
     {{{text}}}
