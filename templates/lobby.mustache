@@ -29,11 +29,25 @@
         ]
     }
 }}
-<h3>{{{title}}}</h3>
-<p>Waiting for players to join...</p>
-<ul>
-{{#players}}
-    <li>{{{name}}}</li>
-{{/players}}
-</ul>
-<div><button data-action="transition">Start the game</button></div>
+
+<div id="game" class="card shadow-sm border-0">
+  <div class="card-body">
+    <h3 class="card-title h5 mb-3">{{{title}}}</h3>
+    <p class="text-muted">Waiting for players to join...</p>
+    
+    <ul id="players" class="list-group list-group-flush mb-3">
+      {{#players}}
+        <li class="list-group-item d-flex align-items-center">
+          <i class="bi bi-person-circle me-2 text-secondary"></i>
+          {{{name}}}
+        </li>
+      {{/players}}
+    </ul>
+    
+    <div class="d-grid">
+      <button data-action="transition" class="btn btn-primary">
+        Start the game
+      </button>
+    </div>
+  </div>
+</div>

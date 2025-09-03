@@ -182,7 +182,7 @@ class api {
             $res[] = ['text' => $option['text'], 'count' => 0];
         }
         foreach ($answers as &$answer) {
-            $answer = json_decode($answer->answer, true); // jetzt ist es ein Array
+            $answer = json_decode($answer->answer, true);
             $res[$answer['option']]['count']++;
         }
         return array_values($res);

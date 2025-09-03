@@ -24,17 +24,21 @@
     }
 }}
 
-<ul>
-{{#statistics}}
-  <li>
-    {{text}} {{count}}
-  </li>
-{{/statistics}}
-</ul>
+<div id="game">
+  
+    <ul>
+    {{#statistics}}
+    <li>
+        {{text}} {{count}}
+    </li>
+    {{/statistics}}
+    </ul>
 
-{{#options}}
-<div class="mod_kahoodle_option{{id}} {{#iscorrect}}mod_kahoodle_option_correct{{/iscorrect}}">
-    {{{text}}}
+    {{#options}}
+    <div class="answer mod_kahoodle_option{{id}} {{#iscorrect}}mod_kahoodle_option_correct{{/iscorrect}}">
+        {{{text}}}
+    </div>
+    {{/options}}
+    <div><button data-action="transition" class="btn btn-primary">Next</button></div>
+
 </div>
-{{/options}}
-<div><button data-action="transition">Next</button></div>
