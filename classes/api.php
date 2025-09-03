@@ -239,6 +239,9 @@ class api {
             ORDER BY points', [
                 'kahoodleid' => $this->game->get_id(),
             ], 0, 10);
+        for ($i = 0; $i < count($score); $i++) {
+            $score[$i]->color = $this->get_next_border_color();
+        }
         return $score;
     }
 
