@@ -65,9 +65,7 @@ class api {
         if ($this->game->is_done()) {
             return [
                 'template' => 'mod_kahoodle/donescreen',
-                'data' => [
-                    // TODO total leaderboard
-                ],
+                'data' => [ 'players' => array_values($this->get_leaderboard())],
             ];
         } else if ($this->game->is_in_preparation()) {
             return [
