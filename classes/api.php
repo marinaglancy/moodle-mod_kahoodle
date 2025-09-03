@@ -214,7 +214,9 @@ class api {
 
     public function can_join() {
         return ($this->game->is_in_progress() || $this->game->is_in_lobby()) &&
-            !self::get_player_id() && has_capability('mod/kahoodle:answer', $this->get_context());
+            !self::get_player_id() &&
+            ((isloggedin() && !isguestuser()) || $this->can_auth_guests()) &&
+            has_capability('mod/kahoodle:answer', $this->get_context());
     }
 
     public function can_answer() {
@@ -247,10 +249,21 @@ class api {
         return $this->playerid;
     }
 
+    protected function can_auth_guests(): bool {
+        return \core_component::get_component_directory('auth_kahoodle')
+                    && is_enabled_auth('kahoodle');
+    }
+
     public function do_join(string $name) {
         global $DB, $USER;
         if (!$this->can_join()) {
             return;
+        }
+        if ((!isloggedin() || isguestuser()) && $this->can_auth_guests()) {
+            /** @var \auth_plugin_kahoodle $auth */
+            $auth = get_auth_plugin('kahoodle');
+
+            $auth->create_fake_user($name);
         }
         $this->playerid = $DB->insert_record('kahoodle_players', [
             'name' => $name,
