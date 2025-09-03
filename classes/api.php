@@ -30,6 +30,7 @@ class api {
     protected $playerid = null;
     protected $answers = null;
     protected game $game;
+    protected int $bordercolorindex = 0;
 
     public function __construct(\cm_info $cm, \stdClass $activity) {
         $this->game = new game($cm, $activity);
@@ -90,7 +91,7 @@ class api {
                     'template' => 'mod_kahoodle/questionresult_gamemaster',
                     'data' => [
                         'data' => $this->game->get_current_question(true),
-                        'statistics' => $this->get_statistics()
+                        'chartdata' => $this->get_chart_data(),
                     ] // TODO plus stats
                 ];
             } else if ($this->game->is_current_question_state_leaderboard()) {
@@ -111,9 +112,8 @@ class api {
         if ($this->game->is_done()) {
             return [
                 'template' => 'mod_kahoodle/donescreen_player',
-                'data' => [
-                    // TODO player-specific data and leaderboard
-                ],
+                // 'data' => [ 'player' => array_keys($this->get_player_aggregated_points($playerid))],
+                'data' => [ 'player' => $this->get_player_aggregated_points($playerid)],
             ];
         } else if ($this->game->is_in_progress() && $this->game->get_current_question_id()) {
             $answers = $this->get_player_answers($playerid);
@@ -170,6 +170,46 @@ class api {
         return $this->answers;
     }
 
+    protected function get_chart_data(): string {
+        $statistics = $this->get_statistics();
+
+        $y = [];
+        $x = [];
+
+        foreach ($statistics as $stat) {
+            $y[] = $stat['count'];
+            $x[] = $stat['text'];
+        }
+
+        $data = [
+            'type' => 'bar',
+            'series' => [
+                [
+                    'label' => 'Antworten',
+                    'labels' => null,
+                    'type' => null,
+                    'values' => $y,
+                    'colors' => [],
+                    'axes' => [
+                        'x' => null,
+                        'y' => null
+                    ],
+                    'smooth' => null
+                ]
+            ],
+            'labels' => $x,
+            'title' => 'Results',
+            'axes' => [
+                'x' => [],
+                'y' => [['min' => 0]],
+            ],
+            'config_colorset' => null,
+            'horizontal' => false,
+        ];
+
+        return json_encode($data);
+    }
+
     protected function get_statistics(): array {
         global $DB;
         $answers = $DB->get_records_sql('SELECT a.player_id, a.answer
@@ -202,6 +242,21 @@ class api {
         return $score;
     }
 
+    protected function get_player_aggregated_points(int $playerid): object {
+        global $DB;
+        $score = $DB->get_record_sql('SELECT a.player_id AS playerid, p.name AS name, SUM(a.points) AS points 
+            FROM {kahoodle_answers} a
+            JOIN {kahoodle_questions} q ON a.question_id = q.id
+            JOIN {kahoodle_players} p on p.id = a.player_id
+            WHERE q.kahoodle_id = :kahoodleid AND a.player_id = :playerid
+            GROUP BY a.player_id, p.name', 
+            [
+                'kahoodleid' => $this->game->get_id(),
+                'playerid' => $playerid,
+            ]);
+        return $score;
+    }
+
     protected function get_player_score(int $playerid): int {
         $answers = $this->get_player_answers($playerid);
         $qids = array_keys($answers);
@@ -214,7 +269,9 @@ class api {
 
     public function can_join() {
         return ($this->game->is_in_progress() || $this->game->is_in_lobby()) &&
-            !self::get_player_id() && has_capability('mod/kahoodle:answer', $this->get_context());
+            !self::get_player_id() &&
+            ((isloggedin() && !isguestuser()) || $this->can_auth_guests()) &&
+            has_capability('mod/kahoodle:answer', $this->get_context());
     }
 
     public function can_answer() {
@@ -247,10 +304,21 @@ class api {
         return $this->playerid;
     }
 
+    protected function can_auth_guests(): bool {
+        return \core_component::get_component_directory('auth_kahoodle')
+                    && is_enabled_auth('kahoodle');
+    }
+
     public function do_join(string $name) {
         global $DB, $USER;
         if (!$this->can_join()) {
             return;
+        }
+        if ((!isloggedin() || isguestuser()) && $this->can_auth_guests()) {
+            /** @var \auth_plugin_kahoodle $auth */
+            $auth = get_auth_plugin('kahoodle');
+
+            $auth->create_fake_user($name);
         }
         $this->playerid = $DB->insert_record('kahoodle_players', [
             'name' => $name,
@@ -351,5 +419,19 @@ class api {
 
         $this->notify_gamemaster();
         $this->notify_all_players();
+    }
+
+    protected function get_next_border_color(): string {
+        $colors = [
+            'primary',
+            'secondary',
+            'success',
+            'danger',
+            'warning',
+            'info',
+        ];
+        $color = $colors[$this->bordercolorindex % count($colors)];
+        $this->bordercolorindex++;
+        return $color;
     }
 }

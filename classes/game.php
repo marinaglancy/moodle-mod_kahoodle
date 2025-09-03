@@ -157,21 +157,33 @@ class game {
 
         $questions = [
             [
-                'text' => 'What is the color of the sky?',
-                'answers' => ['Red', 'Green', 'Blue', 'Purple'],
+                'text' => 'Our team members are …',
+                'answers' => ['Kathleen, Jan, Vasco, Pascal, Lars, Marina, Monika', 'Peter, Heike, Klaus', 'Sabine, Tom, Anna, Otto, Hannah', 'Donald Duck, Goofy, Micky Mouse'],
+                'correctanswer' => 0, // 0-based.
+                'points' => 100,
+            ],
+            [
+                'text' => 'What is the price for the MoodleMoot DACH T-Shirt?',
+                'answers' => ['29€', '50€', '19€', '25€'],
                 'correctanswer' => 2, // 0-based.
                 'points' => 100,
             ],
             [
-                'text' => 'What is the capital of France?',
-                'answers' => ['Berlin', 'Madrid', 'Paris', 'Rome'],
-                'correctanswer' => 2, // 0-based.
+                'text' => 'How many groups are there at the DevCamp?',
+                'answers' => ['17', '4', '35', '22'],
+                'correctanswer' => 3, // 0-based.
                 'points' => 100,
             ],
             [
-                'text' => 'What is 2+2?',
-                'answers' => ['3', '4', '5', '22'],
+                'text' => 'There was a session room called Trave.',
+                'answers' => ['True', 'False' ],
                 'correctanswer' => 1, // 0-based.
+                'points' => 100,
+            ],
+            [
+                'text' => 'The MoodleMoot DACH in 2024 took place in Vienna?',
+                'answers' => ['True', 'False' ],
+                'correctanswer' => 0, // 0-based.
                 'points' => 100,
             ],
         ];
@@ -205,7 +217,6 @@ class game {
         ];
         if ($withcorrect) {
             $result['correctanswer'] = $questiondata['correctanswer'];
-            
         }
         foreach ($questiondata['answers'] as $i => $answer) {
             $option = [

@@ -20,7 +20,16 @@
     TODO describe template donescreen_player
 
     Example context (json):
+    
+    
     {
+        "player": {
+                "playerid": 10,
+                "name" "Max Mustermann",
+                "points": 100,
+            },
     }
 }}
-<p>The game is finished! Your score is .... </p>
+{{#player}}
+<p>The game is finished! Your score is {{points}} points </p>
+{{/player}}

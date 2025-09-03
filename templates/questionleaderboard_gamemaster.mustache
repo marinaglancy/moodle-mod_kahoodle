@@ -31,9 +31,12 @@
     }
 }}
 <p>This is the leaderboard after the question.</p>
-<ul>
+<ul class="list-unstyled">
     {{#players}}
-        <li>{{name}}: {{points}} points</li>
+        <li class="border border-5 p-2 mb-2">
+            <i class="fa-solid fa-star text-warning" aria-hidden="true"></i>
+            {{name}}: {{points}} points
+        </li>
     {{/players}}
 </ul>
 <div><button data-action="transition">Next</button></div>

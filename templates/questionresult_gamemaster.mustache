@@ -24,21 +24,24 @@
     }
 }}
 
-<div id="game">
-  
-    <ul>
-    {{#statistics}}
-    <li>
-        {{text}} {{count}}
-    </li>
-    {{/statistics}}
-    </ul>
+<div class="chart-area" id="chart-area-{{uniqid}}">
+    <div class="chart-image" role="presentation"></div>
+</div>
 
-    {{#options}}
-    <div class="answer mod_kahoodle_option{{id}} {{#iscorrect}}mod_kahoodle_option_correct{{/iscorrect}}">
-        {{{text}}}
-    </div>
-    {{/options}}
-    <div><button data-action="transition" class="btn btn-primary">Next</button></div>
+{{#js}}
+require([
+    'jquery',
+    'core/chart_builder',
+    'core/chart_output_chartjs',
+], function($, Builder, Output) {
+    var data = {{{chartdata}}},
+        uniqid = "{{uniqid}}",
+        chartArea = $('#chart-area-' + uniqid),
+        chartImage = chartArea.find('.chart-image');
+    Builder.make(data).then(function(ChartInst) {
+        new Output(chartImage, ChartInst);
+    });
+});
+{{/js}}
 
 </div>

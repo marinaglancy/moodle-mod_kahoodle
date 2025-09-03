@@ -38,6 +38,7 @@ $capabilities = [
             'teacher' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
             'manager' => CAP_ALLOW,
+            'frontpage' => CAP_ALLOW,
         ],
     ],
 
@@ -63,10 +64,12 @@ $capabilities = [
     ],
 
     'mod/kahoodle:answer' => [
-        'captype' => 'write',
+        'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,
         'archetypes' => [
             'student' => CAP_ALLOW,
+            'guest' => CAP_ALLOW,
+            'frontpage' => CAP_ALLOW,
         ],
     ],
 ];
