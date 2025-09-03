@@ -30,7 +30,7 @@ class api {
     protected $playerid = null;
     protected $answers = null;
     protected game $game;
-    protected string $bordercolorindex = 0;
+    protected int $bordercolorindex = 0;
 
     public function __construct(\cm_info $cm, \stdClass $activity) {
         $this->game = new game($cm, $activity);
