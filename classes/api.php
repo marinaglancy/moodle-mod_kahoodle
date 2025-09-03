@@ -423,12 +423,12 @@ class api {
 
     protected function get_next_border_color(): string {
         $colors = [
-            'border-primary',
-            'border-secondary',
-            'border-success',
-            'border-danger',
-            'border-warning',
-            'border-info',
+            'primary',
+            'secondary',
+            'success',
+            'danger',
+            'warning',
+            'info',
         ];
         $color = $colors[$this->bordercolorindex % count($colors)];
         $this->bordercolorindex++;
