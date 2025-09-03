@@ -23,10 +23,59 @@
     {
     }
 }}
-<div>{{{question}}}</div>
-{{#options}}
-<div class="mod_kahoodle_option{{id}}">
-    {{{text}}}
+<div class="container">
+    {{#image}}
+        <div class="row mb-3">
+            <div class="col-12 text-center">
+                <img src="{{image}}" alt="Question image" class="img-fluid">
+            </div>
+        </div>
+    {{/image}}
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="question-text h1">{{{question}}}</div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-12">
+            {{#options}}
+                <div class="mod_kahoodle_option mod_kahoodle_option{{id}} card mb-2">
+                    <div class="card-body text-center">{{{text}}}</div>
+                </div>
+            {{/options}}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 text-center">
+            <button class="btn btn-primary" data-action="transition">Next</button>
+        </div>
+    </div>
 </div>
-{{/options}}
-<div><button data-action="transition">Next</button></div>
+
+<style>
+    :root {
+        --option-color-1: #F98012;
+        --option-color-2: #9ABB50;
+        --option-color-3: #69E0FF;
+        --option-color-4: #FFE84F;
+    }
+
+    .mod_kahoodle_option:nth-of-type(1) {
+        background-color: var(--option-color-1);
+    }
+
+    .mod_kahoodle_option:nth-child(2) {
+        background-color: var(--option-color-2);
+    }
+
+    .mod_kahoodle_option:nth-child(3) {
+        background-color: var(--option-color-3);
+    }
+
+    .mod_kahoodle_option:nth-child(4) {
+        background-color: var(--option-color-4);
+    }
+</style>
