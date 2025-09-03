@@ -90,7 +90,7 @@ class api {
                     'template' => 'mod_kahoodle/questionresult_gamemaster',
                     'data' => [
                         'data' => $this->game->get_current_question(true),
-                        'statistics' => $this->get_statistics()
+                        'chartdata' => $this->get_chart_data(),
                     ] // TODO plus stats
                 ];
             } else if ($this->game->is_current_question_state_leaderboard()) {
@@ -167,6 +167,46 @@ class api {
             $answer->score = $totalscore;
         }
         return $this->answers;
+    }
+
+    protected function get_chart_data(): string {
+        $statistics = $this->get_statistics();
+
+        $y = [];
+        $x = [];
+
+        foreach ($statistics as $stat) {
+            $y[] = $stat['count'];
+            $x[] = $stat['text'];
+        }
+
+        $data = [
+            'type' => 'bar',
+            'series' => [
+                [
+                    'label' => 'Antworten',
+                    'labels' => null,
+                    'type' => null,
+                    'values' => $y,
+                    'colors' => [],
+                    'axes' => [
+                        'x' => null,
+                        'y' => null
+                    ],
+                    'smooth' => null
+                ]
+            ],
+            'labels' => $x,
+            'title' => 'Results',
+            'axes' => [
+                'x' => [],
+                'y' => [['min' => 0]],
+            ],
+            'config_colorset' => null,
+            'horizontal' => false,
+        ];
+
+        return json_encode($data);
     }
 
     protected function get_statistics(): array {

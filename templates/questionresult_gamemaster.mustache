@@ -24,13 +24,25 @@
     }
 }}
 
-<ul>
-{{#statistics}}
-  <li>
-    {{text}} {{count}}
-  </li>
-{{/statistics}}
-</ul>
+<div class="chart-area" id="chart-area-{{uniqid}}">
+    <div class="chart-image" role="presentation"></div>
+</div>
+
+{{#js}}
+require([
+    'jquery',
+    'core/chart_builder',
+    'core/chart_output_chartjs',
+], function($, Builder, Output) {
+    var data = {{{chartdata}}},
+        uniqid = "{{uniqid}}",
+        chartArea = $('#chart-area-' + uniqid),
+        chartImage = chartArea.find('.chart-image');
+    Builder.make(data).then(function(ChartInst) {
+        new Output(chartImage, ChartInst);
+    });
+});
+{{/js}}
 
 {{#options}}
 <div class="mod_kahoodle_option{{id}} {{#iscorrect}}mod_kahoodle_option_correct{{/iscorrect}}">

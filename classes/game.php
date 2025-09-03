@@ -205,7 +205,6 @@ class game {
         ];
         if ($withcorrect) {
             $result['correctanswer'] = $questiondata['correctanswer'];
-            
         }
         foreach ($questiondata['answers'] as $i => $answer) {
             $option = [
