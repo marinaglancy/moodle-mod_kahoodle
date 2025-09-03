@@ -33,6 +33,9 @@
 <p>This game has finished!</p>
 <ul>
     {{#players}}
-        <li>{{name}}: {{points}} points</li>
+        <li class="list-unstyled">
+            <i class="fa-solid fa-star" aria-hidden="true"></i>
+            {{name}}: {{points}} points
+        </li>
     {{/players}}
 </ul>
