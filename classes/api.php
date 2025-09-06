@@ -29,7 +29,7 @@ use stdClass;
  */
 class api {
     protected $playerid = null;
-    protected $answers = null;
+    protected $cachedanswers = [];
     protected game $game;
     protected int $bordercolorindex = 0;
 
@@ -93,7 +93,7 @@ class api {
                     'data' => [
                         'data' => $this->game->get_current_question(true),
                         'chartdata' => $this->get_chart_data(),
-                    ] // TODO plus stats
+                    ]
                 ];
             } else if ($this->game->is_current_question_state_leaderboard()) {
                 return [
@@ -129,12 +129,12 @@ class api {
                 return [
                     'template' => 'mod_kahoodle/questionresult_player',
                     'data' => $this->game->get_current_question(true, $optionidx) +
-                    ['points' => $studentanswer?->points],
+                    ['points' => $studentanswer?->points ?: 0],
                 ];
             } else {
                 return [
                     'template' => 'mod_kahoodle/questionleaderboard_player',
-                    'data' => $this->game->get_current_question(true, $studentanswer) +
+                    'data' => $this->game->get_current_question(true, $optionidx) +
                     ['points' => $studentanswer?->points ?: 0, 'score' => $this->get_player_score($playerid)],
                 ];
             }
@@ -151,10 +151,10 @@ class api {
         if ($playerid === null) {
             return [];
         }
-        if ($this->answers != null) {
-            return $this->answers;
+        if ($this->cachedanswers[$playerid] != null) {
+            return $this->cachedanswers[$playerid];
         }
-        $this->answers = $DB->get_records_sql('SELECT a.question_id, a.points, a.answer
+        $this->cachedanswers[$playerid] = $DB->get_records_sql('SELECT a.question_id, a.points, a.answer
             FROM {kahoodle_answers} a
             JOIN {kahoodle_questions} q ON a.question_id = q.id
             WHERE q.kahoodle_id = :kahoodleid AND a.player_id = :playerid
@@ -163,12 +163,12 @@ class api {
                 'playerid' => $playerid,
             ]);
         $totalscore = 0;
-        foreach ($this->answers as $answer) {
+        foreach ($this->cachedanswers[$playerid] as $answer) {
             $answer->answer = json_decode($answer->answer, true);
             $totalscore += (int)$answer->points;
             $answer->score = $totalscore;
         }
-        return $this->answers;
+        return $this->cachedanswers[$playerid];
     }
 
     protected function get_chart_data(): string {
@@ -397,7 +397,7 @@ class api {
             'answer' => json_encode(['option' => $optionidx]),
         ]);
         // Invalidate cached answers.
-        $this->answers = null;
+        unset($this->cachedanswers[$playerid]);
 
         $this->notify_player($playerid);
     }
