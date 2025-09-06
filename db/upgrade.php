@@ -126,7 +126,6 @@ function xmldb_kahoodle_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2025090204, 'kahoodle');
     }
 
-
     if ($oldversion < 2025090206) {
 
         // Define field kahoodle_id to be added to kahoodle_players.
@@ -137,7 +136,6 @@ function xmldb_kahoodle_upgrade($oldversion) {
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
-
 
         // Define key kahoodle_id (foreign) to be added to kahoodle_players.
         $table = new xmldb_table('kahoodle_players');
@@ -154,7 +152,8 @@ function xmldb_kahoodle_upgrade($oldversion) {
 
         // Define field current_question_state to be added to kahoodle.
         $table = new xmldb_table('kahoodle');
-        $field = new xmldb_field('current_question_state', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, 'ASKING', 'current_question_id');
+        $field = new xmldb_field('current_question_state', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, 'ASKING',
+            'current_question_id');
 
         // Conditionally launch add field current_question_state.
         if (!$dbman->field_exists($table, $field)) {

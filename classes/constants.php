@@ -17,21 +17,26 @@
 namespace mod_kahoodle;
 
 /**
- * Class constants
+ * Constants for the kahoodle module
  *
  * @package    mod_kahoodle
  * @copyright  Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class constants {
+    /** @var string game state: game did not start yet, teacher is editing, players are not allowed to join */
     public const STATE_PREPARATION = 'PREPARATION';
+    /** @var string game state: waiting for players to join (aka lobby) */
     public const STATE_WAITING = 'WAITING';
+    /** @var string game state: game is in progress */
     public const STATE_INPROGRESS = 'INPROGRESS';
+    /** @var string game state: game is finished */
     public const STATE_DONE = 'DONE';
 
-
+    /** @var string question state: waiting for answers to the current question */
     public const QSTATE_ASKING = 'ASKING';
+    /** @var string question state: showing results for the current question */
     public const QSTATE_RESULTS = 'RESULTS';
+    /** @var string question state: showing leaderboard for the current question */
     public const QSTATE_LEADERBOARD = 'LEADERBOARD';
-
 }

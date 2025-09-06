@@ -31,5 +31,5 @@ $plugin->requires     = 2024100700;
 $plugin->supported    = [405, 500];
 $plugin->maturity     = MATURITY_STABLE;
 $plugin->dependencies  = [
-    'tool_realtime' => ANY_VERSION
+    'tool_realtime' => ANY_VERSION,
 ];

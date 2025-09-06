@@ -30,7 +30,8 @@ use mod_kahoodle\api;
 class renderer extends \plugin_renderer_base {
     /**
      * Summary of render_game
-     * @param \cm_info $cm
+     *
+     * @param api $api
      * @return string
      */
     public function game(api $api) {

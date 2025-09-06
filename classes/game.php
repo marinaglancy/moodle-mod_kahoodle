@@ -20,72 +20,158 @@ use moodle_url;
 use stdClass;
 
 /**
- * Class game
+ * Stores information about a Kahoodle game instance and provides helper methods
  *
  * @package    mod_kahoodle
  * @copyright  Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class game {
+    /** @var array|null cached questions */
     protected $questions = null;
-    public function __construct(protected \cm_info $cm, protected \stdClass $game) {
+
+    /**
+     * Initialises the game instance
+     *
+     * @param \cm_info $cm
+     * @param \stdClass $game
+     */
+    public function __construct(
+        /** @var \cm_info */
+        protected \cm_info $cm,
+        /** @var \stdClass */
+        protected stdClass $game) {
     }
 
+    /**
+     * Getter for the course module instance
+     *
+     * @return \cm_info
+     */
     public function get_cm(): \cm_info {
         return $this->cm;
     }
 
+    /**
+     * Getter for the game record
+     *
+     * @return \stdClass
+     */
     public function get_game(): \stdClass {
         return $this->game;
     }
 
+    /**
+     * Course module context
+     *
+     * @return \context
+     */
     public function get_context(): \context {
         return \context_module::instance($this->cm->id);
     }
 
+    /**
+     * URL to the game view page
+     *
+     * @return moodle_url
+     */
     public function get_url(): moodle_url {
         return new moodle_url('/mod/kahoodle/view.php', ['id' => $this->cm->id]);
     }
 
+    /**
+     * Is the game in preparation state?
+     *
+     * @return moodle_url
+     */
     public function is_in_preparation(): bool {
         return $this->game->state === constants::STATE_PREPARATION;
     }
 
+    /**
+     * Is the game finished?
+     *
+     * @return moodle_url
+     */
     public function is_done(): bool {
         return $this->game->state === constants::STATE_DONE;
     }
 
+    /**
+     * Is the game in lobby/waiting for players state?
+     *
+     * @return bool
+     */
     public function is_in_lobby(): bool {
         return $this->game->state === constants::STATE_WAITING;
     }
 
+    /**
+     * Is the game in progress state?
+     *
+     * @return bool
+     */
     public function is_in_progress(): bool {
         return $this->game->state === constants::STATE_INPROGRESS;
     }
 
+    /**
+     * Gets the current question id if the game is in progress
+     *
+     * @return int|null question id or null if no question is active
+     */
     public function get_current_question_id(): int|null {
         return $this->game->state === constants::STATE_INPROGRESS && $this->game->current_question_id ?
             $this->game->current_question_id : null;
     }
 
+    /**
+     * Is current question state ASKING (accepting answers)?
+     *
+     * @return bool
+     */
     public function is_current_question_state_asking(): bool {
         return $this->get_current_question_id() > 0 &&
             $this->game->current_question_state === constants::QSTATE_ASKING;
     }
 
+    /**
+     * Is current question state RESULTS (showing results)?
+     *
+     * @return bool
+     */
     public function is_current_question_state_results(): bool {
         return $this->get_current_question_id() > 0 &&
             $this->game->current_question_state === constants::QSTATE_RESULTS;
     }
 
+    /**
+     * Is current question state LEADERBOARD (showing leaderboard)?
+     *
+     * @return bool
+     */
     public function is_current_question_state_leaderboard(): bool {
         return $this->get_current_question_id() > 0 &&
             $this->game->current_question_state === constants::QSTATE_LEADERBOARD;
     }
 
+    /**
+     * Getter for the game id
+     *
+     * @return int
+     */
     public function get_id(): int {
         return $this->game->id;
     }
+
+    /**
+     * Updates the game state and optionally current question id and question state
+     *
+     * @param string $newstate new game state
+     * @param int|null $questionid new current question id or null (when the game status is changed to "PROGRESS")
+     * @param string $qstate new current question state
+     * @return void
+     */
     public function update_game_state(string $newstate, ?int $questionid = null, string $qstate = constants::QSTATE_ASKING) {
         global $DB;
         $DB->update_record('kahoodle', [
@@ -99,6 +185,11 @@ class game {
         $this->game->current_question_state = $qstate;
     }
 
+    /**
+     * Getter for the questions of this game
+     *
+     * @return \stdClass[] question records
+     */
     protected function get_questions() {
         if ($this->questions === null) {
             global $DB;
@@ -108,6 +199,12 @@ class game {
         return $this->questions;
     }
 
+    /**
+     * Gets the next question id after the given question id
+     *
+     * @param int|null $currentquestionid current question id or null to get the first question
+     * @return int|null next question id or null if there is no next question
+     */
     protected function get_next_question_id(?int $currentquestionid): int|null {
         $questionids = array_keys($this->get_questions());
         if ($currentquestionid === null) {
@@ -117,6 +214,11 @@ class game {
         return $currentindex !== false && isset($questionids[$currentindex + 1]) ? $questionids[$currentindex + 1] : null;
     }
 
+    /**
+     * Transitions the game to the next state
+     *
+     * @return bool "easy transition", meaning that the notification is the same for all players (usually when question starts)
+     */
     public function transition_game(): bool {
         global $DB;
         if ($this->game->state == constants::STATE_PREPARATION) {
@@ -146,6 +248,11 @@ class game {
         return false;
     }
 
+    /**
+     * Resets the game to the initial state and populates it with default questions
+     *
+     * @return void
+     */
     public function reset_game() {
         global $DB;
         $this->update_game_state(constants::STATE_PREPARATION, null);
@@ -155,6 +262,7 @@ class game {
         $DB->delete_records('kahoodle_players', ['kahoodle_id' => $this->game->id]);
         $DB->delete_records('kahoodle_questions', ['kahoodle_id' => $this->game->id]);
 
+        // phpcs:disable moodle.Files.LineLength.MaxExceeded, moodle.Files.LineLength.TooLong
         $questions = [
             [
                 'text' => '
@@ -168,7 +276,7 @@ class game {
                         <div class="col-12">
                             <span class="fw-bold display-5">Our team members are …</span>
                         </div>
-                    </div>                
+                    </div>
                 ',
                 'answers' => ['Kathleen, Jan, Vasco, Immanuel, Pascal, Lars, Marina, Monika', 'Peter, Heike, Klaus', 'Sabine, Tom, Anna, Otto, Hannah', 'Donald Duck, Goofy, Micky Mouse'],
                 'correctanswer' => 0, // 0-based.
@@ -186,7 +294,7 @@ class game {
                         <div class="col-12">
                             <span class="fw-bold display-5">What is the price of the MoodleMoot DACH T-Shirt?</span>
                         </div>
-                    </div>    
+                    </div>
                 ',
                 'answers' => ['19€', '25€', '29€', '50€'],
                 'correctanswer' => 0, // 0-based.
@@ -204,7 +312,7 @@ class game {
                         <div class="col-12">
                             <span class="fw-bold display-5">There was a session room called Trave.</span>
                         </div>
-                    </div> 
+                    </div>
                 ',
                 'answers' => ['True', 'False' ],
                 'correctanswer' => 1, // 0-based.
@@ -222,7 +330,7 @@ class game {
                         <div class="col-12">
                             <span class="fw-bold display-5">The MoodleMoot DACH in 2024 took place in Vienna.</span>
                         </div>
-                    </div>   
+                    </div>
                 ',
                 'answers' => ['True', 'False' ],
                 'correctanswer' => 0, // 0-based.
@@ -240,13 +348,14 @@ class game {
                         <div class="col-12">
                             <span class="fw-bold display-5">How many groups are there at the DevCamp?</span>
                         </div>
-                    </div>   
+                    </div>
                 ',
                 'answers' => ['22', '10', '50', '35' ],
                 'correctanswer' => 0, // 0-based.
                 'points' => 100,
             ],
         ];
+        // phpcs:enable
 
         foreach ($questions as $i => $question) {
             $DB->insert_record('kahoodle_questions', [
@@ -256,11 +365,20 @@ class game {
                 'sortorder' => $i,
                 'timecreated' => time(),
                 'timemodified' => time(),
-                'started_at' => 0, // TODO make nullable
+                'started_at' => 0, // TODO make nullable.
             ]);
         }
     }
 
+    /**
+     * Gets the current question with options and optionally includes information about the correct answer
+     *
+     * The result is already prepared to be used in templates.
+     *
+     * @param bool $withcorrect whether to include the correct answer
+     * @param int|null $studentanswer the option index of the student's answer or null if not answered yet
+     * @return array|null question data or null if there is no current question
+     */
     public function get_current_question(bool $withcorrect = false, ?int $studentanswer = null) {
         $question = $this->get_current_raw_question();
 
@@ -295,11 +413,22 @@ class game {
         return $result;
     }
 
+    /**
+     * Gets the current question record
+     *
+     * @return stdClass|null question record or null if there is no current question
+     */
     protected function get_current_raw_question(): ?stdClass {
         return $this->get_current_question_id() ? $this->get_questions()[$this->get_current_question_id()] : null;
     }
 
-    public function calculate_score(int $optionidx) {
+    /**
+     * Calculates the score for the given option index
+     *
+     * @param int $optionidx the option index (0-based)
+     * @return int score (0..points)
+     */
+    public function calculate_score(int $optionidx): int {
         $rawquestion = $this->get_current_raw_question();
         $questiondata = json_decode($rawquestion->question, true);
         if ($optionidx != $questiondata['correctanswer']) {
@@ -308,7 +437,7 @@ class game {
 
         $timetaken = time() - $rawquestion->started_at;
         $penalty = $rawquestion->duration > 0 ?
-            0.5 * min($timetaken, $rawquestion->duration)/$rawquestion->duration : 0;
-        return $questiondata['points'] * (1 - $penalty);
+            0.5 * min($timetaken, $rawquestion->duration) / $rawquestion->duration : 0;
+        return (int)($questiondata['points'] * (1 - $penalty));
     }
 }
