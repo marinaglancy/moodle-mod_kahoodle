@@ -14,7 +14,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * TODO describe module game
+ * Kahoodle game actions
  *
  * @module     mod_kahoodle/game
  * @copyright  Marina Glancy
