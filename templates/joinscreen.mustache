@@ -21,13 +21,15 @@
 
     Example context (json):
     {
+        "url": "/",
+        "sesskey": "abc123"
     }
 }}
 <form action="{{url}}" method="post">
-    <input type="hidden" name="sesskey" value="{{sesskey}}" />
-    <input type="hidden" name="action" value="join" />
+    <input type="hidden" name="sesskey" value="{{sesskey}}">
+    <input type="hidden" name="action" value="join">
     <label>Your name:
-        <input type="text" name="name" placeholder="Enter your name" />
+        <input type="text" name="name" placeholder="Enter your name">
     </label>
     <div>
         <button class="btn btn-primary" type="submit">Join Game</button>

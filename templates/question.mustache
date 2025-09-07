@@ -22,7 +22,7 @@
     Example context (json):
     {
         "title": "Question",
-        "source": "https://",
+        "source": "https://example.com/image.png",
         "answers": [
             {"text": "Answer 1", "id": 1 },
             {"text": "Answer 2", "id": 2 },
@@ -32,7 +32,7 @@
 }}
 
 {{#source}}
-<img src="{{{source}}}" style="max-width:350px">
+<img src="{{source}}" alt="{{title}}" style="max-width:350px">
 {{/source}}
 <h3>{{{title}}}</h3>
 <ul>

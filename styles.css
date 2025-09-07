@@ -1,3 +1,46 @@
-#game {
+:root {
+    --option-color-1: #F98012;
+    --option-color-1-hover: #dc6700;
 
+    --option-color-2: #9ABB50;
+    --option-color-2-hover: #708a38;
+
+    --option-color-3: #69E0FF;
+    --option-color-3-hover: #4ea4bd;
+
+    --option-color-4: #FFE84F;
+    --option-color-4-hover: #cab83f;
+}
+
+.mod_kahoodle_option:nth-of-type(1) {
+    background-color: var(--option-color-1);
+}
+
+.mod_kahoodle_option:nth-child(2) {
+    background-color: var(--option-color-2);
+}
+
+.mod_kahoodle_option:nth-child(3) {
+    background-color: var(--option-color-3);
+}
+
+.mod_kahoodle_option:nth-child(4) {
+    background-color: var(--option-color-4);
+}
+
+/* Hover states */
+.mod_kahoodle_option[data-action="answer"]:nth-child(1):hover:not([disabled]) {
+    background-color: var(--option-color-1-hover);
+}
+
+.mod_kahoodle_option[data-action="answer"]:nth-child(2):hover:not([disabled]) {
+    background-color: var(--option-color-2-hover);
+}
+
+.mod_kahoodle_option[data-action="answer"]:nth-child(3):hover:not([disabled]) {
+    background-color: var(--option-color-3-hover);
+}
+
+[data-action="answer"]:nth-child(4):hover:not([disabled]) {
+    background-color: var(--option-color-4-hover);
 }

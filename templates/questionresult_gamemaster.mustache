@@ -21,6 +21,8 @@
 
     Example context (json):
     {
+        "uniqid": "uniqueid123",
+        "chartdata": "\"\""
     }
 }}
 
@@ -39,7 +41,9 @@ require([
         chartArea = $('#chart-area-' + uniqid),
         chartImage = chartArea.find('.chart-image');
     Builder.make(data).then(function(ChartInst) {
-        new Output(chartImage, ChartInst);
+        return new Output(chartImage, ChartInst);
+    }).catch(function(error) {
+        window.console.error('Error creating chart:', error);
     });
 });
 {{/js}}

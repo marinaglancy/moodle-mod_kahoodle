@@ -21,6 +21,14 @@
 
     Example context (json):
     {
+        "image": "https://raw.githubusercontent.com/moodle/moodle/MOODLE_405_STABLE/mod/feedback/pix/monologo.svg",
+        "question": "What is 2 + 2?",
+        "options": [
+            {"id": 1, "text": "3"},
+            {"id": 2, "text": "4"},
+            {"id": 3, "text": "5"},
+            {"id": 4, "text": "22"}
+        ]
     }
 }}
 <div class="container">
@@ -54,28 +62,3 @@
         </div>
     </div>
 </div>
-
-<style>
-    :root {
-        --option-color-1: #F98012;
-        --option-color-2: #9ABB50;
-        --option-color-3: #69E0FF;
-        --option-color-4: #FFE84F;
-    }
-
-    .mod_kahoodle_option:nth-of-type(1) {
-        background-color: var(--option-color-1);
-    }
-
-    .mod_kahoodle_option:nth-child(2) {
-        background-color: var(--option-color-2);
-    }
-
-    .mod_kahoodle_option:nth-child(3) {
-        background-color: var(--option-color-3);
-    }
-
-    .mod_kahoodle_option:nth-child(4) {
-        background-color: var(--option-color-4);
-    }
-</style>

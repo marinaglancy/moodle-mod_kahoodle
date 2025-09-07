@@ -21,69 +21,28 @@
 
     Example context (json):
     {
+        "isanswered": false,
+        "questionid": 5,
+        "options": [
+            {"id": 1, "text": "3"},
+            {"id": 2, "text": "4"},
+            {"id": 3, "text": "5"},
+            {"id": 4, "text": "22"}
+        ]
     }
 }}
 <div class="container">
     <div class="row mb-3">
         <div class="col-12 options-container">
             {{#options}}
-                <button class="card mb-2 w-100" data-action="answer" data-questionid="{{questionid}}"
+                <button class="mod_kahoodle_option mod_kahoodle_option{{id}} card mb-2 w-100" data-action="answer" data-questionid="{{questionid}}"
                         data-optionid="{{id}}" {{#isanswered}}disabled{{/isanswered}}>
-                    <div class="card-body">
+                    <span class="card-body">
                         {{#isanswer}} X {{/isanswer}}
                         {{{text}}}
-                    </div>
+                    </span>
                 </button>
             {{/options}}
         </div>
     </div>
 </div>
-
-<style>
-    :root {
-        --option-color-1: #F98012;
-        --option-color-1-hover: #dc6700;
-
-        --option-color-2: #9ABB50;
-        --option-color-2-hover: #708a38;
-
-        --option-color-3: #69E0FF;
-        --option-color-3-hover: #4ea4bd;
-
-        --option-color-4: #FFE84F;
-        --option-color-4-hover: #cab83f;
-    }
-
-    .card:nth-child(1) {
-        background-color: var(--option-color-1);
-    }
-
-    [data-action="answer"]:nth-child(2) {
-        background-color: var(--option-color-2);
-    }
-
-    [data-action="answer"]:nth-child(3) {
-        background-color: var(--option-color-3);
-    }
-
-    [data-action="answer"]:nth-child(4n+4) {
-        background-color: var(--option-color-4);
-    }
-
-    /* Hover states */
-    [data-action="answer"]:nth-child(1):hover:not([disabled]) {
-        background-color: var(--option-color-1-hover);
-    }
-
-    [data-action="answer"]:nth-child(2):hover:not([disabled]) {
-        background-color: var(--option-color-2-hover);
-    }
-
-    [data-action="answer"]:nth-child(3):hover:not([disabled]) {
-        background-color: var(--option-color-3-hover);
-    }
-
-    [data-action="answer"]:nth-child(4):hover:not([disabled]) {
-        background-color: var(--option-color-4-hover);
-    }
-</style>
