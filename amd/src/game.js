@@ -55,7 +55,7 @@ export const init = () => {
         if (!contextid && context?.id) {
             contextid = context.id;
         }
-        window.console.log('-details-: '+JSON.stringify({contextid: contextid, component, payload}));
+        window.console.log('-details-: ' + JSON.stringify({contextid: contextid, component, payload}));
         const node = document.querySelector(SELECTORS.MAINDIV);
         if (!payload || component != 'mod_kahoodle' || contextid != node.dataset.contextid) {
             window.console.log('Ignoring event for different context or component');
@@ -65,13 +65,13 @@ export const init = () => {
         const updates = data.payload;
         window.console.log('updates = ' + JSON.stringify(updates));
         // Render updates.
-        if (!updates['template']) {
+        if (!updates.template) {
             window.console.error('Unexpected result - template is missing');
-        } else if (updates['data'] === undefined) {
+        } else if (updates.data === undefined) {
             window.console.error('Unexpected result - data is missing');
         } else {
             // TODO validate template and data.
-            Templates.render(updates['template'], updates['data'])
+            Templates.render(updates.template, updates.data)
             .then(function(html, js) {
                 // Append the link to the most suitable place on the page with fallback to legacy selectors and finally the body if
                 // there is no better place.
@@ -122,16 +122,3 @@ export const doAnswer = (questionid, answer) => {
         answer
     });
 };
-
-
-// export const doJoin = () => {
-//     const node = document.querySelector(SELECTORS.MAINDIV);
-//     RealTimeApi.sendToServer({
-//         contextid: node.dataset.contextid,
-//         component: 'mod_kahoodle',
-//         area: 'game',
-//         itemid: 0
-//     }, {
-//         action: 'join',
-//     });
-// };
