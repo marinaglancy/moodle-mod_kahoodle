@@ -11,13 +11,132 @@
         <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="intro" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="allowrepeat" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Allow users to participate in multiple rounds"/>
+        <FIELD NAME="lobbyduration" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="60" SEQUENCE="false" COMMENT="Default lobby duration in seconds"/>
+        <FIELD NAME="questionpreviewduration" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="5" SEQUENCE="false" COMMENT="Default question preview duration in seconds"/>
+        <FIELD NAME="questionduration" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="30" SEQUENCE="false" COMMENT="Default time to answer question in seconds"/>
+        <FIELD NAME="questionresultsduration" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="10" SEQUENCE="false" COMMENT="Default question results display duration in seconds"/>
+        <FIELD NAME="defaultmaxpoints" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1000" SEQUENCE="false" COMMENT="Default maximum points for correct answer"/>
+        <FIELD NAME="defaultminpoints" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="500" SEQUENCE="false" COMMENT="Default minimum points for correct answer (slowest)"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="course" TYPE="foreign" FIELDS="course" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="kahoodle_questions" COMMENT="Questions for kahoodle activities">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="kahoodleid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="questiontype" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false" COMMENT="Type: multichoice, text, clickmap, etc."/>
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Order/position of question in the activity"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="kahoodleid" TYPE="foreign" FIELDS="kahoodleid" REFTABLE="kahoodle" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="kahoodle_question_versions" COMMENT="Version history for each question">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="questionid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="version" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Version number, increments with each edit"/>
+        <FIELD NAME="questiontext" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="questiontextformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="questionconfig" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON configuration for question-specific settings"/>
+        <FIELD NAME="answersconfig" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON configuration: answer options, correct answers, etc."/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="questionid" TYPE="foreign" FIELDS="questionid" REFTABLE="kahoodle_questions" REFFIELDS="id"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="course" UNIQUE="false" FIELDS="course"/>
+        <INDEX NAME="questionid_version" UNIQUE="true" FIELDS="questionid, version"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="kahoodle_rounds" COMMENT="Individual game rounds for kahoodle activities">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="kahoodleid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Round name/title"/>
+        <FIELD NAME="currentstage" TYPE="char" LENGTH="30" NOTNULL="true" DEFAULT="preparation" SEQUENCE="false" COMMENT="preparation, lobby, questionpreview, question, questionresults, leaders, revision, archived"/>
+        <FIELD NAME="currentquestion" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Current question number being displayed"/>
+        <FIELD NAME="stagestarttime" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Timestamp when current stage started"/>
+        <FIELD NAME="lobbyduration" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="60" SEQUENCE="false" COMMENT="Lobby duration in seconds"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timestarted" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="When round actually started (lobby opened)"/>
+        <FIELD NAME="timecompleted" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="When round was completed"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="kahoodleid" TYPE="foreign" FIELDS="kahoodleid" REFTABLE="kahoodle" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="kahoodle_round_questions" COMMENT="Questions used in a specific round with version snapshot">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="roundid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="questionversionid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Reference to kahoodle_question_versions.id"/>
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Order of question in this round"/>
+        <FIELD NAME="questionpreviewduration" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Override default, NULL means use activity default"/>
+        <FIELD NAME="questionduration" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Override default, NULL means use activity default"/>
+        <FIELD NAME="questionresultsduration" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Override default, NULL means use activity default"/>
+        <FIELD NAME="maxpoints" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Override default, NULL means use activity default"/>
+        <FIELD NAME="minpoints" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Override default, NULL means use activity default"/>
+        <FIELD NAME="totalresponses" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Total number of responses collected. NULL until question is completed and stats are collected"/>
+        <FIELD NAME="answerdistribution" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON with answer distribution (e.g., how many chose each option). NULL until question is completed and stats are collected"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="roundid" TYPE="foreign" FIELDS="roundid" REFTABLE="kahoodle_rounds" REFFIELDS="id"/>
+        <KEY NAME="questionversionid" TYPE="foreign" FIELDS="questionversionid" REFTABLE="kahoodle_question_versions" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="kahoodle_participants" COMMENT="User participation in rounds with custom display name and avatar">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="roundid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="displayname" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="Custom display name for this round"/>
+        <FIELD NAME="avatar" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="Avatar identifier or path"/>
+        <FIELD NAME="totalscore" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Total points earned in this round"/>
+        <FIELD NAME="finalrank" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Final rank in this round"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="When user joined the lobby"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="roundid" TYPE="foreign" FIELDS="roundid" REFTABLE="kahoodle_rounds" REFFIELDS="id"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="roundid_userid" UNIQUE="true" FIELDS="roundid, userid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="kahoodle_responses" COMMENT="User responses to questions in a round">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="participantid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="roundquestionid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Reference to kahoodle_round_questions"/>
+        <FIELD NAME="response" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="User's answer as JSON or text"/>
+        <FIELD NAME="iscorrect" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1 if correct, 0 if incorrect"/>
+        <FIELD NAME="points" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Points earned for this response"/>
+        <FIELD NAME="responsetime" TYPE="number" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" DECIMALS="3" COMMENT="Time taken to answer in seconds"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="When response was submitted"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="participantid" TYPE="foreign" FIELDS="participantid" REFTABLE="kahoodle_participants" REFFIELDS="id"/>
+        <KEY NAME="roundquestionid" TYPE="foreign" FIELDS="roundquestionid" REFTABLE="kahoodle_round_questions" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="participantid_roundquestionid" UNIQUE="true" FIELDS="participantid, roundquestionid"/>
       </INDEXES>
     </TABLE>
   </TABLES>
