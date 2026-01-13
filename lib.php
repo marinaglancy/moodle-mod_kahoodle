@@ -56,20 +56,7 @@ function kahoodle_supports($feature) {
  * @return int new instance id
  */
 function kahoodle_add_instance($moduleinstance, $form = null) {
-    global $DB;
-
-    $moduleinstance->timecreated = time();
-    $moduleinstance->timemodified = time();
-
-    $id = $DB->insert_record('kahoodle', $moduleinstance);
-    $completiontimeexpected = !empty($moduleinstance->completionexpected) ? $moduleinstance->completionexpected : null;
-    \core_completion\api::update_completion_date_event(
-        $moduleinstance->coursemodule,
-        'kahoodle',
-        $id,
-        $completiontimeexpected
-    );
-    return $id;
+    return \mod_kahoodle\api::create_instance($moduleinstance, $moduleinstance->coursemodule);
 }
 
 /**
@@ -83,22 +70,8 @@ function kahoodle_add_instance($moduleinstance, $form = null) {
  * @return bool True if successful, false otherwis
  */
 function kahoodle_update_instance($moduleinstance, $form = null) {
-    global $DB;
-
-    $moduleinstance->timemodified = time();
     $moduleinstance->id = $moduleinstance->instance;
-
-    $DB->update_record('kahoodle', $moduleinstance);
-
-    $completiontimeexpected = !empty($moduleinstance->completionexpected) ? $moduleinstance->completionexpected : null;
-    \core_completion\api::update_completion_date_event(
-        $moduleinstance->coursemodule,
-        'kahoodle',
-        $moduleinstance->id,
-        $completiontimeexpected
-    );
-
-    return true;
+    return \mod_kahoodle\api::update_instance($moduleinstance, $moduleinstance->coursemodule);
 }
 
 /**
@@ -108,23 +81,7 @@ function kahoodle_update_instance($moduleinstance, $form = null) {
  * @return bool True if successful, false otherwise
  */
 function kahoodle_delete_instance($id) {
-    global $DB;
-
-    $record = $DB->get_record('kahoodle', ['id' => $id]);
-    if (!$record) {
-        return false;
-    }
-
-    // Delete all calendar events.
-    $events = $DB->get_records('event', ['modulename' => 'kahoodle', 'instance' => $record->id]);
-    foreach ($events as $event) {
-        calendar_event::load($event)->delete();
-    }
-
-    // Delete the instance.
-    $DB->delete_records('kahoodle', ['id' => $id]);
-
-    return true;
+    return \mod_kahoodle\api::delete_instance($id);
 }
 
 /**

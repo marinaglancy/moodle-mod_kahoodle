@@ -36,7 +36,30 @@ class mod_kahoodle_generator extends testing_module_generator {
      */
     public function create_instance($record = null, ?array $options = null) {
         $record = (object)(array)$record;
-        // TODO add default values for plugin-specific fields here.
+
+        // Set default values for plugin-specific fields if not provided.
+        if (!isset($record->allowrepeat)) {
+            $record->allowrepeat = 0;
+        }
+        if (!isset($record->lobbyduration)) {
+            $record->lobbyduration = 60;
+        }
+        if (!isset($record->questionpreviewduration)) {
+            $record->questionpreviewduration = 5;
+        }
+        if (!isset($record->questionduration)) {
+            $record->questionduration = 30;
+        }
+        if (!isset($record->questionresultsduration)) {
+            $record->questionresultsduration = 10;
+        }
+        if (!isset($record->defaultmaxpoints)) {
+            $record->defaultmaxpoints = 1000;
+        }
+        if (!isset($record->defaultminpoints)) {
+            $record->defaultminpoints = 500;
+        }
+
         $instance  = parent::create_instance($record, (array)$options);
 
         return $instance;

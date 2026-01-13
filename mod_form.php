@@ -47,6 +47,70 @@ class mod_kahoodle_mod_form extends moodleform_mod {
             $this->standard_intro_elements();
         }
 
+        // Kahoodle settings.
+        $mform->addElement('header', 'kahoodlesettings', get_string('kahoodlesettings', 'mod_kahoodle'));
+
+        // Allow repeat participation.
+        $mform->addElement(
+            'advcheckbox',
+            'allowrepeat',
+            get_string('allowrepeat', 'mod_kahoodle'),
+            get_string('allowrepeat_help', 'mod_kahoodle')
+        );
+        $mform->setDefault('allowrepeat', 0);
+
+        // Timing settings.
+        $mform->addElement(
+            'duration',
+            'lobbyduration',
+            get_string('lobbyduration', 'mod_kahoodle'),
+            ['optional' => false]
+        );
+        $mform->setDefault('lobbyduration', 300);
+        $mform->addHelpButton('lobbyduration', 'lobbyduration', 'mod_kahoodle');
+
+        $mform->addElement(
+            'duration',
+            'questionpreviewduration',
+            get_string('questionpreviewduration', 'mod_kahoodle'),
+            ['optional' => false]
+        );
+        $mform->setDefault('questionpreviewduration', 10);
+        $mform->addHelpButton('questionpreviewduration', 'questionpreviewduration', 'mod_kahoodle');
+
+        $mform->addElement(
+            'duration',
+            'questionduration',
+            get_string('questionduration', 'mod_kahoodle'),
+            ['optional' => false]
+        );
+        $mform->setDefault('questionduration', 30);
+        $mform->addHelpButton('questionduration', 'questionduration', 'mod_kahoodle');
+
+        $mform->addElement(
+            'duration',
+            'questionresultsduration',
+            get_string('questionresultsduration', 'mod_kahoodle'),
+            ['optional' => false]
+        );
+        $mform->setDefault('questionresultsduration', 10);
+        $mform->addHelpButton('questionresultsduration', 'questionresultsduration', 'mod_kahoodle');
+
+        // Points settings.
+        $mform->addElement('text', 'defaultmaxpoints', get_string('defaultmaxpoints', 'mod_kahoodle'), ['size' => '10']);
+        $mform->setType('defaultmaxpoints', PARAM_INT);
+        $mform->setDefault('defaultmaxpoints', 1000);
+        $mform->addRule('defaultmaxpoints', null, 'required', null, 'client');
+        $mform->addRule('defaultmaxpoints', null, 'numeric', null, 'client');
+        $mform->addHelpButton('defaultmaxpoints', 'defaultmaxpoints', 'mod_kahoodle');
+
+        $mform->addElement('text', 'defaultminpoints', get_string('defaultminpoints', 'mod_kahoodle'), ['size' => '10']);
+        $mform->setType('defaultminpoints', PARAM_INT);
+        $mform->setDefault('defaultminpoints', 500);
+        $mform->addRule('defaultminpoints', null, 'required', null, 'client');
+        $mform->addRule('defaultminpoints', null, 'numeric', null, 'client');
+        $mform->addHelpButton('defaultminpoints', 'defaultminpoints', 'mod_kahoodle');
+
         // Other standard elements that are displayed in their own fieldsets.
         $this->standard_grading_coursemodule_elements();
         $this->standard_coursemodule_elements();

@@ -22,7 +22,7 @@ Feature: Basic operations with module Kahoodle
     Given the site is running Moodle version 5.0.99 or lower
     And the following "activities" exist:
       | activity | name             | course | intro                   | section |
-      | kahoodle   | Test module name | C1     | Test module description | 1       |
+      | kahoodle | Test module name | C1     | Test module description | 1       |
     When I log in as "teacher1"
     And I am on "Course 1" course homepage with editing mode on
     And I add the "Activities" block
@@ -40,11 +40,11 @@ Feature: Basic operations with module Kahoodle
     Given the site is running Moodle version 5.1 or higher
     And the following "activities" exist:
       | activity | name             | course | intro                   | section |
-      | kahoodle   | Test module name | C1     | Test module description | 1       |
+      | kahoodle | Test module name | C1     | Test module description | 1       |
     When I log in as "teacher1"
     And I am on the "Course 1" "course > activities > kahoodle" page
     Then the following should exist in the "Table listing all Kahoodle activities" table:
-      | Name |
+      | Name             |
       | Test module name |
 
   @javascript
@@ -64,3 +64,85 @@ Feature: Basic operations with module Kahoodle
     And I should see "Test module new name"
     And I should not see "Test module name"
     And I should see "Test module description"
+
+  @javascript
+  Scenario: Creating Kahoodle with custom settings
+    When I log in as "teacher1"
+    And I am on "Course 1" course homepage with editing mode on
+    And I add a "Kahoodle" to section 1 using the activity chooser
+    And I set the following fields to these values:
+      | Name                              | Custom Kahoodle      |
+      | Description                       | Custom settings test |
+      | Allow repeat participation        | 1                    |
+      | lobbyduration[number]             | 2                    |
+      | lobbyduration[timeunit]           | minutes              |
+      | questionpreviewduration[number]   | 10                   |
+      | questionpreviewduration[timeunit] | seconds              |
+      | questionduration[number]          | 45                   |
+      | questionduration[timeunit]        | seconds              |
+      | questionresultsduration[number]   | 15                   |
+      | questionresultsduration[timeunit] | seconds              |
+      | Maximum points                    | 2000                 |
+      | Minimum points                    | 750                  |
+    And I press "Save and return to course"
+    Then I should see "Custom Kahoodle"
+    When I open "Custom Kahoodle" actions menu
+    And I click on "Edit settings" "link" in the "Custom Kahoodle" activity
+    Then the following fields match these values:
+      | Allow repeat participation        | 1       |
+      | lobbyduration[number]             | 2       |
+      | lobbyduration[timeunit]           | minutes |
+      | questionpreviewduration[number]   | 10      |
+      | questionpreviewduration[timeunit] | seconds |
+      | questionduration[number]          | 45      |
+      | questionduration[timeunit]        | seconds |
+      | questionresultsduration[number]   | 15      |
+      | questionresultsduration[timeunit] | seconds |
+      | Maximum points                    | 2000    |
+      | Minimum points                    | 750     |
+
+  @javascript
+  Scenario: Verifying default Kahoodle settings
+    When I log in as "teacher1"
+    And I am on "Course 1" course homepage with editing mode on
+    And I add a "Kahoodle" to section 1 using the activity chooser
+    And I set the following fields to these values:
+      | Name        | Default Settings Test |
+      | Description | Testing defaults      |
+    And I press "Save and display"
+    And I navigate to "Settings" in current page administration
+    Then the following fields match these values:
+      | Allow repeat participation        | 0       |
+      | lobbyduration[number]             | 5       |
+      | lobbyduration[timeunit]           | minutes |
+      | questionpreviewduration[number]   | 10      |
+      | questionpreviewduration[timeunit] | seconds |
+      | questionduration[number]          | 30      |
+      | questionduration[timeunit]        | seconds |
+      | questionresultsduration[number]   | 10      |
+      | questionresultsduration[timeunit] | seconds |
+      | Maximum points                    | 1000    |
+      | Minimum points                    | 500     |
+
+  @javascript
+  Scenario: Deleting Kahoodle module
+    Given the following "activities" exist:
+      | activity | name             | course | intro                   | section |
+      | kahoodle | Test module name | C1     | Test module description | 1       |
+    When I log in as "teacher1"
+    And I am on "Course 1" course homepage with editing mode on
+    And I open "Test module name" actions menu
+    And I click on "Delete" "link" in the "Test module name" activity
+    And I click on "Delete" "button" in the "Delete activity?" "dialogue"
+    Then I should not see "Test module name" in the "region-main" "region"
+
+  @javascript
+  Scenario: Student viewing Kahoodle module
+    Given the following "activities" exist:
+      | activity | name             | course | intro                   | section |
+      | kahoodle | Test module name | C1     | Test module description | 1       |
+    When I log in as "student1"
+    And I am on "Course 1" course homepage
+    And I click on "Test module name" "link" in the "region-main" "region"
+    Then I should see "Test module description"
+    And I should see "Test module name"

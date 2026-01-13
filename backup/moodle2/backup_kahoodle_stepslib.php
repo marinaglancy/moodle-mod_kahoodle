@@ -30,11 +30,23 @@ class backup_kahoodle_activity_structure_step extends backup_activity_structure_
         // To know if we are including userinfo.
         $userinfo = $this->get_setting_value('userinfo');
 
-        // TODO: add all additional fields from the kahoodle table.
+        // Define the structure for the kahoodle table.
         $kahoodle = new backup_nested_element(
             'kahoodle',
             ['id'],
-            ['name', 'intro', 'introformat', 'timemodified']
+            [
+                'name',
+                'intro',
+                'introformat',
+                'allowrepeat',
+                'lobbyduration',
+                'questionpreviewduration',
+                'questionduration',
+                'questionresultsduration',
+                'defaultmaxpoints',
+                'defaultminpoints',
+                'timemodified',
+            ]
         );
 
         // Define sources.

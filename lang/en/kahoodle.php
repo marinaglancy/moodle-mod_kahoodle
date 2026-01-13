@@ -25,9 +25,24 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['allowrepeat'] = 'Allow repeat participation';
+$string['allowrepeat_help'] = 'If enabled, users can participate in multiple rounds of this activity.';
+$string['defaultmaxpoints'] = 'Maximum points';
+$string['defaultmaxpoints_help'] = 'Maximum points awarded for the fastest correct answer.';
+$string['defaultminpoints'] = 'Minimum points';
+$string['defaultminpoints_help'] = 'Minimum points awarded for the slowest correct answer.';
 $string['kahoodle:addinstance'] = 'Add a new Kahoodle';
 $string['kahoodle:view'] = 'View Kahoodle';
+$string['kahoodlesettings'] = 'Kahoodle settings';
+$string['lobbyduration'] = 'Lobby duration';
+$string['lobbyduration_help'] = 'How long participants have to join the lobby before the round starts.';
 $string['modulename'] = 'Kahoodle';
 $string['modulenameplural'] = 'Kahoodles';
 $string['pluginadministration'] = 'Kahoodle administration';
 $string['pluginname'] = 'Kahoodle';
+$string['questionduration'] = 'Question duration';
+$string['questionduration_help'] = 'Time given to participants to answer each question.';
+$string['questionpreviewduration'] = 'Question preview duration';
+$string['questionpreviewduration_help'] = 'Time to preview the question before participants can answer.';
+$string['questionresultsduration'] = 'Question results duration';
+$string['questionresultsduration_help'] = 'Time to display the results after each question.';
