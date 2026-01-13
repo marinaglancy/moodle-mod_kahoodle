@@ -26,7 +26,6 @@ require_once($CFG->dirroot . '/mod/kahoodle/backup/moodle2/backup_kahoodle_steps
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class backup_kahoodle_activity_task extends backup_activity_task {
-
     /**
      * No specific settings for this activity
      */
@@ -52,11 +51,11 @@ class backup_kahoodle_activity_task extends backup_activity_task {
         $base = preg_quote($CFG->wwwroot, "/");
 
         // Link to the list of kahoodles.
-        $search = "/(".$base."\/mod\/kahoodle\/index.php\?id\=)([0-9]+)/";
+        $search = "/(" . $base . "\/mod\/kahoodle\/index.php\?id\=)([0-9]+)/";
         $content = preg_replace($search, '$@KAHOODLEINDEX*$2@$', $content);
 
         // Link to kahoodle view by moduleid.
-        $search = "/(".$base."\/mod\/kahoodle\/view.php\?id\=)([0-9]+)/";
+        $search = "/(" . $base . "\/mod\/kahoodle\/view.php\?id\=)([0-9]+)/";
         $content = preg_replace($search, '$@KAHOODLEVIEWBYID*$2@$', $content);
 
         return $content;

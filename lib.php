@@ -39,7 +39,7 @@ function kahoodle_supports($feature) {
         case FEATURE_BACKUP_MOODLE2:
             return true;
         case FEATURE_MOD_PURPOSE:
-        return MOD_PURPOSE_CONTENT;
+            return MOD_PURPOSE_CONTENT;
         default:
             return null;
     }
@@ -63,8 +63,12 @@ function kahoodle_add_instance($moduleinstance, $form = null) {
 
     $id = $DB->insert_record('kahoodle', $moduleinstance);
     $completiontimeexpected = !empty($moduleinstance->completionexpected) ? $moduleinstance->completionexpected : null;
-    \core_completion\api::update_completion_date_event($moduleinstance->coursemodule,
-        'kahoodle', $id, $completiontimeexpected);
+    \core_completion\api::update_completion_date_event(
+        $moduleinstance->coursemodule,
+        'kahoodle',
+        $id,
+        $completiontimeexpected
+    );
     return $id;
 }
 
@@ -87,8 +91,12 @@ function kahoodle_update_instance($moduleinstance, $form = null) {
     $DB->update_record('kahoodle', $moduleinstance);
 
     $completiontimeexpected = !empty($moduleinstance->completionexpected) ? $moduleinstance->completionexpected : null;
-    \core_completion\api::update_completion_date_event($moduleinstance->coursemodule, 'kahoodle',
-      $moduleinstance->id, $completiontimeexpected);
+    \core_completion\api::update_completion_date_event(
+        $moduleinstance->coursemodule,
+        'kahoodle',
+        $moduleinstance->id,
+        $completiontimeexpected
+    );
 
     return true;
 }

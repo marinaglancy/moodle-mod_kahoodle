@@ -25,7 +25,6 @@ namespace mod_kahoodle;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class lib_test extends \advanced_testcase {
-
     /**
      * Test create and delete module
      *
@@ -72,8 +71,10 @@ final class lib_test extends \advanced_testcase {
 
         // Createa a module.
         $course = $this->getDataGenerator()->create_course();
-        $mod = $this->getDataGenerator()->create_module('kahoodle',
-            ['course' => $course->id, 'name' => 'My test module']);
+        $mod = $this->getDataGenerator()->create_module(
+            'kahoodle',
+            ['course' => $course->id, 'name' => 'My test module']
+        );
         $cm = get_coursemodule_from_instance('kahoodle', $mod->id);
 
         // Call duplicate_module - it will backup and restore this module.

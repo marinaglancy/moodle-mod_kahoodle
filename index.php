@@ -50,8 +50,10 @@ echo $OUTPUT->heading($modulenameplural);
 $instances = get_all_instances_in_course('kahoodle', $course);
 
 if (empty($instances)) {
-    notice(get_string('thereareno', 'moodle', $modulenameplural),
-        new moodle_url('/course/view.php', ['id' => $course->id]));
+    notice(
+        get_string('thereareno', 'moodle', $modulenameplural),
+        new moodle_url('/course/view.php', ['id' => $course->id])
+    );
 }
 
 $table = new html_table();
@@ -63,7 +65,7 @@ $table = new html_table();
 $table->attributes['class'] = 'generaltable mod_index';
 
 if ($usesections) {
-    $strsectionname = get_string('sectionname', 'format_'.$course->format);
+    $strsectionname = get_string('sectionname', 'format_' . $course->format);
     $table->head  = [$strsectionname, get_string('name')];
     $table->align = ['left', 'left'];
 } else {
@@ -76,7 +78,8 @@ foreach ($instances as $instance) {
     $link = html_writer::link(
         new moodle_url('/mod/kahoodle/view.php', ['id' => $instance->coursemodule]),
         format_string($instance->name, true),
-        $attrs);
+        $attrs
+    );
 
     if ($usesections) {
         $table->data[] = [$instance->section, $link];

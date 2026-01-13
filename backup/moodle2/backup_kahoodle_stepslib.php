@@ -22,7 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class backup_kahoodle_activity_structure_step extends backup_activity_structure_step {
-
     /**
      * Backup structure
      */
@@ -32,8 +31,11 @@ class backup_kahoodle_activity_structure_step extends backup_activity_structure_
         $userinfo = $this->get_setting_value('userinfo');
 
         // TODO: add all additional fields from the kahoodle table.
-        $kahoodle = new backup_nested_element('kahoodle', ['id'],
-            ['name', 'intro', 'introformat', 'timemodified']);
+        $kahoodle = new backup_nested_element(
+            'kahoodle',
+            ['id'],
+            ['name', 'intro', 'introformat', 'timemodified']
+        );
 
         // Define sources.
         $kahoodle->set_source_table('kahoodle', ['id' => backup::VAR_ACTIVITYID]);
