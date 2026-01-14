@@ -53,13 +53,13 @@ final class lib_test extends \advanced_testcase {
 
         // Verify default values for plugin-specific fields.
         $record = $DB->get_record('kahoodle', ['id' => $mod->id], '*', MUST_EXIST);
-        $this->assertEquals(0, $record->allowrepeat);
-        $this->assertEquals(60, $record->lobbyduration);
-        $this->assertEquals(5, $record->questionpreviewduration);
-        $this->assertEquals(30, $record->questionduration);
-        $this->assertEquals(10, $record->questionresultsduration);
-        $this->assertEquals(1000, $record->defaultmaxpoints);
-        $this->assertEquals(500, $record->defaultminpoints);
+        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_ALLOW_REPEAT, $record->allowrepeat);
+        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_LOBBY_DURATION, $record->lobbyduration);
+        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_QUESTION_PREVIEW_DURATION, $record->questionpreviewduration);
+        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_QUESTION_DURATION, $record->questionduration);
+        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_QUESTION_RESULTS_DURATION, $record->questionresultsduration);
+        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_MAX_POINTS, $record->defaultmaxpoints);
+        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_MIN_POINTS, $record->defaultminpoints);
 
         // Delete module.
         course_delete_module($cm->id);

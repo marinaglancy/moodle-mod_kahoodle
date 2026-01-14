@@ -32,6 +32,7 @@ $string['defaultmaxpoints_help'] = 'Maximum points awarded for the fastest corre
 $string['defaultminpoints'] = 'Minimum points';
 $string['defaultminpoints_help'] = 'Minimum points awarded for the slowest correct answer.';
 $string['kahoodle:addinstance'] = 'Add a new Kahoodle';
+$string['kahoodle:manage_questions'] = 'Manage questions in Kahoodle';
 $string['kahoodle:view'] = 'View Kahoodle';
 $string['kahoodlesettings'] = 'Kahoodle settings';
 $string['lobbyduration'] = 'Lobby duration';

@@ -39,28 +39,28 @@ class mod_kahoodle_generator extends testing_module_generator {
 
         // Set default values for plugin-specific fields if not provided.
         if (!isset($record->allowrepeat)) {
-            $record->allowrepeat = 0;
+            $record->allowrepeat = \mod_kahoodle\constants::DEFAULT_ALLOW_REPEAT;
         }
         if (!isset($record->lobbyduration)) {
-            $record->lobbyduration = 60;
+            $record->lobbyduration = \mod_kahoodle\constants::DEFAULT_LOBBY_DURATION;
         }
         if (!isset($record->questionpreviewduration)) {
-            $record->questionpreviewduration = 5;
+            $record->questionpreviewduration = \mod_kahoodle\constants::DEFAULT_QUESTION_PREVIEW_DURATION;
         }
         if (!isset($record->questionduration)) {
-            $record->questionduration = 30;
+            $record->questionduration = \mod_kahoodle\constants::DEFAULT_QUESTION_DURATION;
         }
         if (!isset($record->questionresultsduration)) {
-            $record->questionresultsduration = 10;
+            $record->questionresultsduration = \mod_kahoodle\constants::DEFAULT_QUESTION_RESULTS_DURATION;
         }
         if (!isset($record->defaultmaxpoints)) {
-            $record->defaultmaxpoints = 1000;
+            $record->defaultmaxpoints = \mod_kahoodle\constants::DEFAULT_MAX_POINTS;
         }
         if (!isset($record->defaultminpoints)) {
-            $record->defaultminpoints = 500;
+            $record->defaultminpoints = \mod_kahoodle\constants::DEFAULT_MIN_POINTS;
         }
 
-        $instance  = parent::create_instance($record, (array)$options);
+        $instance = parent::create_instance($record, (array)$options);
 
         return $instance;
     }
