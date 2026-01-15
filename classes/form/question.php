@@ -21,6 +21,7 @@ use context_module;
 use core_form\dynamic_form;
 use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
+use mod_kahoodle\local\entities\round_question;
 use moodle_url;
 
 /**
@@ -37,7 +38,7 @@ class question extends dynamic_form {
     /**
      * Get round question data for add or edit mode
      *
-     * @return array [roundquestion, round, kahoodle, cm] - roundquestion is null for add mode
+     * @return array [roundquestion, round] - roundquestion is null for add mode
      */
     protected function get_round_question_data(): array {
         global $DB;
@@ -48,19 +49,18 @@ class question extends dynamic_form {
 
         $roundquestionid = $this->optional_param('roundquestionid', 0, PARAM_INT);
         $roundid = $this->optional_param('roundid', 0, PARAM_INT);
-        $roundquestion = null;
 
         if ($roundquestionid) {
             // Edit mode - load existing round question.
-            $roundquestion = $DB->get_record('kahoodle_round_questions', ['id' => $roundquestionid], '*', MUST_EXIST);
-            $roundid = $roundquestion->roundid;
+            $roundquestion = round_question::create_from_round_question_id($roundquestionid);
+            $round = $roundquestion->get_round();
+        } else {
+            // Add mode - load round by ID.
+            $round = round::create_from_id($roundid);
+            $roundquestion = null;
         }
 
-        $round = round::create_from_id($roundid);
-        $kahoodle = $DB->get_record('kahoodle', ['id' => $round->get_kahoodleid()], '*', MUST_EXIST);
-        $cm = get_coursemodule_from_instance('kahoodle', $kahoodle->id, 0, false, MUST_EXIST);
-
-        $this->roundquestiondata = [$roundquestion, $round, $kahoodle, $cm];
+        $this->roundquestiondata = [$roundquestion, $round];
         return $this->roundquestiondata;
     }
 
@@ -70,10 +70,10 @@ class question extends dynamic_form {
     protected function definition() {
         $mform = $this->_form;
 
-        [$roundquestion, $round, $kahoodle, $cm] = $this->get_round_question_data();
+        [$roundquestion, $round] = $this->get_round_question_data();
 
         // Hidden fields.
-        $mform->addElement('hidden', 'roundquestionid', $roundquestion ? $roundquestion->id : 0);
+        $mform->addElement('hidden', 'roundquestionid', $roundquestion ? $roundquestion->get_id() : 0);
         $mform->setType('roundquestionid', PARAM_INT);
 
         $mform->addElement('hidden', 'roundid', $round->get_id());
@@ -92,7 +92,7 @@ class question extends dynamic_form {
         $mform->addElement('editor', 'questiontext_editor', get_string('questiontext', 'mod_kahoodle'), null, [
             'maxfiles' => EDITOR_UNLIMITED_FILES,
             'noclean' => true,
-            'context' => context_module::instance($cm->id),
+            'context' => $round->get_context(),
         ]);
         $mform->setType('questiontext_editor', PARAM_RAW);
         $mform->addRule('questiontext_editor', get_string('required'), 'required', null, 'client');
@@ -134,8 +134,8 @@ class question extends dynamic_form {
      * @return context
      */
     protected function get_context_for_dynamic_submission(): context {
-        [, , , $cm] = $this->get_round_question_data();
-        return context_module::instance($cm->id);
+        [, $round] = $this->get_round_question_data();
+        return $round->get_context();
     }
 
     /**
@@ -176,12 +176,14 @@ class question extends dynamic_form {
             $questiondata->questiontype = $data->questiontype;
             $questionid = \mod_kahoodle\questions::add_question($questiondata);
             return ['questionid' => $questionid, 'action' => 'add'];
-        } else {
-            // Edit mode - get the question ID from the round question.
-            $version = $DB->get_record('kahoodle_question_versions', ['id' => $roundquestion->questionversionid], '*', MUST_EXIST);
-            $questiondata->id = $version->questionid;
+        } else if ($round->is_editable()) {
+            // Edit mode.
+            $questiondata->id = $roundquestion->get_data()->questionid;
             \mod_kahoodle\questions::edit_question($questiondata);
-            return ['questionid' => $version->questionid, 'action' => 'edit'];
+            return ['questionid' => $roundquestion->get_data()->questionid, 'action' => 'edit'];
+        } else {
+            // TODO editing questions in non-editable rounds is not supported yet.
+            return [];
         }
     }
 
@@ -194,13 +196,13 @@ class question extends dynamic_form {
         [$roundquestion, $round] = $this->get_round_question_data();
 
         $data = [
-            'roundquestionid' => $roundquestion ? $roundquestion->id : 0,
+            'roundquestionid' => $roundquestion ? $roundquestion->get_id() : 0,
             'roundid' => $round->get_id(),
         ];
 
         if ($roundquestion) {
             // Edit mode - load existing data.
-            $version = $DB->get_record('kahoodle_question_versions', ['id' => $roundquestion->questionversionid], '*', MUST_EXIST);
+            $version = $roundquestion->get_data();
 
             $data['questiontext_editor'] = [
                 'text' => $version->questiontext,
@@ -223,7 +225,9 @@ class question extends dynamic_form {
      * @return moodle_url
      */
     protected function get_page_url_for_dynamic_submission(): moodle_url {
-        [, , , $cm] = $this->get_round_question_data();
-        return new moodle_url('/mod/kahoodle/questions.php', ['id' => $cm->id]);
+        [$roundquestion, $round] = $this->get_round_question_data();
+        return new moodle_url('/mod/kahoodle/questions.php', [
+            'roundid' => $round->get_id(),
+            'roundquestionid' => $roundquestion ? $roundquestion->get_id() : 0]);
     }
 }

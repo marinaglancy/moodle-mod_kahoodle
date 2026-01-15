@@ -216,6 +216,8 @@ class questions {
         // Get the question record.
         $question = $DB->get_record('kahoodle_questions', ['id' => $questionid], '*', MUST_EXIST);
 
+        // TODO use round_question entity here?
+
         // Get editable round ID.
         $editableroundid = self::get_editable_round_id($question->kahoodleid);
         if ($editableroundid === null) {

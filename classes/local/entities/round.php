@@ -89,4 +89,46 @@ class round {
     public function is_editable(): bool {
         return $this->data->currentstage === constants::STAGE_PREPARATION;
     }
+
+    /** @var stdClass|null Cached Kahoodle activity record */
+    private ?stdClass $kahoodle = null;
+
+    /**
+     * Get the Kahoodle activity record
+     *
+     * @return stdClass
+     */
+    public function get_kahoodle(): stdClass {
+        global $DB;
+        if ($this->kahoodle !== null) {
+            return $this->kahoodle;
+        }
+        $this->kahoodle = $DB->get_record('kahoodle', ['id' => $this->data->kahoodleid], '*', MUST_EXIST);
+        return $this->kahoodle;
+    }
+
+    /** @var stdClass|null Cached course module record */
+    private ?stdClass $cm = null;
+
+    /**
+     * Get the course module record
+     *
+     * @return stdClass
+     */
+    public function get_cm(): stdClass {
+        if ($this->cm !== null) {
+            return $this->cm;
+        }
+        $this->cm = get_coursemodule_from_instance('kahoodle', $this->data->kahoodleid, 0, false, MUST_EXIST);
+        return $this->cm;
+    }
+
+    /**
+     * Get the context module instance
+     *
+     * @return \context_module
+     */
+    public function get_context(): \context_module {
+        return \context_module::instance($this->get_cm()->id);
+    }
 }
