@@ -49,3 +49,4 @@ $string['questionpreviewduration'] = 'Question preview duration';
 $string['questionpreviewduration_help'] = 'Time to preview the question before participants can answer.';
 $string['questionresultsduration'] = 'Question results duration';
 $string['questionresultsduration_help'] = 'Time to display the results after each question.';
+$string['questions'] = 'Questions';

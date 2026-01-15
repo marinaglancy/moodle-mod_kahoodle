@@ -85,6 +85,28 @@ function kahoodle_delete_instance($id) {
 }
 
 /**
+ * Extend the settings navigation with the Kahoodle module items
+ *
+ * @param settings_navigation $settingsnav The settings navigation object
+ * @param navigation_node $node The navigation node to extend
+ */
+function kahoodle_extend_settings_navigation(settings_navigation $settingsnav, navigation_node $node) {
+    global $PAGE;
+
+    if (has_capability('mod/kahoodle:manage_questions', $PAGE->cm->context)) {
+        $url = new moodle_url('/mod/kahoodle/questions.php', ['id' => $PAGE->cm->id]);
+        $node->add(
+            get_string('questions', 'mod_kahoodle'),
+            $url,
+            navigation_node::TYPE_SETTING,
+            null,
+            'kahoodle_questions',
+            new pix_icon('i/questions', '')
+        );
+    }
+}
+
+/**
  * Check if the module has any update that affects the current user since a given time.
  *
  * @param  cm_info $cm course module data

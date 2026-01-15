@@ -28,7 +28,6 @@ use mod_kahoodle\constants;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class add_questions_test extends \advanced_testcase {
-
     /**
      * Test adding a single question via web service
      *
@@ -298,8 +297,12 @@ final class add_questions_test extends \advanced_testcase {
 
         // Verify behavior data.
         $round = $DB->get_record('kahoodle_rounds', ['kahoodleid' => $kahoodle->id], '*', MUST_EXIST);
-        $roundquestion = $DB->get_record('kahoodle_round_questions',
-            ['roundid' => $round->id, 'questionversionid' => $version->id], '*', MUST_EXIST);
+        $roundquestion = $DB->get_record(
+            'kahoodle_round_questions',
+            ['roundid' => $round->id, 'questionversionid' => $version->id],
+            '*',
+            MUST_EXIST
+        );
 
         $this->assertEquals(15, $roundquestion->questionpreviewduration);
         $this->assertEquals(45, $roundquestion->questionduration);
