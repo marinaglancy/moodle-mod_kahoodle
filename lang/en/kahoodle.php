@@ -25,12 +25,15 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['addquestion'] = 'Add question';
 $string['allowrepeat'] = 'Allow repeat participation';
 $string['allowrepeat_help'] = 'If enabled, users can participate in multiple rounds of this activity.';
+$string['answersconfig'] = 'Answers configuration';
 $string['defaultmaxpoints'] = 'Maximum points';
 $string['defaultmaxpoints_help'] = 'Maximum points awarded for the fastest correct answer.';
 $string['defaultminpoints'] = 'Minimum points';
 $string['defaultminpoints_help'] = 'Minimum points awarded for the slowest correct answer.';
+$string['editquestion'] = 'Edit question';
 $string['kahoodle:addinstance'] = 'Add a new Kahoodle';
 $string['kahoodle:manage_questions'] = 'Manage questions in Kahoodle';
 $string['kahoodle:view'] = 'View Kahoodle';
@@ -42,6 +45,8 @@ $string['modulenameplural'] = 'Kahoodles';
 $string['noeditableround'] = 'No editable round available. The last round has already been started.';
 $string['pluginadministration'] = 'Kahoodle administration';
 $string['pluginname'] = 'Kahoodle';
+$string['question'] = 'Question';
+$string['questionbehavior'] = 'Question behavior';
 $string['questionduration'] = 'Question duration';
 $string['questionduration_help'] = 'Time given to participants to answer each question.';
 $string['questionnotfound'] = 'Question not found in editable round';
@@ -50,3 +55,8 @@ $string['questionpreviewduration_help'] = 'Time to preview the question before p
 $string['questionresultsduration'] = 'Question results duration';
 $string['questionresultsduration_help'] = 'Time to display the results after each question.';
 $string['questions'] = 'Questions';
+$string['questiontext'] = 'Question text';
+$string['questiontype'] = 'Question type';
+$string['questiontype_multichoice'] = 'Multiple choice';
+$string['sortorder'] = 'Order';
+$string['version'] = 'Version';

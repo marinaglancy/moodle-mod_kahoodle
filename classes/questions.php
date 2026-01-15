@@ -16,6 +16,8 @@
 
 namespace mod_kahoodle;
 
+use mod_kahoodle\local\entities\round;
+
 /**
  * Class questions
  *
@@ -24,6 +26,46 @@ namespace mod_kahoodle;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class questions {
+    /**
+     * Get the last round for a Kahoodle activity
+     *
+     * Returns the most recent round, creating one if none exist.
+     *
+     * @param int $kahoodleid The Kahoodle activity ID
+     * @return round Round entity
+     */
+    public static function get_last_round(int $kahoodleid): round {
+        global $DB;
+
+        // Get all rounds for this kahoodle, ordered by creation time (newest first).
+        $rounds = $DB->get_records('kahoodle_rounds', ['kahoodleid' => $kahoodleid], 'timecreated DESC', '*', 0, 1);
+
+        if (empty($rounds)) {
+            // No rounds yet, create one.
+            $record = new \stdClass();
+            $record->kahoodleid = $kahoodleid;
+            $record->name = 'Round 1';
+            $record->currentstage = constants::STAGE_PREPARATION;
+            $record->currentquestion = null;
+            $record->stagestarttime = null;
+
+            // Get default lobby duration from kahoodle instance.
+            $kahoodle = $DB->get_record('kahoodle', ['id' => $kahoodleid], 'lobbyduration', MUST_EXIST);
+            $record->lobbyduration = $kahoodle->lobbyduration;
+
+            $record->timecreated = time();
+            $record->timestarted = null;
+            $record->timecompleted = null;
+            $record->timemodified = time();
+
+            $record->id = $DB->insert_record('kahoodle_rounds', $record);
+            return round::create_from_object($record);
+        }
+
+        // Get the last (most recent) round.
+        return round::create_from_object(reset($rounds));
+    }
+
     /**
      * Get the ID of the editable round for a Kahoodle activity
      *
@@ -34,39 +76,11 @@ class questions {
      * @return int|null Round ID if editable round exists/created, null if last round is started
      */
     public static function get_editable_round_id(int $kahoodleid): ?int {
-        global $DB;
+        $lastround = self::get_last_round($kahoodleid);
 
-        // Get all rounds for this kahoodle, ordered by creation time (newest first).
-        $rounds = $DB->get_records('kahoodle_rounds', ['kahoodleid' => $kahoodleid], 'timecreated DESC', '*', 0, 1);
-
-        if (empty($rounds)) {
-            // No rounds yet, create one.
-            $round = new \stdClass();
-            $round->kahoodleid = $kahoodleid;
-            $round->name = 'Round 1';
-            $round->currentstage = constants::STAGE_PREPARATION;
-            $round->currentquestion = null;
-            $round->stagestarttime = null;
-
-            // Get default lobby duration from kahoodle instance.
-            $kahoodle = $DB->get_record('kahoodle', ['id' => $kahoodleid], 'lobbyduration', MUST_EXIST);
-            $round->lobbyduration = $kahoodle->lobbyduration;
-
-            $round->timecreated = time();
-            $round->timestarted = null;
-            $round->timecompleted = null;
-            $round->timemodified = time();
-
-            $round->id = $DB->insert_record('kahoodle_rounds', $round);
-            return $round->id;
-        }
-
-        // Get the last (most recent) round.
-        $lastround = reset($rounds);
-
-        // Return the round ID only if it has not been started yet.
-        if ($lastround->currentstage === constants::STAGE_PREPARATION && empty($lastround->timestarted)) {
-            return $lastround->id;
+        // Return the round ID only if it is editable.
+        if ($lastround->is_editable()) {
+            return $lastround->get_id();
         }
 
         // Last round has been started, return null.

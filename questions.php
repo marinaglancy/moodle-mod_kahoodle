@@ -43,8 +43,36 @@ $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($context);
 $PAGE->activityheader->disable();
 
+$round = \mod_kahoodle\questions::get_last_round($moduleinstance->id);
+
+$PAGE->requires->js_call_amd('mod_kahoodle/questions', 'initAddQuestion', [$round->get_id()]);
+
 echo $OUTPUT->header();
 
-// TODO: Question management interface will be implemented here.
+echo html_writer::start_div('', ['data-region' => 'mod_kahoodle-questions']);
+
+// Add question button.
+echo html_writer::div(
+    $OUTPUT->single_button(
+        new moodle_url('#'),
+        get_string('addquestion', 'mod_kahoodle'),
+        'get',
+        ['class' => 'mb-3', 'attributes' => ['data-action' => 'mod_kahoodle-add-question']]
+    ),
+    'mb-3'
+);
+
+$report = \core_reportbuilder\system_report_factory::create(
+    \mod_kahoodle\reportbuilder\local\systemreports\questions::class,
+    $context,
+    'mod_kahoodle',
+    '',
+    0,
+    ['roundid' => $round->get_id()]
+);
+
+echo $report->output();
+
+echo html_writer::end_div();
 
 echo $OUTPUT->footer();

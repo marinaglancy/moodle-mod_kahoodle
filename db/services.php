@@ -42,6 +42,13 @@ $functions = [
         'type' => 'write',
         'capabilities' => 'mod/kahoodle:manage_questions',
     ],
+
+    'mod_kahoodle_delete_question' => [
+        'classname' => mod_kahoodle\external\delete_question::class,
+        'description' => 'Delete Kahoodle question',
+        'type' => 'write',
+        'ajax' => true,
+    ],
 ];
 
 $services = [
