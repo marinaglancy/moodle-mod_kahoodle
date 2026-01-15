@@ -24,7 +24,7 @@ namespace mod_kahoodle;
  * @copyright  Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class lib_test extends \advanced_testcase {
+final class api_test extends \advanced_testcase {
     /**
      * Test create and delete module
      *

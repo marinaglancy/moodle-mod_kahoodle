@@ -44,4 +44,35 @@ class constants {
 
     /** @var int Default minimum points for slowest correct answer */
     public const DEFAULT_MIN_POINTS = 500;
+
+    /** @var string Question type: multiple choice */
+    public const QUESTION_TYPE_MULTICHOICE = 'multichoice';
+
+    /** @var string File area for question images */
+    public const FILEAREA_QUESTION_IMAGE = 'questionimage';
+
+    // Round stages.
+    /** @var string Round stage: preparation (before round starts) */
+    public const STAGE_PREPARATION = 'preparation';
+
+    /** @var string Round stage: lobby (participants joining) */
+    public const STAGE_LOBBY = 'lobby';
+
+    /** @var string Round stage: question preview */
+    public const STAGE_QUESTION_PREVIEW = 'questionpreview';
+
+    /** @var string Round stage: question (participants answering) */
+    public const STAGE_QUESTION = 'question';
+
+    /** @var string Round stage: question results display */
+    public const STAGE_QUESTION_RESULTS = 'questionresults';
+
+    /** @var string Round stage: leaders (leaderboard display) */
+    public const STAGE_LEADERS = 'leaders';
+
+    /** @var string Round stage: revision (review after round) */
+    public const STAGE_REVISION = 'revision';
+
+    /** @var string Round stage: archived (round completed and archived) */
+    public const STAGE_ARCHIVED = 'archived';
 }

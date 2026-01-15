@@ -26,11 +26,15 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │       ├── restore_kahoodle_activity_task.class.php
 │       └── restore_kahoodle_stepslib.php
 ├── classes/
+│   ├── constants.php         # Plugin constants (defaults, question types, stages, file areas)
+│   ├── questions.php         # Question management API
 │   ├── courseformat/         # Course format integration
 │   │   └── overview.php
-│   └── event/                # Event observers and definitions
-│       ├── course_module_viewed.php
-│       └── course_module_instance_list_viewed.php
+│   ├── event/                # Event observers and definitions
+│   │   ├── course_module_viewed.php
+│   │   └── course_module_instance_list_viewed.php
+│   └── external/             # Web service definitions
+│       └── add_questions.php # Batch question creation web service
 ├── db/
 │   ├── access.php            # Capability definitions
 │   └── install.xml           # Database schema
@@ -41,9 +45,12 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   └── monologo.svg          # Module icon
 ├── tests/
 │   ├── behat/                # Behat acceptance tests
+│   ├── external/             # Web service tests
+│   │   └── add_questions_test.php
 │   ├── generator/            # Test data generators
 │   │   └── lib.php
-│   └── lib_test.php          # PHPUnit tests
+│   ├── lib_test.php          # PHPUnit tests for lib.php
+│   └── questions_test.php    # PHPUnit tests for questions API
 ├── index.php                 # List all instances in a course
 ├── lib.php                   # Core module functions
 ├── mod_form.php              # Activity settings form
@@ -52,6 +59,15 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 ```
 
 ## Core Functionality
+
+### Constants
+
+All plugin constants are defined in `classes/constants.php`:
+
+- **Default Values**: Activity defaults (lobby duration, question timing, points)
+- **Question Types**: `QUESTION_TYPE_MULTICHOICE` (currently only type implemented)
+- **Round Stages**: `STAGE_PREPARATION`, `STAGE_LOBBY`, `STAGE_QUESTION_PREVIEW`, `STAGE_QUESTION`, `STAGE_QUESTION_RESULTS`, `STAGE_LEADERS`, `STAGE_REVISION`, `STAGE_ARCHIVED`
+- **File Areas**: `FILEAREA_QUESTION_IMAGE` for question images
 
 ### Activity Model
 
@@ -62,6 +78,73 @@ Each Kahoodle activity instance consists of:
 3. **Questions**: A list of questions, each with a type
    - **Multiple Choice** (most common): 2-8 answer options
    - Other question types (to be defined)
+
+### Questions API
+
+The `\mod_kahoodle\questions` class provides the core question management functionality:
+
+#### Available Methods
+
+1. **`get_editable_round_id(int $kahoodleid): ?int`**
+   - Returns the ID of the editable round (preparation stage, not yet started)
+   - Creates a new round if none exists
+   - Returns null if the last round has already been started
+
+2. **`add_question(\stdClass $questiondata): int`**
+   - Adds a new question to the editable round
+   - Creates question record, first version, and links to round
+   - Supports file uploads via `imagedraftitemid` parameter
+   - Throws exception if no editable round exists
+
+3. **`edit_question(\stdClass $questiondata): void`**
+   - Updates question content and/or behavior data
+   - Creates new version if current version is used in started rounds
+   - Otherwise updates existing version in-place
+   - Throws exception if no editable round exists
+
+4. **`delete_question(int $questionid): void`**
+   - Removes question from editable round
+   - Preserves version if used in started rounds
+   - Deletes version and question if not used elsewhere
+   - Throws exception if no editable round exists
+
+#### Versioning Logic
+
+- **Editable Round**: Questions in preparation-stage rounds (not yet started) can be freely edited
+- **Started Rounds**: Once a round starts, its questions are "locked" at their current version
+- **Smart Versioning**: When editing a question that's used in started rounds, a new version is created automatically
+- **Historical Accuracy**: Past rounds always reference the exact version that was shown during gameplay
+
+### Web Services
+
+#### mod_kahoodle_add_questions
+
+Batch question creation web service defined in `classes/external/add_questions.php`.
+
+**Parameters:**
+- Array of questions, each containing:
+  - `kahoodleid` (required): Activity instance ID
+  - `questiontext` (required): Question text
+  - `questiontype` (optional): Defaults to multichoice
+  - `questiontextformat` (optional): Defaults to FORMAT_HTML
+  - `questionconfig` (optional): JSON for question-specific settings
+  - `answersconfig` (optional): JSON for answers
+  - `questionpreviewduration` (optional): Preview duration override
+  - `questionduration` (optional): Question duration override
+  - `questionresultsduration` (optional): Results duration override
+  - `maxpoints` (optional): Maximum points override
+  - `minpoints` (optional): Minimum points override
+  - `imagedraftitemid` (optional): Draft file area ID for images
+
+**Returns:**
+- `questionids`: Array of created question IDs with their input array indices
+- `warnings`: Array of errors for questions that failed to create
+
+**Features:**
+- Batch processing with individual error handling
+- Validates context and permissions for each question
+- Supports file uploads for question images
+- Returns partial success (some questions may succeed while others fail)
 
 ### Round-Based Gameplay
 
@@ -276,6 +359,24 @@ After **every database schema change**, you must bump the version number in `ver
 
 **Early Development Note:** During early development (when nobody is using the plugin yet), upgrade scripts in `db/upgrade.php` can be omitted. Once the plugin is in use, all database changes MUST include proper upgrade scripts.
 
+### Git Workflow
+
+**IMPORTANT**: This plugin has its own git repository separate from the Moodle repository.
+
+When committing changes:
+1. Change directory to the plugin folder first: `cd mod/kahoodle` (or `cd public/mod/kahoodle` for Moodle 5.1+)
+2. Run git commands from within the plugin directory
+3. This prevents accidentally committing to the Moodle repository
+
+**Example:**
+```bash
+cd mod/kahoodle
+git status
+git add .
+git commit -m "Add question management API"
+git push
+```
+
 ### Standard Workflow
 
 1. **Testing Across Versions**: Test on Moodle 4.5, 5.0, 5.1, and 5.2 (when released)
@@ -303,6 +404,63 @@ After **every database schema change**, you must bump the version number in `ver
 
 This plugin follows Moodle's GNU GPL v3 or later license.
 
+## Testing
+
+### PHPUnit Tests
+
+The plugin includes comprehensive PHPUnit test coverage:
+
+#### Questions API Tests (`tests/questions_test.php`)
+- 13 tests covering all question management methods
+- Tests for round creation, question CRUD operations, versioning logic
+- Edge cases: no editable rounds, permission checks, sort order
+- All tests passing with 47 assertions
+
+#### Web Service Tests (`tests/external/add_questions_test.php`)
+- 8 tests for batch question creation web service
+- Tests for single/multiple questions, permissions, error handling
+- Mixed success scenarios, parameter validation
+- All tests passing with 43 assertions
+
+### Test Data Generator
+
+The `mod_kahoodle_generator` (in `tests/generator/lib.php`) provides:
+- `create_instance($record)`: Create kahoodle activity instances
+- `create_question($record)`: Create questions with all parameters
+
+### Running Tests
+
+```bash
+# Run all kahoodle tests
+vendor/bin/phpunit mod/kahoodle/tests/
+
+# Run specific test file
+vendor/bin/phpunit mod/kahoodle/tests/questions_test.php
+vendor/bin/phpunit mod/kahoodle/tests/external/add_questions_test.php
+
+# Run with filter
+vendor/bin/phpunit --filter questions_test
+```
+
 ## Current Status
 
-In active development. The basic plugin structure is in place with standard Moodle activity files. Core gameplay mechanics, database schema, and real-time functionality are to be implemented.
+**Implemented:**
+- Database schema with versioning system
+- Question management API with smart versioning
+- Batch question creation web service
+- Comprehensive test coverage
+- Constants for defaults, types, stages, file areas
+- Test data generators
+
+**In Progress:**
+- User interface for question management
+- Round gameplay mechanics
+- Real-time functionality (WebSocket/polling)
+- Participant and response tracking
+
+**To Do:**
+- Frontend UI components
+- Scoreboard and leaderboard displays
+- Mobile-responsive participant view
+- Additional question types
+- Behat acceptance tests

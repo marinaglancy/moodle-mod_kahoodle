@@ -35,6 +35,13 @@ $functions = [
         'type' => 'write',
         'capabilities' => 'mod/kahoodle:addinstance',
     ],
+
+    'mod_kahoodle_add_questions' => [
+        'classname' => mod_kahoodle\external\add_questions::class,
+        'description' => 'Add questions to an instance of Kahoodle',
+        'type' => 'write',
+        'capabilities' => 'mod/kahoodle:manage_questions',
+    ],
 ];
 
 $services = [

@@ -64,4 +64,48 @@ class mod_kahoodle_generator extends testing_module_generator {
 
         return $instance;
     }
+
+    /**
+     * Creates a question for a Kahoodle instance for testing purposes.
+     *
+     * @param array|stdClass $record data for question being generated. Requires 'kahoodleid' key.
+     *     Optional fields:
+     *     - questiontype: Type of question (default: 'multichoice')
+     *     - questiontext: Question text (default: 'Sample question')
+     *     - questiontextformat: Text format (default: FORMAT_HTML)
+     *     - questionconfig: JSON config (default: null)
+     *     - answersconfig: JSON config for answers (default: null)
+     *     - questionpreviewduration: Preview duration override (default: null)
+     *     - questionduration: Question duration override (default: null)
+     *     - questionresultsduration: Results duration override (default: null)
+     *     - maxpoints: Maximum points override (default: null)
+     *     - minpoints: Minimum points override (default: null)
+     * @return stdClass question record with id field
+     */
+    public function create_question($record) {
+        global $DB;
+
+        $record = (object)(array)$record;
+
+        if (!isset($record->kahoodleid)) {
+            throw new coding_exception('kahoodleid must be specified when creating a question');
+        }
+
+        // Set default values for required fields if not provided.
+        if (!isset($record->questiontype)) {
+            $record->questiontype = \mod_kahoodle\constants::QUESTION_TYPE_MULTICHOICE;
+        }
+        if (!isset($record->questiontext)) {
+            $record->questiontext = 'Sample question ' . rand(1, 1000);
+        }
+        if (!isset($record->questiontextformat)) {
+            $record->questiontextformat = FORMAT_HTML;
+        }
+
+        // Use the questions API to add the question.
+        $questionid = \mod_kahoodle\questions::add_question($record);
+
+        // Return the question record.
+        return $DB->get_record('kahoodle_questions', ['id' => $questionid], '*', MUST_EXIST);
+    }
 }

@@ -51,4 +51,14 @@ $capabilities = [
         ],
         'clonepermissionsfrom' => 'moodle/course:manageactivities',
     ],
+
+    'mod/kahoodle:manage_questions' => [
+        'captype' => 'write',
+        'riskbitmask' => RISK_SPAM | RISK_DATALOSS,
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+    ],
 ];
