@@ -75,4 +75,23 @@ class constants {
 
     /** @var string Round stage: archived (round completed and archived) */
     public const STAGE_ARCHIVED = 'archived';
+
+    /** @var array Fields in the table kahoodle_question_versions, except for primary/foreign keys, version, time stamps */
+    public const FIELDS_QUESTION_VERSION = [
+        'questiontext',
+        'questiontextformat',
+        'questionconfig',
+        'answersconfig',
+    ];
+
+    /** @var array Fields in the table kahoodle_round_questions, except for primary/foreign keys, sortorder, time stamps */
+    public const FIELDS_ROUND_QUESTION = [
+        'questionpreviewduration',
+        'questionduration',
+        'questionresultsduration',
+        'maxpoints',
+        'minpoints',
+        'totalresponses',
+        'answerdistribution',
+    ];
 }

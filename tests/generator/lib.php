@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+use mod_kahoodle\local\entities\round_question;
 /**
  * Data generator class
  *
@@ -80,9 +81,9 @@ class mod_kahoodle_generator extends testing_module_generator {
      *     - questionresultsduration: Results duration override (default: null)
      *     - maxpoints: Maximum points override (default: null)
      *     - minpoints: Minimum points override (default: null)
-     * @return stdClass question record with id field
+     * @return round_question The question entity
      */
-    public function create_question($record) {
+    public function create_question($record): round_question {
         global $DB;
 
         $record = (object)(array)$record;
@@ -103,9 +104,6 @@ class mod_kahoodle_generator extends testing_module_generator {
         }
 
         // Use the questions API to add the question.
-        $questionid = \mod_kahoodle\questions::add_question($record);
-
-        // Return the question record.
-        return $DB->get_record('kahoodle_questions', ['id' => $questionid], '*', MUST_EXIST);
+        return \mod_kahoodle\questions::add_question($record);
     }
 }

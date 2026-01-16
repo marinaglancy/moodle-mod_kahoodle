@@ -174,13 +174,12 @@ class question extends dynamic_form {
         if (!$roundquestion) {
             // Add mode.
             $questiondata->questiontype = $data->questiontype;
-            $questionid = \mod_kahoodle\questions::add_question($questiondata);
-            return ['questionid' => $questionid, 'action' => 'add'];
+            $roundquestion = \mod_kahoodle\questions::add_question($questiondata);
+            return ['questionid' => $roundquestion->get_question_id(), 'action' => 'add'];
         } else if ($round->is_editable()) {
             // Edit mode.
-            $questiondata->id = $roundquestion->get_data()->questionid;
-            \mod_kahoodle\questions::edit_question($questiondata);
-            return ['questionid' => $roundquestion->get_data()->questionid, 'action' => 'edit'];
+            \mod_kahoodle\questions::edit_question($roundquestion, $questiondata);
+            return ['questionid' => $roundquestion->get_question_id(), 'action' => 'edit'];
         } else {
             // TODO editing questions in non-editable rounds is not supported yet.
             return [];

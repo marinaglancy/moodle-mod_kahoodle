@@ -16,6 +16,8 @@
 
 namespace mod_kahoodle;
 
+use mod_kahoodle\local\entities\round_question;
+
 /**
  * Tests for Kahoodle questions class
  *
@@ -26,6 +28,15 @@ namespace mod_kahoodle;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class questions_test extends \advanced_testcase {
+    /**
+     * Get the Kahoodle plugin generator
+     *
+     * @return \mod_kahoodle_generator
+     */
+    protected function get_generator(): \mod_kahoodle_generator {
+        return $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
+    }
+
     /**
      * Test get_editable_round_id creates a round when none exist
      *
@@ -122,13 +133,12 @@ final class questions_test extends \advanced_testcase {
         $questiondata->maxpoints = 1500;
         $questiondata->minpoints = 750;
 
-        $questionid = questions::add_question($questiondata);
+        $questionid = questions::add_question($questiondata)->get_question_id();
 
         // Verify question was created.
         $question = $DB->get_record('kahoodle_questions', ['id' => $questionid], '*', MUST_EXIST);
         $this->assertEquals($kahoodle->id, $question->kahoodleid);
         $this->assertEquals(constants::QUESTION_TYPE_MULTICHOICE, $question->questiontype);
-        $this->assertEquals(1, $question->sortorder);
 
         // Verify question version was created.
         $version = $DB->get_record('kahoodle_question_versions', ['questionid' => $questionid], '*', MUST_EXIST);
@@ -167,7 +177,7 @@ final class questions_test extends \advanced_testcase {
 
         // Create a round and mark it as started.
         $roundid = questions::get_editable_round_id($kahoodle->id);
-        $DB->set_field('kahoodle_rounds', 'timestarted', time(), ['id' => $roundid]);
+        $DB->set_field('kahoodle_rounds', 'currentstage', constants::STAGE_LOBBY, ['id' => $roundid]);
 
         $questiondata = new \stdClass();
         $questiondata->kahoodleid = $kahoodle->id;
@@ -192,17 +202,17 @@ final class questions_test extends \advanced_testcase {
         $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
 
         // Add three questions.
-        $q1 = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle')
+        $q1 = $this->get_generator()
             ->create_question(['kahoodleid' => $kahoodle->id, 'questiontext' => 'Question 1']);
-        $q2 = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle')
+        $q2 = $this->get_generator()
             ->create_question(['kahoodleid' => $kahoodle->id, 'questiontext' => 'Question 2']);
-        $q3 = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle')
+        $q3 = $this->get_generator()
             ->create_question(['kahoodleid' => $kahoodle->id, 'questiontext' => 'Question 3']);
 
         // Verify sort order.
-        $this->assertEquals(1, $DB->get_field('kahoodle_questions', 'sortorder', ['id' => $q1->id]));
-        $this->assertEquals(2, $DB->get_field('kahoodle_questions', 'sortorder', ['id' => $q2->id]));
-        $this->assertEquals(3, $DB->get_field('kahoodle_questions', 'sortorder', ['id' => $q3->id]));
+        $this->assertEquals(1, $DB->get_field('kahoodle_round_questions', 'sortorder', ['id' => $q1->get_id()]));
+        $this->assertEquals(2, $DB->get_field('kahoodle_round_questions', 'sortorder', ['id' => $q2->get_id()]));
+        $this->assertEquals(3, $DB->get_field('kahoodle_round_questions', 'sortorder', ['id' => $q3->get_id()]));
     }
 
     /**
@@ -216,31 +226,35 @@ final class questions_test extends \advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
-        $question = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle')
+        $roundquestion = $this->get_generator()
             ->create_question(['kahoodleid' => $kahoodle->id]);
 
         // Edit behavior data.
         $editdata = new \stdClass();
-        $editdata->id = $question->id;
         $editdata->maxpoints = 2000;
         $editdata->minpoints = 800;
         $editdata->questionduration = 45;
 
-        questions::edit_question($editdata);
+        questions::edit_question($roundquestion, $editdata);
 
         // Verify behavior data was updated in round_questions table.
         $round = $DB->get_record('kahoodle_rounds', ['kahoodleid' => $kahoodle->id], '*', MUST_EXIST);
-        $version = $DB->get_record('kahoodle_question_versions', ['questionid' => $question->id], '*', MUST_EXIST);
-        $roundquestion = $DB->get_record(
+        $version = $DB->get_record(
+            'kahoodle_question_versions',
+            ['questionid' => $roundquestion->get_data()->questionid],
+            '*',
+            MUST_EXIST
+        );
+        $roundquestionrecord = $DB->get_record(
             'kahoodle_round_questions',
             ['roundid' => $round->id, 'questionversionid' => $version->id],
             '*',
             MUST_EXIST
         );
 
-        $this->assertEquals(2000, $roundquestion->maxpoints);
-        $this->assertEquals(800, $roundquestion->minpoints);
-        $this->assertEquals(45, $roundquestion->questionduration);
+        $this->assertEquals(2000, $roundquestionrecord->maxpoints);
+        $this->assertEquals(800, $roundquestionrecord->minpoints);
+        $this->assertEquals(45, $roundquestionrecord->questionduration);
     }
 
     /**
@@ -254,20 +268,22 @@ final class questions_test extends \advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
-        $question = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle')
+        $roundquestion = $this->get_generator()
             ->create_question(['kahoodleid' => $kahoodle->id, 'questiontext' => 'Original text']);
 
-        $versionid = $DB->get_field('kahoodle_question_versions', 'id', ['questionid' => $question->id]);
+        $versionid = $roundquestion->get_data()->questionversionid;
 
         // Edit content.
         $editdata = new \stdClass();
-        $editdata->id = $question->id;
         $editdata->questiontext = 'Updated text';
 
-        questions::edit_question($editdata);
+        questions::edit_question($roundquestion, $editdata);
 
         // Should update the same version (not create new one).
-        $this->assertEquals(1, $DB->count_records('kahoodle_question_versions', ['questionid' => $question->id]));
+        $this->assertEquals(1, $DB->count_records(
+            'kahoodle_question_versions',
+            ['questionid' => $roundquestion->get_data()->questionid]
+        ));
 
         $version = $DB->get_record('kahoodle_question_versions', ['id' => $versionid], '*', MUST_EXIST);
         $this->assertEquals('Updated text', $version->questiontext);
@@ -285,14 +301,11 @@ final class questions_test extends \advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
-        $question = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle')
+        $roundquestion = $this->get_generator()
             ->create_question(['kahoodleid' => $kahoodle->id, 'questiontext' => 'Original text']);
 
         // Mark the round as started.
-        $round = $DB->get_record('kahoodle_rounds', ['kahoodleid' => $kahoodle->id], '*', MUST_EXIST);
-        $oldtime = time() - 100; // Make sure old round is older.
-        $DB->set_field('kahoodle_rounds', 'timestarted', $oldtime, ['id' => $round->id]);
-        $DB->set_field('kahoodle_rounds', 'timecreated', $oldtime, ['id' => $round->id]);
+        $DB->set_field('kahoodle_rounds', 'currentstage', constants::STAGE_LOBBY, ['id' => $roundquestion->get_data()->roundid]);
 
         // Create a new editable round with the same question.
         $newround = new \stdClass();
@@ -305,28 +318,34 @@ final class questions_test extends \advanced_testcase {
         $newroundid = $DB->insert_record('kahoodle_rounds', $newround);
 
         // Link the same question version to the new round.
-        $oldversion = $DB->get_record('kahoodle_question_versions', ['questionid' => $question->id], '*', MUST_EXIST);
-        $roundquestion = new \stdClass();
-        $roundquestion->roundid = $newroundid;
-        $roundquestion->questionversionid = $oldversion->id;
-        $roundquestion->sortorder = 1;
-        $roundquestion->timecreated = time();
-        $DB->insert_record('kahoodle_round_questions', $roundquestion);
+        $oldversion = $DB->get_record(
+            'kahoodle_question_versions',
+            ['questionid' => $roundquestion->get_data()->questionid],
+            '*',
+            MUST_EXIST
+        );
+        $roundquestionrec = new \stdClass();
+        $roundquestionrec->roundid = $newroundid;
+        $roundquestionrec->questionversionid = $oldversion->id;
+        $roundquestionrec->sortorder = 1;
+        $roundquestionrec->timecreated = time();
+        $DB->insert_record('kahoodle_round_questions', $roundquestionrec);
 
         // Now edit the question content.
         $editdata = new \stdClass();
-        $editdata->id = $question->id;
         $editdata->questiontext = 'Updated text';
 
-        questions::edit_question($editdata);
+        $questionid = $roundquestion->get_data()->questionid;
+        $roundquestion2 = round_question::create_from_question_id($questionid);
+        questions::edit_question($roundquestion2, $editdata);
 
         // Should create a new version.
-        $this->assertEquals(2, $DB->count_records('kahoodle_question_versions', ['questionid' => $question->id]));
+        $this->assertEquals(2, $DB->count_records('kahoodle_question_versions', ['questionid' => $questionid]));
 
         // New version should have updated text.
         $newversion = $DB->get_record(
             'kahoodle_question_versions',
-            ['questionid' => $question->id, 'version' => 2],
+            ['questionid' => $questionid, 'version' => 2],
             '*',
             MUST_EXIST
         );
@@ -357,20 +376,19 @@ final class questions_test extends \advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
-        $question = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle')
+        $roundquestion = $this->get_generator()
             ->create_question(['kahoodleid' => $kahoodle->id]);
 
         // Mark round as started.
         $round = $DB->get_record('kahoodle_rounds', ['kahoodleid' => $kahoodle->id], '*', MUST_EXIST);
-        $DB->set_field('kahoodle_rounds', 'timestarted', time(), ['id' => $round->id]);
+        $DB->set_field('kahoodle_rounds', 'currentstage', constants::STAGE_LOBBY, ['id' => $round->id]);
 
         $editdata = new \stdClass();
-        $editdata->id = $question->id;
         $editdata->questiontext = 'Updated text';
 
         $this->expectException(\moodle_exception::class);
         $this->expectExceptionMessage('No editable round available');
-        questions::edit_question($editdata);
+        questions::edit_question($roundquestion, $editdata);
     }
 
     /**
@@ -384,20 +402,21 @@ final class questions_test extends \advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
-        $question = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle')
+        $roundquestion = $this->get_generator()
             ->create_question(['kahoodleid' => $kahoodle->id]);
+        $questionid = $roundquestion->get_question_id();
 
-        questions::delete_question($question->id);
+        questions::delete_question($roundquestion);
 
         // Question, version, and round link should all be deleted.
-        $this->assertEquals(0, $DB->count_records('kahoodle_questions', ['id' => $question->id]));
-        $this->assertEquals(0, $DB->count_records('kahoodle_question_versions', ['questionid' => $question->id]));
+        $this->assertEquals(0, $DB->count_records('kahoodle_questions', ['id' => $questionid]));
+        $this->assertEquals(0, $DB->count_records('kahoodle_question_versions', ['questionid' => $questionid]));
         $this->assertEquals(0, $DB->count_records(
             'kahoodle_round_questions',
             ['questionversionid' => $DB->get_field(
                 'kahoodle_question_versions',
                 'id',
-                ['questionid' => $question->id]
+                ['questionid' => $questionid]
             )]
         ));
     }
@@ -413,8 +432,9 @@ final class questions_test extends \advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
-        $question = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle')
+        $roundquestion = $this->get_generator()
             ->create_question(['kahoodleid' => $kahoodle->id]);
+        $questionid = $roundquestion->get_question_id();
 
         // Mark the round as started.
         $round = $DB->get_record('kahoodle_rounds', ['kahoodleid' => $kahoodle->id], '*', MUST_EXIST);
@@ -433,21 +453,25 @@ final class questions_test extends \advanced_testcase {
         $newroundid = $DB->insert_record('kahoodle_rounds', $newround);
 
         // Link the same question version to the new round.
-        $version = $DB->get_record('kahoodle_question_versions', ['questionid' => $question->id], '*', MUST_EXIST);
-        $roundquestion = new \stdClass();
-        $roundquestion->roundid = $newroundid;
-        $roundquestion->questionversionid = $version->id;
-        $roundquestion->sortorder = 1;
-        $roundquestion->timecreated = time();
-        $DB->insert_record('kahoodle_round_questions', $roundquestion);
+        $version = $DB->get_record(
+            'kahoodle_question_versions',
+            ['questionid' => $questionid],
+            '*',
+            MUST_EXIST
+        );
+        $newroundquestion = new \stdClass();
+        $newroundquestion->roundid = $newroundid;
+        $newroundquestion->questionversionid = $version->id;
+        $newroundquestion->sortorder = 1;
+        $newroundquestion->timecreated = time();
+        $newid = $DB->insert_record('kahoodle_round_questions', $newroundquestion);
 
         // Delete from new round.
-        questions::delete_question($question->id);
+        questions::delete_question(round_question::create_from_round_question_id($newid));
 
         // Question and version should still exist (used in started round).
-        $this->assertEquals(1, $DB->count_records('kahoodle_questions', ['id' => $question->id]));
-        $this->assertEquals(1, $DB->count_records('kahoodle_question_versions', ['questionid' => $question->id]));
-
+        $this->assertEquals(1, $DB->count_records('kahoodle_questions', ['id' => $questionid]));
+        $this->assertEquals(1, $DB->count_records('kahoodle_question_versions', ['questionid' => $questionid]));
         // Link to new round should be deleted, but link to old round should remain.
         $this->assertEquals(0, $DB->count_records('kahoodle_round_questions', ['roundid' => $newroundid]));
         $this->assertEquals(1, $DB->count_records('kahoodle_round_questions', ['roundid' => $round->id]));
@@ -464,15 +488,16 @@ final class questions_test extends \advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
-        $question = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle')
+        $roundquestion = $this->get_generator()
             ->create_question(['kahoodleid' => $kahoodle->id]);
+        $id = $roundquestion->get_id();
 
         // Mark round as started.
         $round = $DB->get_record('kahoodle_rounds', ['kahoodleid' => $kahoodle->id], '*', MUST_EXIST);
-        $DB->set_field('kahoodle_rounds', 'timestarted', time(), ['id' => $round->id]);
+        $DB->set_field('kahoodle_rounds', 'currentstage', constants::STAGE_LOBBY, ['id' => $round->id]);
 
         $this->expectException(\moodle_exception::class);
         $this->expectExceptionMessage('No editable round available');
-        questions::delete_question($question->id);
+        questions::delete_question(round_question::create_from_round_question_id($id));
     }
 }

@@ -20,6 +20,7 @@ use core_external\external_function_parameters;
 use core_external\external_single_structure;
 use core_external\external_api;
 use core_external\external_value;
+use mod_kahoodle\local\entities\round_question;
 use mod_kahoodle\questions;
 
 /**
@@ -57,10 +58,10 @@ class delete_question extends external_api {
         );
 
         // Get the question to find the kahoodleid.
-        $question = $DB->get_record('kahoodle_questions', ['id' => $questionid], 'kahoodleid', MUST_EXIST);
+        $roundquestion = round_question::create_from_question_id($questionid);
 
         // Get the course module and validate context.
-        $cm = get_coursemodule_from_instance('kahoodle', $question->kahoodleid, 0, false, MUST_EXIST);
+        $cm = $roundquestion->get_round()->get_cm();
         $context = \context_module::instance($cm->id);
         self::validate_context($context);
 
@@ -68,7 +69,7 @@ class delete_question extends external_api {
         require_capability('mod/kahoodle:manage_questions', $context);
 
         // Delete the question.
-        questions::delete_question($questionid);
+        questions::delete_question($roundquestion);
 
         return [];
     }

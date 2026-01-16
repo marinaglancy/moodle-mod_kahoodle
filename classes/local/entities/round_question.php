@@ -16,6 +16,7 @@
 
 namespace mod_kahoodle\local\entities;
 
+use mod_kahoodle\constants;
 use stdClass;
 
 /**
@@ -46,15 +47,15 @@ class round_question {
      * @return string
      */
     protected static function get_fields_sql(): string {
-        return 'SELECT rq.*,
-                qv.questionid,
-                qv.version,
-                qv.questiontext,
-                qv.questiontextformat,
-                qv.questionconfig,
-                qv.answersconfig,
-                q.kahoodleid,
-                q.questiontype
+        $fields = array_merge(
+            ["rq.id", "rq.roundid", "rq.questionversionid", "rq.sortorder", "rq.timecreated", "rq.timemodified"],
+            array_map(fn($field) => "rq.$field", constants::FIELDS_ROUND_QUESTION),
+            ["qv.questionid", "qv.version"],
+            array_map(fn($field) => "qv.$field", constants::FIELDS_QUESTION_VERSION),
+            ["q.kahoodleid", "q.questiontype"]
+        );
+
+        return 'SELECT ' . implode(', ', $fields) . '
             FROM {kahoodle_round_questions} rq
             JOIN {kahoodle_question_versions} qv ON rq.questionversionid = qv.id
             JOIN {kahoodle_questions} q ON qv.questionid = q.id';
@@ -83,7 +84,7 @@ class round_question {
     public static function create_from_question_id(int $id, ?round $round = null): self {
         global $DB;
         if (!$round) {
-            $question = $DB->get_record('kahoodle_questions', ['id' => $id], 'id', MUST_EXIST);
+            $question = $DB->get_record('kahoodle_questions', ['id' => $id], 'id, kahoodleid', MUST_EXIST);
             $round = \mod_kahoodle\questions::get_last_round($question->kahoodleid);
         }
         $record = $DB->get_record_sql(self::get_fields_sql() .
@@ -112,6 +113,15 @@ class round_question {
      */
     public function get_id(): int {
         return $this->data->id;
+    }
+
+    /**
+     * Get the question ID
+     *
+     * @return int
+     */
+    public function get_question_id(): int {
+        return $this->data->questionid;
     }
 
     /**

@@ -170,11 +170,11 @@ class add_questions extends external_api {
                 }
 
                 // Add the question (this will also handle file uploads).
-                $questionid = \mod_kahoodle\questions::add_question($question);
+                $roundquestion = \mod_kahoodle\questions::add_question($question);
 
                 $questionids[] = [
                     'index' => $index,
-                    'questionid' => $questionid,
+                    'questionid' => $roundquestion->get_question_id(),
                 ];
             } catch (\moodle_exception $e) {
                 $warnings[] = [
