@@ -46,15 +46,16 @@ $PAGE->activityheader->disable();
 $round = \mod_kahoodle\questions::get_last_round($moduleinstance->id);
 
 // Build question types for JavaScript.
-$questiontypes = [];
-foreach (\mod_kahoodle\constants::get_question_types() as $type => $langkey) {
-    $questiontypes[] = [
-        'type' => $type,
-        'name' => get_string($langkey, 'mod_kahoodle'),
+$questiontypes = \mod_kahoodle\questions::get_question_types();
+$questiontypesjs = [];
+foreach ($questiontypes as $questiontype) {
+    $questiontypesjs[] = [
+        'type' => $questiontype->get_type(),
+        'name' => $questiontype->get_display_name(),
     ];
 }
 
-$PAGE->requires->js_call_amd('mod_kahoodle/questions', 'init', [$round->get_id(), $questiontypes]);
+$PAGE->requires->js_call_amd('mod_kahoodle/questions', 'init', [$round->get_id(), $questiontypesjs]);
 
 echo $OUTPUT->header();
 
@@ -62,11 +63,15 @@ echo html_writer::start_div('', ['data-region' => 'mod_kahoodle-questions']);
 
 // Add question dropdown button.
 $dropdownitems = [];
-foreach (\mod_kahoodle\constants::get_question_types() as $type => $langkey) {
+foreach ($questiontypes as $questiontype) {
     $dropdownitems[] = html_writer::link(
         '#',
-        get_string($langkey, 'mod_kahoodle'),
-        ['class' => 'dropdown-item', 'data-action' => 'mod_kahoodle-add-question', 'data-questiontype' => $type]
+        $questiontype->get_display_name(),
+        [
+            'class' => 'dropdown-item',
+            'data-action' => 'mod_kahoodle-add-question',
+            'data-questiontype' => $questiontype->get_type(),
+        ]
     );
 }
 

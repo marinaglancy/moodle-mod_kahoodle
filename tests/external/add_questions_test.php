@@ -46,7 +46,7 @@ final class add_questions_test extends \advanced_testcase {
         $questions = [
             [
                 'kahoodleid' => $kahoodle->id,
-                'questiontype' => constants::QUESTION_TYPE_MULTICHOICE,
+                'questiontype' => 'multichoice',
                 'questiontext' => 'What is 2+2?',
                 'questiontextformat' => FORMAT_HTML,
                 'answersconfig' => json_encode(['options' => ['3', '4', '5'], 'correct' => 1]),
@@ -70,7 +70,7 @@ final class add_questions_test extends \advanced_testcase {
 
         $question = $DB->get_record('kahoodle_questions', ['id' => $questionid], '*', MUST_EXIST);
         $this->assertEquals($kahoodle->id, $question->kahoodleid);
-        $this->assertEquals(constants::QUESTION_TYPE_MULTICHOICE, $question->questiontype);
+        $this->assertEquals('multichoice', $question->questiontype);
     }
 
     /**
@@ -268,7 +268,7 @@ final class add_questions_test extends \advanced_testcase {
         $questions = [
             [
                 'kahoodleid' => $kahoodle->id,
-                'questiontype' => constants::QUESTION_TYPE_MULTICHOICE,
+                'questiontype' => 'multichoice',
                 'questiontext' => 'Complete question',
                 'questiontextformat' => FORMAT_PLAIN,
                 'questionconfig' => json_encode(['setting' => 'value']),
@@ -342,7 +342,7 @@ final class add_questions_test extends \advanced_testcase {
         $question = $DB->get_record('kahoodle_questions', ['id' => $questionid], '*', MUST_EXIST);
         $version = $DB->get_record('kahoodle_question_versions', ['questionid' => $questionid], '*', MUST_EXIST);
 
-        $this->assertEquals(constants::QUESTION_TYPE_MULTICHOICE, $question->questiontype);
+        $this->assertEquals('multichoice', $question->questiontype);
         $this->assertEquals(FORMAT_HTML, $version->questiontextformat);
         $this->assertNull($version->questionconfig);
         $this->assertNull($version->answersconfig);

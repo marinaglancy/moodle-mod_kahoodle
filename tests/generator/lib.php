@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+use mod_kahoodle\local\entities\round;
 use mod_kahoodle\local\entities\round_question;
 /**
  * Data generator class
@@ -85,22 +86,16 @@ class mod_kahoodle_generator extends testing_module_generator {
      */
     public function create_question($record): round_question {
         global $DB;
+        static $counter = 1;
 
         $record = (object)(array)$record;
 
-        if (!isset($record->kahoodleid)) {
+        if (empty($record->kahoodleid)) {
             throw new coding_exception('kahoodleid must be specified when creating a question');
         }
 
-        // Set default values for required fields if not provided.
-        if (!isset($record->questiontype)) {
-            $record->questiontype = \mod_kahoodle\constants::QUESTION_TYPE_MULTICHOICE;
-        }
         if (!isset($record->questiontext)) {
-            $record->questiontext = 'Sample question ' . rand(1, 1000);
-        }
-        if (!isset($record->questiontextformat)) {
-            $record->questiontextformat = FORMAT_HTML;
+            $record->questiontext = 'Sample question ' . $counter++;
         }
 
         // Use the questions API to add the question.

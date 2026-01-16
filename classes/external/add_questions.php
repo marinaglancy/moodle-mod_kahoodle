@@ -44,63 +44,53 @@ class add_questions extends external_api {
                     'questiontype' => new external_value(
                         PARAM_ALPHA,
                         'Question type',
-                        VALUE_DEFAULT,
-                        \mod_kahoodle\constants::QUESTION_TYPE_MULTICHOICE
+                        VALUE_OPTIONAL,
                     ),
                     'questiontext' => new external_value(PARAM_RAW, 'Question text'),
                     'questiontextformat' => new external_value(
                         PARAM_INT,
-                        'Question text format',
-                        VALUE_DEFAULT,
-                        FORMAT_HTML
+                        'Question text format, 0 - FORMAT_MOODLE, 1 - FORMAT_HTML, 2 - FORMAT_PLAIN',
+                        VALUE_OPTIONAL,
                     ),
                     'questionconfig' => new external_value(
                         PARAM_RAW,
                         'JSON configuration for question-specific settings',
-                        VALUE_DEFAULT,
-                        null
+                        VALUE_OPTIONAL
                     ),
                     'answersconfig' => new external_value(
                         PARAM_RAW,
                         'JSON configuration for answers',
-                        VALUE_DEFAULT,
-                        null
+                        VALUE_OPTIONAL
                     ),
                     'questionpreviewduration' => new external_value(
                         PARAM_INT,
                         'Question preview duration in seconds',
-                        VALUE_DEFAULT,
-                        null
+                        VALUE_OPTIONAL,
                     ),
                     'questionduration' => new external_value(
                         PARAM_INT,
                         'Question duration in seconds',
-                        VALUE_DEFAULT,
-                        null
+                        VALUE_OPTIONAL,
                     ),
                     'questionresultsduration' => new external_value(
                         PARAM_INT,
                         'Question results display duration in seconds',
-                        VALUE_DEFAULT,
-                        null
+                        VALUE_OPTIONAL,
                     ),
                     'maxpoints' => new external_value(
                         PARAM_INT,
                         'Maximum points for correct answer',
-                        VALUE_DEFAULT,
-                        null
+                        VALUE_OPTIONAL,
                     ),
                     'minpoints' => new external_value(
                         PARAM_INT,
                         'Minimum points for correct answer',
-                        VALUE_DEFAULT,
-                        null
+                        VALUE_OPTIONAL,
                     ),
                     'imagedraftitemid' => new external_value(
                         PARAM_INT,
                         'Draft item ID for question image(s) file area',
-                        VALUE_DEFAULT,
-                        0
+                        VALUE_OPTIONAL,
                     ),
                 ])
             ),
@@ -128,9 +118,11 @@ class add_questions extends external_api {
         foreach ($params['questions'] as $index => $questiondata) {
             try {
                 // Get the kahoodle instance to validate context.
-                $kahoodle = $DB->get_record('kahoodle', ['id' => $questiondata['kahoodleid']], '*', MUST_EXIST);
-                $cm = get_coursemodule_from_instance('kahoodle', $kahoodle->id, $kahoodle->course, false, MUST_EXIST);
-                $context = \context_module::instance($cm->id);
+                $round = \mod_kahoodle\questions::get_last_round($questiondata['kahoodleid']);
+                if (!$round->is_editable()) {
+                    throw new \moodle_exception('noeditableround', 'mod_kahoodle');
+                }
+                $context = $round->get_context();
 
                 // Validate context.
                 self::validate_context($context);
@@ -138,39 +130,8 @@ class add_questions extends external_api {
                 // Check permissions.
                 require_capability('mod/kahoodle:manage_questions', $context);
 
-                // Prepare question data object.
-                $question = new \stdClass();
-                $question->kahoodleid = $questiondata['kahoodleid'];
-                $question->questiontype = $questiondata['questiontype'];
-                $question->questiontext = $questiondata['questiontext'];
-                $question->questiontextformat = $questiondata['questiontextformat'];
-                $question->questionconfig = $questiondata['questionconfig'];
-                $question->answersconfig = $questiondata['answersconfig'];
-
-                // Optional behavior data.
-                if ($questiondata['questionpreviewduration'] !== null) {
-                    $question->questionpreviewduration = $questiondata['questionpreviewduration'];
-                }
-                if ($questiondata['questionduration'] !== null) {
-                    $question->questionduration = $questiondata['questionduration'];
-                }
-                if ($questiondata['questionresultsduration'] !== null) {
-                    $question->questionresultsduration = $questiondata['questionresultsduration'];
-                }
-                if ($questiondata['maxpoints'] !== null) {
-                    $question->maxpoints = $questiondata['maxpoints'];
-                }
-                if ($questiondata['minpoints'] !== null) {
-                    $question->minpoints = $questiondata['minpoints'];
-                }
-
-                // Pass draft item ID to questions API for file handling.
-                if ($questiondata['imagedraftitemid'] > 0) {
-                    $question->imagedraftitemid = $questiondata['imagedraftitemid'];
-                }
-
                 // Add the question (this will also handle file uploads).
-                $roundquestion = \mod_kahoodle\questions::add_question($question);
+                $roundquestion = \mod_kahoodle\questions::add_question((object)$questiondata);
 
                 $questionids[] = [
                     'index' => $index,

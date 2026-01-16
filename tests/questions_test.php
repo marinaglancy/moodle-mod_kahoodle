@@ -126,7 +126,6 @@ final class questions_test extends \advanced_testcase {
 
         $questiondata = new \stdClass();
         $questiondata->kahoodleid = $kahoodle->id;
-        $questiondata->questiontype = constants::QUESTION_TYPE_MULTICHOICE;
         $questiondata->questiontext = 'What is 2+2?';
         $questiondata->questiontextformat = FORMAT_HTML;
         $questiondata->answersconfig = json_encode(['options' => ['3', '4', '5'], 'correct' => 1]);
@@ -138,7 +137,7 @@ final class questions_test extends \advanced_testcase {
         // Verify question was created.
         $question = $DB->get_record('kahoodle_questions', ['id' => $questionid], '*', MUST_EXIST);
         $this->assertEquals($kahoodle->id, $question->kahoodleid);
-        $this->assertEquals(constants::QUESTION_TYPE_MULTICHOICE, $question->questiontype);
+        $this->assertEquals('multichoice', $question->questiontype);
 
         // Verify question version was created.
         $version = $DB->get_record('kahoodle_question_versions', ['questionid' => $questionid], '*', MUST_EXIST);
@@ -181,7 +180,6 @@ final class questions_test extends \advanced_testcase {
 
         $questiondata = new \stdClass();
         $questiondata->kahoodleid = $kahoodle->id;
-        $questiondata->questiontype = constants::QUESTION_TYPE_MULTICHOICE;
         $questiondata->questiontext = 'Test question';
 
         $this->expectException(\moodle_exception::class);

@@ -45,20 +45,6 @@ class constants {
     /** @var int Default minimum points for slowest correct answer */
     public const DEFAULT_MIN_POINTS = 500;
 
-    /** @var string Question type: multiple choice */
-    public const QUESTION_TYPE_MULTICHOICE = 'multichoice';
-
-    /**
-     * Get all available question types
-     *
-     * @return array Array of type => lang string key
-     */
-    public static function get_question_types(): array {
-        return [
-            self::QUESTION_TYPE_MULTICHOICE => 'questiontype_multichoice',
-        ];
-    }
-
     /** @var string File area for question images */
     public const FILEAREA_QUESTION_IMAGE = 'questionimage';
 
@@ -95,14 +81,12 @@ class constants {
         'answersconfig',
     ];
 
-    /** @var array Fields in the table kahoodle_round_questions, except for primary/foreign keys, sortorder, time stamps */
+    /** @var array Fields in the table kahoodle_round_questions, except for primary/foreign keys, sortorder, time stamps, stats */
     public const FIELDS_ROUND_QUESTION = [
         'questionpreviewduration',
         'questionduration',
         'questionresultsduration',
         'maxpoints',
         'minpoints',
-        'totalresponses',
-        'answerdistribution',
     ];
 }

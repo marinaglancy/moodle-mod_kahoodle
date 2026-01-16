@@ -31,6 +31,8 @@ class round_question {
     protected stdClass $data;
     /** @var round|null The round entity, lazy loaded */
     protected ?round $round = null;
+    /** @var \mod_kahoodle\local\questiontypes\base|null The question type instance */
+    protected ?\mod_kahoodle\local\questiontypes\base $type = null;
 
     /**
      * Protected constructor
@@ -50,6 +52,7 @@ class round_question {
         $fields = array_merge(
             ["rq.id", "rq.roundid", "rq.questionversionid", "rq.sortorder", "rq.timecreated", "rq.timemodified"],
             array_map(fn($field) => "rq.$field", constants::FIELDS_ROUND_QUESTION),
+            ['rq.totalresponses', 'rq.answerdistribution'], // Stats fields.
             ["qv.questionid", "qv.version"],
             array_map(fn($field) => "qv.$field", constants::FIELDS_QUESTION_VERSION),
             ["q.kahoodleid", "q.questiontype"]
@@ -95,6 +98,53 @@ class round_question {
     }
 
     /**
+     * Create a new round question instance for a given round and question type
+     *
+     * @param round $round The round entity
+     * @param string|null $questiontype The question type
+     * @return self
+     */
+    public static function new_for_round_and_type(round $round, ?string $questiontype = null): self {
+        global $DB;
+        $questiontypes = \mod_kahoodle\questions::get_question_types();
+        $type = $questiontypes[0];
+        if ($questiontype !== null) {
+            $types = array_filter($questiontypes, fn($qt) => $qt->get_type() === $questiontype);
+            if (empty($types)) {
+                debugging('Invalid question type: ' . s($questiontype));
+            } else {
+                $type = reset($types);
+            }
+        }
+
+        $record = (object)[
+            'id' => 0,
+            'roundid' => $round->get_id(),
+            'questionversionid' => 0,
+            'sortorder' => 0,
+            'timecreated' => time(),
+            'timemodified' => time(),
+            'questionid' => 0,
+            'version' => 0,
+            'kahoodleid' => $round->get_kahoodleid(),
+            'questiontype' => $type->get_type(),
+            'totalresponses' => null,
+            'answerdistribution' => null,
+        ];
+        foreach (constants::FIELDS_ROUND_QUESTION as $field) {
+            $record->$field = null;
+        }
+        foreach (constants::FIELDS_QUESTION_VERSION as $field) {
+            $record->$field = null;
+        }
+        $record->questiontextformat = FORMAT_HTML; // Default value.
+        $q = new self($record);
+        $q->round = $round;
+        $q->type = $type;
+        return $q;
+    }
+
+    /**
      * Get the round entity for this question
      *
      * @return round
@@ -104,6 +154,25 @@ class round_question {
             $this->round = round::create_from_id($this->data->roundid);
         }
         return $this->round;
+    }
+
+    /**
+     * Get the question type instance for this question
+     *
+     * @return \mod_kahoodle\local\questiontypes\base
+     */
+    public function get_question_type(): \mod_kahoodle\local\questiontypes\base {
+        if ($this->type === null) {
+            $questiontypes = \mod_kahoodle\questions::get_question_types();
+            $types = array_filter($questiontypes, fn($qt) => $qt->get_type() === $this->data->questiontype);
+            if (empty($types)) {
+                debugging('Invalid question type: ' . s($this->data->questiontype));
+                $type = $questiontypes[0];
+            } else {
+                $this->type = reset($types);
+            }
+        }
+        return $this->type;
     }
 
     /**

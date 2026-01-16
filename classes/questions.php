@@ -16,6 +16,7 @@
 
 namespace mod_kahoodle;
 
+use core\exception\moodle_exception;
 use mod_kahoodle\local\entities\round;
 use mod_kahoodle\local\entities\round_question;
 
@@ -28,6 +29,18 @@ use mod_kahoodle\local\entities\round_question;
  */
 class questions {
     /**
+     * Get available question types
+     *
+     * @return \mod_kahoodle\local\questiontypes\base[] Array of question type instances
+     */
+    public static function get_question_types(): array {
+        return [
+            new \mod_kahoodle\local\questiontypes\multichoice(),
+            // Future question types can be added here.
+        ];
+    }
+
+    /**
      * Get the last round for a Kahoodle activity
      *
      * Returns the most recent round, creating one if none exist.
@@ -39,22 +52,28 @@ class questions {
         global $DB;
 
         // Get all rounds for this kahoodle, ordered by creation time (newest first).
+        // In the same query we validate that kahoodle itself exists.
         $order = 'CASE WHEN currentstage = :preparation THEN 0 ELSE 1 END, timecreated DESC, id DESC';
-        $rounds = $DB->get_records_select(
-            'kahoodle_rounds',
-            'kahoodleid = :kahoodleid',
+        $rounds = $DB->get_records_sql(
+            "SELECT r.* from {kahoodle} k
+            LEFT JOIN {kahoodle_rounds} r ON r.kahoodleid = k.id
+            WHERE k.id = :kahoodleid
+            ORDER BY $order",
             ['kahoodleid' => $kahoodleid, 'preparation' => constants::STAGE_PREPARATION],
-            $order,
-            '*',
             0,
             1
         );
-
         if (empty($rounds)) {
+            // Kahoodle does not exist. Throw exception.
+            $DB->get_record('kahoodle', ['id' => $kahoodleid], '*', MUST_EXIST);
+        }
+
+        $round = reset($rounds);
+        if (empty($round->id)) {
             // No rounds yet, create one.
             $record = new \stdClass();
             $record->kahoodleid = $kahoodleid;
-            $record->name = 'Round 1';
+            $record->name = 'Round 1'; // TODO do we need a name field?
             $record->currentstage = constants::STAGE_PREPARATION;
             $record->currentquestion = null;
             $record->stagestarttime = null;
@@ -73,7 +92,7 @@ class questions {
         }
 
         // Get the last (most recent) round.
-        return round::create_from_object(reset($rounds));
+        return round::create_from_object($round);
     }
 
     /**
@@ -125,17 +144,20 @@ class questions {
         $kahoodleid = $questiondata->kahoodleid;
 
         // Get editable round ID, throw exception if there is no editable round.
-        $roundid = self::get_editable_round_id($kahoodleid);
-        if ($roundid === null) {
+        $round = self::get_last_round($kahoodleid);
+        if (!$round->is_editable()) {
             throw new \moodle_exception('noeditableround', 'mod_kahoodle');
         }
+        $roundquestionobj = round_question::new_for_round_and_type($round, $questiondata->questiontype ?? null);
+        $defaultdata = $roundquestionobj->get_data();
+        $roundquestionobj->get_question_type()->sanitize_data($roundquestionobj, $questiondata);
 
         $time = time();
 
         // Create new question.
         $question = new \stdClass();
         $question->kahoodleid = $kahoodleid;
-        $question->questiontype = $questiondata->questiontype;
+        $question->questiontype = $defaultdata->questiontype; // Normalised value.
         $question->timecreated = $time;
 
         $questionid = $DB->insert_record('kahoodle_questions', $question);
@@ -144,10 +166,11 @@ class questions {
         $version = new \stdClass();
         $version->questionid = $questionid;
         $version->version = 1;
-        $version->questiontextformat = FORMAT_HTML; // Default value.
         foreach (constants::FIELDS_QUESTION_VERSION as $field) {
             if (property_exists($questiondata, $field)) {
                 $version->$field = $questiondata->$field;
+            } else {
+                $version->$field = $defaultdata->$field;
             }
         }
         $version->timecreated = $time;
@@ -173,22 +196,25 @@ class questions {
         }
 
         // Get the next sort order for this round.
-        $maxroundsortorder = $DB->get_field('kahoodle_round_questions', 'MAX(sortorder)', ['roundid' => $roundid]);
+        $maxroundsortorder = $DB->get_field(
+            'kahoodle_round_questions',
+            'MAX(sortorder)',
+            ['roundid' => $round->get_id()]
+        );
         $roundsortorder = $maxroundsortorder ? $maxroundsortorder + 1 : 1;
 
         // Link the question version to the editable round.
         $roundquestion = new \stdClass();
-        $roundquestion->roundid = $roundid;
+        $roundquestion->roundid = $round->get_id();
         $roundquestion->questionversionid = $versionid;
         $roundquestion->sortorder = $roundsortorder;
         foreach (constants::FIELDS_ROUND_QUESTION as $field) {
             if (property_exists($questiondata, $field)) {
                 $roundquestion->$field = $questiondata->$field;
+            } else {
+                $roundquestion->$field = $defaultdata->$field;
             }
         }
-        // Initialize statistics fields, they are always null for new questions.
-        $roundquestion->totalresponses = null;
-        $roundquestion->answerdistribution = null;
         // Timestamps.
         $roundquestion->timecreated = $time;
         $roundquestion->timemodified = $time;
@@ -221,8 +247,13 @@ class questions {
     public static function edit_question(round_question $roundquestion, \stdClass $questiondata): void {
         global $DB;
 
+        if (!$roundquestion->get_id()) {
+            throw new \moodle_exception('questionnotfound', 'mod_kahoodle');
+        }
+
         $questionid = $roundquestion->get_data()->questionid;
         $round = $roundquestion->get_round();
+        $roundquestion->get_question_type()->sanitize_data($roundquestion, $questiondata);
 
         if (!$round->is_editable()) {
             // TODO at the moment we only support editing questions in editable rounds.
