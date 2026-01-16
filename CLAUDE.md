@@ -19,6 +19,9 @@ To identify the current Moodle version, check the `version.php` file in the Mood
 
 ```
 mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
+├── amd/
+│   └── src/
+│       └── questions.js      # AMD module for question management UI
 ├── backup/
 │   └── moodle2/              # Backup and restore functionality
 │       ├── backup_kahoodle_activity_task.class.php
@@ -26,15 +29,26 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │       ├── restore_kahoodle_activity_task.class.php
 │       └── restore_kahoodle_stepslib.php
 ├── classes/
-│   ├── constants.php         # Plugin constants (defaults, question types, stages, file areas)
+│   ├── constants.php         # Plugin constants (defaults, question types, stages, file areas, field lists)
 │   ├── questions.php         # Question management API
 │   ├── courseformat/         # Course format integration
 │   │   └── overview.php
 │   ├── event/                # Event observers and definitions
 │   │   ├── course_module_viewed.php
 │   │   └── course_module_instance_list_viewed.php
-│   └── external/             # Web service definitions
-│       └── add_questions.php # Batch question creation web service
+│   ├── external/             # Web service definitions
+│   │   ├── add_questions.php # Batch question creation web service
+│   │   └── delete_question.php # Question deletion web service
+│   ├── form/                 # Dynamic forms
+│   │   └── question.php      # Question add/edit modal form
+│   ├── local/entities/       # Domain entity classes
+│   │   ├── round.php         # Round entity with caching for kahoodle/cm/context
+│   │   └── round_question.php # Round question entity (joins 3 tables)
+│   └── reportbuilder/local/  # Report builder components
+│       ├── entities/
+│       │   └── question.php  # Question entity for reports
+│       └── systemreports/
+│           └── questions.php # Questions list system report
 ├── db/
 │   ├── access.php            # Capability definitions
 │   └── install.xml           # Database schema
@@ -54,6 +68,7 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 ├── index.php                 # List all instances in a course
 ├── lib.php                   # Core module functions
 ├── mod_form.php              # Activity settings form
+├── questions.php             # Question management page
 ├── version.php               # Plugin version information
 └── view.php                  # Main view page
 ```
@@ -68,6 +83,7 @@ All plugin constants are defined in `classes/constants.php`:
 - **Question Types**: `QUESTION_TYPE_MULTICHOICE` (currently only type implemented)
 - **Round Stages**: `STAGE_PREPARATION`, `STAGE_LOBBY`, `STAGE_QUESTION_PREVIEW`, `STAGE_QUESTION`, `STAGE_QUESTION_RESULTS`, `STAGE_LEADERS`, `STAGE_REVISION`, `STAGE_ARCHIVED`
 - **File Areas**: `FILEAREA_QUESTION_IMAGE` for question images
+- **Field Lists**: `FIELDS_QUESTION_VERSION` and `FIELDS_ROUND_QUESTION` for consistent field handling across entities and API methods
 
 ### Activity Model
 
@@ -85,24 +101,30 @@ The `\mod_kahoodle\questions` class provides the core question management functi
 
 #### Available Methods
 
-1. **`get_editable_round_id(int $kahoodleid): ?int`**
+1. **`get_last_round(int $kahoodleid): round`**
+   - Returns the most recent round, prioritizing rounds in preparation stage
+   - Creates a new round if none exists
+   - Returns a `round` entity instance
+
+2. **`get_editable_round_id(int $kahoodleid): ?int`**
    - Returns the ID of the editable round (preparation stage, not yet started)
    - Creates a new round if none exists
    - Returns null if the last round has already been started
 
-2. **`add_question(\stdClass $questiondata): int`**
+3. **`add_question(\stdClass $questiondata): round_question`**
    - Adds a new question to the editable round
    - Creates question record, first version, and links to round
    - Supports file uploads via `imagedraftitemid` parameter
+   - Returns a `round_question` entity instance
    - Throws exception if no editable round exists
 
-3. **`edit_question(\stdClass $questiondata): void`**
+4. **`edit_question(round_question $roundquestion, \stdClass $questiondata): void`**
    - Updates question content and/or behavior data
    - Creates new version if current version is used in started rounds
    - Otherwise updates existing version in-place
    - Throws exception if no editable round exists
 
-4. **`delete_question(int $questionid): void`**
+5. **`delete_question(round_question $roundquestion): void`**
    - Removes question from editable round
    - Preserves version if used in started rounds
    - Deletes version and question if not used elsewhere
@@ -114,6 +136,40 @@ The `\mod_kahoodle\questions` class provides the core question management functi
 - **Started Rounds**: Once a round starts, its questions are "locked" at their current version
 - **Smart Versioning**: When editing a question that's used in started rounds, a new version is created automatically
 - **Historical Accuracy**: Past rounds always reference the exact version that was shown during gameplay
+
+### Entity Classes
+
+The plugin uses entity classes in `classes/local/entities/` for domain object encapsulation:
+
+#### round Entity (`round.php`)
+
+Represents a game round with lazy-loaded cached access to related data.
+
+**Factory Methods:**
+- `create_from_id(int $id): self` - Load from database by ID
+- `create_from_object(stdClass $record): self` - Create from existing record
+
+**Methods:**
+- `get_id(): int` - Get round ID
+- `get_kahoodleid(): int` - Get parent activity ID
+- `is_editable(): bool` - Check if round is in preparation stage
+- `get_kahoodle(): stdClass` - Get cached kahoodle activity record
+- `get_cm(): stdClass` - Get cached course module record
+- `get_context(): context_module` - Get context module instance
+
+#### round_question Entity (`round_question.php`)
+
+Represents a question in a round, joining data from 3 tables (kahoodle_round_questions, kahoodle_question_versions, kahoodle_questions) in a single query.
+
+**Factory Methods:**
+- `create_from_round_question_id(int $id): self` - Load by round question ID
+- `create_from_question_id(int $id, ?round $round = null): self` - Load by question ID (uses last round if round not specified)
+
+**Methods:**
+- `get_id(): int` - Get round question ID
+- `get_question_id(): int` - Get the question ID
+- `get_round(): round` - Get cached round entity
+- `get_data(): stdClass` - Get combined data from all joined tables
 
 ### Web Services
 
@@ -234,7 +290,9 @@ Stores immutable question properties. Each question has multiple versions.
 
 **Key Fields:**
 - `questiontype`: Type of question (multichoice, text, clickmap, etc.) - **immutable once created**
-- `sortorder`: Display order in activity
+- `timecreated`: Creation timestamp
+
+**Note:** Sort order is stored per-round in `kahoodle_round_questions`, not in this table.
 
 #### 3. kahoodle_question_versions (Version History)
 Stores all versions of question content. Questions can be edited, creating new versions.
@@ -245,6 +303,7 @@ Stores all versions of question content. Questions can be edited, creating new v
 - `questiontext`: Question text content
 - `questionconfig`: JSON for question-specific settings
 - `answersconfig`: JSON for answer options, correct answers, etc.
+- `timecreated`, `timemodified`: Timestamps
 
 **Unique Index:** `questionid, version` - ensures one version record per version number
 
@@ -277,6 +336,7 @@ Links questions to rounds with per-round overrides and statistics.
 - `minpoints`: Override activity default (NULL = use default)
 - `totalresponses`: Total responses collected (NULL until stats collected)
 - `answerdistribution`: JSON with answer distribution (NULL until stats collected)
+- `timecreated`, `timemodified`: Timestamps
 
 **Why per-round settings?** Facilitators can run "practice rounds" with more time or "speed rounds" with less time using the same questions.
 
@@ -448,18 +508,21 @@ vendor/bin/phpunit --filter questions_test
 - Database schema with versioning system
 - Question management API with smart versioning
 - Batch question creation web service
+- Question deletion web service
+- Entity classes for `round` and `round_question` with caching
+- Questions management page with Report Builder system report
+- Question add/edit modal form (dynamic form)
+- AMD module for question UI interactions
+- Constants for defaults, types, stages, file areas, and field lists
 - Comprehensive test coverage
-- Constants for defaults, types, stages, file areas
 - Test data generators
 
 **In Progress:**
-- User interface for question management
 - Round gameplay mechanics
 - Real-time functionality (WebSocket/polling)
 - Participant and response tracking
 
 **To Do:**
-- Frontend UI components
 - Scoreboard and leaderboard displays
 - Mobile-responsive participant view
 - Additional question types
