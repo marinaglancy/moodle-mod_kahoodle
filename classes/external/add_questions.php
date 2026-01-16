@@ -49,17 +49,12 @@ class add_questions extends external_api {
                     'questiontext' => new external_value(PARAM_RAW, 'Question text'),
                     'questiontextformat' => new external_value(
                         PARAM_INT,
-                        'Question text format, 0 - FORMAT_MOODLE, 1 - FORMAT_HTML, 2 - FORMAT_PLAIN',
+                        'Question text format, 0 - FORMAT_MOODLE, 1 - FORMAT_HTML, 2 - FORMAT_PLAIN, 4 - FORMAT_MARKDOWN',
                         VALUE_OPTIONAL,
                     ),
                     'questionconfig' => new external_value(
                         PARAM_RAW,
-                        'JSON configuration for question-specific settings',
-                        VALUE_OPTIONAL
-                    ),
-                    'answersconfig' => new external_value(
-                        PARAM_RAW,
-                        'JSON configuration for answers',
+                        'Type-specific configuration',
                         VALUE_OPTIONAL
                     ),
                     'questionpreviewduration' => new external_value(

@@ -49,7 +49,7 @@ final class add_questions_test extends \advanced_testcase {
                 'questiontype' => 'multichoice',
                 'questiontext' => 'What is 2+2?',
                 'questiontextformat' => FORMAT_HTML,
-                'answersconfig' => json_encode(['options' => ['3', '4', '5'], 'correct' => 1]),
+                'questionconfig' => "3\n*4\n5",
                 'maxpoints' => 1500,
                 'minpoints' => 750,
             ],
@@ -92,14 +92,17 @@ final class add_questions_test extends \advanced_testcase {
             [
                 'kahoodleid' => $kahoodle->id,
                 'questiontext' => 'Question 1',
+                'questionconfig' => "Yes\n*No",
             ],
             [
                 'kahoodleid' => $kahoodle->id,
                 'questiontext' => 'Question 2',
+                'questionconfig' => "Option A\n*Option B\nOption C",
             ],
             [
                 'kahoodleid' => $kahoodle->id,
                 'questiontext' => 'Question 3',
+                'questionconfig' => "True\n*False",
             ],
         ];
 
@@ -195,6 +198,7 @@ final class add_questions_test extends \advanced_testcase {
             [
                 'kahoodleid' => $kahoodle->id,
                 'questiontext' => 'Test question',
+                'questionconfig' => "Option A\n*Option B\nOption C",
             ],
         ];
 
@@ -225,6 +229,7 @@ final class add_questions_test extends \advanced_testcase {
             [
                 'kahoodleid' => $kahoodle->id,
                 'questiontext' => 'Valid question',
+                'questionconfig' => "True\n*False",
             ],
             [
                 'kahoodleid' => 99999,
@@ -233,6 +238,7 @@ final class add_questions_test extends \advanced_testcase {
             [
                 'kahoodleid' => $kahoodle->id,
                 'questiontext' => 'Another valid question',
+                'questionconfig' => "Option 1\n*Option 2\nOption 3",
             ],
         ];
 
@@ -271,8 +277,7 @@ final class add_questions_test extends \advanced_testcase {
                 'questiontype' => 'multichoice',
                 'questiontext' => 'Complete question',
                 'questiontextformat' => FORMAT_PLAIN,
-                'questionconfig' => json_encode(['setting' => 'value']),
-                'answersconfig' => json_encode(['options' => ['A', 'B', 'C'], 'correct' => 0]),
+                'questionconfig' => "3\n*4\n5",
                 'questionpreviewduration' => 15,
                 'questionduration' => 45,
                 'questionresultsduration' => 20,
@@ -292,8 +297,7 @@ final class add_questions_test extends \advanced_testcase {
 
         $this->assertEquals('Complete question', $version->questiontext);
         $this->assertEquals(FORMAT_PLAIN, $version->questiontextformat);
-        $this->assertEquals('{"setting":"value"}', $version->questionconfig);
-        $this->assertEquals('{"options":["A","B","C"],"correct":0}', $version->answersconfig);
+        $this->assertEquals("3\n*4\n5", $version->questionconfig);
 
         // Verify behavior data.
         $round = $DB->get_record('kahoodle_rounds', ['kahoodleid' => $kahoodle->id], '*', MUST_EXIST);
@@ -330,6 +334,7 @@ final class add_questions_test extends \advanced_testcase {
             [
                 'kahoodleid' => $kahoodle->id,
                 'questiontext' => 'Minimal question',
+                'questionconfig' => "Option A\n*Option B",
             ],
         ];
 
@@ -344,7 +349,6 @@ final class add_questions_test extends \advanced_testcase {
 
         $this->assertEquals('multichoice', $question->questiontype);
         $this->assertEquals(FORMAT_HTML, $version->questiontextformat);
-        $this->assertNull($version->questionconfig);
-        $this->assertNull($version->answersconfig);
+        $this->assertEquals("Option A\n*Option B", $version->questionconfig);
     }
 }

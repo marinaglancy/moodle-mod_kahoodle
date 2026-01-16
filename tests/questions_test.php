@@ -128,7 +128,7 @@ final class questions_test extends \advanced_testcase {
         $questiondata->kahoodleid = $kahoodle->id;
         $questiondata->questiontext = 'What is 2+2?';
         $questiondata->questiontextformat = FORMAT_HTML;
-        $questiondata->answersconfig = json_encode(['options' => ['3', '4', '5'], 'correct' => 1]);
+        $questiondata->questionconfig = "3\n*4\n5";
         $questiondata->maxpoints = 1500;
         $questiondata->minpoints = 750;
 
@@ -144,7 +144,7 @@ final class questions_test extends \advanced_testcase {
         $this->assertEquals(1, $version->version);
         $this->assertEquals('What is 2+2?', $version->questiontext);
         $this->assertEquals(FORMAT_HTML, $version->questiontextformat);
-        $this->assertEquals($questiondata->answersconfig, $version->answersconfig);
+        $this->assertEquals($questiondata->questionconfig, $version->questionconfig);
 
         // Verify round was created and question linked.
         $rounds = $DB->get_records('kahoodle_rounds', ['kahoodleid' => $kahoodle->id]);

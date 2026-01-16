@@ -78,7 +78,6 @@ class constants {
         'questiontext',
         'questiontextformat',
         'questionconfig',
-        'answersconfig',
     ];
 
     /** @var array Fields in the table kahoodle_round_questions, except for primary/foreign keys, sortorder, time stamps, stats */

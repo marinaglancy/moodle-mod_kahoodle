@@ -97,7 +97,7 @@ abstract class base {
 
         // Validate questiontextformat is a valid FORMAT_* constant.
         if (isset($data->questiontextformat) && $data->questiontextformat !== null) {
-            $validformats = [FORMAT_MOODLE, FORMAT_HTML, FORMAT_PLAIN, FORMAT_MARKDOWN];
+            $validformats = [(int)FORMAT_MOODLE, (int)FORMAT_HTML, (int)FORMAT_PLAIN, (int)FORMAT_MARKDOWN];
             if (!in_array((int)$data->questiontextformat, $validformats, true)) {
                 unset($data->questiontextformat);
             }
@@ -105,7 +105,7 @@ abstract class base {
 
         // Clean questiontext if set.
         if (isset($data->questiontext) && $data->questiontext !== null) {
-            $format = $data->questiontextformat ?? $kahoodle->questiontextformat;
+            $format = $data->questiontextformat ?? FORMAT_HTML;
             $data->questiontext = clean_text($data->questiontext, $format);
         }
 

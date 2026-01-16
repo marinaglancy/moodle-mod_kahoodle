@@ -45,8 +45,7 @@
         <FIELD NAME="version" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Version number, increments with each edit"/>
         <FIELD NAME="questiontext" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="questiontextformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="questionconfig" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON configuration for question-specific settings"/>
-        <FIELD NAME="answersconfig" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON configuration: answer options, correct answers, etc."/>
+        <FIELD NAME="questionconfig" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Type-specific settings (list of options, etc)"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>

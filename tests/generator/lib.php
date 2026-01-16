@@ -75,8 +75,7 @@ class mod_kahoodle_generator extends testing_module_generator {
      *     - questiontype: Type of question (default: 'multichoice')
      *     - questiontext: Question text (default: 'Sample question')
      *     - questiontextformat: Text format (default: FORMAT_HTML)
-     *     - questionconfig: JSON config (default: null)
-     *     - answersconfig: JSON config for answers (default: null)
+     *     - questionconfig: Type-specific configuration (may be required)
      *     - questionpreviewduration: Preview duration override (default: null)
      *     - questionduration: Question duration override (default: null)
      *     - questionresultsduration: Results duration override (default: null)
@@ -96,6 +95,9 @@ class mod_kahoodle_generator extends testing_module_generator {
 
         if (!isset($record->questiontext)) {
             $record->questiontext = 'Sample question ' . $counter++;
+        }
+        if (($record->questiontype ?? 'multichoice') === 'multichoice' && empty($record->questionconfig)) {
+            $record->questionconfig = "Option 1\n*Option 2\nOption 3";
         }
 
         // Use the questions API to add the question.

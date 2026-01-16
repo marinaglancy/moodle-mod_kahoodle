@@ -29,7 +29,7 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │       ├── restore_kahoodle_activity_task.class.php
 │       └── restore_kahoodle_stepslib.php
 ├── classes/
-│   ├── constants.php         # Plugin constants (defaults, question types, stages, file areas, field lists)
+│   ├── constants.php         # Plugin constants (defaults, stages, file areas, field lists)
 │   ├── questions.php         # Question management API
 │   ├── courseformat/         # Course format integration
 │   │   └── overview.php
@@ -41,9 +41,13 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   └── delete_question.php # Question deletion web service
 │   ├── form/                 # Dynamic forms
 │   │   └── question.php      # Question add/edit modal form
-│   ├── local/entities/       # Domain entity classes
-│   │   ├── round.php         # Round entity with caching for kahoodle/cm/context
-│   │   └── round_question.php # Round question entity (joins 3 tables)
+│   ├── local/
+│   │   ├── entities/         # Domain entity classes
+│   │   │   ├── round.php     # Round entity with caching for kahoodle/cm/context
+│   │   │   └── round_question.php # Round question entity (joins 3 tables)
+│   │   └── questiontypes/    # Question type implementations
+│   │       ├── base.php      # Abstract base class for question types
+│   │       └── multichoice.php # Multiple choice question type
 │   └── reportbuilder/local/  # Report builder components
 │       ├── entities/
 │       │   └── question.php  # Question entity for reports
@@ -80,7 +84,6 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 All plugin constants are defined in `classes/constants.php`:
 
 - **Default Values**: Activity defaults (lobby duration, question timing, points)
-- **Question Types**: `QUESTION_TYPE_MULTICHOICE` (currently only type implemented)
 - **Round Stages**: `STAGE_PREPARATION`, `STAGE_LOBBY`, `STAGE_QUESTION_PREVIEW`, `STAGE_QUESTION`, `STAGE_QUESTION_RESULTS`, `STAGE_LEADERS`, `STAGE_REVISION`, `STAGE_ARCHIVED`
 - **File Areas**: `FILEAREA_QUESTION_IMAGE` for question images
 - **Field Lists**: `FIELDS_QUESTION_VERSION` and `FIELDS_ROUND_QUESTION` for consistent field handling across entities and API methods
@@ -101,30 +104,35 @@ The `\mod_kahoodle\questions` class provides the core question management functi
 
 #### Available Methods
 
-1. **`get_last_round(int $kahoodleid): round`**
+1. **`get_question_types(): array`**
+   - Returns array of available question type instances
+   - Each instance extends `\mod_kahoodle\local\questiontypes\base`
+   - Currently returns: `[multichoice]`
+
+2. **`get_last_round(int $kahoodleid): round`**
    - Returns the most recent round, prioritizing rounds in preparation stage
    - Creates a new round if none exists
    - Returns a `round` entity instance
 
-2. **`get_editable_round_id(int $kahoodleid): ?int`**
+3. **`get_editable_round_id(int $kahoodleid): ?int`**
    - Returns the ID of the editable round (preparation stage, not yet started)
    - Creates a new round if none exists
    - Returns null if the last round has already been started
 
-3. **`add_question(\stdClass $questiondata): round_question`**
+4. **`add_question(\stdClass $questiondata): round_question`**
    - Adds a new question to the editable round
    - Creates question record, first version, and links to round
    - Supports file uploads via `imagedraftitemid` parameter
    - Returns a `round_question` entity instance
    - Throws exception if no editable round exists
 
-4. **`edit_question(round_question $roundquestion, \stdClass $questiondata): void`**
+5. **`edit_question(round_question $roundquestion, \stdClass $questiondata): void`**
    - Updates question content and/or behavior data
    - Creates new version if current version is used in started rounds
    - Otherwise updates existing version in-place
    - Throws exception if no editable round exists
 
-5. **`delete_question(round_question $roundquestion): void`**
+6. **`delete_question(round_question $roundquestion): void`**
    - Removes question from editable round
    - Preserves version if used in started rounds
    - Deletes version and question if not used elsewhere
@@ -164,12 +172,45 @@ Represents a question in a round, joining data from 3 tables (kahoodle_round_que
 **Factory Methods:**
 - `create_from_round_question_id(int $id): self` - Load by round question ID
 - `create_from_question_id(int $id, ?round $round = null): self` - Load by question ID (uses last round if round not specified)
+- `new_for_round_and_type(round $round, ?string $questiontype = null): self` - Create new instance for adding a question (doesn't persist to DB)
 
 **Methods:**
-- `get_id(): int` - Get round question ID
+- `get_id(): int` - Get round question ID (0 for new questions)
 - `get_question_id(): int` - Get the question ID
 - `get_round(): round` - Get cached round entity
 - `get_data(): stdClass` - Get combined data from all joined tables
+- `get_question_type(): base` - Get the question type instance for this question
+
+### Question Types
+
+Question types are implemented as classes in `classes/local/questiontypes/`. Each type extends the abstract `base` class.
+
+#### Base Class (`base.php`)
+
+Abstract class that all question types must extend:
+
+**Required Methods:**
+- `get_display_name(): string` - Human-readable name for UI
+- `sanitize_question_config_data(round_question $roundquestion, \stdClass $data): void` - Type-specific data validation/sanitization
+- `question_form_definition(round_question $roundquestion, \MoodleQuickForm $mform): void` - Add type-specific form elements
+- `question_form_validation(round_question $roundquestion, array $data, array $files): array` - Type-specific form validation
+
+**Provided Methods:**
+- `get_type(): string` - Returns the type identifier (class name, e.g., 'multichoice')
+- `sanitize_data(round_question $roundquestion, \stdClass $data): void` - Common sanitization (validates fields, formats, durations, points) then calls `sanitize_question_config_data()`
+
+#### Multichoice Type (`multichoice.php`)
+
+Multiple choice questions with 2-8 answer options.
+
+**questionconfig Format:**
+- One option per line
+- Prefix correct answer with asterisk (`*`)
+- Example: `"Option A\n*Option B\nOption C"` (Option B is correct)
+
+**Validation:**
+- Requires 2-8 options
+- Exactly one option must be marked as correct
 
 ### Web Services
 
@@ -183,8 +224,7 @@ Batch question creation web service defined in `classes/external/add_questions.p
   - `questiontext` (required): Question text
   - `questiontype` (optional): Defaults to multichoice
   - `questiontextformat` (optional): Defaults to FORMAT_HTML
-  - `questionconfig` (optional): JSON for question-specific settings
-  - `answersconfig` (optional): JSON for answers
+  - `questionconfig` (optional): Type-specific configuration (e.g., answer options for multichoice)
   - `questionpreviewduration` (optional): Preview duration override
   - `questionduration` (optional): Question duration override
   - `questionresultsduration` (optional): Results duration override
@@ -423,10 +463,10 @@ After **every database schema change**, you must bump the version number in `ver
 
 **IMPORTANT**: This plugin has its own git repository separate from the Moodle repository.
 
-When committing changes:
-1. Change directory to the plugin folder first: `cd mod/kahoodle` (or `cd public/mod/kahoodle` for Moodle 5.1+)
-2. Run git commands from within the plugin directory
-3. This prevents accidentally committing to the Moodle repository
+When the user asks to commit, check commits, diff, or perform any git operations in the plugin:
+1. **First change directory** to the plugin folder: `cd mod/kahoodle` (or `cd public/mod/kahoodle` for Moodle 5.1+)
+2. Then run git commands from within the plugin directory
+3. This prevents accidentally operating on the Moodle repository instead of the plugin
 
 **Example:**
 ```bash
