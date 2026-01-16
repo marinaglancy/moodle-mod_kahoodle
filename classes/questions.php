@@ -346,6 +346,9 @@ class questions {
         // Always delete the link between the question and the editable round.
         $DB->delete_records('kahoodle_round_questions', ['id' => $roundquestion->get_id()]);
 
+        // Fix sortorder for the round.
+        self::fix_round_sortorder($round->get_id());
+
         // Check if this version is used in any non-editable rounds.
         $questionversionid = $roundquestion->get_data()->questionversionid;
         $usedinotherrounds = $DB->count_records('kahoodle_round_questions', ['questionversionid' => $questionversionid]);
@@ -360,6 +363,32 @@ class questions {
                 // Delete the question itself.
                 $DB->delete_records('kahoodle_questions', ['id' => $questionid]);
             }
+        }
+    }
+
+    /**
+     * Fix sortorder for questions in a round
+     *
+     * Renumbers questions sequentially (1, 2, 3, ...) based on their current order.
+     *
+     * @param int $roundid The round ID
+     * @return void
+     */
+    protected static function fix_round_sortorder(int $roundid): void {
+        global $DB;
+
+        $questions = $DB->get_records(
+            'kahoodle_round_questions',
+            ['roundid' => $roundid],
+            'sortorder ASC',
+            'id, sortorder'
+        );
+        $sortorder = 1;
+        foreach ($questions as $question) {
+            if ($question->sortorder != $sortorder) {
+                $DB->set_field('kahoodle_round_questions', 'sortorder', $sortorder, ['id' => $question->id]);
+            }
+            $sortorder++;
         }
     }
 }

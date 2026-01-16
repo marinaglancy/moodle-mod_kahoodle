@@ -26,11 +26,14 @@ import ModalForm from 'core_form/modalform';
 import {getString} from 'core/str';
 import * as reportEvents from 'core_reportbuilder/local/events';
 import * as reportSelectors from 'core_reportbuilder/local/selectors';
+import Notification from 'core/notification';
+import {call as fetchMany} from 'core/ajax';
 
 const SELECTORS = {
     QUESTIONS_REGION: '[data-region="mod_kahoodle-questions"]',
     ADD_QUESTION_BUTTON: '[data-action="mod_kahoodle-add-question"]',
     EDIT_QUESTION_BUTTON: '[data-action="mod_kahoodle-edit-question"]',
+    DELETE_QUESTION_BUTTON: '[data-action="mod_kahoodle-delete-question"]',
 };
 
 /**
@@ -57,6 +60,14 @@ export const init = (roundId, questionTypes) => {
                 e.preventDefault();
                 const roundQuestionId = editButton.dataset.roundquestionid;
                 await openQuestionForm(roundId, parseInt(roundQuestionId, 10), null, questionTypes);
+                return;
+            }
+
+            const deleteButton = e.target.closest(SELECTORS.DELETE_QUESTION_BUTTON);
+            if (deleteButton) {
+                e.preventDefault();
+                const questionId = deleteButton.dataset.questionid;
+                await deleteQuestion(parseInt(questionId, 10));
             }
         });
     }
@@ -101,12 +112,47 @@ const openQuestionForm = async(roundId, roundQuestionId = 0, questionType = null
     });
 
     modalForm.addEventListener(modalForm.events.FORM_SUBMITTED, () => {
-        const questionsRegion = document.querySelector(SELECTORS.QUESTIONS_REGION);
-        const reportElement = questionsRegion?.querySelector(reportSelectors.regions.report);
-        if (reportElement) {
-            dispatchEvent(reportEvents.tableReload, {preservePagination: true}, reportElement);
-        }
+        reloadQuestionsTable();
     });
 
     modalForm.show();
+};
+
+/**
+ * Delete a question with confirmation
+ *
+ * @param {number} questionId The question ID to delete
+ */
+const deleteQuestion = async(questionId) => {
+    const confirmMessage = await getString('deletequestionconfirm', 'mod_kahoodle');
+    const confirmTitle = await getString('deletequestion', 'mod_kahoodle');
+
+    Notification.confirm(
+        confirmTitle,
+        confirmMessage,
+        await getString('delete', 'core'),
+        await getString('cancel', 'core'),
+        async() => {
+            try {
+                await fetchMany([{
+                    methodname: 'mod_kahoodle_delete_question',
+                    args: {questionid: questionId},
+                }])[0];
+                reloadQuestionsTable();
+            } catch (error) {
+                Notification.exception(error);
+            }
+        }
+    );
+};
+
+/**
+ * Reload the questions table
+ */
+const reloadQuestionsTable = () => {
+    const questionsRegion = document.querySelector(SELECTORS.QUESTIONS_REGION);
+    const reportElement = questionsRegion?.querySelector(reportSelectors.regions.report);
+    if (reportElement) {
+        dispatchEvent(reportEvents.tableReload, {preservePagination: true}, reportElement);
+    }
 };

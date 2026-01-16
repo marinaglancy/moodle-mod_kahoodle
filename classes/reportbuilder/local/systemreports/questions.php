@@ -78,7 +78,7 @@ class questions extends system_report {
         $this->add_base_condition_simple("{$roundquestionalias}.roundid", $this->get_round()->get_id());
 
         // Add base fields for actions.
-        $this->add_base_fields("{$roundquestionalias}.id");
+        $this->add_base_fields("{$roundquestionalias}.id, {$questionalias}.id AS questionid");
 
         // Add columns.
         $this->add_columns();
@@ -148,5 +148,16 @@ class questions extends system_report {
             false,
             new lang_string('editquestion', 'mod_kahoodle')
         ));
+
+        // Delete action.
+        if ($this->get_round()->is_editable()) {
+            $this->add_action(new action(
+                new moodle_url('#'),
+                new pix_icon('t/delete', ''),
+                ['data-action' => 'mod_kahoodle-delete-question', 'data-questionid' => ':questionid'],
+                false,
+                new lang_string('deletequestion', 'mod_kahoodle')
+            ));
+        }
     }
 }

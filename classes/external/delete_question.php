@@ -61,8 +61,7 @@ class delete_question extends external_api {
         $roundquestion = round_question::create_from_question_id($questionid);
 
         // Get the course module and validate context.
-        $cm = $roundquestion->get_round()->get_cm();
-        $context = \context_module::instance($cm->id);
+        $context = $roundquestion->get_round()->get_context();
         self::validate_context($context);
 
         // Check capability.
