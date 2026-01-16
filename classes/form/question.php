@@ -37,29 +37,33 @@ class question extends dynamic_form {
     /**
      * Get round question data for add or edit mode
      *
-     * @return array [roundquestion, round] - roundquestion is null for add mode
+     * @return array [roundquestion, round, questiontype] - roundquestion is null for add mode
      */
     protected function get_round_question_data(): array {
-        global $DB;
-
         if ($this->roundquestiondata !== null) {
             return $this->roundquestiondata;
         }
 
         $roundquestionid = $this->optional_param('roundquestionid', 0, PARAM_INT);
         $roundid = $this->optional_param('roundid', 0, PARAM_INT);
+        $questiontype = $this->optional_param('questiontype', '', PARAM_ALPHANUMEXT);
 
         if ($roundquestionid) {
             // Edit mode - load existing round question.
             $roundquestion = round_question::create_from_round_question_id($roundquestionid);
             $round = $roundquestion->get_round();
+            $questiontype = $roundquestion->get_data()->questiontype;
         } else {
             // Add mode - load round by ID.
             $round = round::create_from_id($roundid);
             $roundquestion = null;
+            // Default to multichoice if not specified.
+            if (empty($questiontype)) {
+                $questiontype = constants::QUESTION_TYPE_MULTICHOICE;
+            }
         }
 
-        $this->roundquestiondata = [$roundquestion, $round];
+        $this->roundquestiondata = [$roundquestion, $round, $questiontype];
         return $this->roundquestiondata;
     }
 
@@ -69,7 +73,7 @@ class question extends dynamic_form {
     protected function definition() {
         $mform = $this->_form;
 
-        [$roundquestion, $round] = $this->get_round_question_data();
+        [$roundquestion, $round, $questiontype] = $this->get_round_question_data();
 
         // Hidden fields.
         $mform->addElement('hidden', 'roundquestionid', $roundquestion ? $roundquestion->get_id() : 0);
@@ -78,14 +82,9 @@ class question extends dynamic_form {
         $mform->addElement('hidden', 'roundid', $round->get_id());
         $mform->setType('roundid', PARAM_INT);
 
-        // Question type (only for add mode).
-        if (!$roundquestion) {
-            $questiontypes = [
-                constants::QUESTION_TYPE_MULTICHOICE => get_string('questiontype_multichoice', 'mod_kahoodle'),
-            ];
-            $mform->addElement('select', 'questiontype', get_string('questiontype', 'mod_kahoodle'), $questiontypes);
-            $mform->setDefault('questiontype', constants::QUESTION_TYPE_MULTICHOICE);
-        }
+        // Question type is passed as parameter and stored as hidden field.
+        $mform->addElement('hidden', 'questiontype', $questiontype);
+        $mform->setType('questiontype', PARAM_ALPHANUMEXT);
 
         // Question text.
         $mform->addElement('editor', 'questiontext_editor', get_string('questiontext', 'mod_kahoodle'), null, [
@@ -187,12 +186,56 @@ class question extends dynamic_form {
     }
 
     /**
+     * Form validation
+     *
+     * @param array $data
+     * @param array $files
+     * @return array
+     */
+    public function validation($data, $files): array {
+        $errors = parent::validation($data, $files);
+
+        [, $round, ] = $this->get_round_question_data();
+        $kahoodle = $round->get_kahoodle();
+
+        // Helper to get effective value (submitted or default).
+        $getvalue = function (string $field, string $defaultfield) use ($data, $kahoodle): int {
+            return strlen("" . $data[$field]) ? (int)$data[$field] : (int)$kahoodle->$defaultfield;
+        };
+
+        // Validate non-negative values.
+        $numericfields = [
+            'maxpoints' => 'maxpointsgroup',
+            'minpoints' => 'minpointsgroup',
+            'questionpreviewduration' => 'questionpreviewdurationgroup',
+            'questionduration' => 'questiondurationgroup',
+            'questionresultsduration' => 'questionresultsdurationgroup',
+        ];
+
+        foreach ($numericfields as $field => $groupname) {
+            if (strlen("" . $data[$field]) && (int)$data[$field] < 0) {
+                $errors[$groupname] = get_string('error_nonnegative', 'mod_kahoodle');
+            }
+        }
+
+        // Validate maxpoints >= minpoints (considering defaults).
+        $maxpoints = $getvalue('maxpoints', 'defaultmaxpoints');
+        $minpoints = $getvalue('minpoints', 'defaultminpoints');
+
+        if ($maxpoints < $minpoints) {
+            $errors['maxpointsgroup'] = get_string('error_maxpoints_less_than_minpoints', 'mod_kahoodle');
+        }
+
+        return $errors;
+    }
+
+    /**
      * Returns context for dynamic submission
      *
      * @return context
      */
     protected function get_context_for_dynamic_submission(): context {
-        [, $round] = $this->get_round_question_data();
+        [, $round, ] = $this->get_round_question_data();
         return $round->get_context();
     }
 
@@ -210,10 +253,8 @@ class question extends dynamic_form {
      * @return array
      */
     public function process_dynamic_submission(): array {
-        global $DB;
-
         $data = $this->get_data();
-        [$roundquestion, $round] = $this->get_round_question_data();
+        [$roundquestion, $round, ] = $this->get_round_question_data();
 
         // Prepare question data.
         $questiondata = new \stdClass();
@@ -248,13 +289,12 @@ class question extends dynamic_form {
      * Set data for dynamic submission
      */
     public function set_data_for_dynamic_submission(): void {
-        global $DB;
-
-        [$roundquestion, $round] = $this->get_round_question_data();
+        [$roundquestion, $round, $questiontype] = $this->get_round_question_data();
 
         $data = [
             'roundquestionid' => $roundquestion ? $roundquestion->get_id() : 0,
             'roundid' => $round->get_id(),
+            'questiontype' => $questiontype,
         ];
 
         if ($roundquestion) {
@@ -282,7 +322,7 @@ class question extends dynamic_form {
      * @return moodle_url
      */
     protected function get_page_url_for_dynamic_submission(): moodle_url {
-        [$roundquestion, $round] = $this->get_round_question_data();
+        [$roundquestion, $round, ] = $this->get_round_question_data();
         return new moodle_url('/mod/kahoodle/questions.php', [
             'roundid' => $round->get_id(),
             'roundquestionid' => $roundquestion ? $roundquestion->get_id() : 0]);

@@ -48,6 +48,17 @@ class constants {
     /** @var string Question type: multiple choice */
     public const QUESTION_TYPE_MULTICHOICE = 'multichoice';
 
+    /**
+     * Get all available question types
+     *
+     * @return array Array of type => lang string key
+     */
+    public static function get_question_types(): array {
+        return [
+            self::QUESTION_TYPE_MULTICHOICE => 'questiontype_multichoice',
+        ];
+    }
+
     /** @var string File area for question images */
     public const FILEAREA_QUESTION_IMAGE = 'questionimage';
 

@@ -26,6 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['addquestion'] = 'Add question';
+$string['addquestiontype'] = 'Add question: {$a}';
 $string['allowrepeat'] = 'Allow repeat participation';
 $string['allowrepeat_help'] = 'If enabled, users can participate in multiple rounds of this activity.';
 $string['answersconfig'] = 'Answers configuration';
@@ -35,6 +36,8 @@ $string['defaultminpoints'] = 'Minimum points';
 $string['defaultminpoints_help'] = 'Minimum points awarded for the slowest correct answer.';
 $string['defaultvalue'] = 'Default: {$a}';
 $string['editquestion'] = 'Edit question';
+$string['error_maxpoints_less_than_minpoints'] = 'Maximum points must be greater than or equal to minimum points.';
+$string['error_nonnegative'] = 'Value must be zero or positive.';
 $string['kahoodle:addinstance'] = 'Add a new Kahoodle';
 $string['kahoodle:manage_questions'] = 'Manage questions in Kahoodle';
 $string['kahoodle:view'] = 'View Kahoodle';

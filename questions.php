@@ -45,22 +45,46 @@ $PAGE->activityheader->disable();
 
 $round = \mod_kahoodle\questions::get_last_round($moduleinstance->id);
 
-$PAGE->requires->js_call_amd('mod_kahoodle/questions', 'initAddQuestion', [$round->get_id()]);
+// Build question types for JavaScript.
+$questiontypes = [];
+foreach (\mod_kahoodle\constants::get_question_types() as $type => $langkey) {
+    $questiontypes[] = [
+        'type' => $type,
+        'name' => get_string($langkey, 'mod_kahoodle'),
+    ];
+}
+
+$PAGE->requires->js_call_amd('mod_kahoodle/questions', 'init', [$round->get_id(), $questiontypes]);
 
 echo $OUTPUT->header();
 
 echo html_writer::start_div('', ['data-region' => 'mod_kahoodle-questions']);
 
-// Add question button.
-echo html_writer::div(
-    $OUTPUT->single_button(
-        new moodle_url('#'),
-        get_string('addquestion', 'mod_kahoodle'),
-        'get',
-        ['class' => 'mb-3', 'attributes' => ['data-action' => 'mod_kahoodle-add-question']]
-    ),
-    'mb-3'
+// Add question dropdown button.
+$dropdownitems = [];
+foreach (\mod_kahoodle\constants::get_question_types() as $type => $langkey) {
+    $dropdownitems[] = html_writer::link(
+        '#',
+        get_string($langkey, 'mod_kahoodle'),
+        ['class' => 'dropdown-item', 'data-action' => 'mod_kahoodle-add-question', 'data-questiontype' => $type]
+    );
+}
+
+echo html_writer::start_div('dropdown mb-3');
+echo html_writer::tag(
+    'button',
+    get_string('addquestion', 'mod_kahoodle') . ' <span class="caret"></span>',
+    [
+        'class' => 'btn btn-primary dropdown-toggle',
+        'type' => 'button',
+        'data-toggle' => 'dropdown',
+        'data-bs-toggle' => 'dropdown',
+        'aria-haspopup' => 'true',
+        'aria-expanded' => 'false',
+    ]
 );
+echo html_writer::tag('div', implode('', $dropdownitems), ['class' => 'dropdown-menu']);
+echo html_writer::end_div();
 
 $report = \core_reportbuilder\system_report_factory::create(
     \mod_kahoodle\reportbuilder\local\systemreports\questions::class,

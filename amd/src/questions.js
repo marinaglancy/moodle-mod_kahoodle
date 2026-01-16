@@ -34,28 +34,29 @@ const SELECTORS = {
 };
 
 /**
- * Initialize the add question button
+ * Initialize the questions page
  *
  * @param {number} roundId The round ID
+ * @param {Array} questionTypes Array of {type, name} objects for available question types
  */
-export const initAddQuestion = (roundId) => {
-    const addButton = document.querySelector(SELECTORS.ADD_QUESTION_BUTTON);
-    if (addButton) {
-        addButton.addEventListener('click', async(e) => {
-            e.preventDefault();
-            await openQuestionForm(roundId);
-        });
-    }
-
-    // Use event delegation for edit buttons (they are dynamically rendered in the report).
+export const init = (roundId, questionTypes) => {
+    // Use event delegation for all buttons.
     const questionsRegion = document.querySelector(SELECTORS.QUESTIONS_REGION);
     if (questionsRegion) {
         questionsRegion.addEventListener('click', async(e) => {
+            const addButton = e.target.closest(SELECTORS.ADD_QUESTION_BUTTON);
+            if (addButton) {
+                e.preventDefault();
+                const questionType = addButton.dataset.questiontype;
+                await openQuestionForm(roundId, 0, questionType, questionTypes);
+                return;
+            }
+
             const editButton = e.target.closest(SELECTORS.EDIT_QUESTION_BUTTON);
             if (editButton) {
                 e.preventDefault();
                 const roundQuestionId = editButton.dataset.roundquestionid;
-                await openQuestionForm(roundId, parseInt(roundQuestionId, 10));
+                await openQuestionForm(roundId, parseInt(roundQuestionId, 10), null, questionTypes);
             }
         });
     }
@@ -66,16 +67,36 @@ export const initAddQuestion = (roundId) => {
  *
  * @param {number} roundId The round ID
  * @param {number} roundQuestionId Optional round question ID for editing
+ * @param {string|null} questionType Question type for add mode
+ * @param {Array} questionTypes Array of {type, name} objects for available question types
  */
-const openQuestionForm = async(roundId, roundQuestionId = 0) => {
+const openQuestionForm = async(roundId, roundQuestionId = 0, questionType = null, questionTypes = []) => {
+    // Determine modal title.
+    let title;
+    if (roundQuestionId) {
+        title = await getString('editquestion', 'mod_kahoodle');
+    } else {
+        // Find the question type name.
+        const typeInfo = questionTypes.find(t => t.type === questionType);
+        const typeName = typeInfo ? typeInfo.name : questionType;
+        title = await getString('addquestiontype', 'mod_kahoodle', typeName);
+    }
+
+    const args = {
+        roundid: roundId,
+        roundquestionid: roundQuestionId,
+    };
+
+    // Pass question type for add mode.
+    if (questionType) {
+        args.questiontype = questionType;
+    }
+
     const modalForm = new ModalForm({
         formClass: 'mod_kahoodle\\form\\question',
-        args: {
-            roundid: roundId,
-            roundquestionid: roundQuestionId,
-        },
+        args: args,
         modalConfig: {
-            title: await getString(roundQuestionId ? 'editquestion' : 'addquestion', 'mod_kahoodle'),
+            title: title,
         },
     });
 

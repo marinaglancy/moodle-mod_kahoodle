@@ -128,4 +128,38 @@ class mod_kahoodle_mod_form extends moodleform_mod {
 
         $this->add_action_buttons();
     }
+
+    /**
+     * Form validation
+     *
+     * @param array $data
+     * @param array $files
+     * @return array
+     */
+    public function validation($data, $files): array {
+        $errors = parent::validation($data, $files);
+
+        // Validate non-negative values.
+        $numericfields = [
+            'lobbyduration',
+            'questionpreviewduration',
+            'questionduration',
+            'questionresultsduration',
+            'defaultmaxpoints',
+            'defaultminpoints',
+        ];
+
+        foreach ($numericfields as $field) {
+            if (isset($data[$field]) && (int)$data[$field] < 0) {
+                $errors[$field] = get_string('error_nonnegative', 'mod_kahoodle');
+            }
+        }
+
+        // Validate maxpoints >= minpoints.
+        if ((int)$data['defaultmaxpoints'] < (int)$data['defaultminpoints']) {
+            $errors['defaultmaxpoints'] = get_string('error_maxpoints_less_than_minpoints', 'mod_kahoodle');
+        }
+
+        return $errors;
+    }
 }
