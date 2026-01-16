@@ -66,36 +66,45 @@ class mod_kahoodle_mod_form extends moodleform_mod {
             'duration',
             'lobbyduration',
             get_string('lobbyduration', 'mod_kahoodle'),
-            ['optional' => false]
+            ['optional' => false, 'units' => [60, 1]]
         );
         $mform->setDefault('lobbyduration', constants::DEFAULT_LOBBY_DURATION);
         $mform->addHelpButton('lobbyduration', 'lobbyduration', 'mod_kahoodle');
 
         $mform->addElement(
-            'duration',
+            'text',
             'questionpreviewduration',
             get_string('questionpreviewduration', 'mod_kahoodle'),
-            ['optional' => false]
+            ['size' => '10']
         );
+        $mform->setType('questionpreviewduration', PARAM_INT);
         $mform->setDefault('questionpreviewduration', constants::DEFAULT_QUESTION_PREVIEW_DURATION);
+        $mform->addRule('questionpreviewduration', null, 'required', null, 'client');
+        $mform->addRule('questionpreviewduration', null, 'numeric', null, 'client');
         $mform->addHelpButton('questionpreviewduration', 'questionpreviewduration', 'mod_kahoodle');
 
         $mform->addElement(
-            'duration',
+            'text',
             'questionduration',
             get_string('questionduration', 'mod_kahoodle'),
-            ['optional' => false]
+            ['size' => '10']
         );
+        $mform->setType('questionduration', PARAM_INT);
         $mform->setDefault('questionduration', constants::DEFAULT_QUESTION_DURATION);
+        $mform->addRule('questionduration', null, 'required', null, 'client');
+        $mform->addRule('questionduration', null, 'numeric', null, 'client');
         $mform->addHelpButton('questionduration', 'questionduration', 'mod_kahoodle');
 
         $mform->addElement(
-            'duration',
+            'text',
             'questionresultsduration',
             get_string('questionresultsduration', 'mod_kahoodle'),
-            ['optional' => false]
+            ['size' => '10']
         );
+        $mform->setType('questionresultsduration', PARAM_INT);
         $mform->setDefault('questionresultsduration', constants::DEFAULT_QUESTION_RESULTS_DURATION);
+        $mform->addRule('questionresultsduration', null, 'required', null, 'client');
+        $mform->addRule('questionresultsduration', null, 'numeric', null, 'client');
         $mform->addHelpButton('questionresultsduration', 'questionresultsduration', 'mod_kahoodle');
 
         // Points settings.

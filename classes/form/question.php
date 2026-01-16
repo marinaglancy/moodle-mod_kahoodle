@@ -17,7 +17,6 @@
 namespace mod_kahoodle\form;
 
 use context;
-use context_module;
 use core_form\dynamic_form;
 use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
@@ -107,25 +106,84 @@ class question extends dynamic_form {
         // Question behavior overrides.
         $mform->addElement('header', 'behaviorheader', get_string('questionbehavior', 'mod_kahoodle'));
 
-        $mform->addElement('text', 'maxpoints', get_string('defaultmaxpoints', 'mod_kahoodle'));
-        $mform->setType('maxpoints', PARAM_INT);
-        $mform->addHelpButton('maxpoints', 'defaultmaxpoints', 'mod_kahoodle');
+        $kahoodle = $round->get_kahoodle();
 
-        $mform->addElement('text', 'minpoints', get_string('defaultminpoints', 'mod_kahoodle'));
-        $mform->setType('minpoints', PARAM_INT);
-        $mform->addHelpButton('minpoints', 'defaultminpoints', 'mod_kahoodle');
+        $group = [];
+        $group[] = $mform->createElement('text', 'maxpoints', '', ['size' => '10']);
+        $group[] = $mform->createElement(
+            'static',
+            'maxpoints_default',
+            '',
+            get_string('defaultvalue', 'mod_kahoodle', $kahoodle->defaultmaxpoints)
+        );
+        $mform->addGroup($group, 'maxpointsgroup', get_string('defaultmaxpoints', 'mod_kahoodle'), ' ', false);
+        $mform->setType('maxpoints', PARAM_RAW_TRIMMED);
+        $mform->addHelpButton('maxpointsgroup', 'defaultmaxpoints', 'mod_kahoodle');
+        $mform->addGroupRule('maxpointsgroup', ['maxpoints' => [[null, 'numeric', null, 'client']]]);
 
-        $mform->addElement('text', 'questionpreviewduration', get_string('questionpreviewduration', 'mod_kahoodle'));
-        $mform->setType('questionpreviewduration', PARAM_INT);
-        $mform->addHelpButton('questionpreviewduration', 'questionpreviewduration', 'mod_kahoodle');
+        $group = [];
+        $group[] = $mform->createElement('text', 'minpoints', '', ['size' => '10']);
+        $group[] = $mform->createElement(
+            'static',
+            'minpoints_default',
+            '',
+            get_string('defaultvalue', 'mod_kahoodle', $kahoodle->defaultminpoints)
+        );
+        $mform->addGroup($group, 'minpointsgroup', get_string('defaultminpoints', 'mod_kahoodle'), ' ', false);
+        $mform->setType('minpoints', PARAM_RAW_TRIMMED);
+        $mform->addHelpButton('minpointsgroup', 'defaultminpoints', 'mod_kahoodle');
+        $mform->addGroupRule('minpointsgroup', ['minpoints' => [[null, 'numeric', null, 'client']]]);
 
-        $mform->addElement('text', 'questionduration', get_string('questionduration', 'mod_kahoodle'));
-        $mform->setType('questionduration', PARAM_INT);
-        $mform->addHelpButton('questionduration', 'questionduration', 'mod_kahoodle');
+        $group = [];
+        $group[] = $mform->createElement('text', 'questionpreviewduration', '', ['size' => '10']);
+        $group[] = $mform->createElement(
+            'static',
+            'questionpreviewduration_default',
+            '',
+            get_string('defaultvalue', 'mod_kahoodle', $kahoodle->questionpreviewduration)
+        );
+        $mform->addGroup(
+            $group,
+            'questionpreviewdurationgroup',
+            get_string('questionpreviewduration', 'mod_kahoodle'),
+            ' ',
+            false
+        );
+        $mform->setType('questionpreviewduration', PARAM_RAW_TRIMMED);
+        $mform->addHelpButton('questionpreviewdurationgroup', 'questionpreviewduration', 'mod_kahoodle');
+        $mform->addGroupRule('questionpreviewdurationgroup', ['questionpreviewduration' => [[null, 'numeric', null, 'client']]]);
 
-        $mform->addElement('text', 'questionresultsduration', get_string('questionresultsduration', 'mod_kahoodle'));
-        $mform->setType('questionresultsduration', PARAM_INT);
-        $mform->addHelpButton('questionresultsduration', 'questionresultsduration', 'mod_kahoodle');
+        $group = [];
+        $group[] = $mform->createElement('text', 'questionduration', '', ['size' => '10']);
+        $group[] = $mform->createElement(
+            'static',
+            'questionduration_default',
+            '',
+            get_string('defaultvalue', 'mod_kahoodle', $kahoodle->questionduration)
+        );
+        $mform->addGroup($group, 'questiondurationgroup', get_string('questionduration', 'mod_kahoodle'), ' ', false);
+        $mform->setType('questionduration', PARAM_RAW_TRIMMED);
+        $mform->addHelpButton('questiondurationgroup', 'questionduration', 'mod_kahoodle');
+        $mform->addGroupRule('questiondurationgroup', ['questionduration' => [[null, 'numeric', null, 'client']]]);
+
+        $group = [];
+        $group[] = $mform->createElement('text', 'questionresultsduration', '', ['size' => '10']);
+        $group[] = $mform->createElement(
+            'static',
+            'questionresultsduration_default',
+            '',
+            get_string('defaultvalue', 'mod_kahoodle', $kahoodle->questionresultsduration)
+        );
+        $mform->addGroup(
+            $group,
+            'questionresultsdurationgroup',
+            get_string('questionresultsduration', 'mod_kahoodle'),
+            ' ',
+            false
+        );
+        $mform->setType('questionresultsduration', PARAM_RAW_TRIMMED);
+        $mform->addHelpButton('questionresultsdurationgroup', 'questionresultsduration', 'mod_kahoodle');
+        $mform->addGroupRule('questionresultsdurationgroup', ['questionresultsduration' => [[null, 'numeric', null, 'client']]]);
     }
 
     /**
@@ -165,24 +223,24 @@ class question extends dynamic_form {
         $questiondata->answersconfig = !empty($data->answersconfig) ? $data->answersconfig : null;
 
         // Behavior overrides (null if empty to use defaults).
-        $questiondata->maxpoints = !empty($data->maxpoints) ? $data->maxpoints : null;
-        $questiondata->minpoints = !empty($data->minpoints) ? $data->minpoints : null;
-        $questiondata->questionpreviewduration = !empty($data->questionpreviewduration) ? $data->questionpreviewduration : null;
-        $questiondata->questionduration = !empty($data->questionduration) ? $data->questionduration : null;
-        $questiondata->questionresultsduration = !empty($data->questionresultsduration) ? $data->questionresultsduration : null;
+        $questiondata->maxpoints = strlen("" . $data->maxpoints) ? (int)$data->maxpoints : null;
+        $questiondata->minpoints = strlen("" . $data->minpoints) ? (int)$data->minpoints : null;
+        $questiondata->questionpreviewduration = strlen("" . $data->questionpreviewduration) ?
+            (int)$data->questionpreviewduration : null;
+        $questiondata->questionduration = strlen("" . $data->questionduration) ?
+            (int)$data->questionduration : null;
+        $questiondata->questionresultsduration = strlen("" . $data->questionresultsduration) ?
+            (int)$data->questionresultsduration : null;
 
         if (!$roundquestion) {
             // Add mode.
             $questiondata->questiontype = $data->questiontype;
             $roundquestion = \mod_kahoodle\questions::add_question($questiondata);
             return ['questionid' => $roundquestion->get_question_id(), 'action' => 'add'];
-        } else if ($round->is_editable()) {
+        } else {
             // Edit mode.
             \mod_kahoodle\questions::edit_question($roundquestion, $questiondata);
             return ['questionid' => $roundquestion->get_question_id(), 'action' => 'edit'];
-        } else {
-            // TODO editing questions in non-editable rounds is not supported yet.
-            return [];
         }
     }
 
@@ -208,11 +266,11 @@ class question extends dynamic_form {
                 'format' => $version->questiontextformat,
             ];
             $data['answersconfig'] = $version->answersconfig;
-            $data['maxpoints'] = $roundquestion->maxpoints;
-            $data['minpoints'] = $roundquestion->minpoints;
-            $data['questionpreviewduration'] = $roundquestion->questionpreviewduration;
-            $data['questionduration'] = $roundquestion->questionduration;
-            $data['questionresultsduration'] = $roundquestion->questionresultsduration;
+            $data['maxpoints'] = $version->maxpoints;
+            $data['minpoints'] = $version->minpoints;
+            $data['questionpreviewduration'] = $version->questionpreviewduration;
+            $data['questionduration'] = $version->questionduration;
+            $data['questionresultsduration'] = $version->questionresultsduration;
         }
 
         $this->set_data($data);

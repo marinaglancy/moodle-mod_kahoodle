@@ -71,35 +71,29 @@ Feature: Basic operations with module Kahoodle
     And I am on "Course 1" course homepage with editing mode on
     And I add a "Kahoodle" to section 1 using the activity chooser
     And I set the following fields to these values:
-      | Name                              | Custom Kahoodle      |
-      | Description                       | Custom settings test |
-      | Allow repeat participation        | 1                    |
-      | lobbyduration[number]             | 2                    |
-      | lobbyduration[timeunit]           | minutes              |
-      | questionpreviewduration[number]   | 10                   |
-      | questionpreviewduration[timeunit] | seconds              |
-      | questionduration[number]          | 45                   |
-      | questionduration[timeunit]        | seconds              |
-      | questionresultsduration[number]   | 15                   |
-      | questionresultsduration[timeunit] | seconds              |
-      | Maximum points                    | 2000                 |
-      | Minimum points                    | 750                  |
+      | Name                                | Custom Kahoodle      |
+      | Description                         | Custom settings test |
+      | Allow repeat participation          | 1                    |
+      | lobbyduration[number]               | 2                    |
+      | lobbyduration[timeunit]             | minutes              |
+      | Question preview duration, seconds  | 10                   |
+      | Question duration, seconds          | 45                   |
+      | Question results duration, seconds  | 15                   |
+      | Maximum points                      | 2000                 |
+      | Minimum points                      | 750                  |
     And I press "Save and return to course"
     Then I should see "Custom Kahoodle"
     When I open "Custom Kahoodle" actions menu
     And I click on "Edit settings" "link" in the "Custom Kahoodle" activity
     Then the following fields match these values:
-      | Allow repeat participation        | 1       |
-      | lobbyduration[number]             | 2       |
-      | lobbyduration[timeunit]           | minutes |
-      | questionpreviewduration[number]   | 10      |
-      | questionpreviewduration[timeunit] | seconds |
-      | questionduration[number]          | 45      |
-      | questionduration[timeunit]        | seconds |
-      | questionresultsduration[number]   | 15      |
-      | questionresultsduration[timeunit] | seconds |
-      | Maximum points                    | 2000    |
-      | Minimum points                    | 750     |
+      | Allow repeat participation          | 1       |
+      | lobbyduration[number]               | 2       |
+      | lobbyduration[timeunit]             | minutes |
+      | Question preview duration, seconds  | 10      |
+      | Question duration, seconds          | 45      |
+      | Question results duration, seconds  | 15      |
+      | Maximum points                      | 2000    |
+      | Minimum points                      | 750     |
 
   @javascript
   Scenario: Verifying default Kahoodle settings
@@ -112,17 +106,14 @@ Feature: Basic operations with module Kahoodle
     And I press "Save and display"
     And I navigate to "Settings" in current page administration
     Then the following fields match these values:
-      | Allow repeat participation        | 0       |
-      | lobbyduration[number]             | 5       |
-      | lobbyduration[timeunit]           | minutes |
-      | questionpreviewduration[number]   | 10      |
-      | questionpreviewduration[timeunit] | seconds |
-      | questionduration[number]          | 30      |
-      | questionduration[timeunit]        | seconds |
-      | questionresultsduration[number]   | 10      |
-      | questionresultsduration[timeunit] | seconds |
-      | Maximum points                    | 1000    |
-      | Minimum points                    | 500     |
+      | Allow repeat participation          | 0       |
+      | lobbyduration[number]               | 5       |
+      | lobbyduration[timeunit]             | minutes |
+      | Question preview duration, seconds  | 10      |
+      | Question duration, seconds          | 30      |
+      | Question results duration, seconds  | 10      |
+      | Maximum points                      | 1000    |
+      | Minimum points                      | 500     |
 
   @javascript
   Scenario: Deleting Kahoodle module
