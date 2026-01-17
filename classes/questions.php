@@ -29,15 +29,71 @@ use mod_kahoodle\local\entities\round_question;
  */
 class questions {
     /**
+     * Static cache for question type instances
+     * @var null|array
+     */
+    protected static ?array $questiontypescache = null;
+
+    /**
      * Get available question types
      *
      * @return \mod_kahoodle\local\questiontypes\base[] Array of question type instances
      */
     public static function get_question_types(): array {
-        return [
-            new \mod_kahoodle\local\questiontypes\multichoice(),
-            // Future question types can be added here.
-        ];
+        if (self::$questiontypescache === null) {
+            $types = [
+                new \mod_kahoodle\local\questiontypes\multichoice(),
+                // Future question types can be added here.
+            ];
+            self::$questiontypescache = array_combine(
+                array_map(fn($qt) => $qt->get_type(), $types),
+                $types
+            );
+        }
+        return array_values(self::$questiontypescache);
+    }
+
+    /**
+     * Get a question type instance by its type property.
+     *
+     * @param string $type The type string (from base::get_type())
+     * @return \mod_kahoodle\local\questiontypes\base|null The question type instance or null if not found
+     */
+    public static function get_question_type_instance(string $type): ?\mod_kahoodle\local\questiontypes\base {
+        self::get_question_types(); // Ensure cache is populated.
+        return self::$questiontypescache[$type] ?? null;
+    }
+
+    /**
+     * Get the default question type instance
+     *
+     * @return \mod_kahoodle\local\questiontypes\base
+     */
+    public static function get_default_question_type(): \mod_kahoodle\local\questiontypes\base {
+        $types = self::get_question_types();
+        return reset($types);
+    }
+
+    /**
+     * Get a question type instance by its type property, or return default if not found.
+     *
+     * @param string $type
+     * @param bool $showdebugging show debugging message if not found
+     * @return \mod_kahoodle\local\questiontypes\base
+     */
+    public static function get_question_type_instance_or_default(
+        string $type,
+        bool $showdebugging = true
+    ): \mod_kahoodle\local\questiontypes\base {
+        $questiontype = self::get_question_type_instance($type);
+        if ($questiontype === null) {
+            $questiontype = self::get_default_question_type();
+            if ($showdebugging) {
+                debugging("Unknown question type '" . s($type) . "' requested, using '" .
+                    s($questiontype->get_type()) . "' as default.");
+            }
+        }
+        return $questiontype;
     }
 
     /**

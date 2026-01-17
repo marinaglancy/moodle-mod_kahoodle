@@ -50,7 +50,7 @@ class create_instance extends external_api {
                 ),
                 'introdraftitemid' => new external_value(
                     PARAM_INT,
-                    'Draft file area ID for intro attachments. '.
+                    'Draft file area ID for intro attachments. ' .
                     'These files can be referenced from the intro text as @@PLUGINFILE@@.',
                     VALUE_OPTIONAL
                 ),

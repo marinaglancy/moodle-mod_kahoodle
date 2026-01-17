@@ -46,9 +46,8 @@ $PAGE->activityheader->disable();
 $round = \mod_kahoodle\questions::get_last_round($moduleinstance->id);
 
 // Build question types for JavaScript.
-$questiontypes = \mod_kahoodle\questions::get_question_types();
 $questiontypesjs = [];
-foreach ($questiontypes as $questiontype) {
+foreach (\mod_kahoodle\questions::get_question_types() as $questiontype) {
     $questiontypesjs[] = [
         'type' => $questiontype->get_type(),
         'name' => $questiontype->get_display_name(),
@@ -63,7 +62,7 @@ echo html_writer::start_div('', ['data-region' => 'mod_kahoodle-questions']);
 
 // Add question dropdown button.
 $dropdownitems = [];
-foreach ($questiontypes as $questiontype) {
+foreach (\mod_kahoodle\questions::get_question_types() as $questiontype) {
     $dropdownitems[] = html_writer::link(
         '#',
         $questiontype->get_display_name(),

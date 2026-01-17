@@ -25,6 +25,7 @@ use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
 use lang_string;
 use mod_kahoodle\constants;
+use mod_kahoodle\questions;
 
 /**
  * Round question entity for report builder
@@ -112,7 +113,8 @@ class question extends base {
                 if ($value === null) {
                     return '';
                 }
-                return get_string('questiontype_' . $value, 'mod_kahoodle');
+                $type = questions::get_question_type_instance($value);
+                return $type ? $type->get_display_name() : s($value);
             });
 
         // Question text column.

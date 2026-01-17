@@ -106,16 +106,9 @@ class round_question {
      */
     public static function new_for_round_and_type(round $round, ?string $questiontype = null): self {
         global $DB;
-        $questiontypes = \mod_kahoodle\questions::get_question_types();
-        $type = $questiontypes[0];
-        if ($questiontype !== null) {
-            $types = array_filter($questiontypes, fn($qt) => $qt->get_type() === $questiontype);
-            if (empty($types)) {
-                debugging('Invalid question type: ' . s($questiontype));
-            } else {
-                $type = reset($types);
-            }
-        }
+        $type = $questiontype !== null ?
+            \mod_kahoodle\questions::get_question_type_instance_or_default($questiontype) :
+            \mod_kahoodle\questions::get_default_question_type();
 
         $record = (object)[
             'id' => 0,
@@ -162,14 +155,7 @@ class round_question {
      */
     public function get_question_type(): \mod_kahoodle\local\questiontypes\base {
         if ($this->type === null) {
-            $questiontypes = \mod_kahoodle\questions::get_question_types();
-            $types = array_filter($questiontypes, fn($qt) => $qt->get_type() === $this->data->questiontype);
-            if (empty($types)) {
-                debugging('Invalid question type: ' . s($this->data->questiontype));
-                $type = $questiontypes[0];
-            } else {
-                $this->type = reset($types);
-            }
+            $this->type = \mod_kahoodle\questions::get_question_type_instance_or_default("" . $this->data->questiontype);
         }
         return $this->type;
     }
