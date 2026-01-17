@@ -82,7 +82,10 @@ class add_questions extends external_api {
                     ),
                     'imagedraftitemid' => new external_value(
                         PARAM_INT,
-                        'Draft item ID for question image(s) file area',
+                        'Draft item ID for question image(s) file area. '.
+                        'If kahoodle instance setting is to use rich text questions, '.
+                        'these files can be referenced from the questiontext as @@PLUGINFILE@@. '.
+                        'If question format is plain text, these images will be shown underneath the question text.',
                         VALUE_OPTIONAL,
                     ),
                 ])

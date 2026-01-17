@@ -125,14 +125,27 @@ class question extends base {
             ->set_type(column::TYPE_LONGTEXT)
             ->add_field("{$versionalias}.questiontext")
             ->add_field("{$kahoodlealias}.questionformat")
+            ->add_field("{$versionalias}.id", 'questionversionid')
+            ->add_field("{$kahoodlealias}.id", 'kahoodleid')
             ->set_is_sortable(false)
             ->add_callback(static function (?string $value, \stdClass $row): string {
                 if ($value === null) {
                     return '';
                 }
+                // Rewrite @@PLUGINFILE@@ URLs for embedded images.
+                $cm = get_coursemodule_from_instance('kahoodle', $row->kahoodleid, 0, false, MUST_EXIST);
+                $context = \context_module::instance($cm->id);
+                $value = file_rewrite_pluginfile_urls(
+                    $value,
+                    'pluginfile.php',
+                    $context->id,
+                    'mod_kahoodle',
+                    constants::FILEAREA_QUESTION_IMAGE,
+                    $row->questionversionid
+                );
                 // Use FORMAT_HTML for rich text, FORMAT_PLAIN for plain text.
                 $format = ($row->questionformat == constants::QUESTIONFORMAT_RICHTEXT) ? FORMAT_HTML : FORMAT_PLAIN;
-                return format_text($value, $format, ['filter' => false]);
+                return format_text($value, $format, ['filter' => false, 'context' => $context]);
             });
 
         // Version column.

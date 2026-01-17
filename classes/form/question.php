@@ -286,7 +286,7 @@ class question extends dynamic_form {
         $roundquestion = $this->get_round_question_data();
         $round = $roundquestion->get_round();
         $kahoodle = $round->get_kahoodle();
-        $questionformat = $kahoodle->questionformat ?? constants::QUESTIONFORMAT_PLAIN;
+        $questionformat = $kahoodle->questionformat;
 
         // Prepare question data.
         $questiondata = new \stdClass();
@@ -295,6 +295,10 @@ class question extends dynamic_form {
         // Get question text based on format.
         if ($questionformat == constants::QUESTIONFORMAT_RICHTEXT) {
             $questiondata->questiontext = $data->questiontext_editor['text'];
+            // Pass the editor's draft item ID for inline attachments.
+            if (!empty($data->questiontext_editor['itemid'])) {
+                $questiondata->imagedraftitemid = $data->questiontext_editor['itemid'];
+            }
         } else {
             $questiondata->questiontext = $data->questiontext;
             // Pass the image filemanager draft item ID.
@@ -335,7 +339,8 @@ class question extends dynamic_form {
         $round = $roundquestion->get_round();
         $version = $roundquestion->get_data();
         $kahoodle = $round->get_kahoodle();
-        $questionformat = $kahoodle->questionformat ?? constants::QUESTIONFORMAT_PLAIN;
+        $questionformat = $kahoodle->questionformat;
+        $context = $round->get_context();
 
         $data = [
             'roundquestionid' => $roundquestion->get_id(),
@@ -345,16 +350,27 @@ class question extends dynamic_form {
 
         // Set question text based on format.
         if ($questionformat == constants::QUESTIONFORMAT_RICHTEXT) {
+            // Prepare editor with inline files.
+            $draftitemid = file_get_submitted_draft_itemid('questiontext_editor');
+            $questiontext = file_prepare_draft_area(
+                $draftitemid,
+                $context->id,
+                'mod_kahoodle',
+                constants::FILEAREA_QUESTION_IMAGE,
+                $roundquestion->get_id() ? $version->questionversionid : null,
+                ['subdirs' => false, 'maxfiles' => EDITOR_UNLIMITED_FILES],
+                $version->questiontext
+            );
             $data['questiontext_editor'] = [
-                'text' => $version->questiontext,
+                'text' => $questiontext,
                 'format' => FORMAT_HTML,
+                'itemid' => $draftitemid,
             ];
         } else {
             $data['questiontext'] = $version->questiontext;
 
             // Prepare file manager for existing files.
             if ($roundquestion->get_id()) {
-                $context = $round->get_context();
                 $draftitemid = file_get_submitted_draft_itemid('questionimage');
                 file_prepare_draft_area(
                     $draftitemid,

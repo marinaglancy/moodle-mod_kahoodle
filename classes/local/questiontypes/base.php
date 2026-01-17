@@ -53,7 +53,11 @@ abstract class base {
      * @return void
      */
     final public function sanitize_data(round_question $roundquestion, \stdClass $data): void {
-        $allowedfields = array_merge(constants::FIELDS_QUESTION_VERSION, constants::FIELDS_ROUND_QUESTION);
+        $allowedfields = array_merge(
+            constants::FIELDS_QUESTION_VERSION,
+            constants::FIELDS_ROUND_QUESTION,
+            ['imagedraftitemid']
+        );
         $datafields = array_keys(get_object_vars($data));
         foreach ($datafields as $field) {
             if (!in_array($field, $allowedfields, true)) {
@@ -97,8 +101,7 @@ abstract class base {
 
         // Clean questiontext if set. Use format based on kahoodle's questionformat setting.
         if (isset($data->questiontext) && $data->questiontext !== null) {
-            $questionformat = $roundquestion->get_round()->get_kahoodle()->questionformat ?? constants::QUESTIONFORMAT_PLAIN;
-            $format = ($questionformat == constants::QUESTIONFORMAT_RICHTEXT) ? FORMAT_HTML : FORMAT_PLAIN;
+            $format = ($kahoodle->questionformat == constants::QUESTIONFORMAT_RICHTEXT) ? FORMAT_HTML : FORMAT_MOODLE;
             $data->questiontext = clean_text($data->questiontext, $format);
         }
 

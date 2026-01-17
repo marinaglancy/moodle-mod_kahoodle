@@ -179,19 +179,33 @@ class questions {
 
         // Handle file uploads if draft item ID is provided.
         if (!empty($questiondata->imagedraftitemid)) {
-            // Get the module context.
-            $cm = get_coursemodule_from_instance('kahoodle', $kahoodleid, 0, false, MUST_EXIST);
-            $context = \context_module::instance($cm->id);
+            $context = $round->get_context();
+            $kahoodle = $round->get_kahoodle();
 
-            // Save files from draft area to the question version.
-            file_save_draft_area_files(
-                $questiondata->imagedraftitemid,
-                $context->id,
-                'mod_kahoodle',
-                constants::FILEAREA_QUESTION_IMAGE,
-                $versionid,
-                ['subdirs' => false, 'maxfiles' => 10]
-            );
+            if ($kahoodle->questionformat == constants::QUESTIONFORMAT_RICHTEXT) {
+                // For rich text, save files and rewrite @@PLUGINFILE@@ URLs in text.
+                $questiontext = file_save_draft_area_files(
+                    $questiondata->imagedraftitemid,
+                    $context->id,
+                    'mod_kahoodle',
+                    constants::FILEAREA_QUESTION_IMAGE,
+                    $versionid,
+                    ['subdirs' => false, 'maxfiles' => EDITOR_UNLIMITED_FILES],
+                    $version->questiontext
+                );
+                // Update the version record with rewritten text.
+                $DB->set_field('kahoodle_question_versions', 'questiontext', $questiontext, ['id' => $versionid]);
+            } else {
+                // For plain text, just save the image file(s).
+                file_save_draft_area_files(
+                    $questiondata->imagedraftitemid,
+                    $context->id,
+                    'mod_kahoodle',
+                    constants::FILEAREA_QUESTION_IMAGE,
+                    $versionid,
+                    ['subdirs' => false, 'maxfiles' => 1]
+                );
+            }
         }
 
         // Get the next sort order for this round.
@@ -326,17 +340,33 @@ class questions {
 
             // Handle file uploads if draft item ID is provided.
             if (!empty($questiondata->imagedraftitemid)) {
-                $cm = get_coursemodule_from_instance('kahoodle', $round->get_kahoodleid(), 0, false, MUST_EXIST);
-                $context = \context_module::instance($cm->id);
+                $context = $round->get_context();
+                $kahoodle = $round->get_kahoodle();
 
-                file_save_draft_area_files(
-                    $questiondata->imagedraftitemid,
-                    $context->id,
-                    'mod_kahoodle',
-                    constants::FILEAREA_QUESTION_IMAGE,
-                    $versionid,
-                    ['subdirs' => false, 'maxfiles' => 1]
-                );
+                if ($kahoodle->questionformat == constants::QUESTIONFORMAT_RICHTEXT) {
+                    // For rich text, save files and rewrite @@PLUGINFILE@@ URLs in text.
+                    $questiontext = file_save_draft_area_files(
+                        $questiondata->imagedraftitemid,
+                        $context->id,
+                        'mod_kahoodle',
+                        constants::FILEAREA_QUESTION_IMAGE,
+                        $versionid,
+                        ['subdirs' => false, 'maxfiles' => EDITOR_UNLIMITED_FILES],
+                        $content['questiontext']
+                    );
+                    // Update the version record with rewritten text.
+                    $DB->set_field('kahoodle_question_versions', 'questiontext', $questiontext, ['id' => $versionid]);
+                } else {
+                    // For plain text, just save the image file(s).
+                    file_save_draft_area_files(
+                        $questiondata->imagedraftitemid,
+                        $context->id,
+                        'mod_kahoodle',
+                        constants::FILEAREA_QUESTION_IMAGE,
+                        $versionid,
+                        ['subdirs' => false, 'maxfiles' => 1]
+                    );
+                }
             }
         }
     }

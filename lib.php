@@ -118,3 +118,42 @@ function mod_kahoodle_check_updates_since(cm_info $cm, $from, $filter = []) {
     $updates = course_check_module_updates_since($cm, $from, ['content'], $filter);
     return $updates;
 }
+
+/**
+ * Serves the kahoodle files.
+ *
+ * @param stdClass $course course object
+ * @param stdClass $cm course module object
+ * @param context $context context object
+ * @param string $filearea file area
+ * @param array $args extra arguments
+ * @param bool $forcedownload whether or not force download
+ * @param array $options additional options affecting the file serving
+ * @return bool false if file not found, does not return if found - just send the file
+ */
+function kahoodle_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options = []) {
+    if ($context->contextlevel != CONTEXT_MODULE) {
+        return false;
+    }
+
+    require_course_login($course, true, $cm);
+
+    // Check the file area.
+    if ($filearea !== \mod_kahoodle\constants::FILEAREA_QUESTION_IMAGE) {
+        // The intro file area is handled automatically.
+        return false;
+    }
+
+    // The item ID is the question version ID.
+    $itemid = array_shift($args);
+    $relativepath = implode('/', $args);
+    $fullpath = "/{$context->id}/mod_kahoodle/{$filearea}/{$itemid}/{$relativepath}";
+
+    $fs = get_file_storage();
+    $file = $fs->get_file_by_hash(sha1($fullpath));
+    if (!$file || $file->is_directory()) {
+        return false;
+    }
+
+    send_stored_file($file, null, 0, $forcedownload, $options);
+}
