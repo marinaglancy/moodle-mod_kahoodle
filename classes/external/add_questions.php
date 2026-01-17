@@ -43,7 +43,7 @@ class add_questions extends external_api {
                     'kahoodleid' => new external_value(PARAM_INT, 'Kahoodle instance ID (this is not a course module ID)'),
                     'questiontype' => new external_value(
                         PARAM_ALPHA,
-                        'Question type',
+                        'Question type. Currently only "multichoice" is supported. Default is "multichoice".',
                         VALUE_OPTIONAL,
                     ),
                     'questiontext' => new external_value(PARAM_RAW, 'Question text'),
@@ -54,32 +54,35 @@ class add_questions extends external_api {
                     ),
                     'questionconfig' => new external_value(
                         PARAM_RAW,
-                        'Type-specific configuration',
+                        "Type-specific configuration.\n\n" .
+                        "For multichoice question, provide possible answers, one per line, with the " .
+                        "correct answer prefixed with '*'.\n\n" .
+                        "For some question types the value is required.",
                         VALUE_OPTIONAL
                     ),
                     'questionpreviewduration' => new external_value(
                         PARAM_INT,
-                        'Question preview duration in seconds',
+                        'Question preview duration in seconds. Do not set to use the default value.',
                         VALUE_OPTIONAL,
                     ),
                     'questionduration' => new external_value(
                         PARAM_INT,
-                        'Question duration in seconds',
+                        'Question duration in seconds. Do not set to use the default value.',
                         VALUE_OPTIONAL,
                     ),
                     'questionresultsduration' => new external_value(
                         PARAM_INT,
-                        'Question results display duration in seconds',
+                        'Question results display duration in seconds. Do not set to use the default value.',
                         VALUE_OPTIONAL,
                     ),
                     'maxpoints' => new external_value(
                         PARAM_INT,
-                        'Maximum points for correct answer',
+                        'Maximum points for correct answer. Do not set to use the default value.',
                         VALUE_OPTIONAL,
                     ),
                     'minpoints' => new external_value(
                         PARAM_INT,
-                        'Minimum points for correct answer',
+                        'Minimum points for correct answer. Do not set to use the default value.',
                         VALUE_OPTIONAL,
                     ),
                     'imagedraftitemid' => new external_value(

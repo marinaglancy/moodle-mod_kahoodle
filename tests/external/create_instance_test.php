@@ -38,11 +38,11 @@ final class create_instance_test extends \advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
 
-        $result = create_instance::execute(
-            $course->id,
-            0,
-            'Test Kahoodle'
-        );
+        $result = create_instance::execute([
+            'courseid' => $course->id,
+            'section' => 0,
+            'name' => 'Test Kahoodle',
+        ]);
 
         $this->assertIsArray($result);
         $this->assertArrayHasKey('coursemoduleid', $result);
@@ -79,22 +79,25 @@ final class create_instance_test extends \advanced_testcase {
 
         $course = $this->getDataGenerator()->create_course();
 
-        $result = create_instance::execute(
-            $course->id,
-            0,
-            'Custom Kahoodle',
-            'This is a test description',
-            FORMAT_HTML,
-            0,
-            1,
-            1,
-            120,
-            8,
-            45,
-            15,
-            2000,
-            750
-        );
+        $result = create_instance::execute([
+            'courseid' => $course->id,
+            'section' => 0,
+            'name' => 'Custom Kahoodle',
+            'intro' => 'This is a test description',
+            'introformat' => FORMAT_HTML,
+            'introdraftitemid' => 0,
+            'visible' => 1,
+            'idnumber' => 'kahoodle-001',
+            'lang' => 'en',
+            'tags' => ['quiz', 'game'],
+            'allowrepeat' => 1,
+            'lobbyduration' => 120,
+            'questionpreviewduration' => 8,
+            'questionduration' => 45,
+            'questionresultsduration' => 15,
+            'defaultmaxpoints' => 2000,
+            'defaultminpoints' => 750,
+        ]);
 
         $this->assertIsArray($result);
         $this->assertArrayHasKey('coursemoduleid', $result);
@@ -112,6 +115,15 @@ final class create_instance_test extends \advanced_testcase {
         $this->assertEquals(15, $instance->questionresultsduration);
         $this->assertEquals(2000, $instance->defaultmaxpoints);
         $this->assertEquals(750, $instance->defaultminpoints);
+
+        // Verify course module properties.
+        $cm = $DB->get_record('course_modules', ['id' => $result['coursemoduleid']], '*', MUST_EXIST);
+        $this->assertEquals('kahoodle-001', $cm->idnumber);
+
+        // Verify tags were saved.
+        $tags = \core_tag_tag::get_item_tags_array('core', 'course_modules', $result['coursemoduleid']);
+        $this->assertContains('quiz', $tags);
+        $this->assertContains('game', $tags);
     }
 
     /**
@@ -128,11 +140,11 @@ final class create_instance_test extends \advanced_testcase {
         $this->setUser($user);
 
         $this->expectException(\required_capability_exception::class);
-        create_instance::execute(
-            $course->id,
-            0,
-            'Test Kahoodle'
-        );
+        create_instance::execute([
+            'courseid' => $course->id,
+            'section' => 0,
+            'name' => 'Test Kahoodle',
+        ]);
     }
 
     /**
@@ -145,10 +157,10 @@ final class create_instance_test extends \advanced_testcase {
         $this->setAdminUser();
 
         $this->expectException(\dml_missing_record_exception::class);
-        create_instance::execute(
-            99999,
-            0,
-            'Test Kahoodle'
-        );
+        create_instance::execute([
+            'courseid' => 99999,
+            'section' => 0,
+            'name' => 'Test Kahoodle',
+        ]);
     }
 }

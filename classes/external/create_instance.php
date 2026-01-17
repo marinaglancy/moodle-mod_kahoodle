@@ -18,6 +18,7 @@ namespace mod_kahoodle\external;
 
 use core_external\external_function_parameters;
 use core_external\external_single_structure;
+use core_external\external_multiple_structure;
 use core_external\external_api;
 use core_external\external_value;
 use mod_kahoodle\constants;
@@ -37,126 +38,106 @@ class create_instance extends external_api {
      */
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
-            'courseid' => new external_value(PARAM_INT, 'Course ID'),
-            'section' => new external_value(PARAM_INT, 'Section number'),
-            'name' => new external_value(PARAM_TEXT, 'Activity name'),
-            'intro' => new external_value(PARAM_RAW, 'Activity description (intro text)', VALUE_DEFAULT, ''),
-            'introformat' => new external_value(
-                PARAM_INT,
-                'Intro format (1 = HTML, 0 = MOODLE, 2 = PLAIN, 4 = MARKDOWN)',
-                VALUE_DEFAULT,
-                FORMAT_HTML
-            ),
-            'introdraftitemid' => new external_value(
-                PARAM_INT,
-                'Draft file area ID for intro attachments',
-                VALUE_DEFAULT,
-                0
-            ),
-            'visible' => new external_value(PARAM_INT, 'Visibility (1 = visible, 0 = hidden)', VALUE_DEFAULT, 1),
-            'allowrepeat' => new external_value(
-                PARAM_INT,
-                'Allow repeat participation (1 = yes, 0 = no)',
-                VALUE_DEFAULT,
-                constants::DEFAULT_ALLOW_REPEAT
-            ),
-            'lobbyduration' => new external_value(
-                PARAM_INT,
-                'Lobby duration in seconds',
-                VALUE_DEFAULT,
-                constants::DEFAULT_LOBBY_DURATION
-            ),
-            'questionpreviewduration' => new external_value(
-                PARAM_INT,
-                'Question preview duration in seconds',
-                VALUE_DEFAULT,
-                constants::DEFAULT_QUESTION_PREVIEW_DURATION
-            ),
-            'questionduration' => new external_value(
-                PARAM_INT,
-                'Question duration in seconds',
-                VALUE_DEFAULT,
-                constants::DEFAULT_QUESTION_DURATION
-            ),
-            'questionresultsduration' => new external_value(
-                PARAM_INT,
-                'Question results duration in seconds',
-                VALUE_DEFAULT,
-                constants::DEFAULT_QUESTION_RESULTS_DURATION
-            ),
-            'defaultmaxpoints' => new external_value(
-                PARAM_INT,
-                'Maximum points for correct answer',
-                VALUE_DEFAULT,
-                constants::DEFAULT_MAX_POINTS
-            ),
-            'defaultminpoints' => new external_value(
-                PARAM_INT,
-                'Minimum points for correct answer',
-                VALUE_DEFAULT,
-                constants::DEFAULT_MIN_POINTS
-            ),
+            'activity' => new external_single_structure([
+                'courseid' => new external_value(PARAM_INT, 'Course ID'),
+                'section' => new external_value(PARAM_INT, 'Section number'),
+                'name' => new external_value(PARAM_TEXT, 'Activity name'),
+                'intro' => new external_value(PARAM_RAW, 'Activity description (intro text)', VALUE_OPTIONAL),
+                'introformat' => new external_value(
+                    PARAM_INT,
+                    'Intro format (1 = HTML, 0 = MOODLE, 2 = PLAIN, 4 = MARKDOWN)',
+                    VALUE_OPTIONAL
+                ),
+                'introdraftitemid' => new external_value(
+                    PARAM_INT,
+                    'Draft file area ID for intro attachments. These files can be referenced from the intro text as.',
+                    VALUE_OPTIONAL
+                ),
+                'visible' => new external_value(
+                    PARAM_INT,
+                    "Availability: 1 = Show on course page, 0 = Hide on course page, " .
+                    "-1 = Make available but don't show on course page (if allowed in site settings)",
+                    VALUE_DEFAULT,
+                    1
+                ),
+                'idnumber' => new external_value(PARAM_RAW, 'ID number', VALUE_OPTIONAL),
+                'lang' => new external_value(
+                    PARAM_LANG,
+                    'Force language (e.g. "en", "de"). Do not set if you do not want to force it.',
+                    VALUE_OPTIONAL
+                ),
+                'tags' => new external_multiple_structure(
+                    new external_value(PARAM_TAG, 'Tag name'),
+                    'Tags',
+                    VALUE_OPTIONAL
+                ),
+                'allowrepeat' => new external_value(
+                    PARAM_INT,
+                    'Allow repeat participation (1 = yes, 0 = no)',
+                    VALUE_OPTIONAL
+                ),
+                'lobbyduration' => new external_value(
+                    PARAM_INT,
+                    'Lobby duration in seconds',
+                    VALUE_OPTIONAL
+                ),
+                'questionpreviewduration' => new external_value(
+                    PARAM_INT,
+                    'Question preview duration in seconds',
+                    VALUE_OPTIONAL
+                ),
+                'questionduration' => new external_value(
+                    PARAM_INT,
+                    'Question duration in seconds',
+                    VALUE_OPTIONAL
+                ),
+                'questionresultsduration' => new external_value(
+                    PARAM_INT,
+                    'Question results duration in seconds',
+                    VALUE_OPTIONAL
+                ),
+                'defaultmaxpoints' => new external_value(
+                    PARAM_INT,
+                    'Maximum points for correct answer',
+                    VALUE_OPTIONAL
+                ),
+                'defaultminpoints' => new external_value(
+                    PARAM_INT,
+                    'Minimum points for correct answer',
+                    VALUE_OPTIONAL
+                ),
+            ]),
         ]);
     }
 
     /**
      * Implementation of web service mod_kahoodle_create_instance
      *
-     * @param int $courseid Course ID
-     * @param int $section Section number
-     * @param string $name Activity name
-     * @param string $intro Activity description
-     * @param int $introformat Intro format
-     * @param int $introdraftitemid Draft file area ID for intro attachments
-     * @param int $visible Visibility
-     * @param int $allowrepeat Allow repeat participation
-     * @param int $lobbyduration Lobby duration in seconds
-     * @param int $questionpreviewduration Question preview duration in seconds
-     * @param int $questionduration Question duration in seconds
-     * @param int $questionresultsduration Question results duration in seconds
-     * @param int $defaultmaxpoints Maximum points
-     * @param int $defaultminpoints Minimum points
+     * @param array $activity Activity data
      * @return array Course module ID and instance ID
      */
-    public static function execute(
-        int $courseid,
-        int $section,
-        string $name,
-        string $intro = '',
-        int $introformat = FORMAT_HTML,
-        int $introdraftitemid = 0,
-        int $visible = 1,
-        int $allowrepeat = constants::DEFAULT_ALLOW_REPEAT,
-        int $lobbyduration = constants::DEFAULT_LOBBY_DURATION,
-        int $questionpreviewduration = constants::DEFAULT_QUESTION_PREVIEW_DURATION,
-        int $questionduration = constants::DEFAULT_QUESTION_DURATION,
-        int $questionresultsduration = constants::DEFAULT_QUESTION_RESULTS_DURATION,
-        int $defaultmaxpoints = constants::DEFAULT_MAX_POINTS,
-        int $defaultminpoints = constants::DEFAULT_MIN_POINTS
-    ): array {
+    public static function execute(array $activity): array {
         global $DB, $CFG;
         require_once($CFG->dirroot . '/course/modlib.php');
 
         // Parameter validation.
         $params = self::validate_parameters(
             self::execute_parameters(),
-            [
-                'courseid' => $courseid,
-                'section' => $section,
-                'name' => $name,
-                'intro' => $intro,
-                'introformat' => $introformat,
-                'introdraftitemid' => $introdraftitemid,
-                'visible' => $visible,
-                'allowrepeat' => $allowrepeat,
-                'lobbyduration' => $lobbyduration,
-                'questionpreviewduration' => $questionpreviewduration,
-                'questionduration' => $questionduration,
-                'questionresultsduration' => $questionresultsduration,
-                'defaultmaxpoints' => $defaultmaxpoints,
-                'defaultminpoints' => $defaultminpoints,
-            ]
-        );
+            ['activity' => $activity]
+        )['activity'];
+
+        // Apply defaults for optional parameters.
+        $params['intro'] = $params['intro'] ?? '';
+        $params['introformat'] = $params['introformat'] ?? FORMAT_HTML;
+        $params['introdraftitemid'] = $params['introdraftitemid'] ?? 0;
+        $params['visible'] = $params['visible'] ?? 1;
+        $params['allowrepeat'] = $params['allowrepeat'] ?? constants::DEFAULT_ALLOW_REPEAT;
+        $params['lobbyduration'] = $params['lobbyduration'] ?? constants::DEFAULT_LOBBY_DURATION;
+        $params['questionpreviewduration'] = $params['questionpreviewduration'] ?? constants::DEFAULT_QUESTION_PREVIEW_DURATION;
+        $params['questionduration'] = $params['questionduration'] ?? constants::DEFAULT_QUESTION_DURATION;
+        $params['questionresultsduration'] = $params['questionresultsduration'] ?? constants::DEFAULT_QUESTION_RESULTS_DURATION;
+        $params['defaultmaxpoints'] = $params['defaultmaxpoints'] ?? constants::DEFAULT_MAX_POINTS;
+        $params['defaultminpoints'] = $params['defaultminpoints'] ?? constants::DEFAULT_MIN_POINTS;
 
         // Get course and validate context.
         $course = $DB->get_record('course', ['id' => $params['courseid']], '*', MUST_EXIST);
@@ -170,6 +151,17 @@ class create_instance extends external_api {
         $moduleinfo->modulename = 'kahoodle';
         $moduleinfo->name = $params['name'];
         $moduleinfo->visible = $params['visible'];
+
+        // Set optional common module properties.
+        if (!empty($params['idnumber'])) {
+            $moduleinfo->cmidnumber = $params['idnumber'];
+        }
+        if (!empty($params['lang'])) {
+            $moduleinfo->lang = $params['lang'];
+        }
+        if (!empty($params['tags'])) {
+            $moduleinfo->tags = $params['tags'];
+        }
 
         // Set intro with file handling.
         $moduleinfo->introeditor = [
