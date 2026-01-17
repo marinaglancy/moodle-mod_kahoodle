@@ -18,6 +18,7 @@ namespace mod_kahoodle\form;
 
 use context;
 use core_form\dynamic_form;
+use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
 use mod_kahoodle\local\entities\round_question;
 use moodle_url;
@@ -81,14 +82,50 @@ class question extends dynamic_form {
         $mform->addElement('hidden', 'questiontype', $questiontype);
         $mform->setType('questiontype', PARAM_ALPHANUMEXT);
 
-        // Question text.
-        $mform->addElement('editor', 'questiontext_editor', get_string('questiontext', 'mod_kahoodle'), null, [
-            'maxfiles' => EDITOR_UNLIMITED_FILES,
-            'noclean' => true,
-            'context' => $round->get_context(),
-        ]);
-        $mform->setType('questiontext_editor', PARAM_RAW);
-        $mform->addRule('questiontext_editor', get_string('required'), 'required', null, 'client');
+        // Question text - show editor or textarea based on kahoodle's questionformat setting.
+        $kahoodle = $round->get_kahoodle();
+        $questionformat = $kahoodle->questionformat ?? constants::QUESTIONFORMAT_PLAIN;
+
+        if ($questionformat == constants::QUESTIONFORMAT_RICHTEXT) {
+            // Rich text mode - use editor.
+            $mform->addElement('editor', 'questiontext_editor', get_string('questiontext', 'mod_kahoodle'), null, [
+                'maxfiles' => EDITOR_UNLIMITED_FILES,
+                'noclean' => true,
+                'context' => $round->get_context(),
+            ]);
+            $mform->setType('questiontext_editor', PARAM_RAW);
+            $mform->addRule('questiontext_editor', get_string('required'), 'required', null, 'client');
+        } else {
+            // Plain text mode - use textarea + filemanager.
+            $mform->addElement(
+                'textarea',
+                'questiontext',
+                get_string('questiontext', 'mod_kahoodle'),
+                ['rows' => 4, 'cols' => 60, 'maxlength' => constants::QUESTIONTEXT_MAXLENGTH]
+            );
+            $mform->setType('questiontext', PARAM_TEXT);
+            $mform->addRule('questiontext', get_string('required'), 'required', null, 'client');
+            $mform->addRule(
+                'questiontext',
+                get_string('maximumchars', '', constants::QUESTIONTEXT_MAXLENGTH),
+                'maxlength',
+                constants::QUESTIONTEXT_MAXLENGTH,
+                'client'
+            );
+
+            // File manager for single image.
+            $mform->addElement(
+                'filemanager',
+                'questionimage',
+                get_string('questionimage', 'mod_kahoodle'),
+                null,
+                [
+                    'subdirs' => false,
+                    'maxfiles' => 1,
+                    'accepted_types' => ['image'],
+                ]
+            );
+        }
 
         $roundquestion->get_question_type()->question_form_definition($roundquestion, $mform);
 
@@ -248,12 +285,24 @@ class question extends dynamic_form {
         $data = $this->get_data();
         $roundquestion = $this->get_round_question_data();
         $round = $roundquestion->get_round();
+        $kahoodle = $round->get_kahoodle();
+        $questionformat = $kahoodle->questionformat ?? constants::QUESTIONFORMAT_PLAIN;
 
         // Prepare question data.
         $questiondata = new \stdClass();
         $questiondata->kahoodleid = $round->get_kahoodleid();
-        $questiondata->questiontext = $data->questiontext_editor['text'];
-        $questiondata->questiontextformat = $data->questiontext_editor['format'];
+
+        // Get question text based on format.
+        if ($questionformat == constants::QUESTIONFORMAT_RICHTEXT) {
+            $questiondata->questiontext = $data->questiontext_editor['text'];
+        } else {
+            $questiondata->questiontext = $data->questiontext;
+            // Pass the image filemanager draft item ID.
+            if (!empty($data->questionimage)) {
+                $questiondata->imagedraftitemid = $data->questionimage;
+            }
+        }
+
         $questiondata->questionconfig = !empty($data->questionconfig) ? $data->questionconfig : null;
 
         // Behavior overrides (null if empty to use defaults).
@@ -285,6 +334,8 @@ class question extends dynamic_form {
         $roundquestion = $this->get_round_question_data();
         $round = $roundquestion->get_round();
         $version = $roundquestion->get_data();
+        $kahoodle = $round->get_kahoodle();
+        $questionformat = $kahoodle->questionformat ?? constants::QUESTIONFORMAT_PLAIN;
 
         $data = [
             'roundquestionid' => $roundquestion->get_id(),
@@ -292,10 +343,31 @@ class question extends dynamic_form {
             'questiontype' => $version->questiontype,
         ];
 
-        $data['questiontext_editor'] = [
-            'text' => $version->questiontext,
-            'format' => $version->questiontextformat,
-        ];
+        // Set question text based on format.
+        if ($questionformat == constants::QUESTIONFORMAT_RICHTEXT) {
+            $data['questiontext_editor'] = [
+                'text' => $version->questiontext,
+                'format' => FORMAT_HTML,
+            ];
+        } else {
+            $data['questiontext'] = $version->questiontext;
+
+            // Prepare file manager for existing files.
+            if ($roundquestion->get_id()) {
+                $context = $round->get_context();
+                $draftitemid = file_get_submitted_draft_itemid('questionimage');
+                file_prepare_draft_area(
+                    $draftitemid,
+                    $context->id,
+                    'mod_kahoodle',
+                    constants::FILEAREA_QUESTION_IMAGE,
+                    $version->questionversionid,
+                    ['subdirs' => false, 'maxfiles' => 1, 'accepted_types' => ['image']]
+                );
+                $data['questionimage'] = $draftitemid;
+            }
+        }
+
         $data['questionconfig'] = $version->questionconfig;
         $data['maxpoints'] = $version->maxpoints;
         $data['minpoints'] = $version->minpoints;

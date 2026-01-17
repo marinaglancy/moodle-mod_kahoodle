@@ -61,6 +61,9 @@ class mod_kahoodle_generator extends testing_module_generator {
         if (!isset($record->defaultminpoints)) {
             $record->defaultminpoints = \mod_kahoodle\constants::DEFAULT_MIN_POINTS;
         }
+        if (!isset($record->questionformat)) {
+            $record->questionformat = \mod_kahoodle\constants::QUESTIONFORMAT_PLAIN;
+        }
 
         $instance = parent::create_instance($record, (array)$options);
 
@@ -74,7 +77,6 @@ class mod_kahoodle_generator extends testing_module_generator {
      *     Optional fields:
      *     - questiontype: Type of question (default: 'multichoice')
      *     - questiontext: Question text (default: 'Sample question')
-     *     - questiontextformat: Text format (default: FORMAT_HTML)
      *     - questionconfig: Type-specific configuration (may be required)
      *     - questionpreviewduration: Preview duration override (default: null)
      *     - questionduration: Question duration override (default: null)

@@ -95,17 +95,10 @@ abstract class base {
             unset($data->questionduration);
         }
 
-        // Validate questiontextformat is a valid FORMAT_* constant.
-        if (isset($data->questiontextformat) && $data->questiontextformat !== null) {
-            $validformats = [(int)FORMAT_MOODLE, (int)FORMAT_HTML, (int)FORMAT_PLAIN, (int)FORMAT_MARKDOWN];
-            if (!in_array((int)$data->questiontextformat, $validformats, true)) {
-                unset($data->questiontextformat);
-            }
-        }
-
-        // Clean questiontext if set.
+        // Clean questiontext if set. Use format based on kahoodle's questionformat setting.
         if (isset($data->questiontext) && $data->questiontext !== null) {
-            $format = $data->questiontextformat ?? FORMAT_HTML;
+            $questionformat = $roundquestion->get_round()->get_kahoodle()->questionformat ?? constants::QUESTIONFORMAT_PLAIN;
+            $format = ($questionformat == constants::QUESTIONFORMAT_RICHTEXT) ? FORMAT_HTML : FORMAT_PLAIN;
             $data->questiontext = clean_text($data->questiontext, $format);
         }
 

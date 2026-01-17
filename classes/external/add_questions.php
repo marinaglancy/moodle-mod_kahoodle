@@ -47,11 +47,6 @@ class add_questions extends external_api {
                         VALUE_OPTIONAL,
                     ),
                     'questiontext' => new external_value(PARAM_RAW, 'Question text'),
-                    'questiontextformat' => new external_value(
-                        PARAM_INT,
-                        'Question text format, 0 - FORMAT_MOODLE, 1 - FORMAT_HTML, 2 - FORMAT_PLAIN, 4 - FORMAT_MARKDOWN',
-                        VALUE_OPTIONAL,
-                    ),
                     'questionconfig' => new external_value(
                         PARAM_RAW,
                         "Type-specific configuration.\n\n" .

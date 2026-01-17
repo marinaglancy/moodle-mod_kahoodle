@@ -84,6 +84,8 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 All plugin constants are defined in `classes/constants.php`:
 
 - **Default Values**: Activity defaults (lobby duration, question timing, points)
+- **Question Format**: `QUESTIONFORMAT_PLAIN` (0) for plain text with image, `QUESTIONFORMAT_RICHTEXT` (1) for rich text editor
+- **Text Limits**: `QUESTIONTEXT_MAXLENGTH` (300 characters for plain text mode)
 - **Round Stages**: `STAGE_PREPARATION`, `STAGE_LOBBY`, `STAGE_QUESTION_PREVIEW`, `STAGE_QUESTION`, `STAGE_QUESTION_RESULTS`, `STAGE_LEADERS`, `STAGE_REVISION`, `STAGE_ARCHIVED`
 - **File Areas**: `FILEAREA_QUESTION_IMAGE` for question images
 - **Field Lists**: `FIELDS_QUESTION_VERSION` and `FIELDS_ROUND_QUESTION` for consistent field handling across entities and API methods
@@ -223,14 +225,13 @@ Batch question creation web service defined in `classes/external/add_questions.p
   - `kahoodleid` (required): Activity instance ID
   - `questiontext` (required): Question text
   - `questiontype` (optional): Defaults to multichoice
-  - `questiontextformat` (optional): Defaults to FORMAT_HTML
   - `questionconfig` (optional): Type-specific configuration (e.g., answer options for multichoice)
   - `questionpreviewduration` (optional): Preview duration override
   - `questionduration` (optional): Question duration override
   - `questionresultsduration` (optional): Results duration override
   - `maxpoints` (optional): Maximum points override
   - `minpoints` (optional): Minimum points override
-  - `imagedraftitemid` (optional): Draft file area ID for images
+  - `imagedraftitemid` (optional): Draft file area ID for images (used with plain text format)
 
 **Returns:**
 - `questionids`: Array of created question IDs with their input array indices
@@ -317,6 +318,7 @@ The complete database schema is defined in `db/install.xml`. The schema uses a v
 Main activity configuration table.
 
 **Key Fields:**
+- `questionformat`: Question input format (0=plain text with image, 1=rich text editor)
 - `allowrepeat`: Allow users to participate in multiple rounds
 - `lobbyduration`: Default lobby duration (60s)
 - `questionpreviewduration`: Default preview time (5s)
@@ -324,6 +326,10 @@ Main activity configuration table.
 - `questionresultsduration`: Default results display time (10s)
 - `defaultmaxpoints`: Maximum points for fastest correct answer (1000)
 - `defaultminpoints`: Minimum points for slowest correct answer (500)
+
+**Question Format Modes:**
+- **Plain text (0)**: Simple textarea (max 300 chars) + optional single image upload. Provides consistent display across devices.
+- **Rich text (1)**: Standard Moodle editor with embedded images. More flexible but teachers manage their own layout.
 
 #### 2. kahoodle_questions (Question Base)
 Stores immutable question properties. Each question has multiple versions.
@@ -340,9 +346,8 @@ Stores all versions of question content. Questions can be edited, creating new v
 **Key Fields:**
 - `questionid`: FK to kahoodle_questions
 - `version`: Version number (increments with each edit)
-- `questiontext`: Question text content
-- `questionconfig`: JSON for question-specific settings
-- `answersconfig`: JSON for answer options, correct answers, etc.
+- `questiontext`: Question text content (format determined by kahoodle.questionformat)
+- `questionconfig`: JSON for question-specific settings (e.g., answer options for multichoice)
 - `timecreated`, `timemodified`: Timestamps
 
 **Unique Index:** `questionid, version` - ensures one version record per version number
@@ -511,16 +516,16 @@ This plugin follows Moodle's GNU GPL v3 or later license.
 The plugin includes comprehensive PHPUnit test coverage:
 
 #### Questions API Tests (`tests/questions_test.php`)
-- 13 tests covering all question management methods
+- Tests covering all question management methods
 - Tests for round creation, question CRUD operations, versioning logic
 - Edge cases: no editable rounds, permission checks, sort order
-- All tests passing with 47 assertions
 
 #### Web Service Tests (`tests/external/add_questions_test.php`)
-- 8 tests for batch question creation web service
+- Tests for batch question creation web service
 - Tests for single/multiple questions, permissions, error handling
 - Mixed success scenarios, parameter validation
-- All tests passing with 43 assertions
+
+**Total: 32 tests passing**
 
 ### Test Data Generator
 
@@ -531,8 +536,11 @@ The `mod_kahoodle_generator` (in `tests/generator/lib.php`) provides:
 ### Running Tests
 
 ```bash
-# Run all kahoodle tests
-vendor/bin/phpunit mod/kahoodle/tests/
+# Initialize PHPUnit environment (required after database schema changes)
+php admin/tool/phpunit/cli/init.php
+
+# Run all kahoodle tests (from Moodle root directory)
+vendor/bin/phpunit mod/kahoodle/tests/questions_test.php
 
 # Run specific test file
 vendor/bin/phpunit mod/kahoodle/tests/questions_test.php
@@ -542,20 +550,24 @@ vendor/bin/phpunit mod/kahoodle/tests/external/add_questions_test.php
 vendor/bin/phpunit --filter questions_test
 ```
 
+**Note:** If you see "Moodle PHPUnit environment was initialised for different version", run `php admin/tool/phpunit/cli/init.php` to reinitialize.
+
 ## Current Status
 
 **Implemented:**
 - Database schema with versioning system
+- Question format modes (plain text with image OR rich text editor)
 - Question management API with smart versioning
 - Batch question creation web service
 - Question deletion web service
 - Entity classes for `round` and `round_question` with caching
 - Questions management page with Report Builder system report
-- Question add/edit modal form (dynamic form)
+- Question add/edit modal form (dynamic form with conditional fields based on format)
 - AMD module for question UI interactions
 - Constants for defaults, types, stages, file areas, and field lists
-- Comprehensive test coverage
+- Comprehensive test coverage (32 tests)
 - Test data generators
+- Backup/restore support for all activity settings
 
 **In Progress:**
 - Round gameplay mechanics

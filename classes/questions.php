@@ -283,7 +283,7 @@ class questions {
         }
 
         // Handle content changes.
-        if ($contentchanges) {
+        if ($contentchanges || !empty($questiondata->imagedraftitemid)) {
             // Check if this version is already used in any non-editable rounds.
             $sql = "SELECT COUNT(rq.id)
                       FROM {kahoodle_round_questions} rq
@@ -294,6 +294,8 @@ class questions {
                 'versionid' => $roundquestion->get_data()->questionversionid,
                 'roundid' => $roundquestion->get_round()->get_id(),
             ]);
+
+            $versionid = $roundquestion->get_data()->questionversionid;
 
             if ($usedinotherrounds > 0) {
                 // Create a new version.
@@ -306,20 +308,35 @@ class questions {
                 $content['questionid'] = $questionid;
                 $content['timecreated'] = $content['timemodified'] = time();
 
-                $newversionid = $DB->insert_record('kahoodle_question_versions', $content);
+                $versionid = $DB->insert_record('kahoodle_question_versions', $content);
 
                 // Update the round question to use the new version.
                 $DB->set_field(
                     'kahoodle_round_questions',
                     'questionversionid',
-                    $newversionid,
+                    $versionid,
                     ['id' => $roundquestion->get_id()]
                 );
-            } else {
+            } else if ($contentchanges) {
                 // Edit the existing version.
                 $contentchanges['id'] = $roundquestion->get_data()->questionversionid;
                 $contentchanges['timemodified'] = time();
                 $DB->update_record('kahoodle_question_versions', $contentchanges);
+            }
+
+            // Handle file uploads if draft item ID is provided.
+            if (!empty($questiondata->imagedraftitemid)) {
+                $cm = get_coursemodule_from_instance('kahoodle', $round->get_kahoodleid(), 0, false, MUST_EXIST);
+                $context = \context_module::instance($cm->id);
+
+                file_save_draft_area_files(
+                    $questiondata->imagedraftitemid,
+                    $context->id,
+                    'mod_kahoodle',
+                    constants::FILEAREA_QUESTION_IMAGE,
+                    $versionid,
+                    ['subdirs' => false, 'maxfiles' => 1]
+                );
             }
         }
     }

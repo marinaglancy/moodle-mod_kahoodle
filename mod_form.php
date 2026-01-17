@@ -52,6 +52,19 @@ class mod_kahoodle_mod_form extends moodleform_mod {
         // Kahoodle settings.
         $mform->addElement('header', 'kahoodlesettings', get_string('kahoodlesettings', 'mod_kahoodle'));
 
+        // Question format.
+        $mform->addElement(
+            'select',
+            'questionformat',
+            get_string('questionformat', 'mod_kahoodle'),
+            [
+                constants::QUESTIONFORMAT_PLAIN => get_string('questionformat_plain', 'mod_kahoodle'),
+                constants::QUESTIONFORMAT_RICHTEXT => get_string('questionformat_richtext', 'mod_kahoodle'),
+            ]
+        );
+        $mform->setDefault('questionformat', constants::QUESTIONFORMAT_PLAIN);
+        $mform->addHelpButton('questionformat', 'questionformat', 'mod_kahoodle');
+
         // Allow repeat participation.
         $mform->addElement(
             'advcheckbox',

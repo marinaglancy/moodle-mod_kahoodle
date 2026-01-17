@@ -45,6 +45,15 @@ class constants {
     /** @var int Default minimum points for slowest correct answer */
     public const DEFAULT_MIN_POINTS = 500;
 
+    /** @var int Question format: plain text with optional image */
+    public const QUESTIONFORMAT_PLAIN = 0;
+
+    /** @var int Question format: rich text editor */
+    public const QUESTIONFORMAT_RICHTEXT = 1;
+
+    /** @var int Maximum length for plain text questions */
+    public const QUESTIONTEXT_MAXLENGTH = 300;
+
     /** @var string File area for question images */
     public const FILEAREA_QUESTION_IMAGE = 'questionimage';
 
@@ -76,7 +85,6 @@ class constants {
     /** @var array Fields in the table kahoodle_question_versions, except for primary/foreign keys, version, time stamps */
     public const FIELDS_QUESTION_VERSION = [
         'questiontext',
-        'questiontextformat',
         'questionconfig',
     ];
 

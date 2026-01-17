@@ -24,6 +24,7 @@ use core_reportbuilder\local\helpers\format;
 use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
 use lang_string;
+use mod_kahoodle\constants;
 
 /**
  * Round question entity for report builder
@@ -43,6 +44,7 @@ class question extends base {
             'kahoodle_round_questions',
             'kahoodle_question_versions',
             'kahoodle_questions',
+            'kahoodle',
         ];
     }
 
@@ -83,6 +85,7 @@ class question extends base {
         $roundquestionalias = $this->get_table_alias('kahoodle_round_questions');
         $versionalias = $this->get_table_alias('kahoodle_question_versions');
         $questionalias = $this->get_table_alias('kahoodle_questions');
+        $kahoodlealias = $this->get_table_alias('kahoodle');
 
         // Sort order column.
         $columns[] = (new column(
@@ -121,13 +124,15 @@ class question extends base {
             ->add_joins($this->get_joins())
             ->set_type(column::TYPE_LONGTEXT)
             ->add_field("{$versionalias}.questiontext")
-            ->add_field("{$versionalias}.questiontextformat")
+            ->add_field("{$kahoodlealias}.questionformat")
             ->set_is_sortable(false)
             ->add_callback(static function (?string $value, \stdClass $row): string {
                 if ($value === null) {
                     return '';
                 }
-                return format_text($value, $row->questiontextformat, ['filter' => false]);
+                // Use FORMAT_HTML for rich text, FORMAT_PLAIN for plain text.
+                $format = ($row->questionformat == constants::QUESTIONFORMAT_RICHTEXT) ? FORMAT_HTML : FORMAT_PLAIN;
+                return format_text($value, $format, ['filter' => false]);
             });
 
         // Version column.

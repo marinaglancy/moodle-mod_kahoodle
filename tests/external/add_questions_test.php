@@ -48,7 +48,6 @@ final class add_questions_test extends \advanced_testcase {
                 'kahoodleid' => $kahoodle->id,
                 'questiontype' => 'multichoice',
                 'questiontext' => 'What is 2+2?',
-                'questiontextformat' => FORMAT_HTML,
                 'questionconfig' => "3\n*4\n5",
                 'maxpoints' => 1500,
                 'minpoints' => 750,
@@ -276,7 +275,6 @@ final class add_questions_test extends \advanced_testcase {
                 'kahoodleid' => $kahoodle->id,
                 'questiontype' => 'multichoice',
                 'questiontext' => 'Complete question',
-                'questiontextformat' => FORMAT_PLAIN,
                 'questionconfig' => "3\n*4\n5",
                 'questionpreviewduration' => 15,
                 'questionduration' => 45,
@@ -296,7 +294,6 @@ final class add_questions_test extends \advanced_testcase {
         $version = $DB->get_record('kahoodle_question_versions', ['questionid' => $questionid], '*', MUST_EXIST);
 
         $this->assertEquals('Complete question', $version->questiontext);
-        $this->assertEquals(FORMAT_PLAIN, $version->questiontextformat);
         $this->assertEquals("3\n*4\n5", $version->questionconfig);
 
         // Verify behavior data.
@@ -348,7 +345,6 @@ final class add_questions_test extends \advanced_testcase {
         $version = $DB->get_record('kahoodle_question_versions', ['questionid' => $questionid], '*', MUST_EXIST);
 
         $this->assertEquals('multichoice', $question->questiontype);
-        $this->assertEquals(FORMAT_HTML, $version->questiontextformat);
         $this->assertEquals("Option A\n*Option B", $version->questionconfig);
     }
 }

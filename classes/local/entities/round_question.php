@@ -137,7 +137,6 @@ class round_question {
         foreach (constants::FIELDS_QUESTION_VERSION as $field) {
             $record->$field = null;
         }
-        $record->questiontextformat = FORMAT_HTML; // Default value.
         $q = new self($record);
         $q->round = $round;
         $q->type = $type;
