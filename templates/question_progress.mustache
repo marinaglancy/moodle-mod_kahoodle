@@ -1,0 +1,140 @@
+{{!
+    This file is part of mod_kahoodle plugin
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_kahoodle/question_progress
+
+    Question progress display during a quiz round.
+
+    Context variables required for this template:
+    * quiztitle - The title of the quiz/kahoodle activity
+    * questionnumber - Current question number
+    * totalquestions - Total number of questions in the round
+    * questiontext - The question text to display
+    * hasimage - Boolean indicating if question has an image
+    * imageurl - URL of the question image (optional)
+    * imagelandscape - Boolean indicating if image is landscape orientation
+    * imagealt - Alt text for the question image
+    * options - Array of answer options, each containing:
+        * optionnumber - The option number (1-8)
+        * letter - The letter label (A, B, C, etc.)
+        * text - The option text
+    * progresspercent - Percentage of time remaining (0-100)
+    * cancontrol - Boolean indicating if user can control the quiz (teacher)
+    * ispreview - Boolean indicating if in preview mode (teacher)
+    * ispaused - Boolean indicating if the quiz is currently paused
+
+    Example context (json):
+    {
+        "quiztitle": "Geography & World Facts Quiz",
+        "questionnumber": 36,
+        "totalquestions": 42,
+        "questiontext": "How long would it take to walk around the world's perimeter?",
+        "hasimage": true,
+        "imageurl": "https://example.com/globe.jpg",
+        "imagelandscape": true,
+        "imagealt": "Earth globe",
+        "options": [
+            {"optionnumber": 1, "letter": "A", "text": "5 days"},
+            {"optionnumber": 2, "letter": "B", "text": "50 days"},
+            {"optionnumber": 3, "letter": "C", "text": "200 days"},
+            {"optionnumber": 4, "letter": "D", "text": "You cannot walk around the world, there is an ocean"}
+        ],
+        "progresspercent": 65,
+        "cancontrol": true,
+        "ispreview": true,
+        "ispaused": false
+    }
+}}
+<div class="mod_kahoodle-overlay" {{#backgroundurl}}style="background-image: url('{{backgroundurl}}');"{{/backgroundurl}}>
+
+    {{! Header: Quiz title and question counter }}
+    <header class="mod_kahoodle-header">
+        <div class="mod_kahoodle-quiz-title">{{quiztitle}}</div>
+        <div class="mod_kahoodle-question-counter">{{#str}}questioncounter, mod_kahoodle, { "current": "{{questionnumber}}", "total": "{{totalquestions}}" }{{/str}}</div>
+    </header>
+
+    {{! Main content: Question, image, and options }}
+    <main class="mod_kahoodle-main">
+
+        {{! Question text }}
+        <div class="mod_kahoodle-question">
+            <h1 class="mod_kahoodle-question-text">{{questiontext}}</h1>
+        </div>
+
+        {{! Question image }}
+        {{#hasimage}}
+        <div class="mod_kahoodle-image-container">
+            <img src="{{imageurl}}" alt="{{imagealt}}" class="mod_kahoodle-image{{#imagelandscape}} mod_kahoodle-image-landscape{{/imagelandscape}}">
+        </div>
+        {{/hasimage}}
+
+        {{! Answer options }}
+        <div class="mod_kahoodle-options">
+            <div class="mod_kahoodle-options-grid">
+                {{#options}}
+                <div class="mod_kahoodle-option mod_kahoodle-option{{optionnumber}}" data-option="{{optionnumber}}">
+                    <div class="mod_kahoodle-option-icon">
+                        <span class="mod_kahoodle-icon-letter">{{letter}}</span>
+                    </div>
+                    <span class="mod_kahoodle-option-text">{{text}}</span>
+                </div>
+                {{/options}}
+            </div>
+        </div>
+
+    </main>
+
+    {{! Footer: Progress bar and teacher controls }}
+    <footer class="mod_kahoodle-footer">
+
+        {{! Time progress bar }}
+        <div class="mod_kahoodle-progress{{#ispaused}} mod_kahoodle-progress-paused{{/ispaused}}">
+            <div class="mod_kahoodle-progress-bar">
+                <div class="mod_kahoodle-progress-fill" style="width: {{progresspercent}}%;"></div>
+            </div>
+        </div>
+
+        {{! Teacher controls }}
+        {{#cancontrol}}
+        <div class="mod_kahoodle-controls">
+            {{#ispreview}}
+            <a href="#" class="mod_kahoodle-control-btn" data-action="back">
+                {{#pix}}back, mod_kahoodle{{/pix}} {{#str}}back{{/str}}
+            </a>
+            {{/ispreview}}
+            {{^ispaused}}
+            <a href="#" class="mod_kahoodle-control-btn" data-action="pause">
+                {{#pix}}pause, mod_kahoodle{{/pix}} {{#str}}pause, mod_kahoodle{{/str}}
+            </a>
+            {{/ispaused}}
+            {{#ispaused}}
+            <a href="#" class="mod_kahoodle-control-btn" data-action="pause">
+                {{#pix}}resume, mod_kahoodle{{/pix}} {{#str}}resume, mod_kahoodle{{/str}}
+            </a>
+            {{/ispaused}}
+            <a href="#" class="mod_kahoodle-control-btn" data-action="next">
+                {{#pix}}next, mod_kahoodle{{/pix}} {{#str}}next{{/str}}
+            </a>
+            <a href="#" class="mod_kahoodle-control-btn" data-action="close">
+                {{#pix}}i/window_close, core{{/pix}} {{#str}}close, mod_kahoodle{{/str}}
+            </a>
+        </div>
+        {{/cancontrol}}
+
+    </footer>
+
+</div>

@@ -1,0 +1,382 @@
+/* Kahoodle Activity Module - Styles */
+/* All custom classes prefixed with mod_kahoodle- */
+
+/* ========================================
+   COLOR PALETTE
+   ======================================== */
+:root {
+    /* Answer option colors (AAA contrast compatible with white text) */
+    --mod_kahoodle-option1: #9e2b4a;  /* Deep Rose */
+    --mod_kahoodle-option2: #3d4db8;  /* Dark Indigo */
+    --mod_kahoodle-option3: #b84a2e;  /* Burnt Coral */
+    --mod_kahoodle-option4: #007a5e;  /* Forest Teal */
+    --mod_kahoodle-option5: #7b3cb8;  /* Deep Violet */
+    --mod_kahoodle-option6: #8b6508;  /* Dark Amber */
+    --mod_kahoodle-option7: #5d4037;  /* Espresso Brown */
+    --mod_kahoodle-option8: #4a5568;  /* Slate Gray */
+
+    /* UI colors */
+    --mod_kahoodle-dark: #2d3436;
+    --mod_kahoodle-dark-overlay: rgba(45, 52, 54, 0.88);
+    --mod_kahoodle-light: #ffffff;
+    --mod_kahoodle-muted: rgba(255, 255, 255, 0.7);
+    --mod_kahoodle-progress-bg: rgba(255, 255, 255, 0.2);
+    --mod_kahoodle-progress-fill: #74b9ff;
+
+    /* Shadows */
+    --mod_kahoodle-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --mod_kahoodle-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ========================================
+   QUIZ OVERLAY BASE STYLES
+   ======================================== */
+.mod_kahoodle-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: var(--mod_kahoodle-dark);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    flex-direction: column;
+}
+
+.mod_kahoodle-overlay::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--mod_kahoodle-dark-overlay);
+    z-index: 1;
+}
+
+.mod_kahoodle-overlay > * {
+    position: relative;
+    z-index: 2;
+}
+
+/* ========================================
+   HEADER STYLES
+   ======================================== */
+.mod_kahoodle-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.5rem 2rem;
+    flex-shrink: 0;
+}
+
+.mod_kahoodle-quiz-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--mod_kahoodle-light);
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-align: center;
+    max-width: 50%;
+    padding: 0.75rem 3rem;
+    z-index: 1;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.mod_kahoodle-quiz-title::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 115%;
+    height: 160%;
+    background: linear-gradient(90deg, #00d4ff 0%, #6366f1 45%, #a855f7 80%, #d946ef 100%);
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 80' preserveAspectRatio='none'%3E%3Cpath d='M2 42 Q8 12 35 18 T85 22 T140 15 T200 25 T260 18 T295 38 L298 52 Q285 72 245 65 T175 60 T105 68 T45 58 T8 62 Z' fill='black'/%3E%3Ccircle cx='8' cy='32' r='10' fill='black'/%3E%3Ccircle cx='22' cy='20' r='7' fill='black'/%3E%3Ccircle cx='5' cy='52' r='6' fill='black'/%3E%3Ccircle cx='35' cy='14' r='5' fill='black'/%3E%3Ccircle cx='292' cy='42' r='8' fill='black'/%3E%3Ccircle cx='280' cy='26' r='6' fill='black'/%3E%3Ccircle cx='295' cy='58' r='7' fill='black'/%3E%3Ccircle cx='265' cy='20' r='5' fill='black'/%3E%3Cellipse cx='55' cy='12' rx='14' ry='8' fill='black'/%3E%3Cellipse cx='248' cy='22' rx='12' ry='7' fill='black'/%3E%3C/svg%3E");
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 80' preserveAspectRatio='none'%3E%3Cpath d='M2 42 Q8 12 35 18 T85 22 T140 15 T200 25 T260 18 T295 38 L298 52 Q285 72 245 65 T175 60 T105 68 T45 58 T8 62 Z' fill='black'/%3E%3Ccircle cx='8' cy='32' r='10' fill='black'/%3E%3Ccircle cx='22' cy='20' r='7' fill='black'/%3E%3Ccircle cx='5' cy='52' r='6' fill='black'/%3E%3Ccircle cx='35' cy='14' r='5' fill='black'/%3E%3Ccircle cx='292' cy='42' r='8' fill='black'/%3E%3Ccircle cx='280' cy='26' r='6' fill='black'/%3E%3Ccircle cx='295' cy='58' r='7' fill='black'/%3E%3Ccircle cx='265' cy='20' r='5' fill='black'/%3E%3Cellipse cx='55' cy='12' rx='14' ry='8' fill='black'/%3E%3Cellipse cx='248' cy='22' rx='12' ry='7' fill='black'/%3E%3C/svg%3E");
+    mask-size: 100% 100%;
+    -webkit-mask-size: 100% 100%;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+    z-index: -1;
+}
+
+.mod_kahoodle-question-counter {
+    color: var(--mod_kahoodle-dark);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-left: auto;
+    background: var(--mod_kahoodle-light);
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    box-shadow: var(--mod_kahoodle-shadow-sm);
+}
+
+/* ========================================
+   MAIN CONTENT AREA
+   ======================================== */
+.mod_kahoodle-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0 2rem;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Question text */
+.mod_kahoodle-question {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    flex-shrink: 0;
+}
+
+.mod_kahoodle-question-text {
+    color: var(--mod_kahoodle-light);
+    font-size: 2.5rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    margin: 0;
+}
+
+/* Question image */
+.mod_kahoodle-image-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-shrink: 0;
+}
+
+.mod_kahoodle-image {
+    max-width: 100%;
+    max-height: 250px;
+    border-radius: 12px;
+    box-shadow: var(--mod_kahoodle-shadow);
+    object-fit: contain;
+}
+
+.mod_kahoodle-image-landscape {
+    width: auto;
+    height: 220px;
+}
+
+/* Answer options container */
+.mod_kahoodle-options {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+}
+
+.mod_kahoodle-options-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Individual answer option */
+.mod_kahoodle-option {
+    display: flex;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-radius: 8px;
+    min-height: 80px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+}
+
+.mod_kahoodle-option:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+}
+
+/* Option colors */
+.mod_kahoodle-option1 {
+    background-color: var(--mod_kahoodle-option1);
+}
+
+.mod_kahoodle-option2 {
+    background-color: var(--mod_kahoodle-option2);
+}
+
+.mod_kahoodle-option3 {
+    background-color: var(--mod_kahoodle-option3);
+}
+
+.mod_kahoodle-option4 {
+    background-color: var(--mod_kahoodle-option4);
+}
+
+.mod_kahoodle-option5 {
+    background-color: var(--mod_kahoodle-option5);
+}
+
+.mod_kahoodle-option6 {
+    background-color: var(--mod_kahoodle-option6);
+}
+
+.mod_kahoodle-option7 {
+    background-color: var(--mod_kahoodle-option7);
+}
+
+.mod_kahoodle-option8 {
+    background-color: var(--mod_kahoodle-option8);
+}
+
+/* Option icon */
+.mod_kahoodle-option-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.mod_kahoodle-option-icon svg {
+    width: 28px;
+    height: 28px;
+    fill: var(--mod_kahoodle-light);
+}
+
+/* Option text */
+.mod_kahoodle-option-text {
+    color: var(--mod_kahoodle-light);
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* ========================================
+   FOOTER / PROGRESS AREA
+   ======================================== */
+.mod_kahoodle-footer {
+    padding: 1rem 2rem 1.5rem;
+    flex-shrink: 0;
+}
+
+/* Progress bar */
+.mod_kahoodle-progress {
+    margin-bottom: 0.75rem;
+}
+
+.mod_kahoodle-progress-bar {
+    width: 100%;
+    height: 12px;
+    background: var(--mod_kahoodle-progress-bg);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.mod_kahoodle-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--mod_kahoodle-progress-fill), #00ff88);
+    border-radius: 6px;
+    transition: width 0.3s ease;
+}
+
+/* Progress bar paused state */
+.mod_kahoodle-progress-paused .mod_kahoodle-progress-fill {
+    background: linear-gradient(90deg, #6b7280, #9ca3af);
+}
+
+/* Teacher controls */
+.mod_kahoodle-controls {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.mod_kahoodle-controls .mod_kahoodle-control-btn:last-child {
+    margin-left: auto;
+}
+
+.mod_kahoodle-control-btn {
+    color: var(--mod_kahoodle-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.mod_kahoodle-control-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--mod_kahoodle-light);
+    text-decoration: none;
+}
+
+/* ========================================
+   LETTER ICONS
+   ======================================== */
+.mod_kahoodle-icon-letter {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+/* ========================================
+   RESPONSIVE ADJUSTMENTS
+   ======================================== */
+@media (max-width: 992px) {
+    .mod_kahoodle-question-text {
+        font-size: 2rem;
+    }
+
+    .mod_kahoodle-option-text {
+        font-size: 1.25rem;
+    }
+
+    .mod_kahoodle-image-landscape {
+        height: 180px;
+    }
+}
+
+@media (max-width: 768px) {
+    .mod_kahoodle-options-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mod_kahoodle-question-text {
+        font-size: 1.5rem;
+    }
+
+    .mod_kahoodle-quiz-title {
+        display: none;
+    }
+
+    .mod_kahoodle-header {
+        padding: 1rem;
+    }
+
+    .mod_kahoodle-main {
+        padding: 0 1rem;
+    }
+
+    .mod_kahoodle-footer {
+        padding: 0.75rem 1rem 1rem;
+    }
+}

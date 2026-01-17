@@ -157,3 +157,17 @@ function kahoodle_pluginfile($course, $cm, $context, $filearea, $args, $forcedow
 
     send_stored_file($file, null, 0, $forcedownload, $options);
 }
+
+/**
+ * Font awesome icons mapping
+ *
+ * @return array
+ */
+function kahoodle_get_fontawesome_icon_map() {
+    return [
+        'mod_kahoodle:pause' => 'fa-pause',
+        'mod_kahoodle:resume' => 'fa-play',
+        'mod_kahoodle:next' => 'fa-forward',
+        'mod_kahoodle:back' => 'fa-backward',
+    ];
+}
