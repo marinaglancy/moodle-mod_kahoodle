@@ -17,6 +17,7 @@
 namespace mod_kahoodle\local\entities;
 
 use mod_kahoodle\constants;
+use moodle_url;
 use stdClass;
 
 /**
@@ -95,6 +96,16 @@ class round_question {
         $q = new self($record);
         $q->round = $round;
         return $q;
+    }
+
+    /**
+     * Create an instance from a record where some fields may be missing, used in report formatters
+     *
+     * @param stdClass $record
+     * @return round_question
+     */
+    public static function create_from_partial_record(stdClass $record): self {
+        return new self($record);
     }
 
     /**
@@ -185,5 +196,96 @@ class round_question {
      */
     public function get_data(): stdClass {
         return $this->data;
+    }
+
+    /**
+     * In most cases we can use the page context and save on DB queries
+     *
+     * @return \context_module
+     */
+    public function guess_context(): \context_module {
+        global $PAGE;
+        if (
+            $PAGE->context->contextlevel == CONTEXT_MODULE &&
+                $PAGE->cm &&
+                $PAGE->activityrecord->id == $this->data->kahoodleid &&
+                $PAGE->cm->modname == 'kahoodle'
+        ) {
+            return $PAGE->context;
+        } else {
+            return $this->get_round()->get_context();
+        }
+    }
+
+    /**
+     * Preview question text, used in a report
+     *
+     * @return string
+     */
+    public function preview_question_text(): string {
+        global $PAGE;
+        $value = $this->data->questiontext;
+        if ($value === null || $value === '') {
+            return '';
+        }
+
+        if ($this->data->questionformat != constants::QUESTIONFORMAT_RICHTEXT) {
+            // Plain text, no need to rewrite URLs.
+            return  format_text($value, FORMAT_MOODLE);
+        }
+
+        $value = strip_tags($value, '<b><strong><i><em><u>'); // Strip most tags for preview.
+        return format_text($value, FORMAT_HTML, ['context' => isset($context) ? $context : $PAGE->context]);
+    }
+
+    /**
+     * Preview question images, used in a report
+     *
+     * @return string
+     */
+    public function preview_question_images(): string {
+        $isrichtext = $this->data->questionformat == constants::QUESTIONFORMAT_RICHTEXT;
+        if ($isrichtext) {
+            // Extract all file names from the question text.
+            preg_match_all('/@@PLUGINFILE@@\/[^\s"\']+/', $this->data->questiontext, $matches);
+            $filenames = array_map(fn($match) => urldecode(substr($match, strlen('@@PLUGINFILE@@'))), $matches[0]);
+            if (!$filenames) {
+                return '';
+            }
+        }
+        $context = $this->guess_context();
+        $fs = get_file_storage();
+        $files = $fs->get_area_files(
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_QUESTION_IMAGE,
+            $this->data->questionversionid,
+            'filename',
+            false
+        );
+        if ($isrichtext) {
+            // Filter only files that are referenced in the question text.
+            $files = array_filter($files, fn($file) => in_array($file->get_filepath() . $file->get_filename(), $filenames));
+        }
+
+        // Return HTML with all images.
+        $html = '';
+        foreach ($files as $file) {
+            $url = moodle_url::make_pluginfile_url(
+                $context->id,
+                'mod_kahoodle',
+                constants::FILEAREA_QUESTION_IMAGE,
+                $this->data->questionversionid,
+                $file->get_filepath(),
+                $file->get_filename()
+            );
+            $html .= \html_writer::empty_tag('img', [
+                'src' => $url,
+                // TODO define and use CSS class for the images.
+                'style' => 'max-width:70px; max-height:70px; margin:2px;',
+                'alt' => s($file->get_filename()),
+            ]);
+        }
+        return $html;
     }
 }

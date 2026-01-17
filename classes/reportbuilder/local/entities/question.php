@@ -20,11 +20,10 @@ namespace mod_kahoodle\reportbuilder\local\entities;
 
 use core_reportbuilder\local\entities\base;
 use core_reportbuilder\local\filters\text;
-use core_reportbuilder\local\helpers\format;
 use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
 use lang_string;
-use mod_kahoodle\constants;
+use mod_kahoodle\local\entities\round_question;
 use mod_kahoodle\questions;
 
 /**
@@ -129,25 +128,69 @@ class question extends base {
             ->add_field("{$kahoodlealias}.questionformat")
             ->add_field("{$versionalias}.id", 'questionversionid')
             ->add_field("{$kahoodlealias}.id", 'kahoodleid')
+            ->add_field("{$roundquestionalias}.id", 'id')
             ->set_is_sortable(false)
             ->add_callback(static function (?string $value, \stdClass $row): string {
-                if ($value === null) {
-                    return '';
-                }
-                // Rewrite @@PLUGINFILE@@ URLs for embedded images.
-                $cm = get_coursemodule_from_instance('kahoodle', $row->kahoodleid, 0, false, MUST_EXIST);
-                $context = \context_module::instance($cm->id);
-                $value = file_rewrite_pluginfile_urls(
-                    $value,
-                    'pluginfile.php',
-                    $context->id,
-                    'mod_kahoodle',
-                    constants::FILEAREA_QUESTION_IMAGE,
-                    $row->questionversionid
-                );
-                // Use FORMAT_HTML for rich text, FORMAT_PLAIN for plain text.
-                $format = ($row->questionformat == constants::QUESTIONFORMAT_RICHTEXT) ? FORMAT_HTML : FORMAT_PLAIN;
-                return format_text($value, $format, ['filter' => false, 'context' => $context]);
+                return round_question::create_from_partial_record($row)->preview_question_text();
+            });
+
+        // Question images column.
+        $columns[] = (new column(
+            'questionimages',
+            new lang_string('questionimage', 'mod_kahoodle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->set_type(column::TYPE_LONGTEXT)
+            ->add_field("{$versionalias}.questiontext")
+            ->add_field("{$kahoodlealias}.questionformat")
+            ->add_field("{$versionalias}.id", 'questionversionid')
+            ->add_field("{$kahoodlealias}.id", 'kahoodleid')
+            ->add_field("{$roundquestionalias}.id", 'id')
+            ->set_is_sortable(false)
+            ->add_callback(static function (?string $value, \stdClass $row): string {
+                return round_question::create_from_partial_record($row)->preview_question_images();
+            });
+
+        // Timing column (preview / question / results durations).
+        $columns[] = (new column(
+            'timing',
+            new lang_string('timing', 'mod_kahoodle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->set_type(column::TYPE_TEXT)
+            ->add_field("{$roundquestionalias}.questionpreviewduration")
+            ->add_field("{$roundquestionalias}.questionduration")
+            ->add_field("{$roundquestionalias}.questionresultsduration")
+            ->add_field("{$kahoodlealias}.questionpreviewduration", 'default_questionpreviewduration')
+            ->add_field("{$kahoodlealias}.questionduration", 'default_questionduration')
+            ->add_field("{$kahoodlealias}.questionresultsduration", 'default_questionresultsduration')
+            ->set_is_sortable(false)
+            ->add_callback(static function (?string $value, \stdClass $row): string {
+                $preview = self::value_or_default($row->questionpreviewduration, $row->default_questionpreviewduration);
+                $question = self::value_or_default($row->questionduration, $row->default_questionduration);
+                $results = self::value_or_default($row->questionresultsduration, $row->default_questionresultsduration);
+                return "{$preview} / {$question} / {$results}";
+            });
+
+        // Score column (minpoints - maxpoints).
+        $columns[] = (new column(
+            'score',
+            new lang_string('score', 'mod_kahoodle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->set_type(column::TYPE_TEXT)
+            ->add_field("{$roundquestionalias}.minpoints")
+            ->add_field("{$roundquestionalias}.maxpoints")
+            ->add_field("{$kahoodlealias}.defaultminpoints")
+            ->add_field("{$kahoodlealias}.defaultmaxpoints")
+            ->set_is_sortable(false)
+            ->add_callback(static function (?string $value, \stdClass $row): string {
+                $min = self::value_or_default($row->minpoints, $row->defaultminpoints);
+                $max = self::value_or_default($row->maxpoints, $row->defaultmaxpoints);
+                return "{$min} - {$max}";
             });
 
         // Version column.
@@ -162,6 +205,19 @@ class question extends base {
             ->set_is_sortable(true);
 
         return $columns;
+    }
+
+    /**
+     * Formatter returning value in bold if it is set specifically for the question, otherwise default value.
+     *
+     * @param mixed $value
+     * @param mixed $default
+     */
+    protected static function value_or_default($value, $default) {
+        if ($value !== null && $value != $default) {
+            return "<b>" . $value . "</b>";
+        }
+        return $default;
     }
 
     /**

@@ -124,8 +124,10 @@ class questions extends system_report {
         $this->add_columns_from_entities([
             'question:sortorder',
             'question:questiontype',
+            'question:questionimages',
             'question:questiontext',
-            'question:version',
+            'question:timing',
+            'question:score',
         ]);
     }
 

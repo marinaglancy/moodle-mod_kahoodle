@@ -72,5 +72,7 @@ $string['questions'] = 'Questions';
 $string['questiontext'] = 'Question text';
 $string['questiontype'] = 'Question type';
 $string['questiontype_multichoice'] = 'Multiple choice';
+$string['score'] = 'Score';
 $string['sortorder'] = 'Order';
+$string['timing'] = 'Timing';
 $string['version'] = 'Version';
