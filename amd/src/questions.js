@@ -193,6 +193,29 @@ const reloadQuestionsTable = () => {
 };
 
 /**
+ * Process question data from web service for template use
+ *
+ * Decodes type-specific JSON data and adds typeis<type> boolean property.
+ *
+ * @param {Object} question Raw question data from web service
+ * @returns {Object} Processed question data ready for template
+ */
+const processQuestionData = (question) => {
+    // Decode the JSON-encoded type-specific data.
+    const typeData = JSON.parse(question.typedata || '{}');
+
+    // Store decoded type data under typedata to avoid naming conflicts.
+    const processed = {...question, typedata: typeData};
+
+    // Add typeis<type> boolean for Mustache conditional rendering.
+    // E.g., questiontype "multichoice" becomes typeismultichoice: true.
+    const typeName = question.questiontype;
+    processed['typeis' + typeName] = true;
+
+    return processed;
+};
+
+/**
  * Fetch preview questions from the web service
  *
  * @param {number} roundId The round ID
@@ -209,9 +232,12 @@ const fetchPreviewQuestions = async(roundId) => {
         args: {roundid: roundId},
     }])[0];
 
-    // Cache the result.
-    previewCache[roundId] = response.questions;
-    return response.questions;
+    // Process each question to decode typedata and add isType boolean.
+    const processedQuestions = response.questions.map(processQuestionData);
+
+    // Cache the processed result.
+    previewCache[roundId] = processedQuestions;
+    return processedQuestions;
 };
 
 /**

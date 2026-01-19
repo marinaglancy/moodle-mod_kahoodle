@@ -111,4 +111,47 @@ class multichoice extends base {
 
         return $errors;
     }
+
+    /**
+     * Export question type specific data for templates
+     *
+     * @param round_question $roundquestion
+     * @return array
+     */
+    public function export_template_data(round_question $roundquestion): array {
+        $data = $roundquestion->get_data();
+        $options = [];
+
+        $questionconfig = $data->questionconfig ?? '';
+        if (empty($questionconfig)) {
+            return [
+                'options' => $options,
+                'optioncount' => 0,
+                'manyoptions' => false,
+            ];
+        }
+
+        $lines = preg_split('/\r\n|\r|\n/', $questionconfig, -1, PREG_SPLIT_NO_EMPTY);
+        $letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+        foreach ($lines as $index => $line) {
+            $text = trim($line);
+            // Remove the asterisk marker for correct answer (don't show in preview).
+            if (str_starts_with($text, '*')) {
+                $text = substr($text, 1);
+            }
+
+            $options[] = [
+                'optionnumber' => $index + 1,
+                'letter' => $letters[$index] ?? (string)($index + 1),
+                'text' => $text,
+            ];
+        }
+
+        return [
+            'options' => $options,
+            'optioncount' => count($options),
+            'manyoptions' => count($options) > 4,
+        ];
+    }
 }

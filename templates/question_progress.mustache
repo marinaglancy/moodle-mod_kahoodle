@@ -28,17 +28,19 @@
     * imageurl - URL of the question image (optional)
     * imagelandscape - Boolean indicating if image is landscape orientation
     * imagealt - Alt text for the question image
-    * options - Array of answer options, each containing:
-        * optionnumber - The option number (1-8)
-        * letter - The letter label (A, B, C, etc.)
-        * text - The option text
-    * optioncount - Number of options (2-8)
-    * manyoptions - Boolean indicating if there are more than 4 options
+    * questiontype - Question type identifier (e.g., "multichoice")
+    * typeismultichoice - Boolean true if questiontype is "multichoice" (added by JS)
+    * typedata - Object containing type-specific data (decoded from JSON by JS)
     * progresspercent - Percentage of time remaining (0-100)
     * cancontrol - Boolean indicating if user can control the quiz (teacher)
     * ispreview - Boolean indicating if in preview mode (teacher)
     * ispaused - Boolean indicating if the quiz is currently paused
     * backgroundurl - URL for background image (optional)
+
+    For multichoice questions, typedata contains:
+    * options - Array of answer options
+    * optioncount - Number of options (2-8)
+    * manyoptions - Boolean indicating if there are more than 4 options
 
     Example context (json):
     {
@@ -50,14 +52,18 @@
         "imageurl": "https://example.com/globe.jpg",
         "imagelandscape": true,
         "imagealt": "Earth globe",
-        "options": [
-            {"optionnumber": 1, "letter": "A", "text": "5 days"},
-            {"optionnumber": 2, "letter": "B", "text": "50 days"},
-            {"optionnumber": 3, "letter": "C", "text": "200 days"},
-            {"optionnumber": 4, "letter": "D", "text": "You cannot walk around the world, there is an ocean"}
-        ],
-        "optioncount": 4,
-        "manyoptions": false,
+        "questiontype": "multichoice",
+        "typeismultichoice": true,
+        "typedata": {
+            "options": [
+                {"optionnumber": 1, "letter": "A", "text": "5 days"},
+                {"optionnumber": 2, "letter": "B", "text": "50 days"},
+                {"optionnumber": 3, "letter": "C", "text": "200 days"},
+                {"optionnumber": 4, "letter": "D", "text": "You cannot walk around the world, there is an ocean"}
+            ],
+            "optioncount": 4,
+            "manyoptions": false
+        },
         "progresspercent": 65,
         "cancontrol": true,
         "ispreview": true,
@@ -83,19 +89,10 @@
         </div>
         {{/hasimage}}
 
-        {{! Answer options }}
-        <div class="mod_kahoodle-options{{#manyoptions}} mod_kahoodle-options-many{{/manyoptions}}">
-            <div class="mod_kahoodle-options-grid{{#manyoptions}} mod_kahoodle-options-grid-compact{{/manyoptions}}">
-                {{#options}}
-                <div class="mod_kahoodle-option mod_kahoodle-option{{optionnumber}}" data-option="{{optionnumber}}">
-                    <div class="mod_kahoodle-option-icon">
-                        <span class="mod_kahoodle-icon-letter">{{letter}}</span>
-                    </div>
-                    <span class="mod_kahoodle-option-text">{{text}}</span>
-                </div>
-                {{/options}}
-            </div>
-        </div>
+        {{! Question type specific content }}
+        {{#typeismultichoice}}
+        {{> mod_kahoodle/questiontypes/multichoice/question_progress }}
+        {{/typeismultichoice}}
 
     </main>
 

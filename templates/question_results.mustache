@@ -24,22 +24,18 @@
     * sortorder - Current question number
     * totalquestions - Total number of questions in the round
     * questiontextcompact - The question text (compact version for results)
-    * options - Array of answer options, each containing:
-        * optionnumber - The option number (1-8)
-        * letter - The letter label (A, B, C, etc.)
-        * text - The option text
-        * iscorrect - Boolean indicating if this is the correct answer
-    * bars - Array of bar chart data, each containing:
-        * optionnumber - The option number (1-8)
-        * letter - The letter label (A, B, C, etc.)
-        * count - Number of responses for this option
-        * heightpercent - Bar height as percentage (0-100)
-        * iscorrect - Boolean indicating if this is the correct answer
+    * questiontype - Question type identifier (e.g., "multichoice")
+    * typeismultichoice - Boolean true if questiontype is "multichoice" (added by JS)
+    * typedata - Object containing type-specific data (decoded from JSON by JS)
     * progresspercent - Percentage of time remaining (0-100, usually 0 for results)
     * cancontrol - Boolean indicating if user can control the quiz (teacher)
     * ispreview - Boolean indicating if in preview mode (teacher)
     * ispaused - Boolean indicating if the quiz is currently paused
     * backgroundurl - URL for background image (optional)
+
+    For multichoice questions, typedata contains:
+    * options - Array of answer options with iscorrect flag
+    * bars - Array of bar chart data
 
     Example context (json):
     {
@@ -47,21 +43,24 @@
         "sortorder": 36,
         "totalquestions": 42,
         "questiontextcompact": "How long would it take to walk around the world's perimeter?",
-        "options": [
-            {"optionnumber": 1, "letter": "A", "text": "5 days", "iscorrect": false},
-            {"optionnumber": 2, "letter": "B", "text": "50 days", "iscorrect": false},
-            {"optionnumber": 3, "letter": "C", "text": "200 days", "iscorrect": false},
-            {"optionnumber": 4, "letter": "D", "text": "You cannot walk around the world, there is an ocean", "iscorrect": true}
-        ],
-        "bars": [
-            {"optionnumber": 1, "letter": "A", "count": 3, "heightpercent": 19, "iscorrect": false},
-            {"optionnumber": 2, "letter": "B", "count": 8, "heightpercent": 50, "iscorrect": false},
-            {"optionnumber": 3, "letter": "C", "count": 5, "heightpercent": 31, "iscorrect": false},
-            {"optionnumber": 4, "letter": "D", "count": 16, "heightpercent": 100, "iscorrect": true}
-        ],
+        "questiontype": "multichoice",
+        "typeismultichoice": true,
+        "typedata": {
+            "options": [
+                {"optionnumber": 1, "letter": "A", "text": "5 days", "iscorrect": false},
+                {"optionnumber": 2, "letter": "B", "text": "50 days", "iscorrect": false},
+                {"optionnumber": 3, "letter": "C", "text": "200 days", "iscorrect": false},
+                {"optionnumber": 4, "letter": "D", "text": "You cannot walk around the world, there is an ocean", "iscorrect": true}
+            ],
+            "bars": [
+                {"optionnumber": 1, "letter": "A", "count": 3, "heightpercent": 19, "iscorrect": false},
+                {"optionnumber": 2, "letter": "B", "count": 8, "heightpercent": 50, "iscorrect": false},
+                {"optionnumber": 3, "letter": "C", "count": 5, "heightpercent": 31, "iscorrect": false},
+                {"optionnumber": 4, "letter": "D", "count": 16, "heightpercent": 100, "iscorrect": true}
+            ]
+        },
         "progresspercent": 0,
-        "cancontrol": true,
-        "isresults": true
+        "cancontrol": true
     }
 }}
 <div class="mod_kahoodle-overlay" {{#backgroundurl}}style="background-image: url('{{backgroundurl}}');"{{/backgroundurl}}>
@@ -76,39 +75,10 @@
             <h1 class="mod_kahoodle-question-text mod_kahoodle-question-text-compact">{{{questiontextcompact}}}</h1>
         </div>
 
-        {{! Results bar chart }}
-        <div class="mod_kahoodle-results-chart">
-            <div class="mod_kahoodle-chart-bars">
-                {{#bars}}
-                <div class="mod_kahoodle-chart-bar-wrapper{{#iscorrect}} mod_kahoodle-bar-correct{{/iscorrect}}">
-                    <div class="mod_kahoodle-chart-bar mod_kahoodle-bar-option{{optionnumber}}" style="--bar-height: {{heightpercent}}%;">
-                        <span class="mod_kahoodle-bar-count">{{count}}</span>
-                        {{#iscorrect}}
-                        <span class="mod_kahoodle-correct-badge">✓</span>
-                        {{/iscorrect}}
-                    </div>
-                    <div class="mod_kahoodle-bar-label mod_kahoodle-bar-label-option{{optionnumber}}">{{letter}}</div>
-                </div>
-                {{/bars}}
-            </div>
-        </div>
-
-        {{! Answer options }}
-        <div class="mod_kahoodle-options">
-            <div class="mod_kahoodle-options-grid">
-                {{#options}}
-                <div class="mod_kahoodle-option mod_kahoodle-option{{optionnumber}}{{#iscorrect}} mod_kahoodle-option-correct{{/iscorrect}}" data-option="{{optionnumber}}">
-                    <div class="mod_kahoodle-option-icon">
-                        <span class="mod_kahoodle-icon-letter">{{letter}}</span>
-                    </div>
-                    <span class="mod_kahoodle-option-text">{{text}}</span>
-                    {{#iscorrect}}
-                    <span class="mod_kahoodle-correct-indicator">✓</span>
-                    {{/iscorrect}}
-                </div>
-                {{/options}}
-            </div>
-        </div>
+        {{! Question type specific content }}
+        {{#typeismultichoice}}
+        {{> mod_kahoodle/questiontypes/multichoice/question_results }}
+        {{/typeismultichoice}}
 
     </main>
 

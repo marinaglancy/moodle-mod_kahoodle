@@ -97,7 +97,7 @@ class preview_questions extends external_api {
             $property->setAccessible(true);
             $property->setValue($roundquestion, $round);
 
-            $output = new roundquestion_output($roundquestion, $totalquestions, true, true, true);
+            $output = new roundquestion_output($roundquestion, $totalquestions, true, true);
             $questions[] = $output->export_for_template($renderer);
         }
 
@@ -122,17 +122,8 @@ class preview_questions extends external_api {
                     'imageurl' => new external_value(PARAM_URL, 'Image URL', VALUE_OPTIONAL),
                     'imagealt' => new external_value(PARAM_TEXT, 'Image alt text', VALUE_OPTIONAL),
                     'imagelandscape' => new external_value(PARAM_BOOL, 'Image is landscape', VALUE_OPTIONAL),
-                    'options' => new external_multiple_structure(
-                        new external_single_structure([
-                            'optionnumber' => new external_value(PARAM_INT, 'Option number'),
-                            'letter' => new external_value(PARAM_ALPHA, 'Option letter'),
-                            'text' => new external_value(PARAM_TEXT, 'Option text'),
-                        ]),
-                        'Answer options',
-                        VALUE_OPTIONAL
-                    ),
-                    'optioncount' => new external_value(PARAM_INT, 'Number of options'),
-                    'manyoptions' => new external_value(PARAM_BOOL, 'Has more than 4 options'),
+                    'questiontype' => new external_value(PARAM_ALPHANUMEXT, 'Question type identifier'),
+                    'typedata' => new external_value(PARAM_RAW, 'JSON-encoded question type specific data'),
                     'progresspercent' => new external_value(PARAM_INT, 'Progress percentage'),
                     'cancontrol' => new external_value(PARAM_BOOL, 'Can control quiz'),
                     'ispreview' => new external_value(PARAM_BOOL, 'Is preview mode'),

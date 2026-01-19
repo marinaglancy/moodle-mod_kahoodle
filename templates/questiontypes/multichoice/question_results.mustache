@@ -1,0 +1,87 @@
+{{!
+    This file is part of mod_kahoodle plugin
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_kahoodle/questiontypes/multichoice/question_results
+
+    Multichoice question type partial for question results display.
+
+    Context variables required for this template (from typedata):
+    * options - Array of answer options, each containing:
+        * optionnumber - The option number (1-8)
+        * letter - The letter label (A, B, C, etc.)
+        * text - The option text
+        * iscorrect - Boolean indicating if this is the correct answer
+    * bars - Array of bar chart data, each containing:
+        * optionnumber - The option number (1-8)
+        * letter - The letter label (A, B, C, etc.)
+        * count - Number of responses for this option
+        * heightpercent - Bar height as percentage (0-100)
+        * iscorrect - Boolean indicating if this is the correct answer
+
+    Example context (json):
+    {
+        "typedata": {
+            "options": [
+                {"optionnumber": 1, "letter": "A", "text": "5 days", "iscorrect": false},
+                {"optionnumber": 2, "letter": "B", "text": "50 days", "iscorrect": false},
+                {"optionnumber": 3, "letter": "C", "text": "200 days", "iscorrect": false},
+                {"optionnumber": 4, "letter": "D", "text": "You cannot walk around the world, there is an ocean", "iscorrect": true}
+            ],
+            "bars": [
+                {"optionnumber": 1, "letter": "A", "count": 3, "heightpercent": 19, "iscorrect": false},
+                {"optionnumber": 2, "letter": "B", "count": 8, "heightpercent": 50, "iscorrect": false},
+                {"optionnumber": 3, "letter": "C", "count": 5, "heightpercent": 31, "iscorrect": false},
+                {"optionnumber": 4, "letter": "D", "count": 16, "heightpercent": 100, "iscorrect": true}
+            ]
+        }
+    }
+}}
+{{#typedata}}
+{{! Results bar chart }}
+<div class="mod_kahoodle-results-chart">
+    <div class="mod_kahoodle-chart-bars">
+        {{#bars}}
+        <div class="mod_kahoodle-chart-bar-wrapper{{#iscorrect}} mod_kahoodle-bar-correct{{/iscorrect}}">
+            <div class="mod_kahoodle-chart-bar mod_kahoodle-bar-option{{optionnumber}}" style="--bar-height: {{heightpercent}}%;">
+                <span class="mod_kahoodle-bar-count">{{count}}</span>
+                {{#iscorrect}}
+                <span class="mod_kahoodle-correct-badge">✓</span>
+                {{/iscorrect}}
+            </div>
+            <div class="mod_kahoodle-bar-label mod_kahoodle-bar-label-option{{optionnumber}}">{{letter}}</div>
+        </div>
+        {{/bars}}
+    </div>
+</div>
+
+{{! Answer options }}
+<div class="mod_kahoodle-options">
+    <div class="mod_kahoodle-options-grid">
+        {{#options}}
+        <div class="mod_kahoodle-option mod_kahoodle-option{{optionnumber}}{{#iscorrect}} mod_kahoodle-option-correct{{/iscorrect}}" data-option="{{optionnumber}}">
+            <div class="mod_kahoodle-option-icon">
+                <span class="mod_kahoodle-icon-letter">{{letter}}</span>
+            </div>
+            <span class="mod_kahoodle-option-text">{{text}}</span>
+            {{#iscorrect}}
+            <span class="mod_kahoodle-correct-indicator">✓</span>
+            {{/iscorrect}}
+        </div>
+        {{/options}}
+    </div>
+</div>
+{{/typedata}}

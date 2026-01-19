@@ -1,0 +1,62 @@
+{{!
+    This file is part of mod_kahoodle plugin
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_kahoodle/questiontypes/multichoice/question_progress
+
+    Multichoice question type partial for question progress display.
+
+    Context variables required for this template (from typedata):
+    * options - Array of answer options, each containing:
+        * optionnumber - The option number (1-8)
+        * letter - The letter label (A, B, C, etc.)
+        * text - The option text
+    * optioncount - Number of options (2-8)
+    * manyoptions - Boolean indicating if there are more than 4 options
+
+    Example context (json):
+    {
+        "typedata": {
+            "options": [
+                {"optionnumber": 1, "letter": "A", "text": "5 days", "iscorrect": false},
+                {"optionnumber": 2, "letter": "B", "text": "50 days", "iscorrect": false},
+                {"optionnumber": 3, "letter": "C", "text": "200 days", "iscorrect": false},
+                {"optionnumber": 4, "letter": "D", "text": "You cannot walk around the world, there is an ocean", "iscorrect": true}
+            ],
+            "bars": [
+                {"optionnumber": 1, "letter": "A", "count": 3, "heightpercent": 19, "iscorrect": false},
+                {"optionnumber": 2, "letter": "B", "count": 8, "heightpercent": 50, "iscorrect": false},
+                {"optionnumber": 3, "letter": "C", "count": 5, "heightpercent": 31, "iscorrect": false},
+                {"optionnumber": 4, "letter": "D", "count": 16, "heightpercent": 100, "iscorrect": true}
+            ]
+        }
+    }
+}}
+{{#typedata}}
+{{! Answer options }}
+<div class="mod_kahoodle-options{{#manyoptions}} mod_kahoodle-options-many{{/manyoptions}}">
+    <div class="mod_kahoodle-options-grid{{#manyoptions}} mod_kahoodle-options-grid-compact{{/manyoptions}}">
+        {{#options}}
+        <div class="mod_kahoodle-option mod_kahoodle-option{{optionnumber}}" data-option="{{optionnumber}}">
+            <div class="mod_kahoodle-option-icon">
+                <span class="mod_kahoodle-icon-letter">{{letter}}</span>
+            </div>
+            <span class="mod_kahoodle-option-text">{{text}}</span>
+        </div>
+        {{/options}}
+    </div>
+</div>
+{{/typedata}}

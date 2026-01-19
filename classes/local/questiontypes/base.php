@@ -135,4 +135,16 @@ abstract class base {
      * @return array errors
      */
     abstract public function question_form_validation(round_question $roundquestion, array $data, array $files): array;
+
+    /**
+     * Export question type specific data for templates
+     *
+     * This method returns an array of data specific to this question type
+     * that will be JSON-encoded and passed to the template via JavaScript.
+     * The JS will decode it and merge with the main template data.
+     *
+     * @param round_question $roundquestion
+     * @return array
+     */
+    abstract public function export_template_data(round_question $roundquestion): array;
 }

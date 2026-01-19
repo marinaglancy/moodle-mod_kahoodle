@@ -43,9 +43,6 @@ class roundquestion implements renderable, templatable {
     /** @var bool Whether this is a preview mode */
     protected bool $ispreview;
 
-    /** @var bool Whether to skip format_text (for web service usage) */
-    protected bool $forwebservice;
-
     /**
      * Constructor
      *
@@ -53,20 +50,17 @@ class roundquestion implements renderable, templatable {
      * @param int $totalquestions Total number of questions in the round
      * @param bool $cancontrol Whether user can control the quiz
      * @param bool $ispreview Whether this is a preview mode
-     * @param bool $forwebservice Whether this is for web service (skip format_text)
      */
     public function __construct(
         round_question $roundquestion,
         int $totalquestions,
         bool $cancontrol = false,
-        bool $ispreview = false,
-        bool $forwebservice = false
+        bool $ispreview = false
     ) {
         $this->roundquestion = $roundquestion;
         $this->totalquestions = $totalquestions;
         $this->cancontrol = $cancontrol;
         $this->ispreview = $ispreview;
-        $this->forwebservice = $forwebservice;
     }
 
     /**
@@ -101,10 +95,10 @@ class roundquestion implements renderable, templatable {
         $templatedata->imagealt = $imagedata['imagealt'];
         $templatedata->imagelandscape = $imagedata['imagelandscape'];
 
-        // Answer options (for multichoice questions).
-        $templatedata->options = $this->get_options();
-        $templatedata->optioncount = count($templatedata->options);
-        $templatedata->manyoptions = $templatedata->optioncount > 4;
+        // Question type and type-specific data (JSON-encoded for JS to decode).
+        $questiontype = $this->roundquestion->get_question_type();
+        $templatedata->questiontype = $questiontype->get_type();
+        $templatedata->typedata = json_encode($questiontype->export_template_data($this->roundquestion));
 
         // Progress and control.
         $templatedata->progresspercent = 100; // Full progress for preview.
@@ -139,27 +133,10 @@ class roundquestion implements renderable, templatable {
                 $data->questionversionid
             );
 
-            if ($this->forwebservice) {
-                // For web services, use external_format_text to avoid double escaping.
-                [$text] = \core_external\util::format_text(
-                    $text,
-                    FORMAT_HTML,
-                    $context,
-                    'mod_kahoodle',
-                    constants::FILEAREA_QUESTION_IMAGE,
-                    $data->questionversionid
-                );
-                return $text;
-            }
-
-            return format_text($text, FORMAT_HTML, ['context' => $context]);
-        }
-
-        // Plain text format.
-        if ($this->forwebservice) {
+            // Use external_format_text to avoid double escaping in web services.
             [$text] = \core_external\util::format_text(
                 $text,
-                FORMAT_PLAIN,
+                FORMAT_HTML,
                 $context,
                 'mod_kahoodle',
                 constants::FILEAREA_QUESTION_IMAGE,
@@ -168,7 +145,16 @@ class roundquestion implements renderable, templatable {
             return $text;
         }
 
-        return format_text($text, FORMAT_PLAIN, ['context' => $context]);
+        // Plain text format.
+        [$text] = \core_external\util::format_text(
+            $text,
+            FORMAT_PLAIN,
+            $context,
+            'mod_kahoodle',
+            constants::FILEAREA_QUESTION_IMAGE,
+            $data->questionversionid
+        );
+        return $text;
     }
 
     /**
@@ -228,39 +214,5 @@ class roundquestion implements renderable, templatable {
         }
 
         return $result;
-    }
-
-    /**
-     * Get answer options for multichoice questions
-     *
-     * @return array
-     */
-    protected function get_options(): array {
-        $data = $this->roundquestion->get_data();
-        $options = [];
-
-        $questionconfig = $data->questionconfig ?? '';
-        if (empty($questionconfig)) {
-            return $options;
-        }
-
-        $lines = preg_split('/\r\n|\r|\n/', $questionconfig, -1, PREG_SPLIT_NO_EMPTY);
-        $letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-
-        foreach ($lines as $index => $line) {
-            $text = trim($line);
-            // Remove the asterisk marker for correct answer (don't show in preview).
-            if (str_starts_with($text, '*')) {
-                $text = substr($text, 1);
-            }
-
-            $options[] = [
-                'optionnumber' => $index + 1,
-                'letter' => $letters[$index] ?? (string)($index + 1),
-                'text' => $text,
-            ];
-        }
-
-        return $options;
     }
 }
