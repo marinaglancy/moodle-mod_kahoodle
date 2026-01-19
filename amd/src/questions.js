@@ -198,14 +198,15 @@ const reloadQuestionsTable = () => {
  * Decodes type-specific JSON data and adds typeis<type> boolean property.
  *
  * @param {Object} question Raw question data from web service
+ * @param {Object} generalData General data to merge into question data
  * @returns {Object} Processed question data ready for template
  */
-const processQuestionData = (question) => {
+const processQuestionData = (question, generalData) => {
     // Decode the JSON-encoded type-specific data.
     const typeData = JSON.parse(question.typedata || '{}');
 
     // Store decoded type data under typedata to avoid naming conflicts.
-    const processed = {...question, typedata: typeData};
+    const processed = {...generalData, ...question, typedata: typeData};
 
     // Add typeis<type> boolean for Mustache conditional rendering.
     // E.g., questiontype "multichoice" becomes typeismultichoice: true.
@@ -232,8 +233,12 @@ const fetchPreviewQuestions = async(roundId) => {
         args: {roundid: roundId},
     }])[0];
 
+    // General data is everything in the reponse except questions (quiz name, number of questions, etc).
+    const generalData = {...response};
+    delete generalData.questions;
+
     // Process each question to decode typedata and add isType boolean.
-    const processedQuestions = response.questions.map(processQuestionData);
+    const processedQuestions = response.questions.map((q) => processQuestionData(q, generalData));
 
     // Cache the processed result.
     previewCache[roundId] = processedQuestions;

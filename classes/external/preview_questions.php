@@ -69,39 +69,24 @@ class preview_questions extends external_api {
         // Set up page for rendering.
         $PAGE->set_context($context);
 
-        // Get all questions in this round ordered by sortorder.
-        $sql = "SELECT rq.id, rq.roundid, rq.questionversionid, rq.sortorder, rq.timecreated, rq.timemodified,
-                       rq.questionpreviewduration, rq.questionduration, rq.questionresultsduration,
-                       rq.maxpoints, rq.minpoints, rq.totalresponses, rq.answerdistribution,
-                       qv.questionid, qv.version, qv.questiontext, qv.questionconfig,
-                       q.kahoodleid, q.questiontype,
-                       k.questionformat
-                  FROM {kahoodle_round_questions} rq
-                  JOIN {kahoodle_question_versions} qv ON rq.questionversionid = qv.id
-                  JOIN {kahoodle_questions} q ON qv.questionid = q.id
-                  JOIN {kahoodle} k ON k.id = q.kahoodleid
-                 WHERE rq.roundid = ?
-              ORDER BY rq.sortorder ASC";
-
-        $records = $DB->get_records_sql($sql, [$roundid]);
-        $totalquestions = count($records);
-
-        $questions = [];
+        // Prepare question data.
+        $roundquestions = \mod_kahoodle\local\entities\round_question::get_all_questions_for_round($round);
+        $totalquestions = count($roundquestions);
         $renderer = $PAGE->get_renderer('core');
+        $questions = [];
 
-        foreach ($records as $record) {
-            $roundquestion = \mod_kahoodle\local\entities\round_question::create_from_partial_record($record);
-            // Set the round entity to avoid additional DB queries.
-            $reflection = new \ReflectionClass($roundquestion);
-            $property = $reflection->getProperty('round');
-            $property->setAccessible(true);
-            $property->setValue($roundquestion, $round);
-
-            $output = new roundquestion_output($roundquestion, $totalquestions, true, true);
+        foreach ($roundquestions as $roundquestion) {
+            $output = new roundquestion_output($roundquestion);
             $questions[] = $output->export_for_template($renderer);
         }
 
-        return ['questions' => $questions];
+        return [
+            'quiztitle' => $round->get_kahoodle_name(),
+            'totalquestions' => $totalquestions,
+            'isedit' => true,
+            'cancontrol' => true,
+            'questions' => $questions,
+        ];
     }
 
     /**
@@ -111,11 +96,13 @@ class preview_questions extends external_api {
      */
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
+            'quiztitle' => new external_value(PARAM_TEXT, 'Quiz title'),
+            'totalquestions' => new external_value(PARAM_INT, 'Total questions'),
+            'isedit' => new external_value(PARAM_BOOL, 'Is it rendered for teacher when they edit the questions'),
+            'cancontrol' => new external_value(PARAM_BOOL, 'Can control quiz'),
             'questions' => new external_multiple_structure(
                 new external_single_structure([
-                    'quiztitle' => new external_value(PARAM_TEXT, 'Quiz title'),
                     'sortorder' => new external_value(PARAM_INT, 'Question order'),
-                    'totalquestions' => new external_value(PARAM_INT, 'Total questions'),
                     'roundquestionid' => new external_value(PARAM_INT, 'Round question ID'),
                     'questiontext' => new external_value(PARAM_RAW, 'Question text HTML'),
                     'hasimage' => new external_value(PARAM_BOOL, 'Has image'),
@@ -124,10 +111,6 @@ class preview_questions extends external_api {
                     'imagelandscape' => new external_value(PARAM_BOOL, 'Image is landscape', VALUE_OPTIONAL),
                     'questiontype' => new external_value(PARAM_ALPHANUMEXT, 'Question type identifier'),
                     'typedata' => new external_value(PARAM_RAW, 'JSON-encoded question type specific data'),
-                    'progresspercent' => new external_value(PARAM_INT, 'Progress percentage'),
-                    'cancontrol' => new external_value(PARAM_BOOL, 'Can control quiz'),
-                    'ispreview' => new external_value(PARAM_BOOL, 'Is preview mode'),
-                    'ispaused' => new external_value(PARAM_BOOL, 'Is paused'),
                     'backgroundurl' => new external_value(PARAM_URL, 'Background image URL', VALUE_OPTIONAL),
                 ])
             ),

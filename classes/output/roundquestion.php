@@ -34,33 +34,13 @@ class roundquestion implements renderable, templatable {
     /** @var round_question The round question entity */
     protected round_question $roundquestion;
 
-    /** @var int Total number of questions in the round */
-    protected int $totalquestions;
-
-    /** @var bool Whether user can control the quiz */
-    protected bool $cancontrol;
-
-    /** @var bool Whether this is a preview mode */
-    protected bool $ispreview;
-
     /**
      * Constructor
      *
      * @param round_question $roundquestion The round question entity
-     * @param int $totalquestions Total number of questions in the round
-     * @param bool $cancontrol Whether user can control the quiz
-     * @param bool $ispreview Whether this is a preview mode
      */
-    public function __construct(
-        round_question $roundquestion,
-        int $totalquestions,
-        bool $cancontrol = false,
-        bool $ispreview = false
-    ) {
+    public function __construct(round_question $roundquestion) {
         $this->roundquestion = $roundquestion;
-        $this->totalquestions = $totalquestions;
-        $this->cancontrol = $cancontrol;
-        $this->ispreview = $ispreview;
     }
 
     /**
@@ -72,39 +52,26 @@ class roundquestion implements renderable, templatable {
     public function export_for_template(\renderer_base $output): stdClass {
         global $CFG;
 
-        $data = $this->roundquestion->get_data();
-        $round = $this->roundquestion->get_round();
-        $kahoodle = $round->get_kahoodle();
-        $context = $round->get_context();
-
         $templatedata = new stdClass();
 
         // Quiz title and question counter.
-        $templatedata->quiztitle = format_string($kahoodle->name, true, ['context' => $context]);
+        $data = $this->roundquestion->get_data();
         $templatedata->sortorder = $data->sortorder;
-        $templatedata->totalquestions = $this->totalquestions;
         $templatedata->roundquestionid = $data->id;
 
         // Question text.
-        $templatedata->questiontext = $this->format_question_text($context);
+        $templatedata->questiontext = $this->roundquestion->display_question_text();
+        $templatedata->questiontextcompact = $this->roundquestion->preview_question_text();
 
         // Question image.
-        $imagedata = $this->get_image_data($context);
-        $templatedata->hasimage = $imagedata['hasimage'];
-        $templatedata->imageurl = $imagedata['imageurl'];
-        $templatedata->imagealt = $imagedata['imagealt'];
-        $templatedata->imagelandscape = $imagedata['imagelandscape'];
+        foreach ($this->get_image_data() as $key => $value) {
+            $templatedata->$key = $value;
+        }
 
         // Question type and type-specific data (JSON-encoded for JS to decode).
         $questiontype = $this->roundquestion->get_question_type();
         $templatedata->questiontype = $questiontype->get_type();
         $templatedata->typedata = json_encode($questiontype->export_template_data($this->roundquestion));
-
-        // Progress and control.
-        $templatedata->progresspercent = 100; // Full progress for preview.
-        $templatedata->cancontrol = $this->cancontrol;
-        $templatedata->ispreview = $this->ispreview;
-        $templatedata->ispaused = false;
 
         // Background.
         $templatedata->backgroundurl = $CFG->wwwroot . '/mod/kahoodle/pix/classroom-bg.jpg';
@@ -113,58 +80,11 @@ class roundquestion implements renderable, templatable {
     }
 
     /**
-     * Format the question text
-     *
-     * @param \context_module $context
-     * @return string
-     */
-    protected function format_question_text(\context_module $context): string {
-        $data = $this->roundquestion->get_data();
-        $text = $data->questiontext ?? '';
-
-        if ($data->questionformat == constants::QUESTIONFORMAT_RICHTEXT) {
-            // Rewrite plugin file URLs for rich text.
-            $text = file_rewrite_pluginfile_urls(
-                $text,
-                'pluginfile.php',
-                $context->id,
-                'mod_kahoodle',
-                constants::FILEAREA_QUESTION_IMAGE,
-                $data->questionversionid
-            );
-
-            // Use external_format_text to avoid double escaping in web services.
-            [$text] = \core_external\util::format_text(
-                $text,
-                FORMAT_HTML,
-                $context,
-                'mod_kahoodle',
-                constants::FILEAREA_QUESTION_IMAGE,
-                $data->questionversionid
-            );
-            return $text;
-        }
-
-        // Plain text format.
-        [$text] = \core_external\util::format_text(
-            $text,
-            FORMAT_PLAIN,
-            $context,
-            'mod_kahoodle',
-            constants::FILEAREA_QUESTION_IMAGE,
-            $data->questionversionid
-        );
-        return $text;
-    }
-
-    /**
      * Get image data for the question
      *
-     * @param \context_module $context
      * @return array
      */
-    protected function get_image_data(\context_module $context): array {
-        $data = $this->roundquestion->get_data();
+    protected function get_image_data(): array {
         $result = [
             'hasimage' => false,
             'imageurl' => '',
@@ -173,20 +93,13 @@ class roundquestion implements renderable, templatable {
         ];
 
         // For rich text, images are embedded in the question text.
-        if ($data->questionformat == constants::QUESTIONFORMAT_RICHTEXT) {
+        $questionformat = $this->roundquestion->get_data()->questionformat;
+        if ($questionformat == constants::QUESTIONFORMAT_RICHTEXT) {
             return $result;
         }
 
         // For plain text, get the uploaded image file.
-        $fs = get_file_storage();
-        $files = $fs->get_area_files(
-            $context->id,
-            'mod_kahoodle',
-            constants::FILEAREA_QUESTION_IMAGE,
-            $data->questionversionid,
-            'filename',
-            false
-        );
+        $files = $this->roundquestion->get_question_files();
 
         if (empty($files)) {
             return $result;
@@ -195,10 +108,10 @@ class roundquestion implements renderable, templatable {
         // Get the first image file.
         $file = reset($files);
         $url = moodle_url::make_pluginfile_url(
-            $context->id,
-            'mod_kahoodle',
-            constants::FILEAREA_QUESTION_IMAGE,
-            $data->questionversionid,
+            $file->get_contextid(),
+            $file->get_component(),
+            $file->get_filearea(),
+            $file->get_itemid(),
             $file->get_filepath(),
             $file->get_filename()
         );

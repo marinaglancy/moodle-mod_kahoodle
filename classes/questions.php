@@ -236,9 +236,8 @@ class questions {
         // Handle file uploads if draft item ID is provided.
         if (!empty($questiondata->imagedraftitemid)) {
             $context = $round->get_context();
-            $kahoodle = $round->get_kahoodle();
 
-            if ($kahoodle->questionformat == constants::QUESTIONFORMAT_RICHTEXT) {
+            if ($roundquestionobj->get_data()->questionformat == constants::QUESTIONFORMAT_RICHTEXT) {
                 // For rich text, save files and rewrite @@PLUGINFILE@@ URLs in text.
                 $questiontext = file_save_draft_area_files(
                     $questiondata->imagedraftitemid,
@@ -397,9 +396,8 @@ class questions {
             // Handle file uploads if draft item ID is provided.
             if (!empty($questiondata->imagedraftitemid)) {
                 $context = $round->get_context();
-                $kahoodle = $round->get_kahoodle();
 
-                if ($kahoodle->questionformat == constants::QUESTIONFORMAT_RICHTEXT) {
+                if ($roundquestion->get_data()->questionformat == constants::QUESTIONFORMAT_RICHTEXT) {
                     // For rich text, save files and rewrite @@PLUGINFILE@@ URLs in text.
                     $questiontext = file_save_draft_area_files(
                         $questiondata->imagedraftitemid,

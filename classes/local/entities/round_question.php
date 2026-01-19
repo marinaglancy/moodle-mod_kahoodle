@@ -56,13 +56,15 @@ class round_question {
             ['rq.totalresponses', 'rq.answerdistribution'], // Stats fields.
             ["qv.questionid", "qv.version"],
             array_map(fn($field) => "qv.$field", constants::FIELDS_QUESTION_VERSION),
-            ["q.kahoodleid", "q.questiontype"]
+            ["q.kahoodleid", "q.questiontype"],
+            ['k.questionformat'] // Kahoodle field needed to determine question text format.
         );
 
         return 'SELECT ' . implode(', ', $fields) . '
             FROM {kahoodle_round_questions} rq
             JOIN {kahoodle_question_versions} qv ON rq.questionversionid = qv.id
-            JOIN {kahoodle_questions} q ON qv.questionid = q.id';
+            JOIN {kahoodle_questions} q ON qv.questionid = q.id
+            JOIN {kahoodle} k ON q.kahoodleid = k.id';
     }
 
     /**
@@ -109,6 +111,25 @@ class round_question {
     }
 
     /**
+     * Get all round questions for a given round
+     *
+     * @param round $round The round entity
+     * @return round_question[]
+     */
+    public static function get_all_questions_for_round(round $round): array {
+        global $DB;
+        $records = $DB->get_records_sql(self::get_fields_sql() .
+            ' WHERE rq.roundid = ? ORDER BY rq.sortorder ASC', [$round->get_id()]);
+        $questions = [];
+        foreach ($records as $record) {
+            $q = new self($record);
+            $q->round = $round;
+            $questions[] = $q;
+        }
+        return $questions;
+    }
+
+    /**
      * Create a new round question instance for a given round and question type
      *
      * @param round $round The round entity
@@ -134,6 +155,7 @@ class round_question {
             'questiontype' => $type->get_type(),
             'totalresponses' => null,
             'answerdistribution' => null,
+            'questionformat' => $round->get_kahoodle()->questionformat,
         ];
         foreach (constants::FIELDS_ROUND_QUESTION as $field) {
             $record->$field = null;
@@ -218,6 +240,34 @@ class round_question {
     }
 
     /**
+     * Full formatted question text for display
+     *
+     * @return string
+     */
+    public function display_question_text(): string {
+        $data = $this->data;
+        $text = $data->questiontext ?? '';
+        $context = $this->get_round()->get_context();
+
+        if ($this->data->questionformat == constants::QUESTIONFORMAT_RICHTEXT) {
+            // Rich text format.
+            [$text] = \core_external\util::format_text(
+                $text,
+                FORMAT_HTML,
+                $context,
+                'mod_kahoodle',
+                constants::FILEAREA_QUESTION_IMAGE,
+                $data->questionversionid
+            );
+            return $text;
+        }
+
+        // Plain text format.
+        [$text] = \core_external\util::format_text($text, FORMAT_MOODLE, $context);
+        return $text;
+    }
+
+    /**
      * Preview question text, used in a report
      *
      * @return string
@@ -239,6 +289,23 @@ class round_question {
     }
 
     /**
+     * All files (normally images) used in this question
+     *
+     * @return \stored_file[]
+     */
+    public function get_question_files(): array {
+        $fs = get_file_storage();
+        return $fs->get_area_files(
+            $this->guess_context()->id,
+            'mod_kahoodle',
+            constants::FILEAREA_QUESTION_IMAGE,
+            $this->data->questionversionid,
+            'filename',
+            false
+        );
+    }
+
+    /**
      * Preview question images, used in a report
      *
      * @return string
@@ -253,16 +320,7 @@ class round_question {
                 return '';
             }
         }
-        $context = $this->guess_context();
-        $fs = get_file_storage();
-        $files = $fs->get_area_files(
-            $context->id,
-            'mod_kahoodle',
-            constants::FILEAREA_QUESTION_IMAGE,
-            $this->data->questionversionid,
-            'filename',
-            false
-        );
+        $files = $this->get_question_files();
         if ($isrichtext) {
             // Filter only files that are referenced in the question text.
             $files = array_filter($files, fn($file) => in_array($file->get_filepath() . $file->get_filename(), $filenames));
@@ -272,10 +330,10 @@ class round_question {
         $html = '';
         foreach ($files as $file) {
             $url = moodle_url::make_pluginfile_url(
-                $context->id,
-                'mod_kahoodle',
-                constants::FILEAREA_QUESTION_IMAGE,
-                $this->data->questionversionid,
+                $file->get_contextid(),
+                $file->get_component(),
+                $file->get_filearea(),
+                $file->get_itemid(),
                 $file->get_filepath(),
                 $file->get_filename()
             );

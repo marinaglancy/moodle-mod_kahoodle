@@ -107,6 +107,15 @@ class round {
         return $this->kahoodle;
     }
 
+    /**
+     * Formatted name of the activity
+     *
+     * @return string
+     */
+    public function get_kahoodle_name(): string {
+        return format_string($this->get_kahoodle()->name, true, ['context' => $this->get_context()]);
+    }
+
     /** @var stdClass|null Cached course module record */
     private ?stdClass $cm = null;
 

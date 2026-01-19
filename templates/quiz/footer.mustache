@@ -23,14 +23,14 @@
     * progresspercent - Percentage of time remaining (0-100)
     * ispaused - Boolean indicating if the quiz is currently paused
     * cancontrol - Boolean indicating if user can control the quiz (teacher)
-    * ispreview - Boolean indicating if in preview mode (teacher)
+    * isedit - Boolean indicating if it is rendered for teachers when they edit the questions
 
 
     Example context (json):
     {
         "progresspercent": 65,
         "cancontrol": true,
-        "ispreview": true,
+        "isedit": true,
         "ispaused": false
     }
 }}
@@ -46,11 +46,11 @@
     {{! Teacher controls }}
     {{#cancontrol}}
     <div class="mod_kahoodle-controls">
-        {{#ispreview}}
+        {{#isedit}}
         <a href="#" class="mod_kahoodle-control-btn" data-action="back">
             {{#pix}}back, mod_kahoodle{{/pix}} {{#str}}back{{/str}}
         </a>
-        {{/ispreview}}
+        {{/isedit}}
         {{^ispaused}}
         <a href="#" class="mod_kahoodle-control-btn" data-action="pause">
             {{#pix}}pause, mod_kahoodle{{/pix}} {{#str}}pause, mod_kahoodle{{/str}}
