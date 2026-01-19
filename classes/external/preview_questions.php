@@ -131,6 +131,8 @@ class preview_questions extends external_api {
                         'Answer options',
                         VALUE_OPTIONAL
                     ),
+                    'optioncount' => new external_value(PARAM_INT, 'Number of options'),
+                    'manyoptions' => new external_value(PARAM_BOOL, 'Has more than 4 options'),
                     'progresspercent' => new external_value(PARAM_INT, 'Progress percentage'),
                     'cancontrol' => new external_value(PARAM_BOOL, 'Can control quiz'),
                     'ispreview' => new external_value(PARAM_BOOL, 'Is preview mode'),

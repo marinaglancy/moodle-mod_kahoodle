@@ -101,6 +101,8 @@ class roundquestion implements renderable, templatable {
 
         // Answer options (for multichoice questions).
         $templatedata->options = $this->get_options();
+        $templatedata->optioncount = count($templatedata->options);
+        $templatedata->manyoptions = $templatedata->optioncount > 4;
 
         // Progress and control.
         $templatedata->progresspercent = 100; // Full progress for preview.
