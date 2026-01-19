@@ -1,0 +1,64 @@
+{{!
+    This file is part of mod_kahoodle plugin
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_kahoodle/quiz/footer
+
+    Quiz overlay footer partial with progress bar and controls.
+
+    Context variables required for this template:
+    * progresspercent - Percentage of time remaining (0-100)
+    * ispaused - Boolean indicating if the quiz is currently paused
+    * cancontrol - Boolean indicating if user can control the quiz (teacher)
+    * ispreview - Boolean indicating if in preview mode (teacher)
+}}
+<footer class="mod_kahoodle-footer">
+
+    {{! Time progress bar }}
+    <div class="mod_kahoodle-progress{{#ispaused}} mod_kahoodle-progress-paused{{/ispaused}}">
+        <div class="mod_kahoodle-progress-bar">
+            <div class="mod_kahoodle-progress-fill" style="width: {{progresspercent}}%;"></div>
+        </div>
+    </div>
+
+    {{! Teacher controls }}
+    {{#cancontrol}}
+    <div class="mod_kahoodle-controls">
+        {{#ispreview}}
+        <a href="#" class="mod_kahoodle-control-btn" data-action="back">
+            {{#pix}}back, mod_kahoodle{{/pix}} {{#str}}back{{/str}}
+        </a>
+        {{/ispreview}}
+        {{^ispaused}}
+        <a href="#" class="mod_kahoodle-control-btn" data-action="pause">
+            {{#pix}}pause, mod_kahoodle{{/pix}} {{#str}}pause, mod_kahoodle{{/str}}
+        </a>
+        {{/ispaused}}
+        {{#ispaused}}
+        <a href="#" class="mod_kahoodle-control-btn" data-action="resume">
+            {{#pix}}resume, mod_kahoodle{{/pix}} {{#str}}resume, mod_kahoodle{{/str}}
+        </a>
+        {{/ispaused}}
+        <a href="#" class="mod_kahoodle-control-btn" data-action="next">
+            {{#pix}}next, mod_kahoodle{{/pix}} {{#str}}next{{/str}}
+        </a>
+        <a href="#" class="mod_kahoodle-control-btn" data-action="close">
+            {{#pix}}i/window_close, core{{/pix}} {{#str}}close, mod_kahoodle{{/str}}
+        </a>
+    </div>
+    {{/cancontrol}}
+
+</footer>

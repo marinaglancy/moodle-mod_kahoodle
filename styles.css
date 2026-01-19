@@ -156,7 +156,7 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
     max-width: 1400px;
-    margin: 0 auto;
+    margin: 0.2rem auto;
     width: 100%;
 }
 
@@ -339,6 +339,217 @@
 }
 
 .mod_kahoodle-options-grid-compact .mod_kahoodle-option-text {
+    font-size: 1.1rem;
+}
+
+/* ========================================
+   RESULTS PAGE - BAR CHART
+   ======================================== */
+.mod_kahoodle-question-text-compact {
+    font-size: 2rem;
+}
+
+.mod_kahoodle-results-chart {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+    flex: 1;
+    min-height: 0;
+    padding: 2rem;
+}
+
+.mod_kahoodle-chart-bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 1.5rem;
+    height: 100%;
+    max-width: 1000px;
+    width: 100%;
+}
+
+.mod_kahoodle-chart-bar-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100px;
+    height: 100%;
+    flex-shrink: 0;
+}
+
+.mod_kahoodle-chart-bar {
+    width: 100%;
+    height: var(--bar-height, 50%);
+    min-height: 50px;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 0.75rem;
+    position: relative;
+    margin-top: auto;
+    box-shadow: var(--mod_kahoodle-shadow-sm);
+}
+
+.mod_kahoodle-bar-count {
+    color: var(--mod_kahoodle-light);
+    font-size: 1.75rem;
+    font-weight: 700;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.mod_kahoodle-bar-label {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.75rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--mod_kahoodle-light);
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Bar colors */
+.mod_kahoodle-bar-option1 {
+    background-color: var(--mod_kahoodle-option1);
+}
+
+.mod_kahoodle-bar-option2 {
+    background-color: var(--mod_kahoodle-option2);
+}
+
+.mod_kahoodle-bar-option3 {
+    background-color: var(--mod_kahoodle-option3);
+}
+
+.mod_kahoodle-bar-option4 {
+    background-color: var(--mod_kahoodle-option4);
+}
+
+.mod_kahoodle-bar-option5 {
+    background-color: var(--mod_kahoodle-option5);
+}
+
+.mod_kahoodle-bar-option6 {
+    background-color: var(--mod_kahoodle-option6);
+}
+
+.mod_kahoodle-bar-option7 {
+    background-color: var(--mod_kahoodle-option7);
+}
+
+.mod_kahoodle-bar-option8 {
+    background-color: var(--mod_kahoodle-option8);
+}
+
+/* Bar label backgrounds - circular badges */
+.mod_kahoodle-bar-label-option1 {
+    background-color: var(--mod_kahoodle-option1);
+}
+
+.mod_kahoodle-bar-label-option2 {
+    background-color: var(--mod_kahoodle-option2);
+}
+
+.mod_kahoodle-bar-label-option3 {
+    background-color: var(--mod_kahoodle-option3);
+}
+
+.mod_kahoodle-bar-label-option4 {
+    background-color: var(--mod_kahoodle-option4);
+}
+
+.mod_kahoodle-bar-label-option5 {
+    background-color: var(--mod_kahoodle-option5);
+}
+
+.mod_kahoodle-bar-label-option6 {
+    background-color: var(--mod_kahoodle-option6);
+}
+
+.mod_kahoodle-bar-label-option7 {
+    background-color: var(--mod_kahoodle-option7);
+}
+
+.mod_kahoodle-bar-label-option8 {
+    background-color: var(--mod_kahoodle-option8);
+}
+
+/* Correct answer indication on bar */
+.mod_kahoodle-bar-correct .mod_kahoodle-chart-bar {
+    box-shadow: 0 0 0 3px var(--mod_kahoodle-light), var(--mod_kahoodle-shadow);
+}
+
+.mod_kahoodle-correct-badge {
+    position: absolute;
+    top: -12px;
+    right: -8px;
+    width: 28px;
+    height: 28px;
+    background: #00c853;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0, 200, 83, 0.4);
+    border: 2px solid white;
+}
+
+/* Correct answer indication on option */
+.mod_kahoodle-option-correct {
+    box-shadow: 0 0 0 4px var(--mod_kahoodle-light), var(--mod_kahoodle-shadow);
+    position: relative;
+}
+
+.mod_kahoodle-correct-indicator {
+    position: absolute;
+    right: 1rem;
+    width: 36px;
+    height: 36px;
+    background: #00c853;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0, 200, 83, 0.4);
+}
+
+/* ========================================
+   COMPACT OPTIONS (for results view)
+   ======================================== */
+.mod_kahoodle-options-compact {
+    flex: 0;
+    margin-top: auto;
+    padding-bottom: 0.5rem;
+}
+
+.mod_kahoodle-option-compact {
+    padding: 0.5rem 1rem;
+    min-height: 48px;
+}
+
+.mod_kahoodle-option-compact .mod_kahoodle-option-text {
+    font-size: 1.1rem;
+}
+
+.mod_kahoodle-option-icon-compact {
+    width: 32px;
+    height: 32px;
+    margin-right: 0.75rem;
+}
+
+.mod_kahoodle-option-icon-compact .mod_kahoodle-icon-letter {
     font-size: 1.1rem;
 }
 
