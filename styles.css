@@ -18,7 +18,7 @@
     /* UI colors */
     --mod_kahoodle-dark: #2d3436;
     --mod_kahoodle-dark-overlay: rgba(45, 52, 54, 0.88);
-    --mod_kahoodle-light: #ffffff;
+    --mod_kahoodle-light: #fff;
     --mod_kahoodle-muted: rgba(255, 255, 255, 0.7);
     --mod_kahoodle-progress-bg: rgba(255, 255, 255, 0.2);
     --mod_kahoodle-progress-fill: #74b9ff;
@@ -76,35 +76,7 @@
 }
 
 .mod_kahoodle-quiz-title {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    color: var(--mod_kahoodle-light);
-    font-size: 1.1rem;
-    font-weight: 700;
-    text-align: center;
-    max-width: 50%;
-    padding: 0.75rem 3rem;
-    z-index: 1;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-}
-
-.mod_kahoodle-quiz-title::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 115%;
-    height: 160%;
-    background: linear-gradient(90deg, #00d4ff 0%, #6366f1 45%, #a855f7 80%, #d946ef 100%);
-    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 80' preserveAspectRatio='none'%3E%3Cpath d='M2 42 Q8 12 35 18 T85 22 T140 15 T200 25 T260 18 T295 38 L298 52 Q285 72 245 65 T175 60 T105 68 T45 58 T8 62 Z' fill='black'/%3E%3Ccircle cx='8' cy='32' r='10' fill='black'/%3E%3Ccircle cx='22' cy='20' r='7' fill='black'/%3E%3Ccircle cx='5' cy='52' r='6' fill='black'/%3E%3Ccircle cx='35' cy='14' r='5' fill='black'/%3E%3Ccircle cx='292' cy='42' r='8' fill='black'/%3E%3Ccircle cx='280' cy='26' r='6' fill='black'/%3E%3Ccircle cx='295' cy='58' r='7' fill='black'/%3E%3Ccircle cx='265' cy='20' r='5' fill='black'/%3E%3Cellipse cx='55' cy='12' rx='14' ry='8' fill='black'/%3E%3Cellipse cx='248' cy='22' rx='12' ry='7' fill='black'/%3E%3C/svg%3E");
-    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 80' preserveAspectRatio='none'%3E%3Cpath d='M2 42 Q8 12 35 18 T85 22 T140 15 T200 25 T260 18 T295 38 L298 52 Q285 72 245 65 T175 60 T105 68 T45 58 T8 62 Z' fill='black'/%3E%3Ccircle cx='8' cy='32' r='10' fill='black'/%3E%3Ccircle cx='22' cy='20' r='7' fill='black'/%3E%3Ccircle cx='5' cy='52' r='6' fill='black'/%3E%3Ccircle cx='35' cy='14' r='5' fill='black'/%3E%3Ccircle cx='292' cy='42' r='8' fill='black'/%3E%3Ccircle cx='280' cy='26' r='6' fill='black'/%3E%3Ccircle cx='295' cy='58' r='7' fill='black'/%3E%3Ccircle cx='265' cy='20' r='5' fill='black'/%3E%3Cellipse cx='55' cy='12' rx='14' ry='8' fill='black'/%3E%3Cellipse cx='248' cy='22' rx='12' ry='7' fill='black'/%3E%3C/svg%3E");
-    mask-size: 100% 100%;
-    -webkit-mask-size: 100% 100%;
-    mask-repeat: no-repeat;
-    -webkit-mask-repeat: no-repeat;
-    z-index: -1;
+    display: none;
 }
 
 .mod_kahoodle-question-counter {
@@ -286,7 +258,7 @@
 
 .mod_kahoodle-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--mod_kahoodle-progress-fill), #00ff88);
+    background: linear-gradient(90deg, var(--mod_kahoodle-progress-fill), #0f8);
     border-radius: 6px;
     transition: width 0.3s ease;
 }
@@ -362,10 +334,6 @@
 
     .mod_kahoodle-question-text {
         font-size: 1.5rem;
-    }
-
-    .mod_kahoodle-quiz-title {
-        display: none;
     }
 
     .mod_kahoodle-header {

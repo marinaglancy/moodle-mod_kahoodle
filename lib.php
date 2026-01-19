@@ -167,7 +167,7 @@ function kahoodle_get_fontawesome_icon_map() {
     return [
         'mod_kahoodle:pause' => 'fa-pause',
         'mod_kahoodle:resume' => 'fa-play',
-        'mod_kahoodle:next' => 'fa-forward',
-        'mod_kahoodle:back' => 'fa-backward',
+        'mod_kahoodle:next' => 'fa-forward-step',
+        'mod_kahoodle:back' => 'fa-backward-step',
     ];
 }

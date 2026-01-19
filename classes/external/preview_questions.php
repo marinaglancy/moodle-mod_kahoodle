@@ -32,7 +32,6 @@ use mod_kahoodle\output\roundquestion as roundquestion_output;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class preview_questions extends external_api {
-
     /**
      * Describes the parameters for mod_kahoodle_preview_questions
      *

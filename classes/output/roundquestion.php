@@ -134,8 +134,14 @@ class roundquestion implements renderable, templatable {
 
             if ($this->forwebservice) {
                 // For web services, use external_format_text to avoid double escaping.
-                [$text] = \core_external\util::format_text($text, FORMAT_HTML, $context, 'mod_kahoodle',
-                    constants::FILEAREA_QUESTION_IMAGE, $data->questionversionid);
+                [$text] = \core_external\util::format_text(
+                    $text,
+                    FORMAT_HTML,
+                    $context,
+                    'mod_kahoodle',
+                    constants::FILEAREA_QUESTION_IMAGE,
+                    $data->questionversionid
+                );
                 return $text;
             }
 
@@ -144,8 +150,14 @@ class roundquestion implements renderable, templatable {
 
         // Plain text format.
         if ($this->forwebservice) {
-            [$text] = \core_external\util::format_text($text, FORMAT_PLAIN, $context, 'mod_kahoodle',
-                constants::FILEAREA_QUESTION_IMAGE, $data->questionversionid);
+            [$text] = \core_external\util::format_text(
+                $text,
+                FORMAT_PLAIN,
+                $context,
+                'mod_kahoodle',
+                constants::FILEAREA_QUESTION_IMAGE,
+                $data->questionversionid
+            );
             return $text;
         }
 
