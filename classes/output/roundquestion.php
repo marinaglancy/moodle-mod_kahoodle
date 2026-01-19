@@ -76,6 +76,8 @@ class roundquestion implements renderable, templatable {
      * @return stdClass
      */
     public function export_for_template(\renderer_base $output): stdClass {
+        global $CFG;
+
         $data = $this->roundquestion->get_data();
         $round = $this->roundquestion->get_round();
         $kahoodle = $round->get_kahoodle();
@@ -109,6 +111,9 @@ class roundquestion implements renderable, templatable {
         $templatedata->cancontrol = $this->cancontrol;
         $templatedata->ispreview = $this->ispreview;
         $templatedata->ispaused = false;
+
+        // Background.
+        $templatedata->backgroundurl = $CFG->wwwroot . '/mod/kahoodle/pix/classroom-bg.jpg';
 
         return $templatedata;
     }

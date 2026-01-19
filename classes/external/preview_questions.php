@@ -137,6 +137,7 @@ class preview_questions extends external_api {
                     'cancontrol' => new external_value(PARAM_BOOL, 'Can control quiz'),
                     'ispreview' => new external_value(PARAM_BOOL, 'Is preview mode'),
                     'ispaused' => new external_value(PARAM_BOOL, 'Is paused'),
+                    'backgroundurl' => new external_value(PARAM_URL, 'Background image URL', VALUE_OPTIONAL),
                 ])
             ),
         ]);
