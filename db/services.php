@@ -49,6 +49,13 @@ $functions = [
         'type' => 'write',
         'ajax' => true,
     ],
+
+    'mod_kahoodle_preview_questions' => [
+        'classname' => mod_kahoodle\external\preview_questions::class,
+        'description' => 'Preview Kahoodle questions in one game round (for teachers only)',
+        'type' => 'read',
+        'ajax' => true,
+    ],
 ];
 
 $services = [

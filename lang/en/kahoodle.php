@@ -56,6 +56,7 @@ $string['noeditableround'] = 'No editable round available. The last round has al
 $string['pause'] = 'Pause';
 $string['pluginadministration'] = 'Kahoodle administration';
 $string['pluginname'] = 'Kahoodle';
+$string['previewquestion'] = 'Preview question';
 $string['question'] = 'Question';
 $string['questionbehavior'] = 'Question behavior';
 $string['questioncounter'] = '{$a->current} of {$a->total}';

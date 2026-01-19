@@ -149,6 +149,19 @@ class questions extends system_report {
      * @return void
      */
     protected function add_actions(): void {
+        // Preview action.
+        $this->add_action(new action(
+            new moodle_url('#'),
+            new pix_icon('t/preview', ''),
+            [
+                'data-action' => 'mod_kahoodle-preview-question',
+                'data-roundid' => $this->get_round()->get_id(),
+                'data-roundquestionid' => ':id',
+            ],
+            false,
+            new lang_string('previewquestion', 'mod_kahoodle')
+        ));
+
         // Edit action.
         $this->add_action(new action(
             new moodle_url('#'),

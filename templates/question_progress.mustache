@@ -21,7 +21,7 @@
 
     Context variables required for this template:
     * quiztitle - The title of the quiz/kahoodle activity
-    * questionnumber - Current question number
+    * sortorder - Current question number
     * totalquestions - Total number of questions in the round
     * questiontext - The question text to display
     * hasimage - Boolean indicating if question has an image
@@ -40,7 +40,7 @@
     Example context (json):
     {
         "quiztitle": "Geography & World Facts Quiz",
-        "questionnumber": 36,
+        "sortorder": 36,
         "totalquestions": 42,
         "questiontext": "How long would it take to walk around the world's perimeter?",
         "hasimage": true,
@@ -64,7 +64,7 @@
     {{! Header: Quiz title and question counter }}
     <header class="mod_kahoodle-header">
         <div class="mod_kahoodle-quiz-title">{{quiztitle}}</div>
-        <div class="mod_kahoodle-question-counter">{{#str}}questioncounter, mod_kahoodle, { "current": "{{questionnumber}}", "total": "{{totalquestions}}" }{{/str}}</div>
+        <div class="mod_kahoodle-question-counter">{{#str}}questioncounter, mod_kahoodle, { "current": "{{sortorder}}", "total": "{{totalquestions}}" }{{/str}}</div>
     </header>
 
     {{! Main content: Question, image, and options }}
@@ -72,7 +72,7 @@
 
         {{! Question text }}
         <div class="mod_kahoodle-question">
-            <h1 class="mod_kahoodle-question-text">{{questiontext}}</h1>
+            <h1 class="mod_kahoodle-question-text">{{{questiontext}}}</h1>
         </div>
 
         {{! Question image }}

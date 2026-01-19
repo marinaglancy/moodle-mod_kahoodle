@@ -28,12 +28,29 @@ import * as reportEvents from 'core_reportbuilder/local/events';
 import * as reportSelectors from 'core_reportbuilder/local/selectors';
 import Notification from 'core/notification';
 import {call as fetchMany} from 'core/ajax';
+import Templates from 'core/templates';
 
 const SELECTORS = {
     QUESTIONS_REGION: '[data-region="mod_kahoodle-questions"]',
     ADD_QUESTION_BUTTON: '[data-action="mod_kahoodle-add-question"]',
     EDIT_QUESTION_BUTTON: '[data-action="mod_kahoodle-edit-question"]',
     DELETE_QUESTION_BUTTON: '[data-action="mod_kahoodle-delete-question"]',
+    PREVIEW_QUESTION_BUTTON: '[data-action="mod_kahoodle-preview-question"]',
+    PREVIEW_OVERLAY: '.mod_kahoodle-overlay',
+    PREVIEW_CONTROL_BACK: '[data-action="back"]',
+    PREVIEW_CONTROL_NEXT: '[data-action="next"]',
+    PREVIEW_CONTROL_CLOSE: '[data-action="close"]',
+};
+
+// Cache for preview questions data, keyed by roundId.
+let previewCache = {};
+
+// Current preview state.
+let currentPreviewState = {
+    roundId: null,
+    questions: [],
+    currentIndex: 0,
+    overlayContainer: null,
 };
 
 /**
@@ -68,8 +85,26 @@ export const init = (roundId, questionTypes) => {
                 e.preventDefault();
                 const questionId = deleteButton.dataset.questionid;
                 await deleteQuestion(parseInt(questionId, 10));
+                return;
+            }
+
+            const previewButton = e.target.closest(SELECTORS.PREVIEW_QUESTION_BUTTON);
+            if (previewButton) {
+                e.preventDefault();
+                const previewRoundId = parseInt(previewButton.dataset.roundid, 10);
+                const roundQuestionId = parseInt(previewButton.dataset.roundquestionid, 10);
+                await openPreview(previewRoundId, roundQuestionId);
             }
         });
+
+        // Listen for report reload events to clear the cache.
+        const reportElement = questionsRegion.querySelector(reportSelectors.regions.report);
+        if (reportElement) {
+            reportElement.addEventListener(reportEvents.tableReload, () => {
+                // Clear the preview cache when report reloads.
+                previewCache = {};
+            });
+        }
     }
 };
 
@@ -155,4 +190,188 @@ const reloadQuestionsTable = () => {
     if (reportElement) {
         dispatchEvent(reportEvents.tableReload, {preservePagination: true}, reportElement);
     }
+};
+
+/**
+ * Fetch preview questions from the web service
+ *
+ * @param {number} roundId The round ID
+ * @returns {Promise<Array>} Array of question data
+ */
+const fetchPreviewQuestions = async(roundId) => {
+    // Check cache first.
+    if (previewCache[roundId]) {
+        return previewCache[roundId];
+    }
+
+    const response = await fetchMany([{
+        methodname: 'mod_kahoodle_preview_questions',
+        args: {roundid: roundId},
+    }])[0];
+
+    // Cache the result.
+    previewCache[roundId] = response.questions;
+    return response.questions;
+};
+
+/**
+ * Open the preview overlay
+ *
+ * @param {number} roundId The round ID
+ * @param {number} roundQuestionId The round question ID to start preview from
+ */
+const openPreview = async(roundId, roundQuestionId) => {
+    try {
+        const questions = await fetchPreviewQuestions(roundId);
+
+        if (!questions || questions.length === 0) {
+            return;
+        }
+
+        // Find the index of the question to preview.
+        let startIndex = questions.findIndex(q => q.roundquestionid === roundQuestionId);
+        if (startIndex === -1) {
+            startIndex = 0;
+        }
+
+        // Store current state.
+        currentPreviewState = {
+            roundId: roundId,
+            questions: questions,
+            currentIndex: startIndex,
+            overlayContainer: null,
+        };
+
+        // Create and show the overlay.
+        await showPreviewOverlay();
+    } catch (error) {
+        Notification.exception(error);
+    }
+};
+
+/**
+ * Show the preview overlay for the current question
+ */
+const showPreviewOverlay = async() => {
+    const question = currentPreviewState.questions[currentPreviewState.currentIndex];
+    if (!question) {
+        return;
+    }
+
+    // Render the template.
+    const html = await Templates.render('mod_kahoodle/question_progress', question);
+
+    // Create or update the overlay container.
+    if (!currentPreviewState.overlayContainer) {
+        currentPreviewState.overlayContainer = document.createElement('div');
+        currentPreviewState.overlayContainer.className = 'mod_kahoodle-preview-container';
+        currentPreviewState.overlayContainer.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+        `;
+        document.body.appendChild(currentPreviewState.overlayContainer);
+
+        // Add event listeners for controls.
+        currentPreviewState.overlayContainer.addEventListener('click', handlePreviewControls);
+
+        // Add keyboard navigation.
+        document.addEventListener('keydown', handlePreviewKeyboard);
+    }
+
+    currentPreviewState.overlayContainer.innerHTML = html;
+};
+
+/**
+ * Handle preview control button clicks
+ *
+ * @param {Event} e The click event
+ */
+const handlePreviewControls = (e) => {
+    const backButton = e.target.closest(SELECTORS.PREVIEW_CONTROL_BACK);
+    if (backButton) {
+        e.preventDefault();
+        navigatePreview(-1);
+        return;
+    }
+
+    const nextButton = e.target.closest(SELECTORS.PREVIEW_CONTROL_NEXT);
+    if (nextButton) {
+        e.preventDefault();
+        navigatePreview(1);
+        return;
+    }
+
+    const closeButton = e.target.closest(SELECTORS.PREVIEW_CONTROL_CLOSE);
+    if (closeButton) {
+        e.preventDefault();
+        closePreview();
+    }
+};
+
+/**
+ * Handle keyboard navigation in preview
+ *
+ * @param {KeyboardEvent} e The keyboard event
+ */
+const handlePreviewKeyboard = (e) => {
+    if (!currentPreviewState.overlayContainer) {
+        return;
+    }
+
+    switch (e.key) {
+        case 'ArrowLeft':
+            e.preventDefault();
+            navigatePreview(-1);
+            break;
+        case 'ArrowRight':
+            e.preventDefault();
+            navigatePreview(1);
+            break;
+        case 'Escape':
+            e.preventDefault();
+            closePreview();
+            break;
+    }
+};
+
+/**
+ * Navigate to the previous or next question in preview
+ *
+ * @param {number} direction -1 for previous, 1 for next
+ */
+const navigatePreview = async(direction) => {
+    const newIndex = currentPreviewState.currentIndex + direction;
+
+    // Check bounds.
+    if (newIndex < 0 || newIndex >= currentPreviewState.questions.length) {
+        return;
+    }
+
+    currentPreviewState.currentIndex = newIndex;
+    await showPreviewOverlay();
+};
+
+/**
+ * Close the preview overlay
+ */
+const closePreview = () => {
+    if (currentPreviewState.overlayContainer) {
+        currentPreviewState.overlayContainer.remove();
+        currentPreviewState.overlayContainer = null;
+    }
+
+    // Remove keyboard event listener.
+    document.removeEventListener('keydown', handlePreviewKeyboard);
+
+    // Reset state.
+    currentPreviewState = {
+        roundId: null,
+        questions: [],
+        currentIndex: 0,
+        overlayContainer: null,
+    };
 };
