@@ -21,6 +21,7 @@ use core_external\external_multiple_structure;
 use core_external\external_single_structure;
 use core_external\external_api;
 use core_external\external_value;
+use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
 use mod_kahoodle\output\roundquestion as roundquestion_output;
 
@@ -74,10 +75,20 @@ class preview_questions extends external_api {
         $totalquestions = count($roundquestions);
         $renderer = $PAGE->get_renderer('core');
         $questions = [];
+        $stages = [
+            constants::STAGE_QUESTION_PREVIEW,
+            constants::STAGE_QUESTION,
+            constants::STAGE_QUESTION_RESULTS,
+        ];
 
         foreach ($roundquestions as $roundquestion) {
-            $output = new roundquestion_output($roundquestion);
-            $questions[] = $output->export_for_template($renderer);
+            foreach ($stages as $stage) {
+                $duration = $roundquestion->get_stage_duration($stage);
+                if ($duration > 0) {
+                    $output = new roundquestion_output($roundquestion, $stage, true);
+                    $questions[] = $output->export_for_template($renderer);
+                }
+            }
         }
 
         return [
@@ -85,7 +96,7 @@ class preview_questions extends external_api {
             'totalquestions' => $totalquestions,
             'isedit' => true,
             'cancontrol' => true,
-            'questions' => $questions,
+            'questionstages' => $questions,
         ];
     }
 
@@ -97,19 +108,23 @@ class preview_questions extends external_api {
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
             'quiztitle' => new external_value(PARAM_TEXT, 'Quiz title'),
-            'totalquestions' => new external_value(PARAM_INT, 'Total questions'),
+            'totalquestions' => new external_value(PARAM_INT, 'Total number of questions'),
             'isedit' => new external_value(PARAM_BOOL, 'Is it rendered for teacher when they edit the questions'),
-            'cancontrol' => new external_value(PARAM_BOOL, 'Can control quiz'),
-            'questions' => new external_multiple_structure(
+            'cancontrol' => new external_value(PARAM_BOOL, 'Can control quiz (pause, resume, next)'),
+            'questionstages' => new external_multiple_structure(
                 new external_single_structure([
-                    'sortorder' => new external_value(PARAM_INT, 'Question order'),
+                    'stage' => new external_value(PARAM_ALPHANUMEXT, 'Question stage name (preview/question/results)'),
+                    'duration' => new external_value(PARAM_INT, 'Question stage duration in seconds'),
+                    'template' => new external_value(PARAM_TEXT, 'Template name for rendering this question stage'),
+                    'sortorder' => new external_value(PARAM_INT, 'Question order, 1-based index'),
                     'roundquestionid' => new external_value(PARAM_INT, 'Round question ID'),
                     'questiontext' => new external_value(PARAM_RAW, 'Question text HTML'),
+                    'questiontextcompact' => new external_value(PARAM_RAW, 'Question text HTML without images'),
                     'hasimage' => new external_value(PARAM_BOOL, 'Has image'),
                     'imageurl' => new external_value(PARAM_URL, 'Image URL', VALUE_OPTIONAL),
                     'imagealt' => new external_value(PARAM_TEXT, 'Image alt text', VALUE_OPTIONAL),
                     'imagelandscape' => new external_value(PARAM_BOOL, 'Image is landscape', VALUE_OPTIONAL),
-                    'questiontype' => new external_value(PARAM_ALPHANUMEXT, 'Question type identifier'),
+                    'questiontype' => new external_value(PARAM_ALPHANUMEXT, 'Question type, i.e. multichoice'),
                     'typedata' => new external_value(PARAM_RAW, 'JSON-encoded question type specific data'),
                     'backgroundurl' => new external_value(PARAM_URL, 'Background image URL', VALUE_OPTIONAL),
                 ])

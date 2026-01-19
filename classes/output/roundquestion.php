@@ -33,14 +33,22 @@ use templatable;
 class roundquestion implements renderable, templatable {
     /** @var round_question The round question entity */
     protected round_question $roundquestion;
+    /** @var string Current question stage (preview/question/results) */
+    protected string $stage;
+    /** @var bool Whether to generate mock results for preview */
+    protected bool $mockresults;
 
     /**
      * Constructor
      *
      * @param round_question $roundquestion The round question entity
+     * @param string $stage Current question stage (preview/question/results)
+     * @param bool $mockresults Whether to generate mock results for preview
      */
-    public function __construct(round_question $roundquestion) {
+    public function __construct(round_question $roundquestion, string $stage, bool $mockresults = false) {
         $this->roundquestion = $roundquestion;
+        $this->stage = $stage;
+        $this->mockresults = $mockresults;
     }
 
     /**
@@ -71,10 +79,26 @@ class roundquestion implements renderable, templatable {
         // Question type and type-specific data (JSON-encoded for JS to decode).
         $questiontype = $this->roundquestion->get_question_type();
         $templatedata->questiontype = $questiontype->get_type();
-        $templatedata->typedata = json_encode($questiontype->export_template_data($this->roundquestion));
+        $templatedata->typedata = json_encode($questiontype->export_template_data(
+            $this->roundquestion,
+            $this->stage,
+            $this->mockresults
+        ));
 
         // Background.
         $templatedata->backgroundurl = $CFG->wwwroot . '/mod/kahoodle/pix/classroom-bg.jpg';
+
+        // Question stage information.
+        $templatedata->stage = $this->stage;
+        $template = 'mod_kahoodle/questiontypes/' . strtolower($templatedata->questiontype) . '/question_' . $templatedata->stage;
+        try {
+            \core\output\mustache_template_finder::get_template_filepath($template);
+        } catch (\moodle_exception $e) {
+            // Template not found, will use fallback.
+            $template = 'mod_kahoodle/common/question_' . $templatedata->stage;
+        }
+        $templatedata->template = $template;
+        $templatedata->duration = $this->roundquestion->get_stage_duration($this->stage);
 
         return $templatedata;
     }

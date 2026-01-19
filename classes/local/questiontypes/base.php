@@ -144,7 +144,9 @@ abstract class base {
      * The JS will decode it and merge with the main template data.
      *
      * @param round_question $roundquestion
+     * @param string $stage (one of constants::STAGE_QUESTION_PREVIEW, constants::STAGE_QUESTION, constants::STAGE_QUESTION_RESULTS)
+     * @param bool $mockresults Whether to generate mock results data (used when a teacher edits the questions)
      * @return array
      */
-    abstract public function export_template_data(round_question $roundquestion): array;
+    abstract public function export_template_data(round_question $roundquestion, string $stage, bool $mockresults = false): array;
 }

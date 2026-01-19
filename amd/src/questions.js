@@ -48,7 +48,7 @@ let previewCache = {};
 // Current preview state.
 let currentPreviewState = {
     roundId: null,
-    questions: [],
+    questionstages: [],
     currentIndex: 0,
     overlayContainer: null,
 };
@@ -235,10 +235,10 @@ const fetchPreviewQuestions = async(roundId) => {
 
     // General data is everything in the reponse except questions (quiz name, number of questions, etc).
     const generalData = {...response};
-    delete generalData.questions;
+    delete generalData.questionstages;
 
     // Process each question to decode typedata and add isType boolean.
-    const processedQuestions = response.questions.map((q) => processQuestionData(q, generalData));
+    const processedQuestions = response.questionstages.map((q) => processQuestionData(q, generalData));
 
     // Cache the processed result.
     previewCache[roundId] = processedQuestions;
@@ -268,7 +268,7 @@ const openPreview = async(roundId, roundQuestionId) => {
         // Store current state.
         currentPreviewState = {
             roundId: roundId,
-            questions: questions,
+            questionstages: questions,
             currentIndex: startIndex,
             overlayContainer: null,
         };
@@ -284,13 +284,13 @@ const openPreview = async(roundId, roundQuestionId) => {
  * Show the preview overlay for the current question
  */
 const showPreviewOverlay = async() => {
-    const question = currentPreviewState.questions[currentPreviewState.currentIndex];
+    const question = currentPreviewState.questionstages[currentPreviewState.currentIndex];
     if (!question) {
         return;
     }
 
     // Render the template.
-    const html = await Templates.render('mod_kahoodle/question_progress', question);
+    const html = await Templates.render(question.template, question);
 
     // Create or update the overlay container.
     if (!currentPreviewState.overlayContainer) {
@@ -378,7 +378,7 @@ const navigatePreview = async(direction) => {
     const newIndex = currentPreviewState.currentIndex + direction;
 
     // Check bounds.
-    if (newIndex < 0 || newIndex >= currentPreviewState.questions.length) {
+    if (newIndex < 0 || newIndex >= currentPreviewState.questionstages.length) {
         return;
     }
 
@@ -401,7 +401,7 @@ const closePreview = () => {
     // Reset state.
     currentPreviewState = {
         roundId: null,
-        questions: [],
+        questionstages: [],
         currentIndex: 0,
         overlayContainer: null,
     };

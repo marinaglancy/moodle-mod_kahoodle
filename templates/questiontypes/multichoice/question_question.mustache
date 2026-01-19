@@ -15,7 +15,7 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_kahoodle/questiontypes/multichoice/question_progress
+    @template mod_kahoodle/questiontypes/multichoice/question_question
 
     Multichoice question type partial for question progress display.
 
@@ -29,22 +29,32 @@
 
     Example context (json):
     {
+        "quiztitle": "Geography & World Facts Quiz",
+        "sortorder": 36,
+        "totalquestions": 42,
+        "questiontext": "How long would it take to walk around the world's perimeter?",
+        "questiontextcompact": "How long would it take to walk around the world's perimeter?",
+        "hasimage": true,
+        "imageurl": "https://example.com/globe.jpg",
+        "imagelandscape": true,
+        "imagealt": "Earth globe",
+        "questiontype": "multichoice",
+        "typeismultichoice": true,
+        "progresspercent": 65,
         "typedata": {
             "options": [
-                {"optionnumber": 1, "letter": "A", "text": "5 days", "iscorrect": false},
-                {"optionnumber": 2, "letter": "B", "text": "50 days", "iscorrect": false},
-                {"optionnumber": 3, "letter": "C", "text": "200 days", "iscorrect": false},
-                {"optionnumber": 4, "letter": "D", "text": "You cannot walk around the world, there is an ocean", "iscorrect": true}
+                {"optionnumber": 1, "letter": "A", "text": "5 days"},
+                {"optionnumber": 2, "letter": "B", "text": "50 days"},
+                {"optionnumber": 3, "letter": "C", "text": "200 days"},
+                {"optionnumber": 4, "letter": "D", "text": "You cannot walk around the world, there is an ocean"}
             ],
-            "bars": [
-                {"optionnumber": 1, "letter": "A", "count": 3, "heightpercent": 19, "iscorrect": false},
-                {"optionnumber": 2, "letter": "B", "count": 8, "heightpercent": 50, "iscorrect": false},
-                {"optionnumber": 3, "letter": "C", "count": 5, "heightpercent": 31, "iscorrect": false},
-                {"optionnumber": 4, "letter": "D", "count": 16, "heightpercent": 100, "iscorrect": true}
-            ]
+            "optioncount": 4,
+            "manyoptions": false
         }
     }
 }}
+{{< mod_kahoodle/common/question_question }}
+{{$ question_type_contents }}
 {{#typedata}}
 {{! Answer options }}
 <div class="mod_kahoodle-options{{#manyoptions}} mod_kahoodle-options-many{{/manyoptions}}">
@@ -60,3 +70,6 @@
     </div>
 </div>
 {{/typedata}}
+{{/ question_type_contents }}
+{{/ mod_kahoodle/common/question_question }}
+

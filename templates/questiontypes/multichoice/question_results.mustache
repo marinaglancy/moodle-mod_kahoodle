@@ -34,27 +34,33 @@
 
     Example context (json):
     {
+        "quiztitle": "Geography & World Facts Quiz",
+        "sortorder": 36,
+        "totalquestions": 42,
+        "questiontext": "How long would it take to walk around the world's perimeter?",
+        "questiontextcompact": "How long would it take to walk around the world's perimeter?",
+        "progresspercent": 65,
+        "questiontype": "multichoice",
+        "typeismultichoice": true,
         "typedata": {
             "options": [
-                {"optionnumber": 1, "letter": "A", "text": "5 days", "iscorrect": false},
-                {"optionnumber": 2, "letter": "B", "text": "50 days", "iscorrect": false},
-                {"optionnumber": 3, "letter": "C", "text": "200 days", "iscorrect": false},
-                {"optionnumber": 4, "letter": "D", "text": "You cannot walk around the world, there is an ocean", "iscorrect": true}
-            ],
-            "bars": [
-                {"optionnumber": 1, "letter": "A", "count": 3, "heightpercent": 19, "iscorrect": false},
-                {"optionnumber": 2, "letter": "B", "count": 8, "heightpercent": 50, "iscorrect": false},
-                {"optionnumber": 3, "letter": "C", "count": 5, "heightpercent": 31, "iscorrect": false},
-                {"optionnumber": 4, "letter": "D", "count": 16, "heightpercent": 100, "iscorrect": true}
+                {"optionnumber": 1, "letter": "A", "text": "5 days", "iscorrect": false, "count": 3, "heightpercent": 19},
+                {"optionnumber": 2, "letter": "B", "text": "50 days", "iscorrect": false, "count": 8, "heightpercent": 50},
+                {"optionnumber": 3, "letter": "C", "text": "200 days", "iscorrect": false, "count": 5, "heightpercent": 31},
+                {"optionnumber": 4, "letter": "D", "text": "You cannot walk around the world, there is an ocean", "iscorrect": true, "count": 16, "heightpercent": 100}
             ]
-        }
+        },
+        "progresspercent": 0,
+        "cancontrol": true
     }
 }}
+{{< mod_kahoodle/common/question_results }}
+{{$ question_type_contents }}
 {{#typedata}}
 {{! Results bar chart }}
 <div class="mod_kahoodle-results-chart">
     <div class="mod_kahoodle-chart-bars">
-        {{#bars}}
+        {{#options}}
         <div class="mod_kahoodle-chart-bar-wrapper{{#iscorrect}} mod_kahoodle-bar-correct{{/iscorrect}}">
             <div class="mod_kahoodle-chart-bar mod_kahoodle-bar-option{{optionnumber}}" style="--bar-height: {{heightpercent}}%;">
                 <span class="mod_kahoodle-bar-count">{{count}}</span>
@@ -64,13 +70,13 @@
             </div>
             <div class="mod_kahoodle-bar-label mod_kahoodle-bar-label-option{{optionnumber}}">{{letter}}</div>
         </div>
-        {{/bars}}
+        {{/options}}
     </div>
 </div>
 
 {{! Answer options }}
-<div class="mod_kahoodle-options">
-    <div class="mod_kahoodle-options-grid">
+<div class="mod_kahoodle-options{{#manyoptions}} mod_kahoodle-options-many{{/manyoptions}}">
+    <div class="mod_kahoodle-options-grid{{#manyoptions}} mod_kahoodle-options-grid-compact{{/manyoptions}}">
         {{#options}}
         <div class="mod_kahoodle-option mod_kahoodle-option{{optionnumber}}{{#iscorrect}} mod_kahoodle-option-correct{{/iscorrect}}" data-option="{{optionnumber}}">
             <div class="mod_kahoodle-option-icon">
@@ -85,3 +91,5 @@
     </div>
 </div>
 {{/typedata}}
+{{/ question_type_contents }}
+{{/ mod_kahoodle/common/question_results }}

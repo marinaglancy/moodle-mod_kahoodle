@@ -16,6 +16,7 @@
 
 namespace mod_kahoodle\local\questiontypes;
 
+use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round_question;
 
 /**
@@ -43,13 +44,7 @@ class multichoice extends base {
      * @return void
      */
     public function sanitize_question_config_data(round_question $roundquestion, \stdClass $data): void {
-        if (!strlen(trim("" . ($data->questionconfig ?? '')))) {
-            $options = [];
-        } else {
-            $options = preg_split('/\r\n|\r|\n/', $data->questionconfig, -1, PREG_SPLIT_NO_EMPTY);
-        }
-
-        $options = array_filter(array_map(fn($o) => trim("" . $o), $options), fn($o) => strlen($o) > 0);
+        $options = $this->get_answers_options($data->questionconfig ?? null);
         if (empty($options) && $roundquestion->get_id()) {
             // For updates we can just unset the field and not update it.
             unset($data->questionconfig);
@@ -59,14 +54,14 @@ class multichoice extends base {
         if (count($options) < 2 || count($options) > 8) {
             throw new \moodle_exception('multichoice_needtwooptions', 'mod_kahoodle');
         }
-        $correctoptions = array_filter($options, fn($o) => str_starts_with($o, '*'));
+        $correctoptions = array_filter($options, fn($o) => $o['iscorrect']);
         if (empty($correctoptions) || count($correctoptions) > 1) {
             throw new \moodle_exception('multichoice_needonecorrectoption', 'mod_kahoodle');
         }
 
         // TODO (later) if round is not editable, the numer of options and the correct option cannot be changed.
 
-        $options = array_map(fn($o) => clean_param($o, PARAM_TEXT), $options);
+        $options = array_map(fn($o) => ($o['iscorrect'] ? '*' : '') . clean_param($o['text'], PARAM_TEXT), $options);
 
         $data->questionconfig = join("\n", $options);
     }
@@ -116,14 +111,20 @@ class multichoice extends base {
      * Export question type specific data for templates
      *
      * @param round_question $roundquestion
+     * @param string $stage (one of constants::STAGE_QUESTION_PREVIEW, constants::STAGE_QUESTION, constants::STAGE_QUESTION_RESULTS)
+     * @param bool $mockresults Whether to generate mock results data (used when a teacher edits the questions)
      * @return array
      */
-    public function export_template_data(round_question $roundquestion): array {
-        $data = $roundquestion->get_data();
+    public function export_template_data(round_question $roundquestion, string $stage, bool $mockresults = false): array {
         $options = [];
 
-        $questionconfig = $data->questionconfig ?? '';
-        if (empty($questionconfig)) {
+        if ($stage == constants::STAGE_QUESTION_PREVIEW) {
+            // In preview stage, we do not show answers.
+            return [];
+        }
+
+        $answers = $this->get_answers_options($roundquestion->get_data()->questionconfig);
+        if (empty($answers)) {
             return [
                 'options' => $options,
                 'optioncount' => 0,
@@ -131,21 +132,25 @@ class multichoice extends base {
             ];
         }
 
-        $lines = preg_split('/\r\n|\r|\n/', $questionconfig, -1, PREG_SPLIT_NO_EMPTY);
         $letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
-        foreach ($lines as $index => $line) {
-            $text = trim($line);
-            // Remove the asterisk marker for correct answer (don't show in preview).
-            if (str_starts_with($text, '*')) {
-                $text = substr($text, 1);
-            }
+        if ($stage == constants::STAGE_QUESTION_RESULTS) {
+            $answerscount = $this->get_answers_count($roundquestion, $mockresults);
+            $maxanswerscount = max(1, ...$answerscount);
+        }
 
-            $options[] = [
+        foreach ($answers as $index => $answer) {
+            $option = [
                 'optionnumber' => $index + 1,
                 'letter' => $letters[$index] ?? (string)($index + 1),
-                'text' => $text,
+                'text' => $answer['text'],
             ];
+            if ($stage == constants::STAGE_QUESTION_RESULTS) {
+                $option['iscorrect'] = $answer['iscorrect'];
+                $option['count'] = $answerscount[$index];
+                $option['heightpercent'] = (int)round(100.0 * $answerscount[$index] / $maxanswerscount);
+            }
+            $options[] = $option;
         }
 
         return [
@@ -153,5 +158,50 @@ class multichoice extends base {
             'optioncount' => count($options),
             'manyoptions' => count($options) > 4,
         ];
+    }
+
+    /**
+     * Returns an array with all configured answers options
+     *
+     * @param string|null $questionconfig
+     * @return array{iscorrect: bool, text: string[]}
+     */
+    protected function get_answers_options(?string $questionconfig): array {
+        $lines = preg_split('/\r\n|\r|\n/', $questionconfig ?? '', -1, PREG_SPLIT_NO_EMPTY);
+        $lines = array_filter(array_map(fn($o) => trim("" . $o), $lines), fn($o) => strlen($o) > 0);
+        $options = [];
+        foreach ($lines as $line) {
+            $text = trim($line);
+            $iscorrect = str_starts_with($text, '*');
+            $text = $iscorrect ? substr($text, 1) : $text;
+            $options[] = [
+                'text' => $text,
+                'iscorrect' => $iscorrect,
+            ];
+        }
+        return $options;
+    }
+
+    /**
+     * Returns the number of participants answers for each answer option
+     *
+     * @param round_question $roundquestion
+     * @param bool $mockresults
+     * @return int[]
+     */
+    protected function get_answers_count(round_question $roundquestion, bool $mockresults = false): array {
+        $answers = $this->get_answers_options($roundquestion->get_data()->questionconfig);
+        $answerscount = array_fill(0, count($answers), 0);
+        if ($mockresults) {
+            // Generate some mock results for teacher preview.
+            for ($i = 0; $i < count($answers); $i++) {
+                $count = rand(0, 10);
+                $answerscount[$i] = $count;
+            }
+        } else {
+            // TODO actual counts!
+            null;
+        }
+        return $answerscount;
     }
 }

@@ -346,4 +346,22 @@ class round_question {
         }
         return $html;
     }
+
+    /**
+     * Stage duration in seconds
+     *
+     * @param string $stage Question stage (one of constants::STAGE_QUESTION_PREVIEW, STAGE_QUESTION, STAGE_QUESTION_RESULTS)
+     * @return int
+     */
+    public function get_stage_duration(string $stage): int {
+        if ($stage === constants::STAGE_QUESTION_PREVIEW) {
+            return $this->data->questionpreviewduration ?? $this->get_round()->get_kahoodle()->questionpreviewduration;
+        } else if ($stage === constants::STAGE_QUESTION) {
+            return $this->data->questionduration ?? $this->get_round()->get_kahoodle()->questionduration;
+        } else if ($stage === constants::STAGE_QUESTION_RESULTS) {
+            return $this->data->questionresultsduration ?? $this->get_round()->get_kahoodle()->questionresultsduration;
+        } else {
+            return 0;
+        }
+    }
 }

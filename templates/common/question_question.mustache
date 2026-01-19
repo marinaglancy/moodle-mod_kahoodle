@@ -15,73 +15,83 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_kahoodle/question_results
+    @template mod_kahoodle/common/question_question
 
-    Question results display showing answer distribution bar chart.
+    Question progress display during a quiz round.
 
     Context variables required for this template:
     * quiztitle - The title of the quiz/kahoodle activity
     * sortorder - Current question number
     * totalquestions - Total number of questions in the round
-    * questiontextcompact - The question text (compact version for results)
+    * questiontext - The question text to display
+    * hasimage - Boolean indicating if question has an image
+    * imageurl - URL of the question image (optional)
+    * imagelandscape - Boolean indicating if image is landscape orientation
+    * imagealt - Alt text for the question image
     * questiontype - Question type identifier (e.g., "multichoice")
     * typeismultichoice - Boolean true if questiontype is "multichoice" (added by JS)
     * typedata - Object containing type-specific data (decoded from JSON by JS)
-    * progresspercent - Percentage of time remaining (0-100, usually 0 for results)
+    * progresspercent - Percentage of time remaining (0-100)
     * cancontrol - Boolean indicating if user can control the quiz (teacher)
     * isedit - Boolean indicating if it is rendered for teachers when they edit the questions
     * ispaused - Boolean indicating if the quiz is currently paused
     * backgroundurl - URL for background image (optional)
 
     For multichoice questions, typedata contains:
-    * options - Array of answer options with iscorrect flag
-    * bars - Array of bar chart data
+    * options - Array of answer options
+    * optioncount - Number of options (2-8)
+    * manyoptions - Boolean indicating if there are more than 4 options
 
     Example context (json):
     {
         "quiztitle": "Geography & World Facts Quiz",
         "sortorder": 36,
         "totalquestions": 42,
-        "questiontextcompact": "How long would it take to walk around the world's perimeter?",
+        "questiontext": "How long would it take to walk around the world's perimeter?",
+        "hasimage": true,
+        "imageurl": "https://example.com/globe.jpg",
+        "imagelandscape": true,
+        "imagealt": "Earth globe",
+        "progresspercent": 65,
         "questiontype": "multichoice",
         "typeismultichoice": true,
         "typedata": {
             "options": [
-                {"optionnumber": 1, "letter": "A", "text": "5 days", "iscorrect": false},
-                {"optionnumber": 2, "letter": "B", "text": "50 days", "iscorrect": false},
-                {"optionnumber": 3, "letter": "C", "text": "200 days", "iscorrect": false},
-                {"optionnumber": 4, "letter": "D", "text": "You cannot walk around the world, there is an ocean", "iscorrect": true}
+                {"optionnumber": 1, "letter": "A", "text": "5 days"},
+                {"optionnumber": 2, "letter": "B", "text": "50 days"},
+                {"optionnumber": 3, "letter": "C", "text": "200 days"},
+                {"optionnumber": 4, "letter": "D", "text": "You cannot walk around the world, there is an ocean"}
             ],
-            "bars": [
-                {"optionnumber": 1, "letter": "A", "count": 3, "heightpercent": 19, "iscorrect": false},
-                {"optionnumber": 2, "letter": "B", "count": 8, "heightpercent": 50, "iscorrect": false},
-                {"optionnumber": 3, "letter": "C", "count": 5, "heightpercent": 31, "iscorrect": false},
-                {"optionnumber": 4, "letter": "D", "count": 16, "heightpercent": 100, "iscorrect": true}
-            ]
-        },
-        "progresspercent": 0,
-        "cancontrol": true
+            "optioncount": 4,
+            "manyoptions": false
+        }
     }
 }}
 <div class="mod_kahoodle-overlay" {{#backgroundurl}}style="background-image: url('{{backgroundurl}}');"{{/backgroundurl}}>
 
-    {{> mod_kahoodle/quiz/header }}
+    {{> mod_kahoodle/common/header }}
 
-    {{! Main content: Question, bar chart, and options }}
+    {{! Main content: Question, image, and options }}
     <main class="mod_kahoodle-main">
 
-        {{! Question text (compact) }}
+        {{! Question text }}
         <div class="mod_kahoodle-question">
-            <h1 class="mod_kahoodle-question-text mod_kahoodle-question-text-compact">{{{questiontextcompact}}}</h1>
+            <h1 class="mod_kahoodle-question-text">{{{questiontext}}}</h1>
         </div>
 
+        {{! Question image }}
+        {{#hasimage}}
+        <div class="mod_kahoodle-image-container">
+            <img src="{{imageurl}}" alt="{{imagealt}}" class="mod_kahoodle-image{{#imagelandscape}} mod_kahoodle-image-landscape{{/imagelandscape}}">
+        </div>
+        {{/hasimage}}
+
         {{! Question type specific content }}
-        {{#typeismultichoice}}
-        {{> mod_kahoodle/questiontypes/multichoice/question_results }}
-        {{/typeismultichoice}}
+        {{$ question_type_contents }}
+        {{/ question_type_contents }}
 
     </main>
 
-    {{> mod_kahoodle/quiz/footer }}
+    {{> mod_kahoodle/common/footer }}
 
 </div>

@@ -65,13 +65,13 @@ class constants {
     public const STAGE_LOBBY = 'lobby';
 
     /** @var string Round stage: question preview */
-    public const STAGE_QUESTION_PREVIEW = 'questionpreview';
+    public const STAGE_QUESTION_PREVIEW = 'preview';
 
     /** @var string Round stage: question (participants answering) */
     public const STAGE_QUESTION = 'question';
 
     /** @var string Round stage: question results display */
-    public const STAGE_QUESTION_RESULTS = 'questionresults';
+    public const STAGE_QUESTION_RESULTS = 'results';
 
     /** @var string Round stage: leaders (leaderboard display) */
     public const STAGE_LEADERS = 'leaders';
