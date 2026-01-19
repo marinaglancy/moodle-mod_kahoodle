@@ -55,11 +55,11 @@ class mod_kahoodle_generator extends testing_module_generator {
         if (!isset($record->questionresultsduration)) {
             $record->questionresultsduration = \mod_kahoodle\constants::DEFAULT_QUESTION_RESULTS_DURATION;
         }
-        if (!isset($record->defaultmaxpoints)) {
-            $record->defaultmaxpoints = \mod_kahoodle\constants::DEFAULT_MAX_POINTS;
+        if (!isset($record->maxpoints)) {
+            $record->maxpoints = \mod_kahoodle\constants::DEFAULT_MAX_POINTS;
         }
-        if (!isset($record->defaultminpoints)) {
-            $record->defaultminpoints = \mod_kahoodle\constants::DEFAULT_MIN_POINTS;
+        if (!isset($record->minpoints)) {
+            $record->minpoints = \mod_kahoodle\constants::DEFAULT_MIN_POINTS;
         }
         if (!isset($record->questionformat)) {
             $record->questionformat = \mod_kahoodle\constants::QUESTIONFORMAT_PLAIN;

@@ -44,8 +44,8 @@ class backup_kahoodle_activity_structure_step extends backup_activity_structure_
                 'questionpreviewduration',
                 'questionduration',
                 'questionresultsduration',
-                'defaultmaxpoints',
-                'defaultminpoints',
+                'maxpoints',
+                'minpoints',
                 'timemodified',
             ]
         );

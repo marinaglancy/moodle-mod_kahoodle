@@ -97,12 +97,12 @@ class create_instance extends external_api {
                     'Question results duration in seconds',
                     VALUE_OPTIONAL
                 ),
-                'defaultmaxpoints' => new external_value(
+                'maxpoints' => new external_value(
                     PARAM_INT,
                     'Maximum points for correct answer',
                     VALUE_OPTIONAL
                 ),
-                'defaultminpoints' => new external_value(
+                'minpoints' => new external_value(
                     PARAM_INT,
                     'Minimum points for correct answer',
                     VALUE_OPTIONAL
@@ -137,8 +137,8 @@ class create_instance extends external_api {
         $params['questionpreviewduration'] = $params['questionpreviewduration'] ?? constants::DEFAULT_QUESTION_PREVIEW_DURATION;
         $params['questionduration'] = $params['questionduration'] ?? constants::DEFAULT_QUESTION_DURATION;
         $params['questionresultsduration'] = $params['questionresultsduration'] ?? constants::DEFAULT_QUESTION_RESULTS_DURATION;
-        $params['defaultmaxpoints'] = $params['defaultmaxpoints'] ?? constants::DEFAULT_MAX_POINTS;
-        $params['defaultminpoints'] = $params['defaultminpoints'] ?? constants::DEFAULT_MIN_POINTS;
+        $params['maxpoints'] = $params['maxpoints'] ?? constants::DEFAULT_MAX_POINTS;
+        $params['minpoints'] = $params['minpoints'] ?? constants::DEFAULT_MIN_POINTS;
 
         // Get course and validate context.
         $course = $DB->get_record('course', ['id' => $params['courseid']], '*', MUST_EXIST);
@@ -177,8 +177,8 @@ class create_instance extends external_api {
         $moduleinfo->questionpreviewduration = $params['questionpreviewduration'];
         $moduleinfo->questionduration = $params['questionduration'];
         $moduleinfo->questionresultsduration = $params['questionresultsduration'];
-        $moduleinfo->defaultmaxpoints = $params['defaultmaxpoints'];
-        $moduleinfo->defaultminpoints = $params['defaultminpoints'];
+        $moduleinfo->maxpoints = $params['maxpoints'];
+        $moduleinfo->minpoints = $params['minpoints'];
 
         // Create the module instance.
         $moduleinfo = \add_moduleinfo($moduleinfo, $course);

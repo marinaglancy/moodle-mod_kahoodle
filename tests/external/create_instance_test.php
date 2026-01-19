@@ -58,8 +58,8 @@ final class create_instance_test extends \advanced_testcase {
         $this->assertEquals(\mod_kahoodle\constants::DEFAULT_QUESTION_PREVIEW_DURATION, $instance->questionpreviewduration);
         $this->assertEquals(\mod_kahoodle\constants::DEFAULT_QUESTION_DURATION, $instance->questionduration);
         $this->assertEquals(\mod_kahoodle\constants::DEFAULT_QUESTION_RESULTS_DURATION, $instance->questionresultsduration);
-        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_MAX_POINTS, $instance->defaultmaxpoints);
-        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_MIN_POINTS, $instance->defaultminpoints);
+        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_MAX_POINTS, $instance->maxpoints);
+        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_MIN_POINTS, $instance->minpoints);
 
         // Verify course module was created.
         $cm = $DB->get_record('course_modules', ['id' => $result['coursemoduleid']], '*', MUST_EXIST);
@@ -95,8 +95,8 @@ final class create_instance_test extends \advanced_testcase {
             'questionpreviewduration' => 8,
             'questionduration' => 45,
             'questionresultsduration' => 15,
-            'defaultmaxpoints' => 2000,
-            'defaultminpoints' => 750,
+            'maxpoints' => 2000,
+            'minpoints' => 750,
         ]);
 
         $this->assertIsArray($result);
@@ -113,8 +113,8 @@ final class create_instance_test extends \advanced_testcase {
         $this->assertEquals(8, $instance->questionpreviewduration);
         $this->assertEquals(45, $instance->questionduration);
         $this->assertEquals(15, $instance->questionresultsduration);
-        $this->assertEquals(2000, $instance->defaultmaxpoints);
-        $this->assertEquals(750, $instance->defaultminpoints);
+        $this->assertEquals(2000, $instance->maxpoints);
+        $this->assertEquals(750, $instance->minpoints);
 
         // Verify course module properties.
         $cm = $DB->get_record('course_modules', ['id' => $result['coursemoduleid']], '*', MUST_EXIST);

@@ -58,8 +58,8 @@ final class api_test extends \advanced_testcase {
         $this->assertEquals(\mod_kahoodle\constants::DEFAULT_QUESTION_PREVIEW_DURATION, $record->questionpreviewduration);
         $this->assertEquals(\mod_kahoodle\constants::DEFAULT_QUESTION_DURATION, $record->questionduration);
         $this->assertEquals(\mod_kahoodle\constants::DEFAULT_QUESTION_RESULTS_DURATION, $record->questionresultsduration);
-        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_MAX_POINTS, $record->defaultmaxpoints);
-        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_MIN_POINTS, $record->defaultminpoints);
+        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_MAX_POINTS, $record->maxpoints);
+        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_MIN_POINTS, $record->minpoints);
 
         // Delete module.
         course_delete_module($cm->id);
@@ -85,8 +85,8 @@ final class api_test extends \advanced_testcase {
             'questionpreviewduration' => 10,
             'questionduration' => 45,
             'questionresultsduration' => 15,
-            'defaultmaxpoints' => 2000,
-            'defaultminpoints' => 750,
+            'maxpoints' => 2000,
+            'minpoints' => 750,
         ]);
 
         // Verify custom values were saved.
@@ -96,8 +96,8 @@ final class api_test extends \advanced_testcase {
         $this->assertEquals(10, $record->questionpreviewduration);
         $this->assertEquals(45, $record->questionduration);
         $this->assertEquals(15, $record->questionresultsduration);
-        $this->assertEquals(2000, $record->defaultmaxpoints);
-        $this->assertEquals(750, $record->defaultminpoints);
+        $this->assertEquals(2000, $record->maxpoints);
+        $this->assertEquals(750, $record->minpoints);
     }
 
     /**
@@ -131,7 +131,7 @@ final class api_test extends \advanced_testcase {
         $moduleinfo->section = $cm->section;
         $moduleinfo->allowrepeat = 1;
         $moduleinfo->lobbyduration = 180;
-        $moduleinfo->defaultmaxpoints = 1500;
+        $moduleinfo->maxpoints = 1500;
 
         // Update using the proper Moodle API.
         update_moduleinfo($cm, $moduleinfo, $course);
@@ -140,7 +140,7 @@ final class api_test extends \advanced_testcase {
         $record = $DB->get_record('kahoodle', ['id' => $mod->id], '*', MUST_EXIST);
         $this->assertEquals(1, $record->allowrepeat);
         $this->assertEquals(180, $record->lobbyduration);
-        $this->assertEquals(1500, $record->defaultmaxpoints);
+        $this->assertEquals(1500, $record->maxpoints);
     }
 
     /**
@@ -167,8 +167,8 @@ final class api_test extends \advanced_testcase {
                 'questionpreviewduration' => 8,
                 'questionduration' => 40,
                 'questionresultsduration' => 12,
-                'defaultmaxpoints' => 1500,
-                'defaultminpoints' => 600,
+                'maxpoints' => 1500,
+                'minpoints' => 600,
             ]
         );
         $cm = get_coursemodule_from_instance('kahoodle', $mod->id);
@@ -189,7 +189,7 @@ final class api_test extends \advanced_testcase {
         $this->assertEquals(8, $newrecord->questionpreviewduration);
         $this->assertEquals(40, $newrecord->questionduration);
         $this->assertEquals(12, $newrecord->questionresultsduration);
-        $this->assertEquals(1500, $newrecord->defaultmaxpoints);
-        $this->assertEquals(600, $newrecord->defaultminpoints);
+        $this->assertEquals(1500, $newrecord->maxpoints);
+        $this->assertEquals(600, $newrecord->minpoints);
     }
 }

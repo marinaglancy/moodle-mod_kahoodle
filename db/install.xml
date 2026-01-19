@@ -16,8 +16,8 @@
         <FIELD NAME="questionpreviewduration" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="5" SEQUENCE="false" COMMENT="Default question preview duration in seconds"/>
         <FIELD NAME="questionduration" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="30" SEQUENCE="false" COMMENT="Default time to answer question in seconds"/>
         <FIELD NAME="questionresultsduration" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="10" SEQUENCE="false" COMMENT="Default question results display duration in seconds"/>
-        <FIELD NAME="defaultmaxpoints" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1000" SEQUENCE="false" COMMENT="Default maximum points for correct answer"/>
-        <FIELD NAME="defaultminpoints" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="500" SEQUENCE="false" COMMENT="Default minimum points for correct answer (slowest)"/>
+        <FIELD NAME="maxpoints" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1000" SEQUENCE="false" COMMENT="Default maximum points for correct answer"/>
+        <FIELD NAME="minpoints" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="500" SEQUENCE="false" COMMENT="Default minimum points for correct answer (slowest)"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="questionformat" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Question format: 0=plain text with image, 1=rich text"/>

@@ -324,8 +324,8 @@ Main activity configuration table.
 - `questionpreviewduration`: Default preview time (5s)
 - `questionduration`: Default answer time (30s)
 - `questionresultsduration`: Default results display time (10s)
-- `defaultmaxpoints`: Maximum points for fastest correct answer (1000)
-- `defaultminpoints`: Minimum points for slowest correct answer (500)
+- `maxpoints`: Maximum points for fastest correct answer (1000)
+- `minpoints`: Minimum points for slowest correct answer (500)
 
 **Question Format Modes:**
 - **Plain text (0)**: Simple textarea (max 300 chars) + optional single image upload. Provides consistent display across devices.

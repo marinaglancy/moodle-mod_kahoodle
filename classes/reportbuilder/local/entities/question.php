@@ -184,12 +184,12 @@ class question extends base {
             ->set_type(column::TYPE_TEXT)
             ->add_field("{$roundquestionalias}.minpoints")
             ->add_field("{$roundquestionalias}.maxpoints")
-            ->add_field("{$kahoodlealias}.defaultminpoints")
-            ->add_field("{$kahoodlealias}.defaultmaxpoints")
+            ->add_field("{$kahoodlealias}.minpoints")
+            ->add_field("{$kahoodlealias}.maxpoints")
             ->set_is_sortable(false)
             ->add_callback(static function (?string $value, \stdClass $row): string {
-                $min = self::value_or_default($row->minpoints, $row->defaultminpoints);
-                $max = self::value_or_default($row->maxpoints, $row->defaultmaxpoints);
+                $min = self::value_or_default($row->minpoints, $row->minpoints);
+                $max = self::value_or_default($row->maxpoints, $row->maxpoints);
                 return "{$min} - {$max}";
             });
 

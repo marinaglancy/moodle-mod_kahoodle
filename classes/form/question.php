@@ -140,11 +140,11 @@ class question extends dynamic_form {
             'static',
             'maxpoints_default',
             '',
-            get_string('defaultvalue', 'mod_kahoodle', $kahoodle->defaultmaxpoints)
+            get_string('defaultvalue', 'mod_kahoodle', $kahoodle->maxpoints)
         );
-        $mform->addGroup($group, 'maxpointsgroup', get_string('defaultmaxpoints', 'mod_kahoodle'), ' ', false);
+        $mform->addGroup($group, 'maxpointsgroup', get_string('maxpoints', 'mod_kahoodle'), ' ', false);
         $mform->setType('maxpoints', PARAM_RAW_TRIMMED);
-        $mform->addHelpButton('maxpointsgroup', 'defaultmaxpoints', 'mod_kahoodle');
+        $mform->addHelpButton('maxpointsgroup', 'maxpoints', 'mod_kahoodle');
         $mform->addGroupRule('maxpointsgroup', ['maxpoints' => [[null, 'numeric', null, 'client']]]);
 
         $group = [];
@@ -153,11 +153,11 @@ class question extends dynamic_form {
             'static',
             'minpoints_default',
             '',
-            get_string('defaultvalue', 'mod_kahoodle', $kahoodle->defaultminpoints)
+            get_string('defaultvalue', 'mod_kahoodle', $kahoodle->minpoints)
         );
-        $mform->addGroup($group, 'minpointsgroup', get_string('defaultminpoints', 'mod_kahoodle'), ' ', false);
+        $mform->addGroup($group, 'minpointsgroup', get_string('minpoints', 'mod_kahoodle'), ' ', false);
         $mform->setType('minpoints', PARAM_RAW_TRIMMED);
-        $mform->addHelpButton('minpointsgroup', 'defaultminpoints', 'mod_kahoodle');
+        $mform->addHelpButton('minpointsgroup', 'minpoints', 'mod_kahoodle');
         $mform->addGroupRule('minpointsgroup', ['minpoints' => [[null, 'numeric', null, 'client']]]);
 
         $group = [];
@@ -247,8 +247,8 @@ class question extends dynamic_form {
         }
 
         // Validate maxpoints >= minpoints (considering defaults).
-        $maxpoints = $getvalue('maxpoints', 'defaultmaxpoints');
-        $minpoints = $getvalue('minpoints', 'defaultminpoints');
+        $maxpoints = $getvalue('maxpoints', 'maxpoints');
+        $minpoints = $getvalue('minpoints', 'minpoints');
 
         if ($maxpoints < $minpoints) {
             $errors['maxpointsgroup'] = get_string('error_maxpoints_less_than_minpoints', 'mod_kahoodle');

@@ -121,19 +121,19 @@ class mod_kahoodle_mod_form extends moodleform_mod {
         $mform->addHelpButton('questionresultsduration', 'questionresultsduration', 'mod_kahoodle');
 
         // Points settings.
-        $mform->addElement('text', 'defaultmaxpoints', get_string('defaultmaxpoints', 'mod_kahoodle'), ['size' => '10']);
-        $mform->setType('defaultmaxpoints', PARAM_INT);
-        $mform->setDefault('defaultmaxpoints', constants::DEFAULT_MAX_POINTS);
-        $mform->addRule('defaultmaxpoints', null, 'required', null, 'client');
-        $mform->addRule('defaultmaxpoints', null, 'numeric', null, 'client');
-        $mform->addHelpButton('defaultmaxpoints', 'defaultmaxpoints', 'mod_kahoodle');
+        $mform->addElement('text', 'maxpoints', get_string('maxpoints', 'mod_kahoodle'), ['size' => '10']);
+        $mform->setType('maxpoints', PARAM_INT);
+        $mform->setDefault('maxpoints', constants::DEFAULT_MAX_POINTS);
+        $mform->addRule('maxpoints', null, 'required', null, 'client');
+        $mform->addRule('maxpoints', null, 'numeric', null, 'client');
+        $mform->addHelpButton('maxpoints', 'maxpoints', 'mod_kahoodle');
 
-        $mform->addElement('text', 'defaultminpoints', get_string('defaultminpoints', 'mod_kahoodle'), ['size' => '10']);
-        $mform->setType('defaultminpoints', PARAM_INT);
-        $mform->setDefault('defaultminpoints', constants::DEFAULT_MIN_POINTS);
-        $mform->addRule('defaultminpoints', null, 'required', null, 'client');
-        $mform->addRule('defaultminpoints', null, 'numeric', null, 'client');
-        $mform->addHelpButton('defaultminpoints', 'defaultminpoints', 'mod_kahoodle');
+        $mform->addElement('text', 'minpoints', get_string('minpoints', 'mod_kahoodle'), ['size' => '10']);
+        $mform->setType('minpoints', PARAM_INT);
+        $mform->setDefault('minpoints', constants::DEFAULT_MIN_POINTS);
+        $mform->addRule('minpoints', null, 'required', null, 'client');
+        $mform->addRule('minpoints', null, 'numeric', null, 'client');
+        $mform->addHelpButton('minpoints', 'minpoints', 'mod_kahoodle');
 
         // Other standard elements that are displayed in their own fieldsets.
         $this->standard_grading_coursemodule_elements();
@@ -158,8 +158,8 @@ class mod_kahoodle_mod_form extends moodleform_mod {
             'questionpreviewduration',
             'questionduration',
             'questionresultsduration',
-            'defaultmaxpoints',
-            'defaultminpoints',
+            'maxpoints',
+            'minpoints',
         ];
 
         foreach ($numericfields as $field) {
@@ -169,8 +169,8 @@ class mod_kahoodle_mod_form extends moodleform_mod {
         }
 
         // Validate maxpoints >= minpoints.
-        if ((int)$data['defaultmaxpoints'] < (int)$data['defaultminpoints']) {
-            $errors['defaultmaxpoints'] = get_string('error_maxpoints_less_than_minpoints', 'mod_kahoodle');
+        if ((int)$data['maxpoints'] < (int)$data['minpoints']) {
+            $errors['maxpoints'] = get_string('error_maxpoints_less_than_minpoints', 'mod_kahoodle');
         }
 
         return $errors;

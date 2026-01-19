@@ -70,9 +70,9 @@ abstract class base {
 
         // Validate maxpoints >= minpoints (considering defaults). If invalid, unset both.
         $maxpoints = isset($data->maxpoints) && $data->maxpoints !== null
-            ? (int)$data->maxpoints : (int)$kahoodle->defaultmaxpoints;
+            ? (int)$data->maxpoints : (int)$kahoodle->maxpoints;
         $minpoints = isset($data->minpoints) && $data->minpoints !== null
-            ? (int)$data->minpoints : (int)$kahoodle->defaultminpoints;
+            ? (int)$data->minpoints : (int)$kahoodle->minpoints;
         if ($maxpoints < $minpoints) {
             unset($data->maxpoints, $data->minpoints);
         }
