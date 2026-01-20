@@ -269,6 +269,15 @@
 .mod_kahoodle-progress-paused .mod_kahoodle-progress-fill {
     background: linear-gradient(90deg, #6b7280, #9ca3af);
 }
+.mod_kahoodle-progress-paused .mod_kahoodle-control-btn[data-action="pause"] {
+    display: none;
+}
+.mod_kahoodle-control-btn[data-action="resume"] {
+    display: none;
+}
+.mod_kahoodle-progress-paused .mod_kahoodle-control-btn[data-action="resume"] {
+    display: inline-block;
+}
 
 /* Teacher controls */
 .mod_kahoodle-controls {

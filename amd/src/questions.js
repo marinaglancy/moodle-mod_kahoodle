@@ -40,6 +40,9 @@ const SELECTORS = {
     PREVIEW_CONTROL_BACK: '[data-action="back"]',
     PREVIEW_CONTROL_NEXT: '[data-action="next"]',
     PREVIEW_CONTROL_CLOSE: '[data-action="close"]',
+    PREVIEW_CONTROL_PAUSE: '[data-action="pause"]',
+    PREVIEW_CONTROL_RESUME: '[data-action="resume"]',
+    PROGRESS_FILL: '.mod_kahoodle-progress-fill',
 };
 
 // Cache for preview questions data, keyed by roundId.
@@ -51,6 +54,10 @@ let currentPreviewState = {
     questionstages: [],
     currentIndex: 0,
     overlayContainer: null,
+    autoplayEnabled: true,
+    autoplayTimerId: null,
+    autoplayStartTime: null,
+    autoplayElapsed: 0,
 };
 
 /**
@@ -271,6 +278,10 @@ const openPreview = async(roundId, roundQuestionId) => {
             questionstages: questions,
             currentIndex: startIndex,
             overlayContainer: null,
+            autoplayEnabled: true,
+            autoplayTimerId: null,
+            autoplayStartTime: null,
+            autoplayElapsed: 0,
         };
 
         // Create and show the overlay.
@@ -314,6 +325,159 @@ const showPreviewOverlay = async() => {
     }
 
     currentPreviewState.overlayContainer.innerHTML = html;
+
+    // Reset elapsed time for the new question.
+    currentPreviewState.autoplayElapsed = 0;
+
+    // Start or update autoplay based on current state.
+    startAutoplay();
+};
+
+/**
+ * Start or resume the autoplay countdown
+ */
+const startAutoplay = () => {
+    // Stop any existing timer.
+    stopAutoplayTimer();
+
+    const question = currentPreviewState.questionstages[currentPreviewState.currentIndex];
+    if (!question || !question.duration) {
+        return;
+    }
+
+    const overlay = currentPreviewState.overlayContainer?.querySelector(SELECTORS.PREVIEW_OVERLAY);
+
+    // Update paused class based on current state.
+    if (overlay) {
+        if (currentPreviewState.autoplayEnabled) {
+            overlay.classList.remove('mod_kahoodle-progress-paused');
+        } else {
+            overlay.classList.add('mod_kahoodle-progress-paused');
+        }
+    }
+
+    // Update progress bar to current position.
+    updateProgressBar();
+
+    // Only start timer if autoplay is enabled.
+    if (!currentPreviewState.autoplayEnabled) {
+        return;
+    }
+
+    const durationMs = question.duration * 1000;
+    const remainingMs = durationMs - currentPreviewState.autoplayElapsed;
+
+    if (remainingMs <= 0) {
+        // Time is up, go to next question.
+        navigatePreview(1);
+        return;
+    }
+
+    currentPreviewState.autoplayStartTime = Date.now();
+
+    // Use requestAnimationFrame for smooth progress updates.
+    const updateLoop = () => {
+        if (!currentPreviewState.autoplayEnabled || !currentPreviewState.overlayContainer) {
+            return;
+        }
+
+        const elapsed = currentPreviewState.autoplayElapsed + (Date.now() - currentPreviewState.autoplayStartTime);
+        const progress = Math.min((elapsed / durationMs) * 100, 100);
+
+        const progressFill = currentPreviewState.overlayContainer.querySelector(SELECTORS.PROGRESS_FILL);
+        if (progressFill) {
+            progressFill.style.width = progress + '%';
+        }
+
+        if (elapsed >= durationMs) {
+            // Time is up, set to 100% and go to next question after a brief moment.
+            currentPreviewState.autoplayTimerId = setTimeout(() => {
+                navigatePreview(1);
+            }, 50);
+        } else {
+            currentPreviewState.autoplayTimerId = requestAnimationFrame(updateLoop);
+        }
+    };
+
+    currentPreviewState.autoplayTimerId = requestAnimationFrame(updateLoop);
+};
+
+/**
+ * Stop the autoplay timer
+ */
+const stopAutoplayTimer = () => {
+    if (currentPreviewState.autoplayTimerId) {
+        cancelAnimationFrame(currentPreviewState.autoplayTimerId);
+        clearTimeout(currentPreviewState.autoplayTimerId);
+        currentPreviewState.autoplayTimerId = null;
+    }
+};
+
+/**
+ * Update the progress bar to reflect current elapsed time
+ */
+const updateProgressBar = () => {
+    const question = currentPreviewState.questionstages[currentPreviewState.currentIndex];
+    if (!question || !question.duration || !currentPreviewState.overlayContainer) {
+        return;
+    }
+
+    const durationMs = question.duration * 1000;
+    const progress = Math.min((currentPreviewState.autoplayElapsed / durationMs) * 100, 100);
+
+    const progressFill = currentPreviewState.overlayContainer.querySelector(SELECTORS.PROGRESS_FILL);
+    if (progressFill) {
+        progressFill.style.width = progress + '%';
+    }
+};
+
+/**
+ * Pause the autoplay countdown
+ */
+const pauseAutoplay = () => {
+    if (!currentPreviewState.autoplayEnabled) {
+        return;
+    }
+
+    // Stop the timer first to prevent further updates.
+    stopAutoplayTimer();
+
+    // Calculate and store elapsed time.
+    if (currentPreviewState.autoplayStartTime) {
+        currentPreviewState.autoplayElapsed += Date.now() - currentPreviewState.autoplayStartTime;
+        currentPreviewState.autoplayStartTime = null;
+    }
+
+    currentPreviewState.autoplayEnabled = false;
+
+    // Update progress bar to exact position immediately.
+    updateProgressBar();
+
+    // Add paused class to overlay.
+    const overlay = currentPreviewState.overlayContainer?.querySelector(SELECTORS.PREVIEW_OVERLAY);
+    if (overlay) {
+        overlay.classList.add('mod_kahoodle-progress-paused');
+    }
+};
+
+/**
+ * Resume the autoplay countdown
+ */
+const resumeAutoplay = () => {
+    if (currentPreviewState.autoplayEnabled) {
+        return;
+    }
+
+    currentPreviewState.autoplayEnabled = true;
+
+    // Remove paused class from overlay.
+    const overlay = currentPreviewState.overlayContainer?.querySelector(SELECTORS.PREVIEW_OVERLAY);
+    if (overlay) {
+        overlay.classList.remove('mod_kahoodle-progress-paused');
+    }
+
+    // Restart the timer.
+    startAutoplay();
 };
 
 /**
@@ -340,6 +504,20 @@ const handlePreviewControls = (e) => {
     if (closeButton) {
         e.preventDefault();
         closePreview();
+        return;
+    }
+
+    const pauseButton = e.target.closest(SELECTORS.PREVIEW_CONTROL_PAUSE);
+    if (pauseButton) {
+        e.preventDefault();
+        pauseAutoplay();
+        return;
+    }
+
+    const resumeButton = e.target.closest(SELECTORS.PREVIEW_CONTROL_RESUME);
+    if (resumeButton) {
+        e.preventDefault();
+        resumeAutoplay();
     }
 };
 
@@ -366,6 +544,14 @@ const handlePreviewKeyboard = (e) => {
             e.preventDefault();
             closePreview();
             break;
+        case ' ':
+            e.preventDefault();
+            if (currentPreviewState.autoplayEnabled) {
+                pauseAutoplay();
+            } else {
+                resumeAutoplay();
+            }
+            break;
     }
 };
 
@@ -390,6 +576,9 @@ const navigatePreview = async(direction) => {
  * Close the preview overlay
  */
 const closePreview = () => {
+    // Stop autoplay timer.
+    stopAutoplayTimer();
+
     if (currentPreviewState.overlayContainer) {
         currentPreviewState.overlayContainer.remove();
         currentPreviewState.overlayContainer = null;
@@ -404,5 +593,9 @@ const closePreview = () => {
         questionstages: [],
         currentIndex: 0,
         overlayContainer: null,
+        autoplayEnabled: true,
+        autoplayTimerId: null,
+        autoplayStartTime: null,
+        autoplayElapsed: 0,
     };
 };

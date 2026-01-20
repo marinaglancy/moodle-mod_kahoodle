@@ -27,10 +27,8 @@
     * questiontype - Question type identifier (e.g., "multichoice")
     * typeismultichoice - Boolean true if questiontype is "multichoice" (added by JS)
     * typedata - Object containing type-specific data (decoded from JSON by JS)
-    * progresspercent - Percentage of time remaining (0-100, usually 0 for results)
     * cancontrol - Boolean indicating if user can control the quiz (teacher)
     * isedit - Boolean indicating if it is rendered for teachers when they edit the questions
-    * ispaused - Boolean indicating if the quiz is currently paused
     * backgroundurl - URL for background image (optional)
 
     For multichoice questions, typedata contains:
@@ -43,18 +41,10 @@
         "sortorder": 36,
         "totalquestions": 42,
         "questiontextcompact": "How long would it take to walk around the world's perimeter?",
-        "progresspercent": 65,
         "questiontype": "multichoice",
         "typeismultichoice": true,
         "typedata": {
-            "options": [
-                {"optionnumber": 1, "letter": "A", "text": "5 days", "iscorrect": false, "count": 3, "heightpercent": 19},
-                {"optionnumber": 2, "letter": "B", "text": "50 days", "iscorrect": false, "count": 8, "heightpercent": 50},
-                {"optionnumber": 3, "letter": "C", "text": "200 days", "iscorrect": false, "count": 5, "heightpercent": 31},
-                {"optionnumber": 4, "letter": "D", "text": "You cannot walk around the world, there is an ocean", "iscorrect": true, "count": 16, "heightpercent": 100}
-            ]
         },
-        "progresspercent": 0,
         "cancontrol": true
     }
 }}

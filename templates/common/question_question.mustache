@@ -31,10 +31,8 @@
     * questiontype - Question type identifier (e.g., "multichoice")
     * typeismultichoice - Boolean true if questiontype is "multichoice" (added by JS)
     * typedata - Object containing type-specific data (decoded from JSON by JS)
-    * progresspercent - Percentage of time remaining (0-100)
     * cancontrol - Boolean indicating if user can control the quiz (teacher)
     * isedit - Boolean indicating if it is rendered for teachers when they edit the questions
-    * ispaused - Boolean indicating if the quiz is currently paused
     * backgroundurl - URL for background image (optional)
 
     For multichoice questions, typedata contains:
@@ -52,18 +50,9 @@
         "imageurl": "https://example.com/globe.jpg",
         "imagelandscape": true,
         "imagealt": "Earth globe",
-        "progresspercent": 65,
         "questiontype": "multichoice",
         "typeismultichoice": true,
         "typedata": {
-            "options": [
-                {"optionnumber": 1, "letter": "A", "text": "5 days"},
-                {"optionnumber": 2, "letter": "B", "text": "50 days"},
-                {"optionnumber": 3, "letter": "C", "text": "200 days"},
-                {"optionnumber": 4, "letter": "D", "text": "You cannot walk around the world, there is an ocean"}
-            ],
-            "optioncount": 4,
-            "manyoptions": false
         }
     }
 }}

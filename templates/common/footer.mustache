@@ -20,26 +20,22 @@
     Quiz overlay footer partial with progress bar and controls.
 
     Context variables required for this template:
-    * progresspercent - Percentage of time remaining (0-100)
-    * ispaused - Boolean indicating if the quiz is currently paused
     * cancontrol - Boolean indicating if user can control the quiz (teacher)
     * isedit - Boolean indicating if it is rendered for teachers when they edit the questions
 
 
     Example context (json):
     {
-        "progresspercent": 65,
         "cancontrol": true,
-        "isedit": true,
-        "ispaused": false
+        "isedit": true
     }
 }}
 <footer class="mod_kahoodle-footer">
 
     {{! Time progress bar }}
-    <div class="mod_kahoodle-progress{{#ispaused}} mod_kahoodle-progress-paused{{/ispaused}}">
+    <div class="mod_kahoodle-progress">
         <div class="mod_kahoodle-progress-bar">
-            <div class="mod_kahoodle-progress-fill" style="width: {{progresspercent}}%;"></div>
+            <div class="mod_kahoodle-progress-fill" style="width: 0%;"></div>
         </div>
     </div>
 
@@ -51,16 +47,12 @@
             {{#pix}}back, mod_kahoodle{{/pix}} {{#str}}back{{/str}}
         </a>
         {{/isedit}}
-        {{^ispaused}}
         <a href="#" class="mod_kahoodle-control-btn" data-action="pause">
             {{#pix}}pause, mod_kahoodle{{/pix}} {{#str}}pause, mod_kahoodle{{/str}}
         </a>
-        {{/ispaused}}
-        {{#ispaused}}
         <a href="#" class="mod_kahoodle-control-btn" data-action="resume">
             {{#pix}}resume, mod_kahoodle{{/pix}} {{#str}}resume, mod_kahoodle{{/str}}
         </a>
-        {{/ispaused}}
         <a href="#" class="mod_kahoodle-control-btn" data-action="next">
             {{#pix}}next, mod_kahoodle{{/pix}} {{#str}}next{{/str}}
         </a>
