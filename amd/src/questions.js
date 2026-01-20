@@ -139,6 +139,9 @@ const initSorting = () => {
     };
     const sortableColumns = $(SELECTORS.SORTABLE_QUESTIONS_LIST + ' > tr');
     sortableColumns.on(SortableList.EVENTS.DROP, async(e, info) => {
+        if (!info.positionChanged) {
+            return null;
+        }
         const roundquestionid = getRowOrder(info.element, 'roundquestionid');
         const oldsortorder = getRowOrder(info.element);
         let newsortorder = getRowOrder(info.targetNextElement);

@@ -45,7 +45,7 @@ Feature: Managing questions in Kahoodle
     And I am on the "Test Kahoodle" "kahoodle activity" page
     And I navigate to "Questions" in current page administration
     Then I should see "What is 2 + 2?"
-    When I open the action menu in "What is 2 + 2?" "table_row"
+    When I click on "Actions" "link" in the "What is 2 + 2?" "table_row"
     And I choose "Edit question" in the open action menu
     And I set the field "Question text" in the "Edit question" "dialogue" to "What is 2 + 3?"
     And I set the field "Answer options" to multiline:
@@ -58,3 +58,42 @@ Feature: Managing questions in Kahoodle
     And I click on "Save changes" "button" in the "Edit question" "dialogue"
     Then I should see "What is 2 + 3?"
     And I should not see "What is 2 + 2?"
+
+  @javascript
+  Scenario: Deleting a question
+    Given the following "mod_kahoodle > questions" exist:
+      | kahoodle  | questiontext               | questionconfig       |
+      | kahoodle1 | What is the capital of UK? | *London\nParis\nRome |
+      | kahoodle1 | What is 5 + 5?             | 8\n9\n*10            |
+      | kahoodle1 | What color is the sky?     | Green\n*Blue\nRed    |
+    When I log in as "teacher1"
+    And I am on the "Test Kahoodle" "kahoodle activity" page
+    And I navigate to "Questions" in current page administration
+    Then I should see "What is the capital of UK?"
+    And I should see "What is 5 + 5?"
+    And I should see "What color is the sky?"
+    When I click on "Actions" "link" in the "What is 5 + 5?" "table_row"
+    And I choose "Delete" in the open action menu
+    And I click on "Delete" "button" in the "Delete question" "dialogue"
+    Then I should see "What is the capital of UK?"
+    And I should not see "What is 5 + 5?"
+    And I should see "What color is the sky?"
+
+  @javascript
+  Scenario: Changing question sort order
+    Given the following "mod_kahoodle > questions" exist:
+      | kahoodle  | questiontext               | questionconfig |
+      | kahoodle1 | What is the capital of UK? | *A\nB\nC       |
+      | kahoodle1 | What is 2 + 2?             | *A\nB\nC       |
+      | kahoodle1 | What color is the sky?     | *A\nB\nC       |
+      | kahoodle1 | How many days in a week?   | *A\nB\nC       |
+      | kahoodle1 | What is the largest ocean? | *A\nB\nC       |
+    When I log in as "teacher1"
+    And I am on the "Test Kahoodle" "kahoodle activity" page
+    And I navigate to "Questions" in current page administration
+    And I press "Move Question 2"
+    And I click on "After \"Question 5\"" "link" in the "Move Question 2" "dialogue"
+    Then "What is the capital of UK?" "table_row" should appear before "What color is the sky?" "table_row"
+    And "What color is the sky?" "table_row" should appear before "How many days in a week?" "table_row"
+    And "How many days in a week?" "table_row" should appear before "What is the largest ocean?" "table_row"
+    And "What is the largest ocean?" "table_row" should appear before "What is 2 + 2?" "table_row"
