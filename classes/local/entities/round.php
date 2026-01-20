@@ -140,4 +140,21 @@ class round {
     public function get_context(): \context_module {
         return \context_module::instance($this->get_cm()->id);
     }
+
+    /** @var int|null Cached questions count */
+    protected ?int $questionscount = null;
+
+    /**
+     * Get the number of questions in this round
+     *
+     * @return int
+     */
+    public function get_questions_count(): int {
+        global $DB;
+        if ($this->questionscount !== null) {
+            return $this->questionscount;
+        }
+        $this->questionscount = $DB->count_records('kahoodle_round_questions', ['roundid' => $this->get_id()]);
+        return $this->questionscount;
+    }
 }

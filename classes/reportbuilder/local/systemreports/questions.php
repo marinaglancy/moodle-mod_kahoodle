@@ -131,7 +131,7 @@ class questions extends system_report {
             'question:score',
         ]);
 
-        // Find the column question:sortorder and change the formatter on it:
+        // Find the column question:sortorder and change the formatter on it.
         foreach ($this->get_columns() as $column) {
             if ($column->get_unique_identifier() === 'question:sortorder') {
                 $column->add_callback(static function ($value, \stdClass $row): string {

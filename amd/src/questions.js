@@ -127,9 +127,12 @@ export const init = (roundId, questionTypes) => {
  * Initialize sortable question list
  */
 const initSorting = () => {
-    const sortableList = new SortableList($(SELECTORS.SORTABLE_QUESTIONS_LIST));
+    const listElement = $(SELECTORS.SORTABLE_QUESTIONS_LIST);
+    listElement.find('> tr.emptyrow').remove();
     const getRowOrder = (element, prop = 'sortorder') =>
         parseInt(element?.find('td:first-child span')?.attr('data-' + prop), 10);
+
+    const sortableList = new SortableList(listElement);
     sortableList.getItemOrder = getRowOrder;
     sortableList.getElementName = function(element) {
         return getString('sortorderx', 'mod_kahoodle', getRowOrder(element));

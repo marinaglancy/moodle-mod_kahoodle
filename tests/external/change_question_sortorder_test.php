@@ -58,7 +58,7 @@ final class change_question_sortorder_test extends \advanced_testcase {
 
         $roundquestions = round_question::get_all_questions_for_round($round);
 
-        // Assert questions are in the following order: 0,7,1,2,3,4,5,6,8,9
+        // Assert questions are in the following order: 0,7,1,2,3,4,5,6,8,9.
         $expectedorder = [0, 7, 1, 2, 3, 4, 5, 6, 8, 9];
         foreach ($roundquestions as $index => $roundquestion) {
             $this->assertEquals($questions[$expectedorder[$index]], $roundquestion->get_id());
@@ -69,7 +69,7 @@ final class change_question_sortorder_test extends \advanced_testcase {
 
         $roundquestions = round_question::get_all_questions_for_round($round);
 
-        // Assert questions are in the following order: 0,7,2,3,4,5,6,8,1,9
+        // Assert questions are in the following order: 0,7,2,3,4,5,6,8,1,9.
         $expectedorder = [0, 7, 2, 3, 4, 5, 6, 8, 1, 9];
         foreach ($roundquestions as $index => $roundquestion) {
             $this->assertEquals($questions[$expectedorder[$index]], $roundquestion->get_id());

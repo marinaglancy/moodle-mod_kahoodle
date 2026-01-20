@@ -98,6 +98,7 @@ $report = \core_reportbuilder\system_report_factory::create(
     0,
     ['roundid' => $round->get_id()]
 );
+$report->set_default_per_page(5000);
 
 echo $report->output();
 

@@ -444,10 +444,7 @@ class questions {
         }
 
         $currentorder = $roundquestion->get_data()->sortorder;
-        $maxsortorder = (int)$DB->get_field_sql(
-            'SELECT count(*) FROM {kahoodle_round_questions} WHERE roundid = :roundid',
-            ['roundid' => $round->get_id()]
-        );
+        $maxsortorder = $roundquestion->get_round()->get_questions_count();
         if ($newsortorder == -1) {
             $newsortorder = $maxsortorder;
         }
