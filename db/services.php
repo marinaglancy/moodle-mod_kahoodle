@@ -56,6 +56,13 @@ $functions = [
         'type' => 'read',
         'ajax' => true,
     ],
+
+    'mod_kahoodle_change_question_sortorder' => [
+        'classname' => mod_kahoodle\external\change_question_sortorder::class,
+        'description' => 'Change question sortorder in Kahoodle',
+        'type' => 'write',
+        'ajax' => true,
+    ],
 ];
 
 $services = [

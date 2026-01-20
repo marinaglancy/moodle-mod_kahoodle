@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 namespace mod_kahoodle\reportbuilder\local\systemreports;
 
+use core\output\html_writer;
 use core_reportbuilder\local\report\action;
 use core_reportbuilder\system_report;
 use lang_string;
@@ -129,6 +130,25 @@ class questions extends system_report {
             'question:timing',
             'question:score',
         ]);
+
+        // Find the column question:sortorder and change the formatter on it:
+        foreach ($this->get_columns() as $column) {
+            if ($column->get_unique_identifier() === 'question:sortorder') {
+                $column->add_callback(static function ($value, \stdClass $row): string {
+                    global $OUTPUT;
+                    return html_writer::span(
+                        $OUTPUT->render_from_template(
+                            'core/drag_handle',
+                            ['movetitle' => get_string('movecontent', 'moodle', get_string('sortorderx', 'mod_kahoodle', $value))]
+                        ) .
+                        $value,
+                        '',
+                        ['data-sortorder' => $value, 'data-roundquestionid' => $row->id]
+                    );
+                });
+                break;
+            }
+        }
     }
 
     /**

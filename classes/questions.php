@@ -426,6 +426,81 @@ class questions {
     }
 
     /**
+     * Move a given question to a new sortorder position
+     *
+     * @param round_question $roundquestion
+     * @param int $newsortorder The new sortorder position (1-based), -1 means last position
+     * @throws \moodle_exception
+     * @return void
+     */
+    public static function change_question_sortorder(round_question $roundquestion, int $newsortorder): void {
+        global $DB;
+
+        // Get editable round ID.
+        $round = $roundquestion->get_round();
+        if (!$round->is_editable()) {
+            // TODO at the moment we only support editing questions in editable rounds.
+            throw new \moodle_exception('noeditableround', 'mod_kahoodle');
+        }
+
+        $currentorder = $roundquestion->get_data()->sortorder;
+        $maxsortorder = (int)$DB->get_field_sql(
+            'SELECT count(*) FROM {kahoodle_round_questions} WHERE roundid = :roundid',
+            ['roundid' => $round->get_id()]
+        );
+        if ($newsortorder == -1) {
+            $newsortorder = $maxsortorder;
+        }
+        $newsortorder = min(max(1, $newsortorder), $maxsortorder);
+        if ($newsortorder == $currentorder) {
+            // No change.
+            return;
+        }
+
+        // Update sort orders of other questions in the round.
+        if ($newsortorder < $currentorder) {
+            // Moving up: increment sortorder of questions between new and current position.
+            $DB->execute(
+                "UPDATE {kahoodle_round_questions}
+                 SET sortorder = sortorder + 1
+                 WHERE roundid = :roundid
+                   AND sortorder >= :newsortorder
+                   AND sortorder < :currentorder",
+                [
+                    'roundid' => $round->get_id(),
+                    'newsortorder' => $newsortorder,
+                    'currentorder' => $currentorder,
+                ]
+            );
+        } else {
+            // Moving down: decrement sortorder of questions between current and new position.
+            $DB->execute(
+                "UPDATE {kahoodle_round_questions}
+                 SET sortorder = sortorder - 1
+                 WHERE roundid = :roundid
+                   AND sortorder <= :newsortorder
+                   AND sortorder > :currentorder",
+                [
+                    'roundid' => $round->get_id(),
+                    'newsortorder' => $newsortorder,
+                    'currentorder' => $currentorder,
+                ]
+            );
+        }
+
+        // Update sortorder of the moved question.
+        $DB->set_field(
+            'kahoodle_round_questions',
+            'sortorder',
+            $newsortorder,
+            ['id' => $roundquestion->get_id()]
+        );
+
+        // Just in case validate that sortorders are sequential.
+        self::fix_round_sortorder($round->get_id());
+    }
+
+    /**
      * Delete a question from the editable round
      *
      * Removes question from editable round. If the question version is used in non-editable rounds,

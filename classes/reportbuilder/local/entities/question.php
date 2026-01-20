@@ -96,6 +96,7 @@ class question extends base {
             ->add_joins($this->get_joins())
             ->set_type(column::TYPE_INTEGER)
             ->add_field("{$roundquestionalias}.sortorder")
+            ->add_field("{$roundquestionalias}.id")
             ->set_is_sortable(true);
 
         // Question type column.

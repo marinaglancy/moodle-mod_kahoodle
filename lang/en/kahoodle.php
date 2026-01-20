@@ -79,5 +79,6 @@ $string['questiontype_multichoice'] = 'Multiple choice';
 $string['resume'] = 'Resume';
 $string['score'] = 'Score';
 $string['sortorder'] = 'Order';
+$string['sortorderx'] = 'Question {$a}';
 $string['timing'] = 'Timing';
 $string['version'] = 'Version';

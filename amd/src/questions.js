@@ -29,6 +29,9 @@ import * as reportSelectors from 'core_reportbuilder/local/selectors';
 import Notification from 'core/notification';
 import {call as fetchMany} from 'core/ajax';
 import Templates from 'core/templates';
+import SortableList from 'core/sortable_list';
+import $ from 'jquery';
+import * as DynamicTable from 'core_table/dynamic';
 
 const SELECTORS = {
     QUESTIONS_REGION: '[data-region="mod_kahoodle-questions"]',
@@ -43,6 +46,7 @@ const SELECTORS = {
     PREVIEW_CONTROL_PAUSE: '[data-action="pause"]',
     PREVIEW_CONTROL_RESUME: '[data-action="resume"]',
     PROGRESS_FILL: '.mod_kahoodle-progress-fill',
+    SORTABLE_QUESTIONS_LIST: '[data-region="mod_kahoodle-questions"] tbody',
 };
 
 // Cache for preview questions data, keyed by roundId.
@@ -107,12 +111,56 @@ export const init = (roundId, questionTypes) => {
         // Listen for report reload events to clear the cache.
         const reportElement = questionsRegion.querySelector(reportSelectors.regions.report);
         if (reportElement) {
-            reportElement.addEventListener(reportEvents.tableReload, () => {
+            reportElement.addEventListener(DynamicTable.Events.tableContentRefreshed, () => {
                 // Clear the preview cache when report reloads.
                 previewCache = {};
+                // Re-initialize sorting after reload.
+                initSorting();
             });
         }
+
+        initSorting();
     }
+};
+
+/**
+ * Initialize sortable question list
+ */
+const initSorting = () => {
+    const sortableList = new SortableList($(SELECTORS.SORTABLE_QUESTIONS_LIST));
+    const getRowOrder = (element, prop = 'sortorder') =>
+        parseInt(element?.find('td:first-child span')?.attr('data-' + prop), 10);
+    sortableList.getItemOrder = getRowOrder;
+    sortableList.getElementName = function(element) {
+        return getString('sortorderx', 'mod_kahoodle', getRowOrder(element));
+    };
+    const sortableColumns = $(SELECTORS.SORTABLE_QUESTIONS_LIST + ' > tr');
+    sortableColumns.on(SortableList.EVENTS.DROP, async(e, info) => {
+        const roundquestionid = getRowOrder(info.element, 'roundquestionid');
+        const oldsortorder = getRowOrder(info.element);
+        let newsortorder = getRowOrder(info.targetNextElement);
+        if (isNaN(newsortorder)) {
+            // Moved to the end.
+            newsortorder = -1;
+        } else if (newsortorder > oldsortorder) {
+            newsortorder -= 1;
+        }
+        // Call web service to update sort order.
+        try {
+            await fetchMany([{
+                methodname: 'mod_kahoodle_change_question_sortorder',
+                args: {
+                    roundquestionid: roundquestionid,
+                    newsortorder: newsortorder,
+                },
+            }]);
+            // Reload the questions table to reflect new order.
+            reloadQuestionsTable();
+        } catch (error) {
+            Notification.exception(error);
+        }
+        return null;
+    });
 };
 
 /**
