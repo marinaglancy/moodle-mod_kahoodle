@@ -148,7 +148,9 @@ class multichoice extends base {
             if ($stage == constants::STAGE_QUESTION_RESULTS) {
                 $option['iscorrect'] = $answer['iscorrect'];
                 $option['count'] = $answerscount[$index];
-                $option['heightpercent'] = (int)round(100.0 * $answerscount[$index] / $maxanswerscount);
+                $heightpercent = (int)round(100.0 * $answerscount[$index] / $maxanswerscount);
+                $option['heightpercent'] = $heightpercent;
+                $option['isshort'] = $heightpercent < 25;
             }
             $options[] = $option;
         }

@@ -31,6 +31,7 @@
         * count - Number of responses for this option
         * heightpercent - Bar height as percentage (0-100)
         * iscorrect - Boolean indicating if this is the correct answer
+        * isshort - Boolean indicating if bar is too short to display count inside (heightpercent < 25)
 
     Example context (json):
     {
@@ -59,8 +60,9 @@
 <div class="mod_kahoodle-results-chart">
     <div class="mod_kahoodle-chart-bars">
         {{#options}}
-        <div class="mod_kahoodle-chart-bar-wrapper{{#iscorrect}} mod_kahoodle-bar-correct{{/iscorrect}}">
+        <div class="mod_kahoodle-chart-bar-wrapper{{#iscorrect}} mod_kahoodle-bar-correct{{/iscorrect}}{{#isshort}} mod_kahoodle-bar-short{{/isshort}}">
             <div class="mod_kahoodle-chart-bar mod_kahoodle-bar-option{{optionnumber}}" style="--bar-height: {{heightpercent}}%;">
+                <span class="mod_kahoodle-bar-count-above">{{count}}</span>
                 <span class="mod_kahoodle-bar-count">{{count}}</span>
                 {{#iscorrect}}
                 <span class="mod_kahoodle-correct-badge">✓</span>
