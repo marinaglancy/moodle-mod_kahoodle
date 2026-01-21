@@ -61,12 +61,14 @@
     <div class="mod_kahoodle-chart-bars">
         {{#options}}
         <div class="mod_kahoodle-chart-bar-wrapper{{#iscorrect}} mod_kahoodle-bar-correct{{/iscorrect}}{{#isshort}} mod_kahoodle-bar-short{{/isshort}}">
-            <div class="mod_kahoodle-chart-bar mod_kahoodle-bar-option{{optionnumber}}" style="--bar-height: {{heightpercent}}%;">
-                <span class="mod_kahoodle-bar-count-above">{{count}}</span>
-                <span class="mod_kahoodle-bar-count">{{count}}</span>
-                {{#iscorrect}}
-                <span class="mod_kahoodle-correct-badge">✓</span>
-                {{/iscorrect}}
+            <div class="mod_kahoodle-chart-bar-container">
+                <div class="mod_kahoodle-chart-bar mod_kahoodle-bar-option{{optionnumber}}" style="height: {{heightpercent}}%;">
+                    <span class="mod_kahoodle-bar-count-above">{{count}}</span>
+                    <span class="mod_kahoodle-bar-count">{{count}}</span>
+                    {{#iscorrect}}
+                    <span class="mod_kahoodle-correct-badge">✓</span>
+                    {{/iscorrect}}
+                </div>
             </div>
             <div class="mod_kahoodle-bar-label mod_kahoodle-bar-label-option{{optionnumber}}">{{letter}}</div>
         </div>

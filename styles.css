@@ -387,9 +387,16 @@
     flex-shrink: 0;
 }
 
+.mod_kahoodle-chart-bar-container {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    min-height: 0;
+}
+
 .mod_kahoodle-chart-bar {
     width: 100%;
-    height: var(--bar-height, 50%);
     min-height: 4px;
     border-radius: 10px 10px 0 0;
     display: flex;
@@ -398,7 +405,6 @@
     justify-content: flex-start;
     padding-top: 0.75rem;
     position: relative;
-    margin-top: auto;
     box-shadow: var(--mod_kahoodle-shadow-sm);
 }
 
