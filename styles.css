@@ -102,11 +102,20 @@
     overflow: hidden;
 }
 
+/* Preview stage: center question text vertically */
+.mod_kahoodle-main[data-stage="preview"] {
+    justify-content: center;
+}
+
 /* Question text */
 .mod_kahoodle-question {
     text-align: center;
     margin-bottom: 1.5rem;
     flex-shrink: 0;
+}
+
+.mod_kahoodle-main[data-stage="preview"] .mod_kahoodle-question {
+    margin-bottom: 0;
 }
 
 .mod_kahoodle-question-text {
