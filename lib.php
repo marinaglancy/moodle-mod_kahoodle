@@ -196,23 +196,21 @@ function mod_kahoodle_realtime_event_received(\tool_realtime\channel $channel, $
     \core_external\external_api::validate_context($context);
 
     // Verify user has control capability.
-    require_capability('mod/kahoodle:control', $context);
+    require_capability('mod/kahoodle:facilitate', $context);
 
     switch ($action) {
         case 'advance':
             // Advance to the next stage.
-            $stagedata = \mod_kahoodle\local\game\progress::advance_to_next_stage($round);
+            $currentstage = clean_param($payload['currentstage'] ?? '', PARAM_ALPHANUMEXT);
+            $currentquestion = clean_param($payload['currentquestion'] ?? 0, PARAM_INT);
+            $stagedata = \mod_kahoodle\local\game\progress::advance_to_next_stage($round, $currentstage, $currentquestion);
             break;
 
         case 'get_current':
             // Get current stage data (used when resuming a game in progress).
             global $DB;
-            $roundrecord = $DB->get_record('kahoodle_rounds', ['id' => $round->get_id()], '*', MUST_EXIST);
-            $stagedata = \mod_kahoodle\local\game\progress::get_stage_data(
-                $round,
-                $roundrecord->currentstage,
-                (int)$roundrecord->currentquestion
-            );
+            $stage = $round->get_current_stage();
+            $stagedata = \mod_kahoodle\local\game\progress::get_stage_data($stage);
             // Don't notify others, just return the data.
             return $stagedata;
 

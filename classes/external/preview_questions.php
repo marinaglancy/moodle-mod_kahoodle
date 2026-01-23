@@ -74,21 +74,12 @@ class preview_questions extends external_api {
         $roundquestions = \mod_kahoodle\local\entities\round_question::get_all_questions_for_round($round);
         $totalquestions = count($roundquestions);
         $renderer = $PAGE->get_renderer('core');
-        $questions = [];
-        $stages = [
-            constants::STAGE_QUESTION_PREVIEW,
-            constants::STAGE_QUESTION,
-            constants::STAGE_QUESTION_RESULTS,
-        ];
+        $allstages = $round->get_all_stages(true);
+        $questionstages = [];
 
-        foreach ($roundquestions as $roundquestion) {
-            foreach ($stages as $stage) {
-                $duration = $roundquestion->get_stage_duration($stage);
-                if ($duration > 0) {
-                    $output = new roundquestion_output($roundquestion, $stage, true);
-                    $questions[] = $output->export_for_template($renderer);
-                }
-            }
+        foreach ($allstages as $rstage) {
+            $output = new roundquestion_output($rstage->get_round_question(), $rstage->get_stage(), true);
+            $questionstages[] = $output->export_for_template($renderer);
         }
 
         return [
@@ -96,7 +87,7 @@ class preview_questions extends external_api {
             'totalquestions' => $totalquestions,
             'isedit' => true,
             'cancontrol' => true,
-            'questionstages' => $questions,
+            'questionstages' => $questionstages,
         ];
     }
 

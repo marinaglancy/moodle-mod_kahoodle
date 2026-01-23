@@ -18,7 +18,7 @@ namespace mod_kahoodle\local\game;
 
 use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
-use mod_kahoodle\local\entities\round_question;
+use mod_kahoodle\local\entities\round_stage;
 use mod_kahoodle\output\roundquestion;
 
 /**
@@ -39,22 +39,25 @@ class progress {
         global $DB;
 
         // Verify round is in preparation stage.
-        $currentstage = $DB->get_field('kahoodle_rounds', 'currentstage', ['id' => $round->get_id()]);
-        if ($currentstage !== constants::STAGE_PREPARATION) {
-            throw new \moodle_exception('invalidstage', 'mod_kahoodle');
+        if ($round->get_current_stage_name() !== constants::STAGE_PREPARATION) {
+            // Race condition, game is already started.
+            return self::get_stage_data($round->get_current_stage());
         }
+
+        $stages = $round->get_all_stages();
+        $firststage = reset($stages);
 
         // Update round to lobby stage.
         $now = time();
         $DB->update_record('kahoodle_rounds', (object)[
             'id' => $round->get_id(),
-            'currentstage' => constants::STAGE_LOBBY,
-            'currentquestion' => 0,
+            'currentstage' => $firststage->get_stage_name(),
+            'currentquestion' => $firststage->get_question_number(),
             'stagestarttime' => $now,
             'timestarted' => $now,
         ]);
 
-        return self::get_stage_data($round, constants::STAGE_LOBBY, 0);
+        return self::get_stage_data($firststage);
     }
 
     /**
@@ -66,15 +69,15 @@ class progress {
         global $DB;
 
         // Verify round is in progress (not preparation or already archived).
-        $currentstage = $DB->get_field('kahoodle_rounds', 'currentstage', ['id' => $round->get_id()]);
-        if ($currentstage === constants::STAGE_PREPARATION || $currentstage === constants::STAGE_ARCHIVED) {
-            throw new \moodle_exception('invalidstage', 'mod_kahoodle');
+        if (!$round->is_in_progress()) {
+            return;
         }
 
         // Update round to archived stage.
         $DB->update_record('kahoodle_rounds', (object)[
             'id' => $round->get_id(),
             'currentstage' => constants::STAGE_ARCHIVED,
+            'currentquestion' => 0,
             'timecompleted' => time(),
         ]);
     }
@@ -83,49 +86,58 @@ class progress {
      * Advance to the next stage in the game flow
      *
      * @param round $round The round entity
+     * @param string $currentstagename The current stage name (for validation)
+     * @param int $currentquestion The current question number (for validation)
      * @return array Stage data including template and duration
      */
-    public static function advance_to_next_stage(round $round): array {
+    public static function advance_to_next_stage(round $round, string $currentstagename, int $currentquestion): array {
         global $DB;
 
-        // Get current state.
-        $roundrecord = $DB->get_record('kahoodle_rounds', ['id' => $round->get_id()], '*', MUST_EXIST);
-        $currentstage = $roundrecord->currentstage;
-        $currentquestion = (int)$roundrecord->currentquestion;
-        $totalquestions = $round->get_questions_count();
-
-        // Calculate next stage.
-        [$nextstage, $nextquestion] = self::calculate_next_stage($currentstage, $currentquestion, $totalquestions);
-
-        // Update round.
-        $updatedata = [
-            'id' => $round->get_id(),
-            'currentstage' => $nextstage,
-            'currentquestion' => $nextquestion,
-            'stagestarttime' => time(),
-        ];
-
-        // Mark as completed if archived.
-        if ($nextstage === constants::STAGE_ARCHIVED) {
-            $updatedata['timecompleted'] = time();
+        // Validate current stage to avoid race conditions.
+        $actualstage = $round->get_current_stage();
+        if (
+            $actualstage->get_stage_name() !== $currentstagename ||
+            $actualstage->get_question_number() !== $currentquestion
+        ) {
+            // Stage has already advanced, return current stage data.
+            return self::get_stage_data($actualstage);
         }
 
-        $DB->update_record('kahoodle_rounds', (object)$updatedata);
+        // Calculate next stage.
+        $nextstage = $round->get_next_stage();
 
-        return self::get_stage_data($round, $nextstage, $nextquestion);
+        if ($nextstage != null) {
+            // Update round.
+            $updatedata = [
+                'id' => $round->get_id(),
+                'currentstage' => $nextstage->get_stage_name(),
+                'currentquestion' => $nextstage->get_question_number(),
+                'stagestarttime' => time(),
+            ];
+
+            // Mark as completed if archived.
+            if ($nextstage === constants::STAGE_ARCHIVED) {
+                $updatedata['timecompleted'] = time();
+            }
+
+            $DB->update_record('kahoodle_rounds', (object)$updatedata);
+        } else {
+            $nextstage = $round->get_current_stage();
+        }
+
+        return self::get_stage_data($nextstage);
     }
 
     /**
      * Get stage data for rendering
      *
-     * @param round $round The round entity
-     * @param string $stage The stage name
-     * @param int $currentquestion Current question number (1-based for questions, 0 for non-question stages)
+     * @param round_stage $stage The stage object
      * @return array Stage data including template, templatedata, and duration
      */
-    public static function get_stage_data(round $round, string $stage, int $currentquestion): array {
+    public static function get_stage_data(round_stage $stage): array {
         global $PAGE;
 
+        $round = $stage->get_round();
         $kahoodle = $round->get_kahoodle();
 
         // Ensure PAGE is set up for rendering (needed when called from realtime callback).
@@ -138,36 +150,36 @@ class progress {
         $output = $PAGE->get_renderer('mod_kahoodle');
 
         $data = [
-            'stage' => $stage,
-            'currentquestion' => $currentquestion,
+            'stage' => $stage->get_stage_name(),
+            'currentquestion' => $stage->get_question_number(),
             'totalquestions' => $round->get_questions_count(),
             'quiztitle' => $kahoodle->name,
         ];
 
-        switch ($stage) {
+        switch ($stage->get_stage_name()) {
             case constants::STAGE_LOBBY:
                 $data['template'] = 'mod_kahoodle/stages/lobby';
                 $data['duration'] = (int)$kahoodle->lobbyduration;
-                $data['templatedata'] = self::get_lobby_template_data($round, $kahoodle);
+                $data['templatedata'] = self::get_lobby_template_data($stage);
                 break;
 
             case constants::STAGE_QUESTION_PREVIEW:
             case constants::STAGE_QUESTION:
             case constants::STAGE_QUESTION_RESULTS:
-                $data = array_merge($data, self::get_question_stage_data($round, $stage, $currentquestion, $output));
+                $data = array_merge($data, self::get_question_stage_data($stage, $output));
                 break;
 
             case constants::STAGE_LEADERS:
                 $data['template'] = 'mod_kahoodle/stages/leaders';
                 $data['duration'] = constants::DEFAULT_LEADERS_DURATION;
-                $data['templatedata'] = self::get_leaders_template_data($round, $kahoodle, $currentquestion);
+                $data['templatedata'] = self::get_leaders_template_data($stage);
                 break;
 
             case constants::STAGE_REVISION:
                 // TODO: Implement revision stage.
                 $data['template'] = 'mod_kahoodle/stages/leaders';
                 $data['duration'] = 0; // No auto-advance from revision.
-                $data['templatedata'] = self::get_leaders_template_data($round, $kahoodle, $currentquestion);
+                $data['templatedata'] = self::get_leaders_template_data($stage);
                 break;
 
             case constants::STAGE_ARCHIVED:
@@ -185,57 +197,16 @@ class progress {
     }
 
     /**
-     * Calculate the next stage based on current state
-     *
-     * @param string $currentstage Current stage
-     * @param int $currentquestion Current question number (1-based)
-     * @param int $totalquestions Total number of questions
-     * @return array [next_stage, next_question_number]
-     */
-    protected static function calculate_next_stage(string $currentstage, int $currentquestion, int $totalquestions): array {
-        switch ($currentstage) {
-            case constants::STAGE_LOBBY:
-                // After lobby, go to first question preview.
-                return [constants::STAGE_QUESTION_PREVIEW, 1];
-
-            case constants::STAGE_QUESTION_PREVIEW:
-                // After preview, go to question.
-                return [constants::STAGE_QUESTION, $currentquestion];
-
-            case constants::STAGE_QUESTION:
-                // After question, go to results.
-                return [constants::STAGE_QUESTION_RESULTS, $currentquestion];
-
-            case constants::STAGE_QUESTION_RESULTS:
-                // After results, go to leaders.
-                return [constants::STAGE_LEADERS, $currentquestion];
-
-            case constants::STAGE_LEADERS:
-                // After leaders, either next question or revision.
-                if ($currentquestion < $totalquestions) {
-                    return [constants::STAGE_QUESTION_PREVIEW, $currentquestion + 1];
-                } else {
-                    return [constants::STAGE_REVISION, $currentquestion];
-                }
-
-            case constants::STAGE_REVISION:
-                // After revision, archive.
-                return [constants::STAGE_ARCHIVED, $currentquestion];
-
-            default:
-                throw new \moodle_exception('invalidstage', 'mod_kahoodle');
-        }
-    }
-
-    /**
      * Get template data for lobby stage
      *
-     * @param round $round The round entity
-     * @param \stdClass $kahoodle The kahoodle record
+     * @param round_stage $stage The stage object
      * @return array Template data
      */
-    protected static function get_lobby_template_data(round $round, \stdClass $kahoodle): array {
+    protected static function get_lobby_template_data(round_stage $stage): array {
         global $CFG;
+
+        $round = $stage->get_round();
+        $kahoodle = $round->get_kahoodle();
 
         return [
             'quiztitle' => $kahoodle->name,
@@ -249,33 +220,19 @@ class progress {
     /**
      * Get template data for question stages (preview, question, results)
      *
-     * @param round $round The round entity
-     * @param string $stage The stage name
-     * @param int $currentquestion Current question number (1-based)
+     * @param round_stage $stage The stage object
      * @param \renderer_base $output The renderer
      * @return array Stage data including template and templatedata
      */
     protected static function get_question_stage_data(
-        round $round,
-        string $stage,
-        int $currentquestion,
+        round_stage $stage,
         \renderer_base $output
     ): array {
-        // Map stage constant to roundquestion stage name.
-        $stagemap = [
-            constants::STAGE_QUESTION_PREVIEW => 'preview',
-            constants::STAGE_QUESTION => 'question',
-            constants::STAGE_QUESTION_RESULTS => 'results',
-        ];
-        $questionstage = $stagemap[$stage];
-
-        // Get the round question for this position.
-        $roundquestion = round_question::create_from_round_and_sortorder($round, $currentquestion);
-
         // Create output class - use live mode (no mock results).
         // TODO: When actual results are implemented, pass false for mockresults.
         // For now, we still use mock results as a placeholder.
-        $outputclass = new roundquestion($roundquestion, $questionstage, true);
+        $round = $stage->get_round();
+        $outputclass = new roundquestion($stage->get_round_question(), $stage->get_stage_name(), true);
         $templatedata = $outputclass->export_for_template($output);
 
         // Add control flag and total questions.
@@ -293,19 +250,19 @@ class progress {
     /**
      * Get template data for leaders stage
      *
-     * @param round $round The round entity
-     * @param \stdClass $kahoodle The kahoodle record
-     * @param int $currentquestion Current question number
+     * @param round_stage|null $stage The stage object (null if it is the final leaders stage)
      * @return array Template data
      */
-    protected static function get_leaders_template_data(round $round, \stdClass $kahoodle, int $currentquestion): array {
+    protected static function get_leaders_template_data(round_stage $stage): array {
         global $CFG;
 
         // TODO: Implement actual leaderboard data retrieval.
         // For now, return placeholder data.
+        $round = $stage->get_round();
+        $kahoodle = $round->get_kahoodle();
         return [
             'quiztitle' => $kahoodle->name,
-            'currentquestion' => $currentquestion,
+            'currentquestion' => $stage->get_question_number() ?: $round->get_questions_count(),
             'totalquestions' => $round->get_questions_count(),
             'cancontrol' => true,
             'isedit' => false,

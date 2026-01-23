@@ -111,22 +111,6 @@ class round_question {
     }
 
     /**
-     * Create a round question instance from a round and sort order (1-based question number)
-     *
-     * @param round $round The round entity
-     * @param int $sortorder The sort order (1-based question number)
-     * @return self
-     */
-    public static function create_from_round_and_sortorder(round $round, int $sortorder): self {
-        global $DB;
-        $record = $DB->get_record_sql(self::get_fields_sql() .
-            ' WHERE rq.roundid = ? AND rq.sortorder = ?', [$round->get_id(), $sortorder], MUST_EXIST);
-        $q = new self($record);
-        $q->round = $round;
-        return $q;
-    }
-
-    /**
      * Get all round questions for a given round
      *
      * @param round $round The round entity
@@ -379,5 +363,9 @@ class round_question {
         } else {
             return 0;
         }
+    }
+
+    public function get_max_points(): int {
+        return $this->data->maxpoints ?? $this->get_round()->get_kahoodle()->maxpoints;
     }
 }

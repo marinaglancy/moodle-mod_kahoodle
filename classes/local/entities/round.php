@@ -102,6 +102,15 @@ class round {
             && $this->data->currentstage !== constants::STAGE_ARCHIVED;
     }
 
+    /**
+     * Get the current stage of the round
+     *
+     * @return string
+     */
+    public function get_current_stage_name(): string {
+        return $this->data->currentstage;
+    }
+
     /** @var stdClass|null Cached Kahoodle activity record */
     private ?stdClass $kahoodle = null;
 
@@ -168,5 +177,173 @@ class round {
         }
         $this->questionscount = $DB->count_records('kahoodle_round_questions', ['roundid' => $this->get_id()]);
         return $this->questionscount;
+    }
+
+    /** @var round_stage[]|null Cached stages */
+    protected ?array $stagescache = null;
+
+    /**
+     * Get all stages for this round in order
+     *
+     * For preview mode, returns only question stages (preview, question, results) for each question.
+     * For live game mode, includes lobby at the start, leaders after each question, and revision at the end.
+     *
+     * @param bool $ispreview Whether this is for preview mode (true) or live game (false)
+     * @return round_stage[] Array of round_stage objects in order
+     */
+    public function get_all_stages(bool $ispreview = false): array {
+        if ($this->stagescache !== null && !$ispreview) {
+            return $this->stagescache;
+        }
+
+        $stages = [];
+        $kahoodle = $this->get_kahoodle();
+        $roundquestions = round_question::get_all_questions_for_round($this);
+
+        if (!$ispreview) {
+            // Live game starts with lobby.
+            $stages[] = new round_stage(
+                $this,
+                constants::STAGE_LOBBY,
+                null,
+                (int)$kahoodle->lobbyduration
+            );
+        }
+
+        // Question stages for each question.
+        foreach ($roundquestions as $i => $roundquestion) {
+            // Question preview stage.
+            $duration = $roundquestion->get_stage_duration(constants::STAGE_QUESTION_PREVIEW);
+            if ($duration > 0) {
+                $stages[] = new round_stage(
+                    $this,
+                    constants::STAGE_QUESTION_PREVIEW,
+                    $roundquestion,
+                    $duration
+                );
+            }
+
+            // Question stage. Must always be present.
+            $duration = $roundquestion->get_stage_duration(constants::STAGE_QUESTION);
+            $stages[] = new round_stage(
+                $this,
+                constants::STAGE_QUESTION,
+                $roundquestion,
+                $duration
+            );
+
+            // Question results stage.
+            $duration = $roundquestion->get_stage_duration(constants::STAGE_QUESTION_RESULTS);
+            if ($duration > 0) {
+                $stages[] = new round_stage(
+                    $this,
+                    constants::STAGE_QUESTION_RESULTS,
+                    $roundquestion,
+                    $duration
+                );
+            }
+
+            if (!$ispreview && $roundquestion->get_max_points() > 0 && $i < count($roundquestions) - 1) {
+                // Live game shows leaderboard after each question. Except for non-graded questions.
+                // No leaderboard after the last question.
+                $stages[] = new round_stage(
+                    $this,
+                    constants::STAGE_LEADERS,
+                    $roundquestion,
+                    constants::DEFAULT_LEADERS_DURATION
+                );
+            }
+        }
+
+        if (!$ispreview && count($roundquestions) > 0) {
+            // Live game ends with revision stage.
+            $stages[] = new round_stage(
+                $this,
+                constants::STAGE_REVISION,
+                null,
+                0 // No auto-advance from revision.
+            );
+        }
+
+        if (!$ispreview) {
+            $this->stagescache = $stages;
+        }
+        return $stages;
+    }
+
+    /**
+     * Get the current stage object
+     *
+     * @return round_stage
+     */
+    public function get_current_stage(): round_stage {
+        $stagename = $this->get_current_stage_name();
+        $questionnumber = (int)$this->data->currentquestion;
+
+        return $this->find_stage($stagename, $questionnumber);
+    }
+
+    /**
+     * Find the next stage after the given stage and question number
+     *
+     * @return round_stage|null The next stage, or null if at the end (should transition to archived)
+     */
+    public function get_next_stage(): ?round_stage {
+        $stages = $this->get_all_stages(false);
+        $current = $this->get_current_stage();
+
+        for ($i = 1; $i < count($stages); $i++) {
+            if ($stages[$i - 1] === $current) {
+                return $stages[$i];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Find the stage matching the given stage constant and question number
+     *
+     * @param string $stagename Stage constant
+     * @param int $questionnumber Question number (1-based, 0 for non-question stages like lobby)
+     * @return round_stage|null The matching stage, or null if not found
+     */
+    protected function find_stage(string $stagename, int $questionnumber): ?round_stage {
+        $stages = $this->get_all_stages(false);
+
+        foreach ($stages as $stage) {
+            if ($stage->matches($stagename, $questionnumber)) {
+                return $stage;
+            }
+        }
+
+        // For some reason we can not find the current stage. There may be some race condition and we refer to
+        // non-existing question stage. Try to find the closest one.
+        if ($stagename === constants::STAGE_LOBBY) {
+            return $stages[0];
+        }
+
+        if ($questionnumber > 0 && $questionnumber > $this->get_questions_count()) {
+            // Last stage is revision before archived.
+            return $stages[count($stages) - 1];
+        }
+
+        if ($questionnumber > 0 && $stagename === constants::STAGE_QUESTION_PREVIEW) {
+            // Preview does not exist, go to the question itself.
+            return $this->find_stage(constants::STAGE_QUESTION, $questionnumber);
+        }
+
+        if ($questionnumber > 0 && $stagename === constants::STAGE_QUESTION_RESULTS) {
+            // Question results stage does not exist, try next stage (leaders).
+            return $this->find_stage(constants::STAGE_LEADERS, $questionnumber);
+        }
+
+        if ($questionnumber > 0 && $stagename === constants::STAGE_LEADERS) {
+            // Question leaders stage does not exist, try next question.
+            return $this->find_stage(constants::STAGE_QUESTION_PREVIEW, $questionnumber + 1);
+        }
+
+        // We exhaused all options, return the last stage as fallback.
+        return $stages[count($stages) - 1];
     }
 }

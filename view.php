@@ -50,7 +50,7 @@ $round = \mod_kahoodle\questions::get_last_round($moduleinstance->id);
 $action = optional_param('action', '', PARAM_ALPHA);
 if ($action === 'start') {
     require_sesskey();
-    require_capability('mod/kahoodle:control', $context);
+    require_capability('mod/kahoodle:facilitate', $context);
 
     // Start the game.
     \mod_kahoodle\local\game\progress::start_game($round);
@@ -61,7 +61,7 @@ if ($action === 'start') {
 
 if ($action === 'finish') {
     require_sesskey();
-    require_capability('mod/kahoodle:control', $context);
+    require_capability('mod/kahoodle:facilitate', $context);
 
     // Finish the game (archive the round).
     \mod_kahoodle\local\game\progress::finish_game($round);
@@ -77,7 +77,7 @@ $PAGE->set_title(format_string($moduleinstance->name));
 $PAGE->set_heading(format_string($course->fullname));
 
 // Only load realtime and JS when user can control and game is in progress.
-if (has_capability('mod/kahoodle:control', $context) && $round->is_in_progress()) {
+if (has_capability('mod/kahoodle:facilitate', $context) && $round->is_in_progress()) {
     $channel = new \tool_realtime\channel($context, 'mod_kahoodle', 'game', $round->get_id());
     $channel->subscribe();
 

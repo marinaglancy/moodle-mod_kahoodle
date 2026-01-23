@@ -62,7 +62,7 @@ class landing implements renderable, templatable {
         $data = new stdClass();
 
         // Get capabilities.
-        $cancontrol = has_capability('mod/kahoodle:control', $this->context);
+        $cancontrol = has_capability('mod/kahoodle:facilitate', $this->context);
         $canmanagequestions = has_capability('mod/kahoodle:manage_questions', $this->context);
         $canparticipate = has_capability('mod/kahoodle:participate', $this->context);
 

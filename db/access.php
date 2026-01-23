@@ -62,7 +62,7 @@ $capabilities = [
         ],
     ],
 
-    'mod/kahoodle:control' => [
+    'mod/kahoodle:facilitate' => [
         'captype' => 'write',
         'contextlevel' => CONTEXT_MODULE,
         'archetypes' => [

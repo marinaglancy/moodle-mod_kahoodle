@@ -367,7 +367,12 @@ const advanceToNextStage = async() => {
 
     try {
         const channel = getChannel();
-        const rawResponse = await RealTimeApi.sendToServer(channel, {action: 'advance'});
+        const rawResponse = await RealTimeApi.sendToServer(channel, {
+            action: 'advance',
+            // Also send the current stage to avoid race conditions, double facilitation, and jumping over stages.
+            currentstage: gameState.currentStageData.stage,
+            currentquestion: gameState.currentStageData.currentquestion
+        });
         const response = parseRealtimeResponse(rawResponse);
 
         if (response.error) {
