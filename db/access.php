@@ -61,4 +61,22 @@ $capabilities = [
             'manager' => CAP_ALLOW,
         ],
     ],
+
+    'mod/kahoodle:control' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [
+            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+        ],
+    ],
+
+    'mod/kahoodle:participate' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [
+            'frontpage' => CAP_ALLOW,
+            'student' => CAP_ALLOW,
+        ],
+    ],
 ];

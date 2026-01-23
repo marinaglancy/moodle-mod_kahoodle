@@ -1,0 +1,109 @@
+{{!
+    This file is part of mod_kahoodle plugin
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_kahoodle/landing
+
+    Landing page template for Kahoodle activity.
+
+    Context variables required for this template:
+    * showcontrolpreparation - bool - Show the control panel for preparation stage
+    * startgamebuttondisabled - bool - Whether the start button should be disabled
+    * starturl - string - URL for the start action
+    * showmanagequestions - bool - Show the manage questions section
+    * managequestionsurl - string - URL for manage questions page
+    * showwaitingtostart - bool - Show waiting message for participants
+    * showinprogress - bool - Show in progress section
+    * showjoinbutton - bool - Show join button
+    * showresumebutton - bool - Show resume button
+    * joinurl - string - URL for join action
+    * resumeurl - string - URL for resume action
+    * showfinished - bool - Show finished section
+    * resultsurl - string - URL for results page
+
+    Example context (json):
+    {
+        "showcontrolpreparation": true,
+        "startgamebuttondisabled": false,
+        "starturl": "/mod/kahoodle/view.php?id=1&action=start&sesskey=abc123",
+        "showmanagequestions": true,
+        "managequestionsurl": "/mod/kahoodle/questions.php?id=1"
+    }
+}}
+<div class="mod-kahoodle-landing">
+    {{#showcontrolpreparation}}
+    <div class="card mb-3">
+        <div class="card-body">
+            <p class="card-text">{{#str}}landing_preparation_message, mod_kahoodle{{/str}}</p>
+            <a href="{{starturl}}" class="btn btn-primary{{#startgamebuttondisabled}} disabled{{/startgamebuttondisabled}}"{{#startgamebuttondisabled}} aria-disabled="true"{{/startgamebuttondisabled}}>
+                {{#str}}start, mod_kahoodle{{/str}}
+            </a>
+            {{#startgamebuttondisabled}}
+            <p class="mt-2 text-muted"><small>{{#str}}start_noquestions, mod_kahoodle{{/str}}</small></p>
+            {{/startgamebuttondisabled}}
+        </div>
+    </div>
+    {{/showcontrolpreparation}}
+
+    {{#showmanagequestions}}
+    <div class="card mb-3">
+        <div class="card-body">
+            <p class="card-text">{{#str}}landing_managequestions_message, mod_kahoodle{{/str}}</p>
+            <a href="{{managequestionsurl}}" class="btn btn-secondary">
+                {{#str}}managequestions, mod_kahoodle{{/str}}
+            </a>
+        </div>
+    </div>
+    {{/showmanagequestions}}
+
+    {{#showwaitingtostart}}
+    <div class="card mb-3">
+        <div class="card-body">
+            <p class="card-text">{{#str}}landing_waiting_message, mod_kahoodle{{/str}}</p>
+            <p class="card-text">{{#str}}landing_waiting_hint, mod_kahoodle{{/str}}</p>
+        </div>
+    </div>
+    {{/showwaitingtostart}}
+
+    {{#showinprogress}}
+    <div class="card mb-3">
+        <div class="card-body">
+            <p class="card-text">{{#str}}landing_inprogress_message, mod_kahoodle{{/str}}</p>
+            {{#showjoinbutton}}
+            <a href="{{joinurl}}" class="btn btn-primary">
+                {{#str}}join, mod_kahoodle{{/str}}
+            </a>
+            {{/showjoinbutton}}
+            {{#showresumebutton}}
+            <a href="{{resumeurl}}" class="btn btn-primary">
+                {{#str}}resume, mod_kahoodle{{/str}}
+            </a>
+            {{/showresumebutton}}
+        </div>
+    </div>
+    {{/showinprogress}}
+
+    {{#showfinished}}
+    <div class="card mb-3">
+        <div class="card-body">
+            <p class="card-text">{{#str}}landing_finished_message, mod_kahoodle{{/str}}</p>
+            <a href="{{resultsurl}}" class="btn btn-primary">
+                {{#str}}viewresults, mod_kahoodle{{/str}}
+            </a>
+        </div>
+    </div>
+    {{/showfinished}}
+</div>

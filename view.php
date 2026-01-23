@@ -49,6 +49,11 @@ $PAGE->set_url('/mod/kahoodle/view.php', ['id' => $cm->id]);
 $PAGE->set_title(format_string($moduleinstance->name));
 $PAGE->set_heading(format_string($course->fullname));
 
+$round = \mod_kahoodle\questions::get_last_round($moduleinstance->id);
+$landing = new \mod_kahoodle\output\landing($round);
+
 echo $OUTPUT->header();
+
+echo $OUTPUT->render_from_template('mod_kahoodle/landing', $landing->export_for_template($OUTPUT));
 
 echo $OUTPUT->footer();

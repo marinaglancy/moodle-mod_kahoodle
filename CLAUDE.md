@@ -48,6 +48,9 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   └── questiontypes/    # Question type implementations
 │   │       ├── base.php      # Abstract base class for question types
 │   │       └── multichoice.php # Multiple choice question type
+│   ├── output/               # Output classes for templates
+│   │   ├── landing.php       # Landing page output (stage-based view)
+│   │   └── roundquestion.php # Round question display output
 │   └── reportbuilder/local/  # Report builder components
 │       ├── entities/
 │       │   └── question.php  # Question entity for reports
@@ -61,6 +64,9 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │       └── kahoodle.php      # English language strings
 ├── pix/
 │   └── monologo.svg          # Module icon
+├── templates/
+│   ├── landing.mustache      # Landing page template (view.php)
+│   └── ...                   # Question display templates
 ├── tests/
 │   ├── behat/                # Behat acceptance tests
 │   ├── external/             # Web service tests
@@ -568,6 +574,12 @@ vendor/bin/phpunit --filter questions_test
 - Comprehensive test coverage (32 tests)
 - Test data generators
 - Backup/restore support for all activity settings
+- Landing page with stage-based content display (view.php)
+  - Shows different UI based on round stage and user capabilities
+  - Control panel for facilitators (start button)
+  - Waiting message for participants before activity starts
+  - Join/Resume buttons when activity is in progress
+  - Results button when activity has finished
 
 **In Progress:**
 - Round gameplay mechanics
@@ -575,6 +587,7 @@ vendor/bin/phpunit --filter questions_test
 - Participant and response tracking
 
 **To Do:**
+- Implement button actions (start, join, resume, view results)
 - Scoreboard and leaderboard displays
 - Mobile-responsive participant view
 - Additional question types
