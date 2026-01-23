@@ -73,10 +73,13 @@ class landing implements renderable, templatable {
 
         // Initialize all section flags to false.
         $data->showcontrolpreparation = false;
+        $data->showcontrolinprogress = false;
         $data->showmanagequestions = false;
         $data->showwaitingtostart = false;
         $data->showinprogress = false;
         $data->showfinished = false;
+
+        $isinprogress = $this->is_round_in_progress($stage);
 
         // Determine which section to show based on stage and capabilities.
         if ($stage === constants::STAGE_PREPARATION) {
@@ -91,13 +94,21 @@ class landing implements renderable, templatable {
             } else if ($canparticipate) {
                 $data->showwaitingtostart = true;
             }
-        } else if ($this->is_round_in_progress($stage)) {
+        } else if ($isinprogress) {
             // Round is in progress (lobby through revision).
-            if ($canparticipate || $cancontrol) {
+            if ($cancontrol) {
+                // Facilitator view - show Resume and Finish buttons.
+                $data->showcontrolinprogress = true;
+                $data->finishurl = (new moodle_url(
+                    '/mod/kahoodle/view.php',
+                    ['id' => $this->cm->id, 'action' => 'finish', 'sesskey' => sesskey()]
+                ))->out(false);
+            } else if ($canparticipate) {
+                // Participant view - show Join/Resume buttons.
                 $data->showinprogress = true;
                 $isparticipating = $this->is_user_participating();
-                $data->showjoinbutton = $canparticipate && !$isparticipating;
-                $data->showresumebutton = $isparticipating || $cancontrol;
+                $data->showjoinbutton = !$isparticipating;
+                $data->showresumebutton = $isparticipating;
                 $data->joinurl = (new moodle_url(
                     '/mod/kahoodle/view.php',
                     ['id' => $this->cm->id, 'action' => 'join']
@@ -116,8 +127,8 @@ class landing implements renderable, templatable {
             ))->out(false);
         }
 
-        // Show manage questions section if user can manage questions.
-        if ($canmanagequestions) {
+        // Show manage questions section if user can manage questions and game is not in progress.
+        if ($canmanagequestions && !$isinprogress) {
             $data->showmanagequestions = true;
             $data->managequestionsurl = (new moodle_url(
                 '/mod/kahoodle/questions.php',

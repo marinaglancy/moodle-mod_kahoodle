@@ -43,13 +43,51 @@ if ($id) {
 
 require_login($course, true, $cm);
 
+$context = context_module::instance($cm->id);
+$round = \mod_kahoodle\questions::get_last_round($moduleinstance->id);
+
+// Handle actions.
+$action = optional_param('action', '', PARAM_ALPHA);
+if ($action === 'start') {
+    require_sesskey();
+    require_capability('mod/kahoodle:control', $context);
+
+    // Start the game.
+    \mod_kahoodle\local\game\progress::start_game($round);
+
+    // Redirect to remove action from URL (prevents re-triggering on refresh).
+    redirect(new moodle_url('/mod/kahoodle/view.php', ['id' => $cm->id]));
+}
+
+if ($action === 'finish') {
+    require_sesskey();
+    require_capability('mod/kahoodle:control', $context);
+
+    // Finish the game (archive the round).
+    \mod_kahoodle\local\game\progress::finish_game($round);
+
+    // Redirect to remove action from URL.
+    redirect(new moodle_url('/mod/kahoodle/view.php', ['id' => $cm->id]));
+}
+
 \mod_kahoodle\event\course_module_viewed::create_from_record($moduleinstance, $cm, $course)->trigger();
 
 $PAGE->set_url('/mod/kahoodle/view.php', ['id' => $cm->id]);
 $PAGE->set_title(format_string($moduleinstance->name));
 $PAGE->set_heading(format_string($course->fullname));
 
-$round = \mod_kahoodle\questions::get_last_round($moduleinstance->id);
+// Only load realtime and JS when user can control and game is in progress.
+if (has_capability('mod/kahoodle:control', $context) && $round->is_in_progress()) {
+    $channel = new \tool_realtime\channel($context, 'mod_kahoodle', 'game', $round->get_id());
+    $channel->subscribe();
+
+    // Initialize the game controller JS module.
+    $PAGE->requires->js_call_amd('mod_kahoodle/gamecontroller', 'init', [
+        $round->get_id(),
+        $context->id,
+    ]);
+}
+
 $landing = new \mod_kahoodle\output\landing($round);
 
 echo $OUTPUT->header();

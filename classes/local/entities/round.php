@@ -90,6 +90,18 @@ class round {
         return $this->data->currentstage === constants::STAGE_PREPARATION;
     }
 
+    /**
+     * Check if the round is in progress
+     *
+     * A round is in progress if it's between lobby and revision stages (not preparation or archived).
+     *
+     * @return bool
+     */
+    public function is_in_progress(): bool {
+        return $this->data->currentstage !== constants::STAGE_PREPARATION
+            && $this->data->currentstage !== constants::STAGE_ARCHIVED;
+    }
+
     /** @var stdClass|null Cached Kahoodle activity record */
     private ?stdClass $kahoodle = null;
 

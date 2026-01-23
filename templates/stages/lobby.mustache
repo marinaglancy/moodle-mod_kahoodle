@@ -1,0 +1,56 @@
+{{!
+    This file is part of mod_kahoodle plugin
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_kahoodle/stages/lobby
+
+    Lobby stage template - shown while waiting for participants to join.
+
+    Context variables required for this template:
+    * quiztitle - The title of the quiz/kahoodle activity
+    * totalquestions - Total number of questions in the round
+    * participantcount - Number of participants who have joined
+    * cancontrol - Boolean indicating if user can control the quiz (teacher)
+    * backgroundurl - URL for background image
+
+    Example context (json):
+    {
+        "quiztitle": "Geography & World Facts Quiz",
+        "totalquestions": 10,
+        "participantcount": 5,
+        "cancontrol": true,
+        "backgroundurl": "/mod/kahoodle/pix/classroom-bg.jpg"
+    }
+}}
+<div class="mod_kahoodle-overlay" {{#backgroundurl}}style="background-image: url('{{backgroundurl}}');"{{/backgroundurl}}>
+
+    <header class="mod_kahoodle-header">
+        <div class="mod_kahoodle-quiz-title">{{quiztitle}}</div>
+        <div class="mod_kahoodle-question-counter">{{#str}}stage_lobby, mod_kahoodle{{/str}}</div>
+    </header>
+
+    <main class="mod_kahoodle-main mod_kahoodle-lobby" data-stage="lobby">
+
+        <div class="mod_kahoodle-lobby-content">
+            <h1 class="mod_kahoodle-lobby-title">{{#str}}stage_lobby_placeholder, mod_kahoodle{{/str}}</h1>
+            <p class="mod_kahoodle-lobby-participants">{{#str}}participants_count, mod_kahoodle, {{participantcount}}{{/str}}</p>
+        </div>
+
+    </main>
+
+    {{> mod_kahoodle/common/footer }}
+
+</div>

@@ -23,10 +23,12 @@
     * showcontrolpreparation - bool - Show the control panel for preparation stage
     * startgamebuttondisabled - bool - Whether the start button should be disabled
     * starturl - string - URL for the start action
+    * showcontrolinprogress - bool - Show the control panel for facilitator when game is in progress
+    * finishurl - string - URL for the finish action
     * showmanagequestions - bool - Show the manage questions section
     * managequestionsurl - string - URL for manage questions page
     * showwaitingtostart - bool - Show waiting message for participants
-    * showinprogress - bool - Show in progress section
+    * showinprogress - bool - Show in progress section for participants
     * showjoinbutton - bool - Show join button
     * showresumebutton - bool - Show resume button
     * joinurl - string - URL for join action
@@ -48,15 +50,34 @@
     <div class="card mb-3">
         <div class="card-body">
             <p class="card-text">{{#str}}landing_preparation_message, mod_kahoodle{{/str}}</p>
-            <a href="{{starturl}}" class="btn btn-primary{{#startgamebuttondisabled}} disabled{{/startgamebuttondisabled}}"{{#startgamebuttondisabled}} aria-disabled="true"{{/startgamebuttondisabled}}>
+            {{^startgamebuttondisabled}}
+            <a href="{{starturl}}" class="btn btn-primary">
                 {{#str}}start, mod_kahoodle{{/str}}
             </a>
+            {{/startgamebuttondisabled}}
             {{#startgamebuttondisabled}}
+            <button type="button" class="btn btn-primary" disabled>
+                {{#str}}start, mod_kahoodle{{/str}}
+            </button>
             <p class="mt-2 text-muted"><small>{{#str}}start_noquestions, mod_kahoodle{{/str}}</small></p>
             {{/startgamebuttondisabled}}
         </div>
     </div>
     {{/showcontrolpreparation}}
+
+    {{#showcontrolinprogress}}
+    <div class="card mb-3">
+        <div class="card-body">
+            <p class="card-text">{{#str}}landing_controlinprogress_message, mod_kahoodle{{/str}}</p>
+            <button type="button" class="btn btn-primary" data-action="resume-game">
+                {{#str}}resume, mod_kahoodle{{/str}}
+            </button>
+            <button type="button" class="btn btn-danger" data-action="finish-game" data-finishurl="{{finishurl}}">
+                {{#str}}finishgame, mod_kahoodle{{/str}}
+            </button>
+        </div>
+    </div>
+    {{/showcontrolinprogress}}
 
     {{#showmanagequestions}}
     <div class="card mb-3">

@@ -45,6 +45,9 @@ class constants {
     /** @var int Default minimum points for slowest correct answer */
     public const DEFAULT_MIN_POINTS = 500;
 
+    /** @var int Default leaders (leaderboard) display duration in seconds */
+    public const DEFAULT_LEADERS_DURATION = 10;
+
     /** @var int Question format: plain text with optional image */
     public const QUESTIONFORMAT_PLAIN = 0;
 

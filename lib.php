@@ -171,3 +171,57 @@ function kahoodle_get_fontawesome_icon_map() {
         'mod_kahoodle:back' => 'fa-backward-step',
     ];
 }
+
+/**
+ * Callback for tool_realtime - handle events received from clients
+ *
+ * @param \tool_realtime\channel $channel The realtime channel
+ * @param mixed $payload The event payload
+ * @return array Response data
+ */
+function mod_kahoodle_realtime_event_received(\tool_realtime\channel $channel, $payload): array {
+    $props = $channel->get_properties();
+
+    // Verify this is for our component and the game area.
+    if ($props['component'] !== 'mod_kahoodle' || $props['area'] !== 'game') {
+        return ['error' => 'Invalid channel'];
+    }
+
+    $roundid = (int)$props['itemid'];
+    $action = $payload['action'] ?? '';
+
+    // Get the round entity.
+    $round = \mod_kahoodle\local\entities\round::create_from_id($roundid);
+    $context = $round->get_context();
+    \core_external\external_api::validate_context($context);
+
+    // Verify user has control capability.
+    require_capability('mod/kahoodle:control', $context);
+
+    switch ($action) {
+        case 'advance':
+            // Advance to the next stage.
+            $stagedata = \mod_kahoodle\local\game\progress::advance_to_next_stage($round);
+            break;
+
+        case 'get_current':
+            // Get current stage data (used when resuming a game in progress).
+            global $DB;
+            $roundrecord = $DB->get_record('kahoodle_rounds', ['id' => $round->get_id()], '*', MUST_EXIST);
+            $stagedata = \mod_kahoodle\local\game\progress::get_stage_data(
+                $round,
+                $roundrecord->currentstage,
+                (int)$roundrecord->currentquestion
+            );
+            // Don't notify others, just return the data.
+            return $stagedata;
+
+        default:
+            return ['error' => 'Unknown action'];
+    }
+
+    // Notify all subscribers on the game channel with the new stage data.
+    $channel->notify($stagedata);
+
+    return $stagedata;
+}

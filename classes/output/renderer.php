@@ -14,22 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace mod_kahoodle\output;
+
 /**
- * Version information for Kahoodle
+ * Renderer for Kahoodle
  *
  * @package    mod_kahoodle
  * @copyright  Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->component    = 'mod_kahoodle';
-$plugin->release      = '1.0';
-$plugin->version      = 2026012301;
-$plugin->requires     = 2024100700;
-$plugin->supported    = [405, 501];
-$plugin->maturity     = MATURITY_STABLE;
-$plugin->dependencies = [
-    'tool_realtime' => ANY_VERSION,
-];
+class renderer extends \plugin_renderer_base {
+}
