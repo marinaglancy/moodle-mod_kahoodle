@@ -53,7 +53,6 @@ let gameState = {
     contextId: null,
     overlayContainer: null,
     currentStageData: null,
-    lastRenderedStageKey: null,
     autoplayEnabled: true,
     autoplayTimerId: null,
     autoplayStartTime: null,
@@ -129,7 +128,7 @@ const fetchCurrentStage = async() => {
             return;
         }
 
-        if (response.template) {
+        if (response.template && response.stage) {
             await showStage(response);
         }
     } catch (error) {
@@ -162,7 +161,7 @@ const getChannel = () => {
     return {
         contextid: gameState.contextId,
         component: 'mod_kahoodle',
-        area: 'game',
+        area: 'facilitator',
         itemid: gameState.roundId,
     };
 };
@@ -176,12 +175,14 @@ const handleRealtimeEvent = (eventData) => {
     const {component, area, itemid, payload} = eventData;
 
     // Verify this event is for our game.
-    if (component !== 'mod_kahoodle' || area !== 'game' || parseInt(itemid) !== gameState.roundId) {
+    if (component !== 'mod_kahoodle' || area !== 'facilitator' || parseInt(itemid) !== gameState.roundId) {
         return;
     }
 
     // Show the new stage.
-    showStage(payload);
+    if (payload.template && payload.stage) {
+        showStage(payload);
+    }
 };
 
 /**
@@ -227,16 +228,14 @@ const processTemplateData = (templatedata) => {
  * @param {Object} stageData The stage data from the server
  */
 const showStage = async(stageData) => {
-    // Create a unique key for this stage to avoid re-rendering the same stage.
-    const stageKey = `${stageData.stage}-${stageData.currentquestion}`;
 
-    // Skip if we're already showing this stage (prevents double render from response + realtime event).
-    if (stageKey === gameState.lastRenderedStageKey) {
-        return;
-    }
+    // TODO: If we are already in the same stage, do not re-render the whole thing, re-render only
+    // the changes (i.e. lobby participants list).
+    const stageChanged = !gameState.currentStageData ||
+        gameState.currentStageData.stage !== stageData.stage ||
+        gameState.currentStageData.currentquestion !== stageData.currentquestion;
 
     gameState.currentStageData = stageData;
-    gameState.lastRenderedStageKey = stageKey;
 
     // If stage is archived, close the overlay.
     if (stageData.stage === 'archived' || !stageData.template) {
@@ -260,12 +259,16 @@ const showStage = async(stageData) => {
 
         gameState.overlayContainer.innerHTML = html;
 
-        // Reset elapsed time for the new stage.
-        gameState.autoplayElapsed = 0;
-        gameState.autoplayEnabled = true;
+        if (stageChanged) {
+            // Reset elapsed time for the new stage.
+            gameState.autoplayElapsed = 0;
+            gameState.autoplayEnabled = true;
 
-        // Start autoplay.
-        startAutoplay();
+            // Start autoplay.
+            startAutoplay();
+        } else {
+            // TODO make sure that the timer value is preserved across re-renders.
+        }
     } catch (error) {
         Notification.exception(error);
     }
@@ -379,9 +382,6 @@ const advanceToNextStage = async() => {
             Notification.exception({message: response.error});
             return;
         }
-
-        // The server notifies all subscribers, but we can also use the response directly.
-        await showStage(response);
     } catch (error) {
         Notification.exception(error);
     }
@@ -551,7 +551,6 @@ const closeOverlay = () => {
 
     // Reset state (but keep roundId and contextId).
     gameState.currentStageData = null;
-    gameState.lastRenderedStageKey = null;
     gameState.autoplayEnabled = true;
     gameState.autoplayTimerId = null;
     gameState.autoplayStartTime = null;

@@ -360,11 +360,21 @@ class round_question {
             return $this->data->questionduration ?? $this->get_round()->get_kahoodle()->questionduration;
         } else if ($stage === constants::STAGE_QUESTION_RESULTS) {
             return $this->data->questionresultsduration ?? $this->get_round()->get_kahoodle()->questionresultsduration;
+        } else if ($stage === constants::STAGE_LEADERS) {
+            // Live game shows leaderboard after each question. Except for non-graded questions.
+            // No leaderboard after the last question.
+            return $this->get_max_points() > 0 && $this->data->sortorder < $this->get_round()->get_questions_count() - 1 ?
+            constants::DEFAULT_LEADERS_DURATION : 0;
         } else {
             return 0;
         }
     }
 
+    /**
+     * Maximum points for this question, 0 means it is not graded
+     *
+     * @return int
+     */
     public function get_max_points(): int {
         return $this->data->maxpoints ?? $this->get_round()->get_kahoodle()->maxpoints;
     }

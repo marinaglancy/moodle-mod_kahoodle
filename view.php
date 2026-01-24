@@ -78,7 +78,7 @@ $PAGE->set_heading(format_string($course->fullname));
 
 // Only load realtime and JS when user can control and game is in progress.
 if (has_capability('mod/kahoodle:facilitate', $context) && $round->is_in_progress()) {
-    $channel = new \tool_realtime\channel($context, 'mod_kahoodle', 'game', $round->get_id());
+    $channel = new \tool_realtime\channel($context, 'mod_kahoodle', 'facilitator', $round->get_id());
     $channel->subscribe();
 
     // Initialize the game controller JS module.

@@ -211,47 +211,30 @@ class round {
         }
 
         // Question stages for each question.
-        foreach ($roundquestions as $i => $roundquestion) {
+        foreach ($roundquestions as $roundquestion) {
             // Question preview stage.
-            $duration = $roundquestion->get_stage_duration(constants::STAGE_QUESTION_PREVIEW);
-            if ($duration > 0) {
-                $stages[] = new round_stage(
-                    $this,
-                    constants::STAGE_QUESTION_PREVIEW,
-                    $roundquestion,
-                    $duration
-                );
+            $stage = round_stage::create_from_round_question($roundquestion, constants::STAGE_QUESTION_PREVIEW);
+            if ($stage->get_duration() > 0) {
+                $stages[] = $stage;
             }
 
             // Question stage. Must always be present.
-            $duration = $roundquestion->get_stage_duration(constants::STAGE_QUESTION);
-            $stages[] = new round_stage(
-                $this,
-                constants::STAGE_QUESTION,
-                $roundquestion,
-                $duration
-            );
+            $stage = round_stage::create_from_round_question($roundquestion, constants::STAGE_QUESTION);
+            $stages[] = $stage;
 
             // Question results stage.
-            $duration = $roundquestion->get_stage_duration(constants::STAGE_QUESTION_RESULTS);
-            if ($duration > 0) {
-                $stages[] = new round_stage(
-                    $this,
-                    constants::STAGE_QUESTION_RESULTS,
-                    $roundquestion,
-                    $duration
-                );
+            $stage = round_stage::create_from_round_question($roundquestion, constants::STAGE_QUESTION_RESULTS);
+            if ($stage->get_duration() > 0) {
+                $stages[] = $stage;
             }
 
-            if (!$ispreview && $roundquestion->get_max_points() > 0 && $i < count($roundquestions) - 1) {
-                // Live game shows leaderboard after each question. Except for non-graded questions.
-                // No leaderboard after the last question.
-                $stages[] = new round_stage(
-                    $this,
-                    constants::STAGE_LEADERS,
-                    $roundquestion,
-                    constants::DEFAULT_LEADERS_DURATION
-                );
+            if (!$ispreview) {
+                $stage = round_stage::create_from_round_question($roundquestion, constants::STAGE_LEADERS);
+                if ($stage->get_duration() > 0) {
+                    // Live game shows leaderboard after each question. Except for non-graded questions.
+                    // No leaderboard after the last question.
+                    $stages[] = $stage;
+                }
             }
         }
 

@@ -183,43 +183,59 @@ function mod_kahoodle_realtime_event_received(\tool_realtime\channel $channel, $
     $props = $channel->get_properties();
 
     // Verify this is for our component and the game area.
-    if ($props['component'] !== 'mod_kahoodle' || $props['area'] !== 'game') {
+    if ($props['component'] !== 'mod_kahoodle') {
         return ['error' => 'Invalid channel'];
     }
 
-    $roundid = (int)$props['itemid'];
-    $action = $payload['action'] ?? '';
+    if ($props['area'] == 'facilitator') {
+        // Facilitator channel. If there are several facilitators, they share the same channel.
+        // Itemid is the round id.
 
-    // Get the round entity.
-    $round = \mod_kahoodle\local\entities\round::create_from_id($roundid);
-    $context = $round->get_context();
-    \core_external\external_api::validate_context($context);
+        $roundid = (int)$props['itemid'];
+        $action = $payload['action'] ?? '';
 
-    // Verify user has control capability.
-    require_capability('mod/kahoodle:facilitate', $context);
+        // Get the round entity.
+        $round = \mod_kahoodle\local\entities\round::create_from_id($roundid);
+        $context = $round->get_context();
+        \core_external\external_api::validate_context($context);
 
-    switch ($action) {
-        case 'advance':
-            // Advance to the next stage.
-            $currentstage = clean_param($payload['currentstage'] ?? '', PARAM_ALPHANUMEXT);
-            $currentquestion = clean_param($payload['currentquestion'] ?? 0, PARAM_INT);
-            $stagedata = \mod_kahoodle\local\game\progress::advance_to_next_stage($round, $currentstage, $currentquestion);
-            break;
+        switch ($action) {
+            case 'advance':
+                // Advance to the next stage.
+                $currentstage = clean_param($payload['currentstage'] ?? '', PARAM_ALPHANUMEXT);
+                $currentquestion = clean_param($payload['currentquestion'] ?? 0, PARAM_INT);
+                $stage = \mod_kahoodle\local\game\progress::advance_to_next_stage($round, $currentstage, $currentquestion);
+                // Notify all subscribers on the game channel with the new stage data.
+                $channel->notify($stage->export_data_for_facilitators());
+                // Do not return anything, instead listen to the game channel for updates.
+                return [];
 
-        case 'get_current':
-            // Get current stage data (used when resuming a game in progress).
-            global $DB;
-            $stage = $round->get_current_stage();
-            $stagedata = \mod_kahoodle\local\game\progress::get_stage_data($stage);
-            // Don't notify others, just return the data.
-            return $stagedata;
+            case 'get_current':
+                // Get current stage data (used when resuming a game in progress).
+                $currentstage = clean_param($payload['currentstage'] ?? '', PARAM_ALPHANUMEXT);
+                $stage = $round->get_current_stage();
+                return $stage->export_data_for_facilitators();
 
-        default:
-            return ['error' => 'Unknown action'];
+            default:
+                return ['error' => 'Unknown action'];
+        }
     }
 
-    // Notify all subscribers on the game channel with the new stage data.
-    $channel->notify($stagedata);
+    // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
+    if ($props['area'] == 'game') {
+        // Game channel, common notifications to all participants. Itemid is the round id.
+        // TODO implement when participant view is ready.
+        // Nobody can send events to this channel.
+        // Examples of common notifications: stage changed to previewing or asking a question.
+    }
 
-    return $stagedata;
+    // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
+    if ($props['area'] == 'participant') {
+        // Participant-specific channel. Itemid is the participant id.
+        // TODO implement when participant view is ready.
+        // Participants can send events to this channel - changing avatar, answering a question.
+        // Examples of participant-specific notifications: stage changed to question results (showing result for this participant).
+    }
+
+    return ['error' => 'Invalid channel'];
 }
