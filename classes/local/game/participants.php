@@ -85,10 +85,10 @@ class participants {
         }
 
         // Delete any responses from this participant.
-        $DB->delete_records('kahoodle_responses', ['participantid' => $participant->id]);
+        $DB->delete_records('kahoodle_responses', ['participantid' => $participant->get_id()]);
 
         // Delete the participant record.
-        $DB->delete_records('kahoodle_participants', ['id' => $participant->id]);
+        $DB->delete_records('kahoodle_participants', ['id' => $participant->get_id()]);
         $round->clear_participant_cache();
 
         // If round is in lobby stage, notify facilitators with updated stage data.

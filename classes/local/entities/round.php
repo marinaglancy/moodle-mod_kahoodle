@@ -347,7 +347,7 @@ class round {
     /**
      * Get all participants for this round
      *
-     * @return array Array of participant objects with id, displayname, avatar
+     * @return participant[] Array of participant objects, indexed by participant ID
      */
     public function get_all_participants(): array {
         global $DB;
@@ -355,19 +355,7 @@ class round {
             return $this->participantscache;
         }
 
-        $userfields = \core_user\fields::for_userpic()->with_name()->excluding('email');
-        ['selects' => $userfieldssql, 'joins' => $userfieldsjoin, 'params' => $userfieldsparams,
-        'mappings' => $mappings] =
-                (array)$userfields->get_sql('u', true);
-
-        $this->participantscache = $DB->get_records_sql(
-            'SELECT p.id AS participantid, p.avatar, p.displayname ' . $userfieldssql . '
-            FROM {kahoodle_participants} p
-            JOIN {user} u ON u.id = p.userid ' . $userfieldsjoin . '
-            WHERE p.roundid = :roundid
-            ORDER BY p.timecreated DESC',
-            ['roundid' => $this->get_id()] + $userfieldsparams
-        );
+        $this->participantscache = participant::load_round_participants($this);
         return $this->participantscache;
     }
 
@@ -381,9 +369,9 @@ class round {
      * has joined this round. Returns null if user cannot participate or hasn't joined.
      * The result is cached for subsequent calls.
      *
-     * @return stdClass|null The participant record or null
+     * @return participant|null The participant record or null
      */
-    public function is_participant(): ?stdClass {
+    public function is_participant(): ?participant {
         global $DB, $USER;
 
         if ($this->currentuserparticipant !== null) {
@@ -397,12 +385,9 @@ class round {
         }
 
         // Check if user has joined this round.
-        $participant = $DB->get_record('kahoodle_participants', [
-            'roundid' => $this->get_id(),
-            'userid' => $USER->id,
-        ]);
+        $result = participant::load_round_participants($this, ' AND p.userid = :userid', ['userid' => $USER->id]);
 
-        $this->currentuserparticipant = $participant ?: false;
+        $this->currentuserparticipant = !empty($result) ? reset($result) : false;
         return $this->currentuserparticipant ?: null;
     }
 

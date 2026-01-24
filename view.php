@@ -111,12 +111,12 @@ if ($round->is_in_progress()) {
         $gamechannel = new \tool_realtime\channel($context, 'mod_kahoodle', 'game', $round->get_id());
         $gamechannel->subscribe();
 
-        $participantchannel = new \tool_realtime\channel($context, 'mod_kahoodle', 'participant', $participant->id);
+        $participantchannel = new \tool_realtime\channel($context, 'mod_kahoodle', 'participant', $participant->get_id());
         $participantchannel->subscribe();
 
         $PAGE->requires->js_call_amd('mod_kahoodle/participant', 'init', [
             $round->get_id(),
-            $participant->id,
+            $participant->get_id(),
             $context->id,
         ]);
     } else if ($round->is_facilitator()) {

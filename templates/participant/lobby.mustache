@@ -1,0 +1,80 @@
+{{!
+    This file is part of mod_kahoodle plugin
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_kahoodle/participant/lobby
+
+    Participant lobby template - shown while waiting for the activity to start.
+
+    Context variables required for this template:
+    * activityname - The name of the kahoodle activity
+    * avatarurl - URL for the participant's avatar image
+    * displayname - The participant's display name
+    * closeurl - URL to close/exit the lobby (optional)
+
+    Example context (json):
+    {
+        "quiztitle": "Geography Challenge",
+        "avatarurl": "/user/pix.php/2/f1.jpg",
+        "displayname": "Alex Johnson",
+        "caneditavatar": true
+    }
+}}
+<div class="mod_kahoodle-overlay">
+    <div class="mod_kahoodle-participant-body">
+        <div class="mod_kahoodle-participant-container">
+            {{! Close Button }}
+            <a href="#" class="mod_kahoodle-participant-close" data-action="close">
+                {{#pix}}i/window_close, core, {{#str}}close, mod_kahoodle{{/str}}{{/pix}}
+            </a>
+
+            {{! Activity Name }}
+            <div class="mod_kahoodle-participant-header">
+                <h1 class="mod_kahoodle-participant-activity">{{quiztitle}}</h1>
+            </div>
+
+            {{! Main Content }}
+            <div class="mod_kahoodle-participant-content">
+                <p class="mod_kahoodle-participant-joining-text">{{#str}}joiningas, mod_kahoodle{{/str}}</p>
+
+                {{! Avatar Section }}
+                <div class="mod_kahoodle-participant-avatar-wrapper">
+                    <div class="mod_kahoodle-participant-avatar-circle">
+                        <img src="{{avatarurl}}" alt="" class="mod_kahoodle-participant-avatar-img">
+                    </div>
+                    {{#caneditavatar}}
+                    <button class="mod_kahoodle-participant-edit-btn" aria-label="{{#str}}editavatar, mod_kahoodle{{/str}}" data-action="editavatar">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                        </svg>
+                    </button>
+                    {{/caneditavatar}}
+                </div>
+
+                {{! Display Name }}
+                <p class="mod_kahoodle-participant-display-name">{{displayname}}</p>
+            </div>
+
+            {{! Footer Status }}
+            <div class="mod_kahoodle-participant-footer">
+                <div class="mod_kahoodle-participant-status">
+                    <div class="mod_kahoodle-participant-spinner"></div>
+                    <span>{{#str}}startingsoonpleasewait, mod_kahoodle{{/str}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

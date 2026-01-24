@@ -833,3 +833,165 @@
         font-size: 1.5rem;
     }
 }
+
+/* ========================================
+   PARTICIPANT LOBBY SCREEN
+   ======================================== */
+
+.mod_kahoodle-participant-body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background-color: #2a2a2a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.mod_kahoodle-participant-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    position: relative;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.mod_kahoodle-participant-close {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    z-index: 10;
+}
+
+.mod_kahoodle-participant-close:hover {
+    color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.mod_kahoodle-participant-header {
+    padding-top: 2rem;
+    text-align: center;
+}
+
+.mod_kahoodle-participant-activity {
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.mod_kahoodle-participant-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 0;
+}
+
+.mod_kahoodle-participant-joining-text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+}
+
+.mod_kahoodle-participant-avatar-wrapper {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.mod_kahoodle-participant-avatar-wrapper .mod_kahoodle-participant-avatar-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background-color: #3d3d3d;
+    overflow: hidden;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+}
+
+.mod_kahoodle-participant-avatar-wrapper .mod_kahoodle-participant-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mod_kahoodle-participant-avatar-wrapper .mod_kahoodle-participant-edit-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+}
+
+.mod_kahoodle-participant-avatar-wrapper .mod_kahoodle-participant-edit-btn:hover {
+    transform: scale(1.1);
+    background-color: #f0f0f0;
+}
+
+.mod_kahoodle-participant-avatar-wrapper .mod_kahoodle-participant-edit-btn svg {
+    color: #333;
+}
+
+.mod_kahoodle-participant-container .mod_kahoodle-participant-display-name {
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    text-align: center;
+}
+
+.mod_kahoodle-participant-footer {
+    padding-bottom: 2rem;
+}
+
+.mod_kahoodle-participant-status {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+}
+
+.mod_kahoodle-participant-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-top-color: rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    animation: mod_kahoodle-spin 1s linear infinite;
+}
+
+@keyframes mod_kahoodle-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Participant lobby responsive - larger screens */
+@media (min-width: 768px) {
+    .mod_kahoodle-participant-activity {
+        font-size: 1.5rem;
+    }
+
+    .mod_kahoodle-participant-container .mod_kahoodle-participant-display-name {
+        font-size: 1.75rem;
+    }
+}

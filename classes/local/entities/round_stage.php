@@ -226,17 +226,28 @@ class round_stage {
             'stage' => $this->get_stage_name(),
             'currentquestion' => $this->get_question_number(),
             'totalquestions' => $round->get_questions_count(),
-            'quiztitle' => $kahoodle->name,
+            'templatedata' => [
+                'quiztitle' => $round->get_kahoodle_name(),
+            ],
         ];
+        $data['duration'] = 0; // No auto-advance for participants.
+        $participant = $round->is_participant();
+
+        if ($this->get_stage_name() === constants::STAGE_LOBBY) {
+            // Game is over, no more content to show.
+            $data['template'] = 'mod_kahoodle/participant/lobby';
+            $data['templatedata'] += [
+                'avatarurl' => $participant->get_avatar_url(100)->out(false),
+                'displayname' => $participant->get_display_name(),
+                'caneditavatar' => false, // TODO: Implement avatar editing.
+            ];
+            return $data;
+        }
 
         // For now, all stages show the waiting template for participants.
         // TODO: Implement stage-specific templates for participants.
         $data['template'] = 'mod_kahoodle/participant/waiting';
-        $data['duration'] = 0; // No auto-advance for participants.
-        $data['templatedata'] = [
-            'quiztitle' => $kahoodle->name,
-            'backgroundurl' => $CFG->wwwroot . '/mod/kahoodle/pix/classroom-bg.jpg',
-        ];
+        $data['templatedata'] += [];
 
         return $data;
     }
@@ -247,26 +258,21 @@ class round_stage {
      * @return array Template data
      */
     protected function get_lobby_template_data(): array {
-        global $CFG, $PAGE;
+        global $CFG;
 
         $round = $this->get_round();
         $kahoodle = $round->get_kahoodle();
 
         // Get participants list.
-        $participantrecords = $round->get_all_participants();
-        $participantcount = count($participantrecords);
+        $participants = $round->get_all_participants();
+        $participantcount = count($participants);
 
-        $participants = [];
-        foreach ($participantrecords as $participant) {
-            $picture = \core_user::get_profile_picture(
-                $participant,
-                $round->get_context()
-            );
-            $picture->size = 35;
-            $participants[] = [
-                'participantid' => $participant->participantid,
-                'displayname' => $participant->displayname ?: fullname($participant),
-                'imageurl' => $picture->get_url($PAGE)->out(false),
+        $participantdata = [];
+        foreach ($participants as $participant) {
+            $participantdata[] = [
+                'participantid' => $participant->get_id(),
+                'displayname' => $participant->get_display_name(),
+                'imageurl' => $participant->get_avatar_url(35)->out(false),
             ];
         }
 
@@ -279,7 +285,7 @@ class round_stage {
             'cancontrol' => true, // Teacher view always has control.
             'backgroundurl' => $CFG->wwwroot . '/mod/kahoodle/pix/classroom-bg.jpg',
             'participantcount' => $participantcount,
-            'participants' => array_values($participants),
+            'participants' => $participantdata,
             'qrcodeurl' => $qrcode,
             'joincode' => '', // TODO when join codes are implemented.
         ];
