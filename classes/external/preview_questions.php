@@ -78,7 +78,7 @@ class preview_questions extends external_api {
         $questionstages = [];
 
         foreach ($allstages as $rstage) {
-            $output = new roundquestion_output($rstage->get_round_question(), $rstage->get_stage(), true);
+            $output = new roundquestion_output($rstage->get_round_question(), $rstage->get_stage_name(), true);
             $questionstages[] = $output->export_for_template($renderer);
         }
 

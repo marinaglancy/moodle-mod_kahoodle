@@ -171,11 +171,10 @@ class round {
      * @return int
      */
     public function get_questions_count(): int {
-        global $DB;
         if ($this->questionscount !== null) {
             return $this->questionscount;
         }
-        $this->questionscount = $DB->count_records('kahoodle_round_questions', ['roundid' => $this->get_id()]);
+        $this->get_all_stages(); // Ensures questionscount is populated.
         return $this->questionscount;
     }
 
@@ -192,26 +191,35 @@ class round {
      * @return round_stage[] Array of round_stage objects in order
      */
     public function get_all_stages(bool $ispreview = false): array {
-        if ($this->stagescache !== null && !$ispreview) {
+        static $showinpreview = function (round_stage $stage) {
+            return in_array($stage->get_stage_name(), [
+                constants::STAGE_QUESTION_PREVIEW,
+                constants::STAGE_QUESTION,
+                constants::STAGE_QUESTION_RESULTS,
+            ], true);
+        };
+
+        if ($this->stagescache !== null) {
+            if ($ispreview) {
+                return array_values(array_filter($this->stagescache, $showinpreview));
+            }
             return $this->stagescache;
         }
 
         $stages = [];
-        $kahoodle = $this->get_kahoodle();
         $roundquestions = round_question::get_all_questions_for_round($this);
+        $this->questionscount = count($roundquestions);
 
-        if (!$ispreview) {
-            // Live game starts with lobby.
-            $stages[] = new round_stage(
-                $this,
-                constants::STAGE_LOBBY,
-                null,
-                (int)$kahoodle->lobbyduration
-            );
-        }
+        // Live game starts with lobby.
+        $stages[] = new round_stage(
+            $this,
+            constants::STAGE_LOBBY,
+            null,
+            (int)$this->get_kahoodle()->lobbyduration
+        );
 
         // Question stages for each question.
-        foreach ($roundquestions as $roundquestion) {
+        foreach ($roundquestions as $i => $roundquestion) {
             // Question preview stage.
             $stage = round_stage::create_from_round_question($roundquestion, constants::STAGE_QUESTION_PREVIEW);
             if ($stage->get_duration() > 0) {
@@ -228,7 +236,8 @@ class round {
                 $stages[] = $stage;
             }
 
-            if (!$ispreview) {
+            if ($i < $this->questionscount - 1) {
+                // No leaderboard stage after the last question.
                 $stage = round_stage::create_from_round_question($roundquestion, constants::STAGE_LEADERS);
                 if ($stage->get_duration() > 0) {
                     // Live game shows leaderboard after each question. Except for non-graded questions.
@@ -238,7 +247,7 @@ class round {
             }
         }
 
-        if (!$ispreview && count($roundquestions) > 0) {
+        if ($this->questionscount > 0) {
             // Live game ends with revision stage.
             $stages[] = new round_stage(
                 $this,
@@ -248,10 +257,12 @@ class round {
             );
         }
 
-        if (!$ispreview) {
-            $this->stagescache = $stages;
+        $this->stagescache = $stages;
+
+        if ($ispreview) {
+            return array_values(array_filter($this->stagescache, $showinpreview));
         }
-        return $stages;
+        return $this->stagescache;
     }
 
     /**
@@ -426,12 +437,32 @@ class round {
     }
 
     /**
-     * To be executed after updating the round (i.e. advancing stages)
+     * Set current stage
      *
+     * @param round_stage $newstage
      * @return void
      */
-    public function refetch_data(): void {
+    public function set_current_stage(round_stage $newstage): void {
         global $DB;
-        $this->data = $DB->get_record('kahoodle_rounds', ['id' => $this->data->id], '*', MUST_EXIST);
+        $updaterecord = [
+            'currentstage' => $newstage->get_stage_name(),
+            'currentquestion' => $newstage->get_question_number(),
+        ];
+
+        if ($this->get_current_stage_name() === constants::STAGE_PREPARATION) {
+            $updaterecord['timestarted'] = time();
+        }
+
+        if ($newstage->get_stage_name() === constants::STAGE_ARCHIVED) {
+            $updaterecord['timecompleted'] = time();
+        } else {
+            $updaterecord['stagestarttime'] = time();
+        }
+
+        $DB->update_record('kahoodle_rounds', ['id' => $this->get_id()] + $updaterecord);
+
+        foreach ($updaterecord as $key => $value) {
+            $this->data->$key = $value;
+        }
     }
 }

@@ -363,7 +363,7 @@ class round_question {
         } else if ($stage === constants::STAGE_LEADERS) {
             // Live game shows leaderboard after each question. Except for non-graded questions.
             // No leaderboard after the last question.
-            return $this->get_max_points() > 0 && $this->data->sortorder < $this->get_round()->get_questions_count() - 1 ?
+            return $this->get_max_points() > 0 ?
             constants::DEFAULT_LEADERS_DURATION : 0;
         } else {
             return 0;

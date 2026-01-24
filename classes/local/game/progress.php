@@ -46,15 +46,7 @@ class progress {
         $firststage = reset($stages);
 
         // Update round to the first stage (normally the lobby).
-        $now = time();
-        $DB->update_record('kahoodle_rounds', (object)[
-            'id' => $round->get_id(),
-            'currentstage' => $firststage->get_stage_name(),
-            'currentquestion' => $firststage->get_question_number(),
-            'stagestarttime' => $now,
-            'timestarted' => $now,
-        ]);
-        $round->refetch_data();
+        $round->set_current_stage($firststage);
     }
 
     /**
@@ -71,13 +63,8 @@ class progress {
         }
 
         // Update round to archived stage.
-        $DB->update_record('kahoodle_rounds', (object)[
-            'id' => $round->get_id(),
-            'currentstage' => constants::STAGE_ARCHIVED,
-            'currentquestion' => 0,
-            'timecompleted' => time(),
-        ]);
-        $round->refetch_data();
+        $stage = new round_stage($round, constants::STAGE_ARCHIVED, null, 0);
+        $round->set_current_stage($stage);
     }
 
     /**
@@ -106,20 +93,7 @@ class progress {
 
         if ($nextstage != null) {
             // Update round.
-            $updatedata = [
-                'id' => $round->get_id(),
-                'currentstage' => $nextstage->get_stage_name(),
-                'currentquestion' => $nextstage->get_question_number(),
-                'stagestarttime' => time(),
-            ];
-
-            // Mark as completed if archived.
-            if ($nextstage === constants::STAGE_ARCHIVED) {
-                $updatedata['timecompleted'] = time();
-            }
-
-            $DB->update_record('kahoodle_rounds', (object)$updatedata);
-            $round->refetch_data();
+            $round->set_current_stage($nextstage);
         } else {
             $nextstage = $round->get_current_stage();
         }
