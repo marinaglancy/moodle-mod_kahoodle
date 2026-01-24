@@ -45,6 +45,10 @@ const SELECTORS = {
     // Landing page buttons.
     LANDING_RESUME: '[data-action="resume-game"]',
     LANDING_FINISH: '[data-action="finish-game"]',
+    // Lobby-specific selectors for partial updates.
+    LOBBY_PARTICIPANTS_LIST: '.mod_kahoodle-participants-list',
+    LOBBY_COUNT_NUMBER: '.mod_kahoodle-count-number',
+    COUNTDOWN_TIME: '.mod_kahoodle-countdown-time',
 };
 
 // Current game state.
@@ -223,14 +227,103 @@ const processTemplateData = (templatedata) => {
 };
 
 /**
+ * Sync participants list by comparing data-participantid attributes
+ *
+ * This performs a smart DOM diff to minimize changes:
+ * - Removes participants that are no longer present
+ * - Adds new participants
+ * - Updates existing participants if their content changed
+ *
+ * @param {HTMLElement} currentList The current participants list element
+ * @param {HTMLElement} newList The new participants list element (from rendered template)
+ */
+const syncParticipantsList = (currentList, newList) => {
+    const currentChildren = Array.from(currentList.children);
+    const newChildren = Array.from(newList.children);
+
+    // Build maps by participantid for quick lookup.
+    const currentMap = new Map(currentChildren.filter(c => c.dataset.participantid).map(c => [c.dataset.participantid, c]));
+    const newids = newChildren.map(c => c.dataset.participantid).filter(id => id);
+
+    // Remove participants that are no longer present.
+    currentChildren.filter(c => !newids.includes(c.dataset.participantid)).forEach(c => c.remove());
+
+    // Add or update participants in the correct order.
+    let currentIndex = 0;
+    newChildren.forEach(newChild => {
+        const existingChild = currentMap.get(newChild.dataset.participantid);
+
+        if (existingChild) {
+            // Update existing participant if content changed.
+            if (existingChild.innerHTML !== newChild.innerHTML) {
+                existingChild.innerHTML = newChild.innerHTML;
+            }
+            // Move to correct position if needed.
+            const currentAtIndex = currentList.children[currentIndex];
+            if (currentAtIndex !== existingChild) {
+                currentList.insertBefore(existingChild, currentAtIndex);
+            }
+        } else {
+            // Insert new participant at the correct position.
+            const referenceNode = currentList.children[currentIndex] || null;
+            currentList.insertBefore(newChild.cloneNode(true), referenceNode);
+        }
+        currentIndex++;
+    });
+};
+
+/**
+ * Update only the dynamic parts of the lobby (participants list and count)
+ *
+ * This prevents the whole overlay from re-rendering when participants join/leave,
+ * which would cause visual flickering.
+ *
+ * @param {string} template The template name
+ * @param {Object} templatedata The processed template data
+ * @returns {Promise<boolean>} True if partial update was performed, false otherwise
+ */
+const updateLobbyPartial = async(template, templatedata) => {
+    if (!gameState.overlayContainer) {
+        return false;
+    }
+
+    const currentParticipantsList = gameState.overlayContainer.querySelector(SELECTORS.LOBBY_PARTICIPANTS_LIST);
+    const currentCountNumber = gameState.overlayContainer.querySelector(SELECTORS.LOBBY_COUNT_NUMBER);
+
+    if (!currentParticipantsList || !currentCountNumber) {
+        return false;
+    }
+
+    // Render the full template to get the new HTML.
+    const html = await Templates.render(template, templatedata);
+
+    // Parse the rendered HTML to extract the updated parts.
+    const tempContainer = document.createElement('div');
+    tempContainer.innerHTML = html;
+
+    const newParticipantsList = tempContainer.querySelector(SELECTORS.LOBBY_PARTICIPANTS_LIST);
+    const newCountNumber = tempContainer.querySelector(SELECTORS.LOBBY_COUNT_NUMBER);
+
+    if (!newParticipantsList || !newCountNumber) {
+        return false;
+    }
+
+    // Sync participants list with minimal DOM changes.
+    syncParticipantsList(currentParticipantsList, newParticipantsList);
+
+    // Update count.
+    currentCountNumber.textContent = newCountNumber.textContent;
+
+    return true;
+};
+
+/**
  * Show a game stage in the overlay
  *
  * @param {Object} stageData The stage data from the server
  */
 const showStage = async(stageData) => {
 
-    // TODO: If we are already in the same stage, do not re-render the whole thing, re-render only
-    // the changes (i.e. lobby participants list).
     const stageChanged = !gameState.currentStageData ||
         gameState.currentStageData.stage !== stageData.stage ||
         gameState.currentStageData.currentquestion !== stageData.currentquestion;
@@ -249,7 +342,14 @@ const showStage = async(stageData) => {
         // Process template data (decode typedata, add type booleans).
         const templatedata = processTemplateData(stageData.templatedata);
 
-        // Render the template.
+        // For lobby stage without stage change, only update dynamic parts to avoid flickering.
+        if (!stageChanged && stageData.stage === 'lobby') {
+            if (await updateLobbyPartial(stageData.template, templatedata)) {
+                return;
+            }
+        }
+
+        // Render the full template.
         const html = await Templates.render(stageData.template, templatedata);
 
         // Create or update the overlay container.
@@ -266,8 +366,6 @@ const showStage = async(stageData) => {
 
             // Start autoplay.
             startAutoplay();
-        } else {
-            // TODO make sure that the timer value is preserved across re-renders.
         }
     } catch (error) {
         Notification.exception(error);
@@ -436,11 +534,17 @@ const startAutoplay = () => {
         }
 
         const elapsed = gameState.autoplayElapsed + (Date.now() - gameState.autoplayStartTime);
+        const remaining = durationMs - elapsed;
         const progress = Math.min((elapsed / durationMs) * 100, 100);
 
         const progressFill = gameState.overlayContainer.querySelector(SELECTORS.PROGRESS_FILL);
         if (progressFill) {
             progressFill.style.width = progress + '%';
+        }
+
+        const countdownTime = gameState.overlayContainer.querySelector(SELECTORS.COUNTDOWN_TIME);
+        if (countdownTime) {
+            countdownTime.textContent = formatCountdown(remaining);
         }
 
         if (elapsed >= durationMs) {
@@ -468,7 +572,20 @@ const stopAutoplayTimer = () => {
 };
 
 /**
- * Update the progress bar to reflect current elapsed time
+ * Format milliseconds as M:SS countdown string
+ *
+ * @param {number} ms Milliseconds remaining
+ * @returns {string} Formatted time string (e.g., "4:30")
+ */
+const formatCountdown = (ms) => {
+    const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+};
+
+/**
+ * Update the progress bar and countdown time to reflect current elapsed time
  */
 const updateProgressBar = () => {
     const stageData = gameState.currentStageData;
@@ -477,11 +594,17 @@ const updateProgressBar = () => {
     }
 
     const durationMs = stageData.duration * 1000;
+    const remainingMs = durationMs - gameState.autoplayElapsed;
     const progress = Math.min((gameState.autoplayElapsed / durationMs) * 100, 100);
 
     const progressFill = gameState.overlayContainer.querySelector(SELECTORS.PROGRESS_FILL);
     if (progressFill) {
         progressFill.style.width = progress + '%';
+    }
+
+    const countdownTime = gameState.overlayContainer.querySelector(SELECTORS.COUNTDOWN_TIME);
+    if (countdownTime) {
+        countdownTime.textContent = formatCountdown(remainingMs);
     }
 };
 

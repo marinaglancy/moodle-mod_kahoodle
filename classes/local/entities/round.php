@@ -354,11 +354,19 @@ class round {
         if ($this->participantscache !== null) {
             return $this->participantscache;
         }
-        $this->participantscache = $DB->get_records(
-            'kahoodle_participants',
-            ['roundid' => $this->get_id()],
-            'timecreated ASC',
-            'id, displayname, avatar'
+
+        $userfields = \core_user\fields::for_userpic()->with_name()->excluding('email');
+        ['selects' => $userfieldssql, 'joins' => $userfieldsjoin, 'params' => $userfieldsparams,
+        'mappings' => $mappings] =
+                (array)$userfields->get_sql('u', true);
+
+        $this->participantscache = $DB->get_records_sql(
+            'SELECT p.id AS participantid, p.avatar, p.displayname ' . $userfieldssql . '
+            FROM {kahoodle_participants} p
+            JOIN {user} u ON u.id = p.userid ' . $userfieldsjoin . '
+            WHERE p.roundid = :roundid
+            ORDER BY p.timecreated DESC',
+            ['roundid' => $this->get_id()] + $userfieldsparams
         );
         return $this->participantscache;
     }

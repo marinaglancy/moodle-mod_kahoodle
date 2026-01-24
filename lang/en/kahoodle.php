@@ -25,6 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+$string['accesscode'] = 'Access code';
 $string['addquestion'] = 'Add question';
 $string['addquestiontype'] = 'Add question: {$a}';
 $string['allowrepeat'] = 'Allow repeat participation';
@@ -43,6 +44,7 @@ $string['finishgame_confirm'] = 'Are you sure you want to finish the activity? T
 $string['invalidstage'] = 'Invalid activity stage';
 $string['join_as_facilitator'] = 'Join as facilitator';
 $string['join_as_participant'] = 'Join as participant';
+$string['joinqrcode'] = 'Join with QR code';
 $string['kahoodle:addinstance'] = 'Add a new Kahoodle';
 $string['kahoodle:facilitate'] = 'Facilitate a round of Kahoodle, display the main screen';
 $string['kahoodle:manage_questions'] = 'Manage questions in Kahoodle';
@@ -73,6 +75,7 @@ $string['multichoice_needtwooptions'] = 'You must specify between 2 and 8 answer
 $string['noeditableround'] = 'No editable round available. The last round has already been started.';
 $string['participant_controls'] = 'Participant controls';
 $string['participants_count'] = '{$a} participant(s) waiting';
+$string['participantsjoined'] = '{$a} participants joined';
 $string['pause'] = 'Pause';
 $string['pleasewait'] = 'Please wait';
 $string['pluginadministration'] = 'Kahoodle administration';
@@ -109,6 +112,7 @@ $string['stage_lobby'] = 'Lobby';
 $string['stage_lobby_placeholder'] = 'Lobby will be here';
 $string['start'] = 'Start';
 $string['start_noquestions'] = 'Add some questions before starting.';
+$string['startsin'] = 'Starts in';
 $string['timing'] = 'Timing';
 $string['version'] = 'Version';
 $string['viewresults'] = 'View results';

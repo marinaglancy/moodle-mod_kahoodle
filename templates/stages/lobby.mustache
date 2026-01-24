@@ -21,47 +21,85 @@
 
     Context variables required for this template:
     * quiztitle - The title of the quiz/kahoodle activity
-    * totalquestions - Total number of questions in the round
     * participantcount - Number of participants who have joined
-    * hasparticipants - Boolean indicating if there are any participants
-    * participants - Array of participant objects with displayname and avatar
+    * participants - Array of participant objects with displayname, avatar
     * cancontrol - Boolean indicating if user can control the quiz (teacher)
     * backgroundurl - URL for background image
+    * qrcodeurl - URL for the QR code image
+    * joincode - The access code to join the game
+    * countdowntime - Time remaining until game starts (e.g., "4:30")
 
     Example context (json):
     {
         "quiztitle": "Geography & World Facts Quiz",
-        "totalquestions": 10,
         "participantcount": 5,
-        "hasparticipants": true,
-        "participants": [{"displayname": "John Doe"}, {"displayname": "Jane Smith"}],
+        "participants": [
+            {"participantid": 1, "displayname": "John Doe", "imageurl": "/user/pix.php/1/f2.jpg"},
+            {"participantid": 2, "displayname": "Jane Smith", "imageurl": "/user/pix.php/2/f2.jpg"},
+            {"participantid": 3, "displayname": "Alice Johnson", "imageurl": "/user/pix.php/3/f2.jpg"},
+            {"participantid": 4, "displayname": "Bob Brown", "imageurl": "/user/pix.php/4/f2.jpg"},
+            {"participantid": 5, "displayname": "Charlie Davis", "imageurl": "/user/pix.php/5/f2.jpg"},
+            {"participantid": 6, "displayname": "Diana Evans", "imageurl": "/user/pix.php/6/f2.jpg"},
+            {"participantid": 7, "displayname": "Frank Green", "imageurl": "/user/pix.php/7/f2.jpg"},
+            {"participantid": 8, "displayname": "Grace Harris", "imageurl": "/user/pix.php/8/f2.jpg"},
+            {"participantid": 9, "displayname": "Henry Lee", "imageurl": "/user/pix.php/9/f2.jpg"},
+            {"participantid": 10, "displayname": "Ivy Martin", "imageurl": "/user/pix.php/10/f2.jpg"}
+        ],
         "cancontrol": true,
-        "backgroundurl": "/mod/kahoodle/pix/classroom-bg.jpg"
+        "backgroundurl": "/mod/kahoodle/pix/classroom-bg.jpg",
+        "qrcodeurl": "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://example.com/join/ABC123",
+        "joincode": "ABC123",
+        "countdowntime": "4:30"
     }
 }}
 <div class="mod_kahoodle-overlay" {{#backgroundurl}}style="background-image: url('{{backgroundurl}}');"{{/backgroundurl}}>
 
+    {{! Header: Game title }}
     <header class="mod_kahoodle-header">
-        <div class="mod_kahoodle-quiz-title">{{quiztitle}}</div>
-        <div class="mod_kahoodle-question-counter">{{#str}}stage_lobby, mod_kahoodle{{/str}}</div>
+        <div class="mod_kahoodle-game-title">{{quiztitle}}</div>
     </header>
 
-    <main class="mod_kahoodle-main mod_kahoodle-lobby" data-stage="lobby">
+    {{! Main content: Participants and QR code }}
+    <main class="mod_kahoodle-lobby-main" data-stage="lobby">
 
-        <div class="mod_kahoodle-lobby-content">
-            <h1 class="mod_kahoodle-lobby-title">{{#str}}stage_lobby_placeholder, mod_kahoodle{{/str}}</h1>
-            <p class="mod_kahoodle-lobby-participants">{{#str}}participants_count, mod_kahoodle, {{participantcount}}{{/str}}</p>
-
-            {{#hasparticipants}}
-            <div class="mod_kahoodle-lobby-participants-list">
+        {{! Participants area (left side) }}
+        <div class="mod_kahoodle-participants-area">
+            <div class="mod_kahoodle-participants-list">
                 {{#participants}}
-                <span class="mod_kahoodle-participant-badge">{{displayname}}</span>
+                <div class="mod_kahoodle-participant" data-participantid="{{participantid}}">
+                    <img src="{{imageurl}}" alt="" class="mod_kahoodle-participant-avatar">
+                    <span class="mod_kahoodle-participant-name">{{displayname}}</span>
+                </div>
                 {{/participants}}
             </div>
-            {{/hasparticipants}}
+        </div>
+
+        {{! QR Code area (right side) }}
+        <div class="mod_kahoodle-qr-area">
+            <div class="mod_kahoodle-qr-code">
+                <img src="{{qrcodeurl}}" alt="{{#str}}joinqrcode, mod_kahoodle{{/str}}" class="mod_kahoodle-qr-image">
+            </div>
+            {{#joincode}}
+            <div class="mod_kahoodle-join-code">
+                <span class="mod_kahoodle-join-label">{{#str}}accesscode, mod_kahoodle{{/str}}</span>
+                <span class="mod_kahoodle-join-value">{{joincode}}</span>
+            </div>
+            {{/joincode}}
         </div>
 
     </main>
+
+    {{! Status bar: participant count and countdown }}
+    <div class="mod_kahoodle-lobby-status">
+        <div class="mod_kahoodle-participant-count">
+
+            <span class="mod_kahoodle-count-label">{{#str}}participantsjoined, mod_kahoodle, <span class="mod_kahoodle-count-number">{{participantcount}}</span>{{/str}}</span>
+        </div>
+        <div class="mod_kahoodle-countdown">
+            <span class="mod_kahoodle-countdown-label">{{#str}}startsin, mod_kahoodle{{/str}}</span>
+            <span class="mod_kahoodle-countdown-time">{{countdowntime}}</span>
+        </div>
+    </div>
 
     {{> mod_kahoodle/common/footer }}
 

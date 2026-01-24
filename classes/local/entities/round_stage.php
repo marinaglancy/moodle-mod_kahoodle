@@ -18,6 +18,7 @@ namespace mod_kahoodle\local\entities;
 
 use mod_kahoodle\constants;
 use mod_kahoodle\output\roundquestion;
+use tool_brickfield\local\areas\core_course\fullname;
 
 /**
  * Represents a single stage in a Kahoodle round
@@ -246,23 +247,41 @@ class round_stage {
      * @return array Template data
      */
     protected function get_lobby_template_data(): array {
-        global $CFG;
+        global $CFG, $PAGE;
 
         $round = $this->get_round();
         $kahoodle = $round->get_kahoodle();
 
         // Get participants list.
-        $participants = $round->get_all_participants();
-        $participantcount = count($participants);
+        $participantrecords = $round->get_all_participants();
+        $participantcount = count($participantrecords);
+
+        $participants = [];
+        foreach ($participantrecords as $participant) {
+            $picture = \core_user::get_profile_picture(
+                $participant,
+                $round->get_context()
+            );
+            $picture->size = 35;
+            $participants[] = [
+                'participantid' => $participant->participantid,
+                'displayname' => $participant->displayname ?: fullname($participant),
+                'imageurl' => $picture->get_url($PAGE)->out(false),
+            ];
+        }
+
+        $url = (new \moodle_url('/mod/kahoodle/view.php', ['id' => $round->get_cm()->id]))->out(false);
+        $qrcode = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" . urlencode($url);
+        // TODO use core_qrcode class to generate QR code, save it in filestorage and serve from there.
 
         return [
             'quiztitle' => $kahoodle->name,
-            'totalquestions' => $round->get_questions_count(),
             'cancontrol' => true, // Teacher view always has control.
             'backgroundurl' => $CFG->wwwroot . '/mod/kahoodle/pix/classroom-bg.jpg',
             'participantcount' => $participantcount,
             'participants' => array_values($participants),
-            'hasparticipants' => $participantcount > 0,
+            'qrcodeurl' => $qrcode,
+            'joincode' => '', // TODO when join codes are implemented.
         ];
     }
 

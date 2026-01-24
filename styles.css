@@ -287,6 +287,9 @@
 .mod_kahoodle-progress-paused .mod_kahoodle-control-btn[data-action="resume"] {
     display: inline-block;
 }
+.mod_kahoodle-progress-paused .mod_kahoodle-countdown {
+    display: none;
+}
 
 /* Teacher controls */
 .mod_kahoodle-controls {
@@ -636,5 +639,197 @@
 
     .mod_kahoodle-footer {
         padding: 0.75rem 1rem 1rem;
+    }
+}
+
+/* ========================================
+   GAME LOBBY STYLES
+   ======================================== */
+.mod_kahoodle-game-title {
+    color: var(--mod_kahoodle-light);
+    font-size: 2rem;
+    font-weight: 700;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.mod_kahoodle-lobby-main {
+    flex: 1;
+    display: flex;
+    padding: 0 2rem;
+    gap: 2rem;
+    min-height: 0;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+/* Participants area */
+.mod_kahoodle-participants-area {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.mod_kahoodle-participants-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 0.75rem;
+    height: 100%;
+    overflow: hidden;
+}
+
+.mod_kahoodle-participant {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    padding: 0.4rem 1rem 0.4rem 0.4rem;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.mod_kahoodle-participant:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.02);
+}
+
+.mod_kahoodle-participant-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.mod_kahoodle-participant-name {
+    color: var(--mod_kahoodle-light);
+    font-size: 0.95rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* QR Code area */
+.mod_kahoodle-qr-area {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.mod_kahoodle-qr-code {
+    background: var(--mod_kahoodle-light);
+    padding: 1rem;
+    border-radius: 16px;
+    box-shadow: var(--mod_kahoodle-shadow);
+}
+
+.mod_kahoodle-qr-image {
+    width: 200px;
+    height: 200px;
+    display: block;
+}
+
+.mod_kahoodle-join-code {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.mod_kahoodle-join-label {
+    color: var(--mod_kahoodle-muted);
+    font-size: 0.875rem;
+}
+
+.mod_kahoodle-join-value {
+    color: var(--mod_kahoodle-light);
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Lobby status bar */
+.mod_kahoodle-lobby-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: rgba(0, 0, 0, 0.2);
+    margin: 0 2rem;
+    border-radius: 12px;
+}
+
+.mod_kahoodle-participant-count {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.mod_kahoodle-count-number {
+    color: var(--mod_kahoodle-light);
+    font-size: 2rem;
+    font-weight: 700;
+    margin-right: 0.15rem;
+}
+
+.mod_kahoodle-count-label {
+    color: var(--mod_kahoodle-muted);
+    font-size: 1rem;
+}
+
+.mod_kahoodle-countdown {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+}
+
+.mod_kahoodle-countdown-label {
+    color: var(--mod_kahoodle-muted);
+    font-size: 1rem;
+}
+
+.mod_kahoodle-countdown-time {
+    color: #0f8;
+    font-size: 2rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Lobby responsive adjustments */
+@media (max-width: 992px) {
+    .mod_kahoodle-lobby-main {
+        flex-direction: column;
+    }
+
+    /* QR code above participants on mobile */
+    .mod_kahoodle-qr-area {
+        order: -1;
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    .mod_kahoodle-qr-image {
+        width: 120px;
+        height: 120px;
+    }
+}
+
+@media (max-width: 768px) {
+    .mod_kahoodle-lobby-main {
+        padding: 0 1rem;
+    }
+
+    .mod_kahoodle-lobby-status {
+        flex-direction: column;
+        gap: 0.75rem;
+        margin: 0 1rem 1rem;
+    }
+
+    .mod_kahoodle-game-title {
+        font-size: 1.5rem;
     }
 }
