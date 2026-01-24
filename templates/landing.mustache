@@ -23,16 +23,15 @@
     * showcontrolpreparation - bool - Show the control panel for preparation stage
     * startgamebuttondisabled - bool - Whether the start button should be disabled
     * starturl - string - URL for the start action
-    * showcontrolinprogress - bool - Show the control panel for facilitator when game is in progress
+    * showfacilitatorcontrols - bool - Show facilitator controls when game is in progress
     * finishurl - string - URL for the finish action
+    * showparticipantcontrols - bool - Show participant controls when user is playing
+    * leaveurl - string - URL for leave action
+    * showjoinoption - bool - Show join as participant option
+    * joinurl - string - URL for join action
     * showmanagequestions - bool - Show the manage questions section
     * managequestionsurl - string - URL for manage questions page
     * showwaitingtostart - bool - Show waiting message for participants
-    * showinprogress - bool - Show in progress section for participants
-    * showjoinbutton - bool - Show join button
-    * showresumebutton - bool - Show resume button
-    * joinurl - string - URL for join action
-    * resumeurl - string - URL for resume action
     * showfinished - bool - Show finished section
     * resultsurl - string - URL for results page
 
@@ -65,19 +64,52 @@
     </div>
     {{/showcontrolpreparation}}
 
-    {{#showcontrolinprogress}}
+    {{#showfacilitatorcontrols}}
     <div class="card mb-3">
+        <div class="card-header">
+            <h5 class="mb-0">{{#str}}facilitator_controls, mod_kahoodle{{/str}}</h5>
+        </div>
         <div class="card-body">
-            <p class="card-text">{{#str}}landing_controlinprogress_message, mod_kahoodle{{/str}}</p>
-            <button type="button" class="btn btn-primary" data-action="resume-game">
-                {{#str}}resume, mod_kahoodle{{/str}}
+            <p class="card-text">{{#str}}landing_facilitator_message, mod_kahoodle{{/str}}</p>
+            <button type="button" class="btn btn-primary me-2" data-action="resume-game">
+                {{#str}}resume_facilitating, mod_kahoodle{{/str}}
             </button>
             <button type="button" class="btn btn-danger" data-action="finish-game" data-finishurl="{{finishurl}}">
-                {{#str}}finishgame, mod_kahoodle{{/str}}
+                {{#str}}end_round_for_everyone, mod_kahoodle{{/str}}
             </button>
         </div>
     </div>
-    {{/showcontrolinprogress}}
+    {{/showfacilitatorcontrols}}
+
+    {{#showparticipantcontrols}}
+    <div class="card mb-3">
+        <div class="card-header">
+            <h5 class="mb-0">{{#str}}participant_controls, mod_kahoodle{{/str}}</h5>
+        </div>
+        <div class="card-body">
+            <p class="card-text">{{#str}}landing_participant_message, mod_kahoodle{{/str}}</p>
+            <button type="button" class="btn btn-primary me-2" data-action="resume-participant">
+                {{#str}}resume_playing, mod_kahoodle{{/str}}
+            </button>
+            {{#leaveurl}}
+            <a href="{{leaveurl}}" class="btn btn-outline-secondary">
+                {{#str}}join_as_facilitator, mod_kahoodle{{/str}}
+            </a>
+            {{/leaveurl}}
+        </div>
+    </div>
+    {{/showparticipantcontrols}}
+
+    {{#showjoinoption}}
+    <div class="card mb-3">
+        <div class="card-body">
+            <p class="card-text">{{#str}}landing_join_message, mod_kahoodle{{/str}}</p>
+            <a href="{{joinurl}}" class="btn btn-success">
+                {{#str}}join_as_participant, mod_kahoodle{{/str}}
+            </a>
+        </div>
+    </div>
+    {{/showjoinoption}}
 
     {{#showmanagequestions}}
     <div class="card mb-3">
@@ -98,24 +130,6 @@
         </div>
     </div>
     {{/showwaitingtostart}}
-
-    {{#showinprogress}}
-    <div class="card mb-3">
-        <div class="card-body">
-            <p class="card-text">{{#str}}landing_inprogress_message, mod_kahoodle{{/str}}</p>
-            {{#showjoinbutton}}
-            <a href="{{joinurl}}" class="btn btn-primary">
-                {{#str}}join, mod_kahoodle{{/str}}
-            </a>
-            {{/showjoinbutton}}
-            {{#showresumebutton}}
-            <a href="{{resumeurl}}" class="btn btn-primary">
-                {{#str}}resume, mod_kahoodle{{/str}}
-            </a>
-            {{/showresumebutton}}
-        </div>
-    </div>
-    {{/showinprogress}}
 
     {{#showfinished}}
     <div class="card mb-3">

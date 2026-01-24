@@ -21,6 +21,8 @@ To identify the current Moodle version, check the `version.php` file in the Mood
 mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 ├── amd/
 │   └── src/
+│       ├── gamecontroller.js # AMD module for facilitator game control
+│       ├── participant.js    # AMD module for participant interface
 │       └── questions.js      # AMD module for question management UI
 ├── backup/
 │   └── moodle2/              # Backup and restore functionality
@@ -44,7 +46,11 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   ├── local/
 │   │   ├── entities/         # Domain entity classes
 │   │   │   ├── round.php     # Round entity with caching for kahoodle/cm/context
-│   │   │   └── round_question.php # Round question entity (joins 3 tables)
+│   │   │   ├── round_question.php # Round question entity (joins 3 tables)
+│   │   │   └── round_stage.php # Round stage entity for stage data export
+│   │   ├── game/             # Game mechanics
+│   │   │   ├── participants.php # Participant management (join, get)
+│   │   │   └── progress.php  # Game progress and stage transitions
 │   │   └── questiontypes/    # Question type implementations
 │   │       ├── base.php      # Abstract base class for question types
 │   │       └── multichoice.php # Multiple choice question type
@@ -65,8 +71,17 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 ├── pix/
 │   └── monologo.svg          # Module icon
 ├── templates/
-│   ├── landing.mustache      # Landing page template (view.php)
-│   └── ...                   # Question display templates
+│   ├── common/               # Shared template partials
+│   │   ├── footer.mustache   # Footer with progress bar and controls
+│   │   └── header.mustache   # Header with title and counter
+│   ├── participant/          # Participant-specific templates
+│   │   └── waiting.mustache  # Waiting overlay for participants
+│   ├── questiontypes/        # Question type display templates
+│   │   └── multichoice/      # Multiple choice templates
+│   ├── stages/               # Game stage templates (facilitator)
+│   │   ├── leaders.mustache  # Leaderboard display
+│   │   └── lobby.mustache    # Lobby waiting room
+│   └── landing.mustache      # Landing page template (view.php)
 ├── tests/
 │   ├── behat/                # Behat acceptance tests
 │   ├── external/             # Web service tests
@@ -431,11 +446,51 @@ The plugin references these Moodle core tables:
 Since questions can be modified after rounds are completed, implement a versioning or snapshot system to preserve the exact state of questions/answers at the time of each round.
 
 ### Real-time Functionality
-Consider WebSocket or AJAX polling for:
-- Lobby participant list updates
-- Live scoreboard updates
-- Question progression
-- Timer synchronization
+
+The plugin uses `tool_realtime` for real-time communication between clients and server.
+
+#### Realtime Channel Architecture
+
+```
+Facilitator Channel (area='facilitator', itemid=roundid)
+├── Facilitators subscribe here
+├── Receives: stage changes, participant list updates
+└── Sends: advance, get_current
+
+Game Channel (area='game', itemid=roundid)
+├── All participants subscribe here
+├── Receives: stage changes (preview, question, results)
+└── Sends: nothing (read-only for now)
+
+Participant Channel (area='participant', itemid=participantid)
+├── Individual participant subscribes here
+├── Receives: personal results, points earned
+└── Sends: get_current, answer (future)
+```
+
+#### Channel Details
+
+**Facilitator Channel:**
+- Used by teachers to control the game flow
+- Actions: `advance` (go to next stage), `get_current` (get current stage data)
+- Notifications include full stage data with template and template data
+
+**Game Channel:**
+- Broadcast channel for all participants in a round
+- Read-only for participants - they cannot send events
+- Used for common stage notifications (question preview, question, results)
+
+**Participant Channel:**
+- Individual channel for each participant (itemid = participant record ID)
+- Used for participant-specific data (their results, points earned)
+- Participants can send: `get_current` (get current waiting stage)
+
+#### PHP Realtime Handler
+
+The `mod_kahoodle_realtime_event_received()` function in `lib.php` handles all incoming realtime events:
+- Validates channel and component
+- Routes to appropriate handler based on area (facilitator, game, participant)
+- Returns response data that is sent back to the requesting client
 
 ### Performance
 - Efficient query handling for large participant groups
@@ -580,14 +635,18 @@ vendor/bin/phpunit --filter questions_test
   - Waiting message for participants before activity starts
   - Join/Resume buttons when activity is in progress
   - Results button when activity has finished
+- Participant workflow
+  - Join action creates participant record
+  - Real-time channels for game and participant communication
+  - Participant waiting overlay during game stages
+  - Facilitator lobby shows list of joined participants
 
 **In Progress:**
 - Round gameplay mechanics
-- Real-time functionality (WebSocket/polling)
-- Participant and response tracking
+- Participant response submission and scoring
 
 **To Do:**
-- Implement button actions (start, join, resume, view results)
+- Implement actual question/answer display for participants
 - Scoreboard and leaderboard displays
 - Mobile-responsive participant view
 - Additional question types

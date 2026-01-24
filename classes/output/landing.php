@@ -61,22 +61,24 @@ class landing implements renderable, templatable {
     public function export_for_template(\renderer_base $output): stdClass {
         $data = new stdClass();
 
-        // Get capabilities.
-        $cancontrol = has_capability('mod/kahoodle:facilitate', $this->context);
+        // Get capabilities and participant status using round methods.
+        $isfacilitator = $this->round->is_facilitator();
         $canmanagequestions = has_capability('mod/kahoodle:manage_questions', $this->context);
         $canparticipate = has_capability('mod/kahoodle:participate', $this->context);
+        $isparticipating = $this->round->is_participant() !== null;
 
         // Get round stage and question count.
-        $stage = $this->get_stage();
+        $stage = $this->round->get_current_stage_name();
         $questioncount = $this->round->get_questions_count();
         $hasquestions = $questioncount > 0;
 
         // Initialize all section flags to false.
         $data->showcontrolpreparation = false;
-        $data->showcontrolinprogress = false;
+        $data->showfacilitatorcontrols = false;
+        $data->showparticipantcontrols = false;
+        $data->showjoinoption = false;
         $data->showmanagequestions = false;
         $data->showwaitingtostart = false;
-        $data->showinprogress = false;
         $data->showfinished = false;
 
         $isinprogress = $this->is_round_in_progress($stage);
@@ -84,7 +86,7 @@ class landing implements renderable, templatable {
         // Determine which section to show based on stage and capabilities.
         if ($stage === constants::STAGE_PREPARATION) {
             // Round is in preparation stage.
-            if ($cancontrol) {
+            if ($isfacilitator) {
                 $data->showcontrolpreparation = true;
                 $data->startgamebuttondisabled = !$hasquestions;
                 $data->starturl = (new moodle_url(
@@ -96,27 +98,36 @@ class landing implements renderable, templatable {
             }
         } else if ($isinprogress) {
             // Round is in progress (lobby through revision).
-            if ($cancontrol) {
-                // Facilitator view - show Resume and Finish buttons.
-                $data->showcontrolinprogress = true;
-                $data->finishurl = (new moodle_url(
-                    '/mod/kahoodle/view.php',
-                    ['id' => $this->cm->id, 'action' => 'finish', 'sesskey' => sesskey()]
-                ))->out(false);
-            } else if ($canparticipate) {
-                // Participant view - show Join/Resume buttons.
-                $data->showinprogress = true;
-                $isparticipating = $this->is_user_participating();
-                $data->showjoinbutton = !$isparticipating;
-                $data->showresumebutton = $isparticipating;
-                $data->joinurl = (new moodle_url(
-                    '/mod/kahoodle/view.php',
-                    ['id' => $this->cm->id, 'action' => 'join']
-                ))->out(false);
-                $data->resumeurl = (new moodle_url(
-                    '/mod/kahoodle/view.php',
-                    ['id' => $this->cm->id, 'action' => 'resume']
-                ))->out(false);
+            // Participation takes precedence over facilitation - once joined, user acts as participant.
+            if ($isparticipating) {
+                // User is a participant - show participant controls only.
+                $data->showparticipantcontrols = true;
+                if (has_capability('mod/kahoodle:facilitate', $this->context)) {
+                    // Only facilitators can leave the round, so they can take over control.
+                    $data->leaveurl = (new moodle_url(
+                        '/mod/kahoodle/view.php',
+                        ['id' => $this->cm->id, 'action' => 'leave', 'sesskey' => sesskey()]
+                    ))->out(false);
+                }
+            } else {
+                // User is not a participant.
+                if ($isfacilitator) {
+                    // Show facilitator controls.
+                    $data->showfacilitatorcontrols = true;
+                    $data->finishurl = (new moodle_url(
+                        '/mod/kahoodle/view.php',
+                        ['id' => $this->cm->id, 'action' => 'finish', 'sesskey' => sesskey()]
+                    ))->out(false);
+                }
+                if ($canparticipate) {
+                    // Show join option (for users with participate capability who haven't joined yet).
+                    // This includes users with both capabilities.
+                    $data->showjoinoption = true;
+                    $data->joinurl = (new moodle_url(
+                        '/mod/kahoodle/view.php',
+                        ['id' => $this->cm->id, 'action' => 'join', 'sesskey' => sesskey()]
+                    ))->out(false);
+                }
             }
         } else if ($stage === constants::STAGE_ARCHIVED) {
             // Round is finished.
@@ -140,17 +151,6 @@ class landing implements renderable, templatable {
     }
 
     /**
-     * Get the current stage of the round
-     *
-     * @return string
-     */
-    protected function get_stage(): string {
-        global $DB;
-        // Fetch fresh stage from database to ensure it's current.
-        return $DB->get_field('kahoodle_rounds', 'currentstage', ['id' => $this->round->get_id()]);
-    }
-
-    /**
      * Check if the round is in progress (between lobby and revision stages)
      *
      * @param string $stage The current stage
@@ -158,18 +158,5 @@ class landing implements renderable, templatable {
      */
     protected function is_round_in_progress(string $stage): bool {
         return $stage != constants::STAGE_PREPARATION && $stage != constants::STAGE_ARCHIVED;
-    }
-
-    /**
-     * Check if the current user is already participating in this round
-     *
-     * @return bool
-     */
-    protected function is_user_participating(): bool {
-        global $DB, $USER;
-        return $DB->record_exists('kahoodle_participants', [
-            'roundid' => $this->round->get_id(),
-            'userid' => $USER->id,
-        ]);
     }
 }

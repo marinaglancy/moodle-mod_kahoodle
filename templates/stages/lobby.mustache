@@ -23,6 +23,8 @@
     * quiztitle - The title of the quiz/kahoodle activity
     * totalquestions - Total number of questions in the round
     * participantcount - Number of participants who have joined
+    * hasparticipants - Boolean indicating if there are any participants
+    * participants - Array of participant objects with displayname and avatar
     * cancontrol - Boolean indicating if user can control the quiz (teacher)
     * backgroundurl - URL for background image
 
@@ -31,6 +33,8 @@
         "quiztitle": "Geography & World Facts Quiz",
         "totalquestions": 10,
         "participantcount": 5,
+        "hasparticipants": true,
+        "participants": [{"displayname": "John Doe"}, {"displayname": "Jane Smith"}],
         "cancontrol": true,
         "backgroundurl": "/mod/kahoodle/pix/classroom-bg.jpg"
     }
@@ -47,6 +51,14 @@
         <div class="mod_kahoodle-lobby-content">
             <h1 class="mod_kahoodle-lobby-title">{{#str}}stage_lobby_placeholder, mod_kahoodle{{/str}}</h1>
             <p class="mod_kahoodle-lobby-participants">{{#str}}participants_count, mod_kahoodle, {{participantcount}}{{/str}}</p>
+
+            {{#hasparticipants}}
+            <div class="mod_kahoodle-lobby-participants-list">
+                {{#participants}}
+                <span class="mod_kahoodle-participant-badge">{{displayname}}</span>
+                {{/participants}}
+            </div>
+            {{/hasparticipants}}
         </div>
 
     </main>

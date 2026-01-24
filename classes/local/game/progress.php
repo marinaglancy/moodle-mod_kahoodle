@@ -54,6 +54,7 @@ class progress {
             'stagestarttime' => $now,
             'timestarted' => $now,
         ]);
+        $round->refetch_data();
     }
 
     /**
@@ -76,6 +77,7 @@ class progress {
             'currentquestion' => 0,
             'timecompleted' => time(),
         ]);
+        $round->refetch_data();
     }
 
     /**
@@ -117,6 +119,7 @@ class progress {
             }
 
             $DB->update_record('kahoodle_rounds', (object)$updatedata);
+            $round->refetch_data();
         } else {
             $nextstage = $round->get_current_stage();
         }

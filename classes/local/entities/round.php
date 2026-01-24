@@ -329,4 +329,109 @@ class round {
         // We exhaused all options, return the last stage as fallback.
         return $stages[count($stages) - 1];
     }
+
+    /** @var array|null Cached participants array */
+    protected ?array $participantscache = null;
+
+    /**
+     * Get all participants for this round
+     *
+     * @return array Array of participant objects with id, displayname, avatar
+     */
+    public function get_all_participants(): array {
+        global $DB;
+        if ($this->participantscache !== null) {
+            return $this->participantscache;
+        }
+        $this->participantscache = $DB->get_records(
+            'kahoodle_participants',
+            ['roundid' => $this->get_id()],
+            'timecreated ASC',
+            'id, displayname, avatar'
+        );
+        return $this->participantscache;
+    }
+
+    /** @var stdClass|false|null Cached participant record for current user (null = not checked, false = not participant) */
+    protected $currentuserparticipant = null;
+
+    /**
+     * Check if the current user is a participant in this round
+     *
+     * Returns the participant record if the user has the participate capability and
+     * has joined this round. Returns null if user cannot participate or hasn't joined.
+     * The result is cached for subsequent calls.
+     *
+     * @return stdClass|null The participant record or null
+     */
+    public function is_participant(): ?stdClass {
+        global $DB, $USER;
+
+        if ($this->currentuserparticipant !== null) {
+            return $this->currentuserparticipant ?: null;
+        }
+
+        // Check capability first.
+        if (!has_capability('mod/kahoodle:participate', $this->get_context())) {
+            $this->currentuserparticipant = false;
+            return null;
+        }
+
+        // Check if user has joined this round.
+        $participant = $DB->get_record('kahoodle_participants', [
+            'roundid' => $this->get_id(),
+            'userid' => $USER->id,
+        ]);
+
+        $this->currentuserparticipant = $participant ?: false;
+        return $this->currentuserparticipant ?: null;
+    }
+
+    /**
+     * Check if the current user is a facilitator for this round
+     *
+     * Returns true if the user has the facilitate capability and is NOT currently
+     * participating in the round. Once a user joins as participant, they are no
+     * longer considered a facilitator until they leave the round.
+     *
+     * @return bool
+     */
+    public function is_facilitator(): bool {
+        // If user is a participant, they are not a facilitator (participation takes precedence).
+        if ($this->is_participant() !== null) {
+            return false;
+        }
+
+        return has_capability('mod/kahoodle:facilitate', $this->get_context());
+    }
+
+    /**
+     * To be executed when we know that list of participants changed
+     *
+     * @return void
+     */
+    public function clear_participant_cache(): void {
+        $this->currentuserparticipant = null;
+        $this->participantscache = null;
+    }
+
+    /**
+     * To be executed when we know that question data changed
+     *
+     * @return void
+     */
+    public function clear_questions_cache(): void {
+        $this->questionscount = null;
+        $this->stagescache = null;
+    }
+
+    /**
+     * To be executed after updating the round (i.e. advancing stages)
+     *
+     * @return void
+     */
+    public function refetch_data(): void {
+        global $DB;
+        $this->data = $DB->get_record('kahoodle_rounds', ['id' => $this->data->id], '*', MUST_EXIST);
+    }
 }

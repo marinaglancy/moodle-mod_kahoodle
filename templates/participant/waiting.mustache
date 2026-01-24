@@ -1,0 +1,52 @@
+{{!
+    This file is part of mod_kahoodle plugin
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_kahoodle/participant/waiting
+
+    Participant waiting template - shown while waiting for the next stage.
+
+    Context variables required for this template:
+    * quiztitle - The title of the quiz/kahoodle activity
+    * backgroundurl - URL for background image
+
+    Example context (json):
+    {
+        "quiztitle": "Geography & World Facts Quiz",
+        "backgroundurl": "/mod/kahoodle/pix/classroom-bg.jpg"
+    }
+}}
+<div class="mod_kahoodle-overlay mod_kahoodle-waiting" {{#backgroundurl}}style="background-image: url('{{backgroundurl}}');"{{/backgroundurl}}>
+
+    <header class="mod_kahoodle-header">
+        <div class="mod_kahoodle-quiz-title">{{quiztitle}}</div>
+    </header>
+
+    <main class="mod_kahoodle-main mod_kahoodle-waiting-content">
+        <div class="mod_kahoodle-waiting-message">
+            <h1>{{#str}}pleasewait, mod_kahoodle{{/str}}</h1>
+        </div>
+    </main>
+
+    <footer class="mod_kahoodle-footer">
+        <div class="mod_kahoodle-controls">
+            <a href="#" class="mod_kahoodle-control-btn" data-action="close">
+                {{#pix}}i/window_close, core{{/pix}} {{#str}}close, mod_kahoodle{{/str}}
+            </a>
+        </div>
+    </footer>
+
+</div>

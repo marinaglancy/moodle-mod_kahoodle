@@ -229,12 +229,31 @@ function mod_kahoodle_realtime_event_received(\tool_realtime\channel $channel, $
         // Examples of common notifications: stage changed to previewing or asking a question.
     }
 
-    // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
     if ($props['area'] == 'participant') {
         // Participant-specific channel. Itemid is the participant id.
-        // TODO implement when participant view is ready.
-        // Participants can send events to this channel - changing avatar, answering a question.
-        // Examples of participant-specific notifications: stage changed to question results (showing result for this participant).
+        // TODO: Participants can send events to this channel - changing avatar, answering a question.
+        // TODO: Examples of participant-specific notifications:
+        // stage changed to question results (showing result for this participant).
+
+        $participantid = (int)$props['itemid'];
+        $action = $payload['action'] ?? '';
+
+        // Get the participant and round.
+        global $DB;
+        $participant = $DB->get_record('kahoodle_participants', ['id' => $participantid], '*', MUST_EXIST);
+        $round = \mod_kahoodle\local\entities\round::create_from_id($participant->roundid);
+        $context = $round->get_context();
+        \core_external\external_api::validate_context($context);
+
+        switch ($action) {
+            case 'get_current':
+                // Get current stage data for participant view.
+                $stage = $round->get_current_stage();
+                return $stage->export_data_for_participants();
+
+            default:
+                return ['error' => 'Unknown action'];
+        }
     }
 
     return ['error' => 'Invalid channel'];

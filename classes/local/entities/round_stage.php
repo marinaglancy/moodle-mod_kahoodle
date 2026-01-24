@@ -202,6 +202,45 @@ class round_stage {
     }
 
     /**
+     * Stage data for participants
+     *
+     * For now, all stages show a simple "Please wait" template.
+     *
+     * @return array Stage data including template, templatedata, and duration
+     */
+    public function export_data_for_participants(): array {
+        global $PAGE, $CFG;
+
+        $round = $this->get_round();
+        $kahoodle = $round->get_kahoodle();
+
+        // Ensure PAGE is set up for rendering (needed when called from realtime callback).
+        if (!$PAGE->has_set_url()) {
+            $cm = $round->get_cm();
+            $PAGE->set_url('/mod/kahoodle/view.php', ['id' => $cm->id]);
+            $PAGE->set_context($round->get_context());
+        }
+
+        $data = [
+            'stage' => $this->get_stage_name(),
+            'currentquestion' => $this->get_question_number(),
+            'totalquestions' => $round->get_questions_count(),
+            'quiztitle' => $kahoodle->name,
+        ];
+
+        // For now, all stages show the waiting template for participants.
+        // TODO: Implement stage-specific templates for participants.
+        $data['template'] = 'mod_kahoodle/participant/waiting';
+        $data['duration'] = 0; // No auto-advance for participants.
+        $data['templatedata'] = [
+            'quiztitle' => $kahoodle->name,
+            'backgroundurl' => $CFG->wwwroot . '/mod/kahoodle/pix/classroom-bg.jpg',
+        ];
+
+        return $data;
+    }
+
+    /**
      * Get template data for lobby stage
      *
      * @return array Template data
@@ -212,11 +251,18 @@ class round_stage {
         $round = $this->get_round();
         $kahoodle = $round->get_kahoodle();
 
+        // Get participants list.
+        $participants = $round->get_all_participants();
+        $participantcount = count($participants);
+
         return [
             'quiztitle' => $kahoodle->name,
             'totalquestions' => $round->get_questions_count(),
             'cancontrol' => true, // Teacher view always has control.
             'backgroundurl' => $CFG->wwwroot . '/mod/kahoodle/pix/classroom-bg.jpg',
+            'participantcount' => $participantcount,
+            'participants' => array_values($participants),
+            'hasparticipants' => $participantcount > 0,
         ];
     }
 
