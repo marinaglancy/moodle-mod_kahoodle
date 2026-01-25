@@ -164,7 +164,7 @@ class round_stage {
 
         switch ($stage->get_stage_name()) {
             case constants::STAGE_LOBBY:
-                $data['template'] = 'mod_kahoodle/stages/lobby';
+                $data['template'] = 'mod_kahoodle/facilitator/lobby';
                 $data['duration'] = (int)$kahoodle->lobbyduration;
                 $data['templatedata'] = $this->get_lobby_template_data();
                 break;
@@ -176,14 +176,14 @@ class round_stage {
                 break;
 
             case constants::STAGE_LEADERS:
-                $data['template'] = 'mod_kahoodle/stages/leaders';
+                $data['template'] = 'mod_kahoodle/facilitator/leaders';
                 $data['duration'] = constants::DEFAULT_LEADERS_DURATION;
                 $data['templatedata'] = $this->get_leaders_template_data();
                 break;
 
             case constants::STAGE_REVISION:
                 // TODO: Implement revision stage.
-                $data['template'] = 'mod_kahoodle/stages/leaders';
+                $data['template'] = 'mod_kahoodle/facilitator/revision';
                 $data['duration'] = 0; // No auto-advance from revision.
                 $data['templatedata'] = $this->get_leaders_template_data();
                 break;
@@ -333,7 +333,7 @@ class round_stage {
         $kahoodle = $round->get_kahoodle();
         return [
             'quiztitle' => $kahoodle->name,
-            'currentquestion' => $this->get_question_number() ?: $round->get_questions_count(),
+            'sortorder' => $this->get_question_number() ?: $round->get_questions_count(),
             'totalquestions' => $round->get_questions_count(),
             'cancontrol' => true,
             'isedit' => false,

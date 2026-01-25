@@ -15,24 +15,25 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_kahoodle/common/header
+    @template mod_kahoodle/facilitator/revision
 
-    Quiz overlay header partial.
-
-    Context variables required for this template:
-    * quiztitle - The title of the quiz/kahoodle activity
-    * sortorder - Current question number
-    * totalquestions - Total number of questions in the round
-
+    Shown on facilitator screens during the revision stage (final leaderboard).
 
     Example context (json):
     {
-        "quiztitle": "Geography & World Facts Quiz",
-        "sortorder": 36,
-        "totalquestions": 42
     }
 }}
-<header class="mod_kahoodle-header">
-    <div class="mod_kahoodle-quiz-title">{{quiztitle}}</div>
-    <div class="mod_kahoodle-question-counter">{{#str}}questioncounter, mod_kahoodle, { "current": "{{sortorder}}", "total": "{{totalquestions}}" }{{/str}}</div>
-</header>
+<div class="mod_kahoodle-overlay" {{#backgroundurl}}style="background-image: url('{{backgroundurl}}');"{{/backgroundurl}}>
+
+    <main class="mod_kahoodle-main mod_kahoodle-leaders" data-stage="revision">
+
+        <div class="mod_kahoodle-leaders-content">
+            <h1 class="mod_kahoodle-leaders-title">Final leaderboard</h1>
+            <p class="mod_kahoodle-leaders-placeholder">Final leaderboard will be displayed here</p>
+        </div>
+
+    </main>
+
+    {{> mod_kahoodle/facilitator/common/footer }}
+
+</div>

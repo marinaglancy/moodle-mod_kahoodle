@@ -1,0 +1,38 @@
+{{!
+    This file is part of mod_kahoodle plugin
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_kahoodle/facilitator/common/questionheader
+
+    Quiz overlay header partial.
+
+    Context variables required for this template:
+    * quiztitle - The title of the quiz/kahoodle activity
+    * sortorder - Current question number
+    * totalquestions - Total number of questions in the round
+
+
+    Example context (json):
+    {
+        "quiztitle": "Geography & World Facts Quiz",
+        "sortorder": 36,
+        "totalquestions": 42
+    }
+}}
+<header class="mod_kahoodle-header">
+    <div class="mod_kahoodle-quiz-title">{{quiztitle}}</div>
+    <div class="mod_kahoodle-question-counter">{{#str}}questioncounter, mod_kahoodle, { "current": "{{sortorder}}", "total": "{{totalquestions}}" }{{/str}}</div>
+</header>

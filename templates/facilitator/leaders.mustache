@@ -15,7 +15,7 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_kahoodle/stages/leaders
+    @template mod_kahoodle/facilitator/leaders
 
     Leaderboard stage template - shown after question results.
 
@@ -41,20 +41,17 @@
 }}
 <div class="mod_kahoodle-overlay" {{#backgroundurl}}style="background-image: url('{{backgroundurl}}');"{{/backgroundurl}}>
 
-    <header class="mod_kahoodle-header">
-        <div class="mod_kahoodle-quiz-title">{{quiztitle}}</div>
-        <div class="mod_kahoodle-question-counter">{{#str}}questioncounter, mod_kahoodle, { "current": "{{currentquestion}}", "total": "{{totalquestions}}" }{{/str}}</div>
-    </header>
+    {{> mod_kahoodle/facilitator/common/questionheader }}
 
     <main class="mod_kahoodle-main mod_kahoodle-leaders" data-stage="leaders">
 
         <div class="mod_kahoodle-leaders-content">
-            <h1 class="mod_kahoodle-leaders-title">{{#str}}stage_leaders, mod_kahoodle{{/str}}</h1>
-            <p class="mod_kahoodle-leaders-placeholder">{{#str}}stage_leaders_placeholder, mod_kahoodle{{/str}}</p>
+            <h1 class="mod_kahoodle-leaders-title">Leaderboard</h1>
+            <p class="mod_kahoodle-leaders-placeholder">Leaderboard will be displayed here</p>
         </div>
 
     </main>
 
-    {{> mod_kahoodle/common/footer }}
+    {{> mod_kahoodle/facilitator/common/footer }}
 
 </div>

@@ -29,7 +29,8 @@
         "backgroundurl": "/mod/kahoodle/pix/classroom-bg.jpg"
     }
 }}
-<div class="mod_kahoodle-overlay mod_kahoodle-waiting" {{#backgroundurl}}style="background-image: url('{{backgroundurl}}');"{{/backgroundurl}}>
+{{< mod_kahoodle/participant/common/base }}
+{{$ main_content }}
 
     <header class="mod_kahoodle-header">
         <div class="mod_kahoodle-quiz-title">{{quiztitle}}</div>
@@ -49,4 +50,5 @@
         </div>
     </footer>
 
-</div>
+{{/ main_content }}
+{{/ mod_kahoodle/participant/common/base }}

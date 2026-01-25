@@ -15,7 +15,7 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_kahoodle/common/question_question
+    @template mod_kahoodle/facilitator/question
 
     Question progress display during a quiz round.
 
@@ -58,7 +58,7 @@
 }}
 <div class="mod_kahoodle-overlay" {{#backgroundurl}}style="background-image: url('{{backgroundurl}}');"{{/backgroundurl}}>
 
-    {{> mod_kahoodle/common/header }}
+    {{> mod_kahoodle/facilitator/common/questionheader }}
 
     {{! Main content: Question, image, and options }}
     <main class="mod_kahoodle-main" data-stage="question" data-questiontype="{{questiontype}}">
@@ -81,6 +81,6 @@
 
     </main>
 
-    {{> mod_kahoodle/common/footer }}
+    {{> mod_kahoodle/facilitator/common/footer }}
 
 </div>

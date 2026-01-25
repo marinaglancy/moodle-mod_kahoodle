@@ -1,0 +1,44 @@
+{{!
+    This file is part of mod_kahoodle plugin
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_kahoodle/questiontypes/multichoice/participant_question
+
+    Shown to participants for multiple choice questions during the question stage.
+
+    Example context (json):
+    {
+    }
+}}
+{{< mod_kahoodle/participant/question }}
+{{$ question_type_contents }}
+{{#typedata}}
+{{! Answer options }}
+<div class="mod_kahoodle-options{{#manyoptions}} mod_kahoodle-options-many{{/manyoptions}}">
+    <div class="mod_kahoodle-options-grid{{#manyoptions}} mod_kahoodle-options-grid-compact{{/manyoptions}}">
+        {{#options}}
+        <div class="mod_kahoodle-option mod_kahoodle-option{{optionnumber}}" data-option="{{optionnumber}}">
+            <div class="mod_kahoodle-option-icon">
+                <span class="mod_kahoodle-icon-letter">{{letter}}</span>
+            </div>
+        </div>
+        {{/options}}
+    </div>
+</div>
+{{/typedata}}
+{{/ question_type_contents }}
+{{/ mod_kahoodle/participant/question }}
+

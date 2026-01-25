@@ -15,7 +15,7 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_kahoodle/common/question_results
+    @template mod_kahoodle/facilitator/results
 
     Question results display showing answer distribution bar chart.
 
@@ -50,7 +50,7 @@
 }}
 <div class="mod_kahoodle-overlay" {{#backgroundurl}}style="background-image: url('{{backgroundurl}}');"{{/backgroundurl}}>
 
-    {{> mod_kahoodle/common/header }}
+    {{> mod_kahoodle/facilitator/common/questionheader }}
 
     {{! Main content: Question, bar chart, and options }}
     <main class="mod_kahoodle-main" data-stage="results" data-questiontype="{{questiontype}}">
@@ -66,6 +66,6 @@
 
     </main>
 
-    {{> mod_kahoodle/common/footer }}
+    {{> mod_kahoodle/facilitator/common/footer }}
 
 </div>

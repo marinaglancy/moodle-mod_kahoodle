@@ -33,13 +33,8 @@
         "caneditavatar": true
     }
 }}
-<div class="mod_kahoodle-overlay">
-    <div class="mod_kahoodle-participant-body">
-        <div class="mod_kahoodle-participant-container">
-            {{! Close Button }}
-            <a href="#" class="mod_kahoodle-participant-close" data-action="close">
-                {{#pix}}i/window_close, core, {{#str}}close, mod_kahoodle{{/str}}{{/pix}}
-            </a>
+{{< mod_kahoodle/participant/common/base }}
+    {{$ main_content }}
 
             {{! Activity Name }}
             <div class="mod_kahoodle-participant-header">
@@ -75,6 +70,5 @@
                     <span>{{#str}}startingsoonpleasewait, mod_kahoodle{{/str}}</span>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
+    {{/ main_content }}
+{{/ mod_kahoodle/participant/common/base }}
