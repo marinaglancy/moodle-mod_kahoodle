@@ -41,15 +41,17 @@
     {{^timeup}}
         {{#iscorrect}}
             <div>Correct!</div>
+
+            <div>+ {{points}} points</div>
         {{/iscorrect}}
         {{^iscorrect}}
             <div>Incorrect</div>
         {{/iscorrect}}
     {{/timeup}}
 
-    <div>You're in {{rank}} place</div>
-
-    <div>{{{rankstatus}}}</div>
+    {{#rankstatus}}
+        <div>{{{rankstatus}}}</div>
+    {{/rankstatus}}
 
     <div>Total score: {{totalscore}}</div>
 {{/ main_content }}

@@ -29,9 +29,9 @@
 {{$ main_content }}
 <div>TODO revision placeholder</div>
 
-    <div>{{points}} points</div>
-
-    <div>{{rank}} place</div>
+    {{#rankstatus}}
+        <div>{{{rankstatus}}}</div>
+    {{/rankstatus}}
 
     <div>Total score: {{totalscore}}</div>
 {{/ main_content }}

@@ -1,0 +1,73 @@
+{{!
+    This file is part of mod_kahoodle plugin
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_kahoodle/facilitator/common/leaderboard
+
+    TODO describe template leaderboard
+
+    Example context (json):
+    {
+        "leaders": [
+            {
+                "rank": 1,
+                "displayname": "Alice",
+                "score": 100,
+                "updownstatus": "<span class=\"mod_kahoodle-leader-up\">&#9650;</span>"
+            },
+            {
+                "rank": 2,
+                "displayname": "Bob",
+                "score": 80,
+                "updownstatus": "<span class=\"mod_kahoodle-leader-down\">&#9660;</span>"
+            }
+        ]
+    }
+}}
+<table class="mod_kahoodle-leaders-table">
+    <thead>
+        <tr>
+            <th>Rank</th>
+            <th colspan="2">Participant</th>
+            <th>Score</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#leaders}}
+        <tr>
+            <td>{{rank}}</td>
+            <td>
+                <div class="mod_kahoodle-participant-avatar-circle">
+                    <img src="{{avatarurl}}" alt="" class="mod_kahoodle-participant-avatar-img">
+                </div>
+            </td>
+            <td>
+                {{{displayname}}}
+            </td>
+            <td>{{score}}</td>
+            <td>
+                {{#isup}}
+                    <span class="mod_kahoodle-leader-up">&#9650;</span>
+                {{/isup}}
+                {{#isdown}}
+                    <span class="mod_kahoodle-leader-down">&#9660;</span>
+                {{/isdown}}
+            </td>
+        </tr>
+        {{/leaders}}
+    </tbody>
+</table>

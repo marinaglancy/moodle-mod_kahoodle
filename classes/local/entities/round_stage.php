@@ -247,6 +247,11 @@ class round_stage {
             ];
         }
 
+        $rank = $round->get_rankings()[$participant->get_id()] ?? rank::create_empty($participant);
+        $data['templatedata'] += [
+            'totalscore' => $rank->score,
+        ];
+
         $response = null;
         if (
             $stagename === constants::STAGE_QUESTION_PREVIEW ||
@@ -277,15 +282,12 @@ class round_stage {
                 } else {
                     $data['templatedata']['timeup'] = true;
                 }
-                // TODO calculate rank and rankstatus.
+                $data['templatedata']['rankstatus'] = $rank->get_status_message();
             }
         }
 
-        if ($stagename === constants::STAGE_QUESTION && !empty($response)) {
-            // Hide total score during question stage after the answer until the end of the stage.
-            $data['templatedata']['totalscore'] = '?';
-        } else {
-            $data['templatedata']['totalscore'] = $participant->get_total_score();
+        if ($stagename === constants::STAGE_QUESTION_RESULTS || $stagename === constants::STAGE_REVISION) {
+            $data['templatedata']['rankstatus'] = $rank->get_status_message();
         }
 
         return $data;
@@ -368,6 +370,21 @@ class round_stage {
         // For now, return placeholder data.
         $round = $this->get_round();
         $kahoodle = $round->get_kahoodle();
+
+        $leaderranks = $this->round->get_leaders();
+        $leaders = [];
+        foreach ($leaderranks as $rank) {
+            $rankmoved = $rank->get_rank_movement_status();
+            $leaders[] = [
+                'displayname' => $rank->participant->get_display_name(),
+                'avatarurl' => $rank->participant->get_avatar_url(100)->out(false),
+                'score' => $rank->score,
+                'rank' => $rank->minrank,
+                'isup' => $rankmoved < 0,
+                'isdown' => $rankmoved > 0,
+            ];
+        }
+
         return [
             'quiztitle' => $kahoodle->name,
             'sortorder' => $this->get_question_number() ?: $round->get_questions_count(),
@@ -376,7 +393,7 @@ class round_stage {
             'isedit' => false,
             'backgroundurl' => $CFG->wwwroot . '/mod/kahoodle/pix/classroom-bg.jpg',
             // Placeholder for actual leaderboard.
-            'leaders' => [],
+            'leaders' => $leaders,
         ];
     }
 }

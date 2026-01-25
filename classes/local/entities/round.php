@@ -417,6 +417,7 @@ class round {
     public function clear_participant_cache(): void {
         $this->currentuserparticipant = null;
         $this->participantscache = null;
+        $this->questionrankings = [];
     }
 
     /**
@@ -427,6 +428,7 @@ class round {
     public function clear_questions_cache(): void {
         $this->questionscount = null;
         $this->stagescache = null;
+        $this->questionrankings = [];
     }
 
     /**
@@ -457,5 +459,203 @@ class round {
         foreach ($updaterecord as $key => $value) {
             $this->data->$key = $value;
         }
+
+        $this->questionrankings = [];
+    }
+
+    /**
+     * Get rankings for all participants in this round (excluding the current question if it is still in progress)
+     *
+     * Calculates rankings based on total score (descending), with ties handled
+     * by join time (earlier joiners ranked higher) and participant ID as final tiebreaker.
+     *
+     * Returns an associative array keyed by participant ID, where each entry contains:
+     * - minrank: The best possible rank (1 = first place)
+     * - maxrank: The worst possible rank (equals minrank if no tie)
+     * - tiewith: Array of participant IDs sharing the same score
+     * - prevscore: The score of the rank immediately above (null for 1st place)
+     * - withprevrank: Array of participant IDs at the previous rank
+     *
+     * Example: If participants A(100pts), B(80pts), C(80pts), D(50pts):
+     * - A: minrank=1, maxrank=1, tiewith=[]
+     * - B: minrank=2, maxrank=3, tiewith=[C], prevscore=100
+     * - C: minrank=2, maxrank=3, tiewith=[B], prevscore=100
+     * - D: minrank=4, maxrank=4, tiewith=[], prevscore=80
+     *
+     * @return rank[] Array of rank objects indexed by participant ID
+     */
+    public function get_rankings(): array {
+        return $this->get_question_rankings($this->get_last_answered_question_number());
+    }
+
+    /**
+     * Get randkings of all participants in this round after the previous question
+     *
+     * Can be used to compare how rankings changed after the last question.
+     *
+     * @return rank[] Array of rank objects indexed by participant ID
+     */
+    public function get_prev_question_rankings(): array {
+        return $this->get_question_rankings($this->get_last_answered_question_number() - 1);
+    }
+
+    /**
+     * Get sortorder of the last question for which the STAGE_QUESTION is finished
+     *
+     * @return int
+     */
+    public function get_last_answered_question_number(): int {
+        $currentstage = $this->get_current_stage_name();
+        $currentquestion = (int)$this->data->currentquestion;
+
+        if (
+            $currentstage === constants::STAGE_QUESTION_RESULTS ||
+            $currentstage === constants::STAGE_LEADERS
+        ) {
+            return $currentquestion;
+        }
+        if (
+            $currentstage === constants::STAGE_REVISION ||
+            $currentstage === constants::STAGE_ARCHIVED
+        ) {
+            return $this->get_questions_count();
+        }
+        if (
+            $currentstage === constants::STAGE_QUESTION_PREVIEW ||
+            $currentstage === constants::STAGE_QUESTION
+        ) {
+            return $currentquestion - 1;
+        }
+        return 0;
+    }
+
+    /**
+     * Get rankings for all participants in this round
+     *
+     * Calculates rankings based on total score (descending), with ties handled
+     * by join time (earlier joiners ranked higher) and participant ID as final tiebreaker.
+     *
+     * Returns an associative array keyed by participant ID, where each entry contains:
+     * - minrank: The best possible rank (1 = first place)
+     * - maxrank: The worst possible rank (equals minrank if no tie)
+     * - tiewith: Array of participant IDs sharing the same score
+     * - prevscore: The score of the rank immediately above (null for 1st place)
+     * - withprevrank: Array of participant IDs at the previous rank
+     *
+     * Example: If participants A(100pts), B(80pts), C(80pts), D(50pts):
+     * - A: minrank=1, maxrank=1, tiewith=[]
+     * - B: minrank=2, maxrank=3, tiewith=[C], prevscore=100
+     * - C: minrank=2, maxrank=3, tiewith=[B], prevscore=100
+     * - D: minrank=4, maxrank=4, tiewith=[], prevscore=80
+     *
+     * @param int[] $scores Participants scores indexed by participant id
+     * @return rank[] Array of rank objects indexed by participant ID
+     */
+    public function get_rankings_int(array $scores): array {
+        $participants = $this->get_all_participants();
+
+        // Ensure scores are available for all participants.
+        if ($scores !== null) {
+            foreach ($participants as $participant) {
+                if (!isset($scores[$participant->get_id()])) {
+                    $scores[$participant->get_id()] = 0;
+                }
+            }
+        }
+
+        $comparerank = function (participant $one, participant $two) use ($scores) {
+            // Sort by total score desc, by id asc to have consistent order.
+            return $scores[$two->get_id()] <=> $scores[$one->get_id()] ?:
+                $one->get_id() <=> $two->get_id();
+        };
+
+        uasort($participants, $comparerank);
+
+        $groupbyscore = [];
+        foreach ($participants as $participant) {
+            $score = $scores[$participant->get_id()];
+            if (!isset($groupbyscore[$score])) {
+                $groupbyscore[$score] = [];
+            }
+            $groupbyscore[$score][] = $participant;
+        }
+
+        $rankings = [];
+        $lastrank = 0;
+        $prevscore = null;
+        foreach ($groupbyscore as $score => $participantswithscore) {
+            $minrank = $lastrank + 1;
+            $maxrank = $lastrank + count($participantswithscore);
+            foreach ($participantswithscore as $participant) {
+                $rankings[$participant->get_id()] =
+                    new rank(
+                        $participant,
+                        $score,
+                        $minrank,
+                        $maxrank,
+                        array_filter($participantswithscore, fn($p) => $p !== $participant),
+                        $prevscore,
+                        $prevscore > 0 ? array_filter(
+                            $groupbyscore[$prevscore] ?? [],
+                            fn($p) => $p !== $participant
+                        ) : []
+                    );
+            }
+            $lastrank = $maxrank;
+            $prevscore = $score;
+        }
+
+        return $rankings;
+    }
+
+    /** @var array cache of question rankings */
+    protected array $questionrankings = [];
+
+    /**
+     * Get rankings up to the question with the given question number
+     *
+     * @param int $questionnumber
+     * @return rank[] Array of rank objects indexed by participant ID
+     */
+    protected function get_question_rankings(int $questionnumber): array {
+        global $DB;
+        if ($questionnumber < 1) {
+            return [];
+        }
+        if (isset($this->questionrankings[$questionnumber])) {
+            return $this->questionrankings[$questionnumber];
+        }
+
+        $scores = $DB->get_records_sql_menu('
+            SELECT p.id, SUM(r.points) AS totalscore
+            FROM {kahoodle_participants} p
+            JOIN {kahoodle_responses} r ON r.participantid = p.id
+            JOIN {kahoodle_round_questions} rq ON rq.id = r.roundquestionid
+            WHERE p.roundid = :roundid AND rq.sortorder <= :questionnumber
+            GROUP BY p.id
+        ', [
+            'roundid' => $this->get_id(),
+            'questionnumber' => $questionnumber,
+        ]);
+
+        $this->questionrankings[$questionnumber] = $this->get_rankings_int($scores);
+        return $this->questionrankings[$questionnumber];
+    }
+
+    /**
+     * Get top participants (leaders) for this round
+     *
+     * @param int $maxnumber
+     * @return rank[]
+     */
+    public function get_leaders(int $maxnumber = 5): array {
+        $rankings = $this->get_rankings();
+        $rankingsprev = $this->get_prev_question_rankings();
+        $leaders = count($rankings) > $maxnumber ? array_slice($rankings, 0, $maxnumber, true) : $rankings;
+        foreach ($leaders as $participantid => $rank) {
+            $prevrank = $rankingsprev[$participantid] ?? null;
+            $leaders[$participantid]->prevquestionrank = $prevrank;
+        }
+        return $leaders;
     }
 }

@@ -105,4 +105,82 @@ class mod_kahoodle_generator extends testing_module_generator {
         // Use the questions API to add the question.
         return \mod_kahoodle\questions::add_question($record);
     }
+
+    /**
+     * Creates a participant for a round for testing purposes.
+     *
+     * @param array|stdClass $record data for participant being generated. Requires 'roundid' and 'userid' keys.
+     *     Optional fields:
+     *     - displayname: Display name (default: 'User {userid}')
+     *     - totalscore: Total score (default: 0)
+     *     - timecreated: Time created (default: current time)
+     * @return int The participant ID
+     */
+    public function create_participant($record): int {
+        global $DB;
+
+        $record = (object)(array)$record;
+
+        if (empty($record->roundid)) {
+            throw new coding_exception('roundid must be specified when creating a participant');
+        }
+        if (empty($record->userid)) {
+            throw new coding_exception('userid must be specified when creating a participant');
+        }
+
+        if (!isset($record->displayname)) {
+            $record->displayname = 'User ' . $record->userid;
+        }
+        if (!isset($record->totalscore)) {
+            $record->totalscore = 0;
+        }
+        if (!isset($record->timecreated)) {
+            $record->timecreated = time();
+        }
+
+        return $DB->insert_record('kahoodle_participants', $record);
+    }
+
+    /**
+     * Creates a response for a participant for testing purposes.
+     *
+     * @param array|stdClass $record data for response being generated. Requires 'participantid' and 'roundquestionid' keys.
+     *     Optional fields:
+     *     - response: The response string (default: '1')
+     *     - iscorrect: Whether correct (default: 1)
+     *     - points: Points earned (default: 100)
+     *     - responsetime: Response time in seconds (default: 5.0)
+     *     - timecreated: Time created (default: current time)
+     * @return int The response ID
+     */
+    public function create_response($record): int {
+        global $DB;
+
+        $record = (object)(array)$record;
+
+        if (empty($record->participantid)) {
+            throw new coding_exception('participantid must be specified when creating a response');
+        }
+        if (empty($record->roundquestionid)) {
+            throw new coding_exception('roundquestionid must be specified when creating a response');
+        }
+
+        if (!isset($record->response)) {
+            $record->response = '1';
+        }
+        if (!isset($record->iscorrect)) {
+            $record->iscorrect = 1;
+        }
+        if (!isset($record->points)) {
+            $record->points = 100;
+        }
+        if (!isset($record->responsetime)) {
+            $record->responsetime = 5.0;
+        }
+        if (!isset($record->timecreated)) {
+            $record->timecreated = time();
+        }
+
+        return $DB->insert_record('kahoodle_responses', $record);
+    }
 }
