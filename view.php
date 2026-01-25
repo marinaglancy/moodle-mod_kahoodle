@@ -22,6 +22,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_kahoodle\local\game\realtime_channels;
+
 require(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 
@@ -108,11 +110,7 @@ $participant = $round->is_participant();
 if ($round->is_in_progress()) {
     if ($participant) {
         // User is a participant - load participant JS only (even if they have facilitate capability).
-        $gamechannel = new \tool_realtime\channel($context, 'mod_kahoodle', 'game', $round->get_id());
-        $gamechannel->subscribe();
-
-        $participantchannel = new \tool_realtime\channel($context, 'mod_kahoodle', 'participant', $participant->get_id());
-        $participantchannel->subscribe();
+        realtime_channels::subscribe_as_participant($participant);
 
         $PAGE->requires->js_call_amd('mod_kahoodle/participant', 'init', [
             $round->get_id(),
@@ -121,8 +119,7 @@ if ($round->is_in_progress()) {
         ]);
     } else if ($round->is_facilitator()) {
         // User is not a participant but can facilitate - load facilitator JS.
-        $channel = new \tool_realtime\channel($context, 'mod_kahoodle', 'facilitator', $round->get_id());
-        $channel->subscribe();
+        realtime_channels::subscribe_as_facilitator($round);
 
         $PAGE->requires->js_call_amd('mod_kahoodle/gamecontroller', 'init', [
             $round->get_id(),

@@ -17,6 +17,7 @@
 namespace mod_kahoodle\local\questiontypes;
 
 use mod_kahoodle\constants;
+use mod_kahoodle\local\entities\participant;
 use mod_kahoodle\local\entities\round_question;
 
 /**
@@ -44,6 +45,25 @@ abstract class base {
      * @return string
      */
     abstract public function get_display_name(): string;
+
+    /**
+     * Returns the name of the template for this question type and role/stage (either type-specific or basic)
+     *
+     * @param string $role Role of the user (facilitator/participant)
+     * @param string $stage Stage name (question preview/question/results)
+     * @return string
+     */
+    public function get_template(string $role, string $stage): string {
+        $template = 'mod_kahoodle/questiontypes/' . $this->get_type() . '/' . $role . '_' . $stage;
+        try {
+            \core\output\mustache_template_finder::get_template_filepath($template);
+            return $template;
+        // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+        } catch (\moodle_exception $e) {
+            // Template not found, will use fallback.
+        }
+        return 'mod_kahoodle/' . $role . '/' . $stage;
+    }
 
     /**
      * Sanitizes the data before adding/editing a question.
@@ -149,4 +169,22 @@ abstract class base {
      * @return array
      */
     abstract public function export_template_data(round_question $roundquestion, string $stage, bool $mockresults = false): array;
+
+    /**
+     * Export question type specific data for templates
+     *
+     * This method returns an array of data specific to this question type
+     * that will be JSON-encoded and passed to the template via JavaScript.
+     * The JS will decode it and merge with the main template data.
+     *
+     * @param participant $participant The participant
+     * @param round_question $roundquestion
+     * @param string $stage (one of constants::STAGE_QUESTION_PREVIEW, constants::STAGE_QUESTION, constants::STAGE_QUESTION_RESULTS)
+     * @return array
+     */
+    abstract public function export_template_data_participant(
+        participant $participant,
+        round_question $roundquestion,
+        string $stage
+    ): array;
 }

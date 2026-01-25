@@ -21,11 +21,16 @@
 
     Example context (json):
     {
-        "answered": true
+        "answered": true,
+        "sortorder": 1
     }
 }}
 {{< mod_kahoodle/participant/common/base }}
 {{$ main_content }}
+<div>TODO question placeholder</div>
+<div>
+    Question {{sortorder}}
+</div>
 {{^answered}}
         {{! Question type specific content }}
         {{$ question_type_contents }}

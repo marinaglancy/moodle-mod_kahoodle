@@ -207,13 +207,13 @@ class round_stage {
      *
      * For now, all stages show a simple "Please wait" template.
      *
+     * @param participant $participant The participant
      * @return array Stage data including template, templatedata, and duration
      */
-    public function export_data_for_participants(): array {
-        global $PAGE, $CFG;
+    public function export_data_for_participant(participant $participant): array {
+        global $PAGE;
 
         $round = $this->get_round();
-        $kahoodle = $round->get_kahoodle();
 
         // Ensure PAGE is set up for rendering (needed when called from realtime callback).
         if (!$PAGE->has_set_url()) {
@@ -228,26 +228,41 @@ class round_stage {
             'totalquestions' => $round->get_questions_count(),
             'templatedata' => [
                 'quiztitle' => $round->get_kahoodle_name(),
-            ],
-        ];
-        $data['duration'] = 0; // No auto-advance for participants.
-        $participant = $round->is_participant();
-
-        if ($this->get_stage_name() === constants::STAGE_LOBBY) {
-            // Game is over, no more content to show.
-            $data['template'] = 'mod_kahoodle/participant/lobby';
-            $data['templatedata'] += [
                 'avatarurl' => $participant->get_avatar_url(100)->out(false),
                 'displayname' => $participant->get_display_name(),
+            ],
+            'duration' => 0, // No auto-advance for participants.
+            'template' => 'mod_kahoodle/participant/' . $this->get_stage_name(),
+        ];
+
+        if ($this->get_stage_name() === constants::STAGE_LOBBY) {
+            // Lobby. Participant joined but waiting for other players to join.
+            $data['templatedata'] += [
                 'caneditavatar' => false, // TODO: Implement avatar editing.
             ];
-            return $data;
         }
 
-        // For now, all stages show the waiting template for participants.
-        // TODO: Implement stage-specific templates for participants.
-        $data['template'] = 'mod_kahoodle/participant/waiting';
-        $data['templatedata'] += [];
+        if ($this->get_stage_name() === constants::STAGE_LEADERS || $this->get_stage_name() === constants::STAGE_QUESTION_RESULTS) {
+            // For participants, leaders stage shows the results template.
+            $data['template'] = 'mod_kahoodle/participant/results';
+        }
+
+        if (
+            $this->get_stage_name() === constants::STAGE_QUESTION_PREVIEW ||
+            $this->get_stage_name() === constants::STAGE_QUESTION ||
+            $this->get_stage_name() === constants::STAGE_QUESTION_RESULTS
+        ) {
+            $data['templatedata']['sortorder'] = $this->get_question_number();
+            $questiontype = $this->roundquestion->get_question_type();
+            $data['template'] = $questiontype->get_template('participant', $this->get_stage_name());
+            $typedata = $this->roundquestion->get_question_type()->export_template_data_participant(
+                $participant,
+                $this->roundquestion,
+                $this->get_stage_name()
+            );
+            $data['templatedata']['questiontype'] = $questiontype->get_type();
+            $data['templatedata']['typedata'] = json_encode($typedata);
+        }
 
         return $data;
     }

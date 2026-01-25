@@ -47,6 +47,7 @@ class progress {
 
         // Update round to the first stage (normally the lobby).
         $round->set_current_stage($firststage);
+        // No notification to participants because nobody is listening yet.
     }
 
     /**
@@ -65,6 +66,7 @@ class progress {
         // Update round to archived stage.
         $stage = new round_stage($round, constants::STAGE_ARCHIVED, null, 0);
         $round->set_current_stage($stage);
+        realtime_channels::notify_participants_stage_advanced($round);
     }
 
     /**
@@ -94,6 +96,7 @@ class progress {
         if ($nextstage != null) {
             // Update round.
             $round->set_current_stage($nextstage);
+            realtime_channels::notify_participants_stage_advanced($round);
         } else {
             $nextstage = $round->get_current_stage();
         }

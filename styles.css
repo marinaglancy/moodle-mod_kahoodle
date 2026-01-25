@@ -844,6 +844,7 @@
     min-height: 100vh;
     background-color: #2a2a2a;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #fff;
 }
 
 .mod_kahoodle-participant-container {
@@ -883,7 +884,6 @@
 }
 
 .mod_kahoodle-participant-activity {
-    color: #fff;
     font-size: 1.25rem;
     font-weight: 600;
     margin: 0;
@@ -951,7 +951,6 @@
 }
 
 .mod_kahoodle-participant-container .mod_kahoodle-participant-display-name {
-    color: #fff;
     font-size: 1.5rem;
     font-weight: 600;
     margin: 0;

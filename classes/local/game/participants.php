@@ -63,7 +63,7 @@ class participants {
 
         // If round is in lobby stage, notify facilitators with updated stage data.
         if ($round->get_current_stage_name() === constants::STAGE_LOBBY) {
-            self::notify_facilitators_participant_joined($round);
+            realtime_channels::notify_facilitators_participant_joined($round);
         }
     }
 
@@ -93,28 +93,7 @@ class participants {
 
         // If round is in lobby stage, notify facilitators with updated stage data.
         if ($round->get_current_stage_name() === constants::STAGE_LOBBY) {
-            self::notify_facilitators_participant_joined($round);
+            realtime_channels::notify_facilitators_participant_joined($round);
         }
-    }
-
-    /**
-     * Notify facilitators that a participant has joined
-     *
-     * Sends the updated lobby stage data to the facilitator channel.
-     *
-     * @param round $round The round
-     */
-    protected static function notify_facilitators_participant_joined(round $round): void {
-        $context = $round->get_context();
-
-        // Create the facilitator channel.
-        $channel = new \tool_realtime\channel($context, 'mod_kahoodle', 'facilitator', $round->get_id());
-
-        // Get current stage data for facilitators.
-        $stage = $round->get_current_stage();
-        $stagedata = $stage->export_data_for_facilitators();
-
-        // Notify all subscribers on the facilitator channel.
-        $channel->notify($stagedata);
     }
 }

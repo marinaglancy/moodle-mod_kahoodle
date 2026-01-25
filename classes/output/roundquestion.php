@@ -90,15 +90,7 @@ class roundquestion implements renderable, templatable {
 
         // Question stage information.
         $templatedata->stage = $this->stage;
-        $template = 'mod_kahoodle/questiontypes/' . strtolower($templatedata->questiontype) .
-            '/facilitator_' . $templatedata->stage;
-        try {
-            \core\output\mustache_template_finder::get_template_filepath($template);
-        } catch (\moodle_exception $e) {
-            // Template not found, will use fallback.
-            $template = 'mod_kahoodle/facilitator/' . $templatedata->stage;
-        }
-        $templatedata->template = $template;
+        $templatedata->template = $this->roundquestion->get_question_type()->get_template('facilitator', $this->stage);
         $templatedata->duration = $this->roundquestion->get_stage_duration($this->stage);
 
         return $templatedata;

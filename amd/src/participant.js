@@ -185,6 +185,28 @@ const handleConnectionLost = (e) => {
 };
 
 /**
+ * Process template data to decode typedata and add type boolean
+ *
+ * @param {Object} templatedata The template data from the server
+ * @returns {Object} Processed template data ready for rendering
+ */
+const processTemplateData = (templatedata) => {
+    const processed = {...templatedata};
+
+    // Decode the JSON-encoded type-specific data if present.
+    if (processed.typedata && typeof processed.typedata === 'string') {
+        processed.typedata = JSON.parse(processed.typedata);
+    }
+
+    // Add typeis<type> boolean for Mustache conditional rendering.
+    if (processed.questiontype) {
+        processed['typeis' + processed.questiontype] = true;
+    }
+
+    return processed;
+};
+
+/**
  * Show a stage in the participant overlay
  *
  * @param {Object} stageData The stage data from the server
@@ -200,8 +222,11 @@ const showStage = async(stageData) => {
     }
 
     try {
+        // Process template data (decode typedata, add type booleans).
+        const templatedata = processTemplateData(stageData.templatedata);
+
         // Render the template.
-        const html = await Templates.render(stageData.template, stageData.templatedata);
+        const html = await Templates.render(stageData.template, templatedata);
 
         // Create or update the overlay container.
         if (!participantState.overlayContainer) {

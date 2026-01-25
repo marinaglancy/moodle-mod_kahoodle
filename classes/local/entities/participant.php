@@ -45,6 +45,15 @@ class participant {
     }
 
     /**
+     * Get the round entity
+     *
+     * @return round
+     */
+    public function get_round(): round {
+        return $this->round;
+    }
+
+    /**
      * Load participants for a round
      *
      * @param round $round The round entity
@@ -55,7 +64,7 @@ class participant {
     public static function load_round_participants(round $round, string $extraquery = '', array $extraparams = []): array {
         global $DB;
 
-        $userfields = \core_user\fields::for_userpic()->with_name()->excluding('email');
+        $userfields = \core_user\fields::for_userpic()->with_name();
         ['selects' => $userfieldssql, 'joins' => $userfieldsjoin, 'params' => $userfieldsparams,
         'mappings' => $mappings] =
                 (array)$userfields->get_sql('u', true, 'user_');

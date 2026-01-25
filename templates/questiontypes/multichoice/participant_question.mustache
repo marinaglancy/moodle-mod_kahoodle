@@ -23,8 +23,14 @@
     {
     }
 }}
-{{< mod_kahoodle/participant/question }}
-{{$ question_type_contents }}
+{{< mod_kahoodle/participant/common/base }}
+{{$ main_content }}
+<div>TODO question placeholder</div>
+<div>
+    Question {{sortorder}}
+</div>
+{{^answered}}
+<div>Multiple Choice Question Type</div>
 {{#typedata}}
 {{! Answer options }}
 <div class="mod_kahoodle-options{{#manyoptions}} mod_kahoodle-options-many{{/manyoptions}}">
@@ -39,6 +45,16 @@
     </div>
 </div>
 {{/typedata}}
-{{/ question_type_contents }}
-{{/ mod_kahoodle/participant/question }}
 
+{{/answered}}
+{{#answered}}
+    <div>
+    Quick answer!
+    </div>
+
+    <div>
+    Wait for the results...
+    </div>
+{{/answered}}
+{{/ main_content }}
+{{/ mod_kahoodle/participant/common/base }}

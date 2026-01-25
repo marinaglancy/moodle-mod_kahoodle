@@ -17,6 +17,7 @@
 namespace mod_kahoodle\local\questiontypes;
 
 use mod_kahoodle\constants;
+use mod_kahoodle\local\entities\participant;
 use mod_kahoodle\local\entities\round_question;
 
 /**
@@ -152,6 +153,56 @@ class multichoice extends base {
                 $option['heightpercent'] = $heightpercent;
                 $option['isshort'] = $heightpercent < 25;
             }
+            $options[] = $option;
+        }
+
+        return [
+            'options' => $options,
+            'optioncount' => count($options),
+            'manyoptions' => count($options) > 4,
+        ];
+    }
+
+    /**
+     * Export question type specific data for templates
+     *
+     * This method returns an array of data specific to this question type
+     * that will be JSON-encoded and passed to the template via JavaScript.
+     * The JS will decode it and merge with the main template data.
+     *
+     * @param participant $participant The participant
+     * @param round_question $roundquestion
+     * @param string $stage (one of constants::STAGE_QUESTION_PREVIEW, constants::STAGE_QUESTION, constants::STAGE_QUESTION_RESULTS)
+     * @return array
+     */
+    public function export_template_data_participant(
+        participant $participant,
+        round_question $roundquestion,
+        string $stage
+    ): array {
+        $options = [];
+
+        if ($stage == constants::STAGE_QUESTION_PREVIEW) {
+            // In preview stage, we do not show answers.
+            return [];
+        }
+
+        $answers = $this->get_answers_options($roundquestion->get_data()->questionconfig);
+        if (empty($answers)) {
+            return [
+                'options' => $options,
+                'optioncount' => 0,
+                'manyoptions' => false,
+            ];
+        }
+
+        $letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+        foreach ($answers as $index => $answer) {
+            $option = [
+                'optionnumber' => $index + 1,
+                'letter' => $letters[$index] ?? (string)($index + 1),
+            ];
             $options[] = $option;
         }
 
