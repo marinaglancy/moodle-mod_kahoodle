@@ -72,6 +72,9 @@ export const init = (roundId, participantId, contextId) => {
     // Set up event listeners for landing page buttons.
     document.addEventListener('click', handleLandingPageClick);
 
+    // Listen for answer events from question type templates.
+    PubSub.subscribe('mod_kahoodle:answer', handleAnswerEvent);
+
     // Fetch current stage and display the participant overlay.
     fetchCurrentStage();
 };
@@ -87,6 +90,30 @@ const handleLandingPageClick = (e) => {
         e.preventDefault();
         // Re-open the participant overlay.
         fetchCurrentStage();
+    }
+};
+
+/**
+ * Handle answer events from question type templates
+ *
+ * @param {string} response The answer response
+ */
+const handleAnswerEvent = async(response) => {
+    if (!participantState.currentStageData || participantState.currentStageData.stage !== 'question') {
+        return;
+    }
+
+    try {
+        const channel = getParticipantChannel();
+        await RealTimeApi.sendToServer(channel, {
+            action: 'answer',
+            response: response,
+            questionnumber: participantState.currentStageData.currentquestion,
+        });
+        // Server will send stage update via channel notification if successful.
+    } catch (error) {
+        // Silent failure - server will ignore invalid submissions anyway.
+        window.console.error('Failed to submit answer', error);
     }
 };
 
@@ -225,15 +252,14 @@ const showStage = async(stageData) => {
         // Process template data (decode typedata, add type booleans).
         const templatedata = processTemplateData(stageData.templatedata);
 
-        // Render the template.
-        const html = await Templates.render(stageData.template, templatedata);
-
-        // Create or update the overlay container.
+        // Create the overlay container if it doesn't exist.
         if (!participantState.overlayContainer) {
             createOverlayContainer();
         }
 
-        participantState.overlayContainer.innerHTML = html;
+        // Render the template and execute embedded JS.
+        const {html, js} = await Templates.renderForPromise(stageData.template, templatedata);
+        Templates.replaceNodeContents(participantState.overlayContainer, html, js);
     } catch (error) {
         Notification.exception(error);
     }

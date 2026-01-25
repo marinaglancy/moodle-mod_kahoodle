@@ -31,6 +31,7 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │       ├── restore_kahoodle_activity_task.class.php
 │       └── restore_kahoodle_stepslib.php
 ├── classes/
+│   ├── api.php               # General API functions
 │   ├── constants.php         # Plugin constants (defaults, stages, file areas, field lists)
 │   ├── questions.php         # Question management API
 │   ├── courseformat/         # Course format integration
@@ -40,22 +41,28 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   └── course_module_instance_list_viewed.php
 │   ├── external/             # Web service definitions
 │   │   ├── add_questions.php # Batch question creation web service
-│   │   └── delete_question.php # Question deletion web service
+│   │   ├── change_question_sortorder.php # Question reordering web service
+│   │   ├── create_instance.php # Activity instance creation web service
+│   │   ├── delete_question.php # Question deletion web service
+│   │   └── preview_questions.php # Question preview web service
 │   ├── form/                 # Dynamic forms
 │   │   └── question.php      # Question add/edit modal form
 │   ├── local/
 │   │   ├── entities/         # Domain entity classes
+│   │   │   ├── participant.php # Participant entity
 │   │   │   ├── round.php     # Round entity with caching for kahoodle/cm/context
 │   │   │   ├── round_question.php # Round question entity (joins 3 tables)
 │   │   │   └── round_stage.php # Round stage entity for stage data export
 │   │   ├── game/             # Game mechanics
 │   │   │   ├── participants.php # Participant management (join, get)
-│   │   │   └── progress.php  # Game progress and stage transitions
+│   │   │   ├── progress.php  # Game progress and stage transitions
+│   │   │   └── realtime_channels.php # Realtime channel management
 │   │   └── questiontypes/    # Question type implementations
 │   │       ├── base.php      # Abstract base class for question types
 │   │       └── multichoice.php # Multiple choice question type
 │   ├── output/               # Output classes for templates
 │   │   ├── landing.php       # Landing page output (stage-based view)
+│   │   ├── renderer.php      # Plugin renderer
 │   │   └── roundquestion.php # Round question display output
 │   └── reportbuilder/local/  # Report builder components
 │       ├── entities/
@@ -64,31 +71,51 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │           └── questions.php # Questions list system report
 ├── db/
 │   ├── access.php            # Capability definitions
-│   └── install.xml           # Database schema
+│   ├── install.xml           # Database schema
+│   ├── services.php          # Web service definitions
+│   └── upgrade.php           # Database upgrade scripts
 ├── lang/
 │   └── en/
 │       └── kahoodle.php      # English language strings
 ├── pix/
 │   └── monologo.svg          # Module icon
 ├── templates/
-│   ├── common/               # Shared template partials
-│   │   ├── footer.mustache   # Footer with progress bar and controls
-│   │   └── header.mustache   # Header with title and counter
-│   ├── participant/          # Participant-specific templates
+│   ├── facilitator/          # Facilitator view templates
+│   │   ├── common/           # Shared facilitator partials
+│   │   │   ├── footer.mustache      # Footer with progress bar and controls
+│   │   │   └── questionheader.mustache # Question header with number and text
+│   │   ├── leaders.mustache  # Leaderboard display
+│   │   ├── lobby.mustache    # Lobby waiting room
+│   │   ├── preview.mustache  # Question preview stage
+│   │   ├── question.mustache # Question display stage
+│   │   ├── results.mustache  # Question results stage
+│   │   └── revision.mustache # Revision/review stage
+│   ├── participant/          # Participant view templates
+│   │   ├── common/           # Shared participant partials
+│   │   │   └── base.mustache # Base template for participant overlay
+│   │   ├── lobby.mustache    # Lobby waiting for participants
+│   │   ├── preview.mustache  # Question preview for participants
+│   │   ├── question.mustache # Question display for participants
+│   │   ├── results.mustache  # Results display for participants
+│   │   ├── revision.mustache # Revision stage for participants
 │   │   └── waiting.mustache  # Waiting overlay for participants
 │   ├── questiontypes/        # Question type display templates
 │   │   └── multichoice/      # Multiple choice templates
-│   ├── stages/               # Game stage templates (facilitator)
-│   │   ├── leaders.mustache  # Leaderboard display
-│   │   └── lobby.mustache    # Lobby waiting room
+│   │       ├── facilitator_question.mustache # Facilitator question view
+│   │       ├── facilitator_results.mustache  # Facilitator results view
+│   │       └── participant_question.mustache # Participant question view
 │   └── landing.mustache      # Landing page template (view.php)
 ├── tests/
 │   ├── behat/                # Behat acceptance tests
 │   ├── external/             # Web service tests
-│   │   └── add_questions_test.php
+│   │   ├── add_questions_test.php
+│   │   ├── change_question_sortorder_test.php
+│   │   ├── create_instance_test.php
+│   │   └── delete_question_test.php
 │   ├── generator/            # Test data generators
+│   │   ├── behat_mod_kahoodle_generator.php
 │   │   └── lib.php
-│   ├── lib_test.php          # PHPUnit tests for lib.php
+│   ├── api_test.php          # PHPUnit tests for api.php
 │   └── questions_test.php    # PHPUnit tests for questions API
 ├── index.php                 # List all instances in a course
 ├── lib.php                   # Core module functions

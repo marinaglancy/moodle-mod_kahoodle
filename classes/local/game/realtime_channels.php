@@ -97,4 +97,25 @@ class realtime_channels {
             $channel->notify($stagedata);
         }
     }
+
+    /**
+     * Notifiy participant about the changes in the round stage
+     *
+     * @param participant $participant
+     * @return void
+     */
+    public static function notify_participants_stage_changed(participant $participant): void {
+        $round = $participant->get_round();
+        $context = $round->get_context();
+
+        // Create the participant channel.
+        $channel = new \tool_realtime\channel($context, 'mod_kahoodle', 'participant', $participant->get_id());
+
+        // Get current stage data for participants.
+        $stage = $round->get_current_stage();
+        $stagedata = $stage->export_data_for_participant($participant);
+
+        // Notify all subscribers on the participant channel.
+        $channel->notify($stagedata);
+    }
 }

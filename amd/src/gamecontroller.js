@@ -349,15 +349,14 @@ const showStage = async(stageData) => {
             }
         }
 
-        // Render the full template.
-        const html = await Templates.render(stageData.template, templatedata);
-
         // Create or update the overlay container.
         if (!gameState.overlayContainer) {
             createOverlayContainer();
         }
 
-        gameState.overlayContainer.innerHTML = html;
+        // Render the template and execute embedded JS.
+        const {html, js} = await Templates.renderForPromise(stageData.template, templatedata);
+        Templates.replaceNodeContents(gameState.overlayContainer, html, js);
 
         if (stageChanged) {
             // Reset elapsed time for the new stage.

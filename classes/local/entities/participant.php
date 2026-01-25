@@ -136,4 +136,13 @@ class participant {
         );
         return $picture->get_url($PAGE);
     }
+
+    /**
+     * Get total score
+     *
+     * @return int
+     */
+    public function get_total_score(): int {
+        return (int)$this->participantdata->totalscore;
+    }
 }

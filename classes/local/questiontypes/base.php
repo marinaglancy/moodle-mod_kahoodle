@@ -187,4 +187,13 @@ abstract class base {
         round_question $roundquestion,
         string $stage
     ): array;
+
+    /**
+     * Validate a participant's answer
+     *
+     * @param round_question $roundquestion The question
+     * @param string $response The participant's answer
+     * @return bool|null True if correct, false if incorrect, null if invalid
+     */
+    abstract public function validate_answer(round_question $roundquestion, string $response): ?bool;
 }

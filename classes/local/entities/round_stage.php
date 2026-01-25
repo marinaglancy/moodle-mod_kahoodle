@@ -18,7 +18,6 @@ namespace mod_kahoodle\local\entities;
 
 use mod_kahoodle\constants;
 use mod_kahoodle\output\roundquestion;
-use tool_brickfield\local\areas\core_course\fullname;
 
 /**
  * Represents a single stage in a Kahoodle round
@@ -222,6 +221,12 @@ class round_stage {
             $PAGE->set_context($round->get_context());
         }
 
+        $stagename = $this->get_stage_name();
+        if ($stagename === constants::STAGE_LEADERS) {
+            // For participants, leaders stage does not really exist, we show the results stage.
+            $stagename = constants::STAGE_QUESTION_RESULTS;
+        }
+
         $data = [
             'stage' => $this->get_stage_name(),
             'currentquestion' => $this->get_question_number(),
@@ -232,36 +237,55 @@ class round_stage {
                 'displayname' => $participant->get_display_name(),
             ],
             'duration' => 0, // No auto-advance for participants.
-            'template' => 'mod_kahoodle/participant/' . $this->get_stage_name(),
+            'template' => 'mod_kahoodle/participant/' . $stagename,
         ];
 
-        if ($this->get_stage_name() === constants::STAGE_LOBBY) {
+        if ($stagename === constants::STAGE_LOBBY) {
             // Lobby. Participant joined but waiting for other players to join.
             $data['templatedata'] += [
                 'caneditavatar' => false, // TODO: Implement avatar editing.
             ];
         }
 
-        if ($this->get_stage_name() === constants::STAGE_LEADERS || $this->get_stage_name() === constants::STAGE_QUESTION_RESULTS) {
-            // For participants, leaders stage shows the results template.
-            $data['template'] = 'mod_kahoodle/participant/results';
-        }
-
+        $response = null;
         if (
-            $this->get_stage_name() === constants::STAGE_QUESTION_PREVIEW ||
-            $this->get_stage_name() === constants::STAGE_QUESTION ||
-            $this->get_stage_name() === constants::STAGE_QUESTION_RESULTS
+            $stagename === constants::STAGE_QUESTION_PREVIEW ||
+            $stagename === constants::STAGE_QUESTION ||
+            $stagename === constants::STAGE_QUESTION_RESULTS
         ) {
             $data['templatedata']['sortorder'] = $this->get_question_number();
             $questiontype = $this->roundquestion->get_question_type();
-            $data['template'] = $questiontype->get_template('participant', $this->get_stage_name());
+            $data['template'] = $questiontype->get_template('participant', $stagename);
             $typedata = $this->roundquestion->get_question_type()->export_template_data_participant(
                 $participant,
                 $this->roundquestion,
-                $this->get_stage_name()
+                $stagename
             );
             $data['templatedata']['questiontype'] = $questiontype->get_type();
             $data['templatedata']['typedata'] = json_encode($typedata);
+
+            if ($stagename !== constants::STAGE_QUESTION_PREVIEW) {
+                $response = \mod_kahoodle\local\game\responses::get_response($participant, $this->roundquestion);
+                $data['templatedata']['answered'] = $response !== null;
+            }
+
+            // For results stage, include answer result data.
+            if ($stagename === constants::STAGE_QUESTION_RESULTS) {
+                if ($response) {
+                    $data['templatedata']['iscorrect'] = (bool)$response->iscorrect;
+                    $data['templatedata']['points'] = (int)$response->points;
+                } else {
+                    $data['templatedata']['timeup'] = true;
+                }
+                // TODO calculate rank and rankstatus.
+            }
+        }
+
+        if ($stagename === constants::STAGE_QUESTION && !empty($response)) {
+            // Hide total score during question stage after the answer until the end of the stage.
+            $data['templatedata']['totalscore'] = '?';
+        } else {
+            $data['templatedata']['totalscore'] = $participant->get_total_score();
         }
 
         return $data;
@@ -315,11 +339,9 @@ class round_stage {
     protected function get_question_stage_data(
         \renderer_base $output
     ): array {
-        // Create output class - use live mode (no mock results).
-        // TODO: When actual results are implemented, pass false for mockresults.
-        // For now, we still use mock results as a placeholder.
+        // Create output class with real results data.
         $round = $this->get_round();
-        $outputclass = new roundquestion($this->get_round_question(), $this->get_stage_name(), true);
+        $outputclass = new roundquestion($this->get_round_question(), $this->get_stage_name(), false);
         $templatedata = $outputclass->export_for_template($output);
 
         // Add control flag and total questions.

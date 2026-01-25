@@ -58,3 +58,23 @@
 {{/answered}}
 {{/ main_content }}
 {{/ mod_kahoodle/participant/common/base }}
+{{#js}}
+require(['core/pubsub'], function(PubSub) {
+    document.querySelectorAll('.mod_kahoodle-option[data-option]').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (this.classList.contains('mod_kahoodle-option-disabled')) {
+                // Already answered.
+                return;
+            }
+            // Visual feedback - disable all options.
+            document.querySelectorAll('.mod_kahoodle-option').forEach(function(opt) {
+                opt.classList.add('mod_kahoodle-option-disabled');
+            });
+            this.classList.add('mod_kahoodle-option-selected');
+            // Dispatch event for participant.js to catch.
+            PubSub.publish('mod_kahoodle:answer', String(this.dataset.option));
+        });
+    });
+});
+{{/js}}

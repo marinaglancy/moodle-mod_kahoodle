@@ -22,10 +22,11 @@
     Example context (json):
     {
         "timeup": false,
-        "correct": true,
+        "iscorrect": true,
         "rank": 3,
         "rankstatus": "13 points behind John",
-        "sortorder": 1
+        "sortorder": 1,
+        "totalscore": 42
     }
 }}
 {{< mod_kahoodle/participant/common/base }}
@@ -38,16 +39,18 @@
         <div>Time is up!</div>
     {{/timeup}}
     {{^timeup}}
-        {{#correct}}
+        {{#iscorrect}}
             <div>Correct!</div>
-        {{/correct}}
-        {{^correct}}
+        {{/iscorrect}}
+        {{^iscorrect}}
             <div>Incorrect</div>
-        {{/correct}}
+        {{/iscorrect}}
     {{/timeup}}
 
     <div>You're in {{rank}} place</div>
 
     <div>{{{rankstatus}}}</div>
+
+    <div>Total score: {{totalscore}}</div>
 {{/ main_content }}
 {{/ mod_kahoodle/participant/common/base }}

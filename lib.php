@@ -256,6 +256,18 @@ function mod_kahoodle_realtime_event_received(\tool_realtime\channel $channel, $
                 }
                 return ['error' => 'Participant not found'];
 
+            case 'answer':
+                // Record participant's answer (validation and notification handled inside).
+                $response = (string)($payload['response'] ?? '');
+                $questionnumber = clean_param($payload['questionnumber'] ?? 0, PARAM_INT);
+                foreach ($round->get_all_participants() as $participant) {
+                    if ($participant->get_id() == $participantid) {
+                        \mod_kahoodle\local\game\responses::record_answer($participant, $response, $questionnumber);
+                        break;
+                    }
+                }
+                return [];
+
             default:
                 return ['error' => 'Unknown action'];
         }

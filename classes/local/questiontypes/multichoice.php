@@ -243,18 +243,55 @@ class multichoice extends base {
      * @return int[]
      */
     protected function get_answers_count(round_question $roundquestion, bool $mockresults = false): array {
+        global $DB;
+
         $answers = $this->get_answers_options($roundquestion->get_data()->questionconfig);
         $answerscount = array_fill(0, count($answers), 0);
+
         if ($mockresults) {
             // Generate some mock results for teacher preview.
             for ($i = 0; $i < count($answers); $i++) {
-                $count = rand(0, 10);
-                $answerscount[$i] = $count;
+                $answerscount[$i] = rand(0, 10);
             }
         } else {
-            // TODO actual counts!
-            null;
+            // Get actual response counts from database.
+            $responses = $DB->get_records(
+                'kahoodle_responses',
+                ['roundquestionid' => $roundquestion->get_id()],
+                '',
+                'response'
+            );
+
+            foreach ($responses as $responserecord) {
+                $optionnumber = (int)$responserecord->response;
+                // Convert from 1-based to 0-based index.
+                $index = $optionnumber - 1;
+                if (isset($answerscount[$index])) {
+                    $answerscount[$index]++;
+                }
+            }
         }
+
         return $answerscount;
+    }
+
+    /**
+     * Validate a participant's answer for multichoice questions
+     *
+     * @param round_question $roundquestion The question
+     * @param string $response The option number (1-based) as a string
+     * @return bool|null True if correct, false if incorrect, null if invalid
+     */
+    public function validate_answer(round_question $roundquestion, string $response): ?bool {
+        $optionnumber = (int)$response;
+        $options = $this->get_answers_options($roundquestion->get_data()->questionconfig);
+
+        // Invalid option number - return null to indicate invalid answer.
+        if ($optionnumber < 1 || $optionnumber > count($options)) {
+            return null;
+        }
+
+        // Return whether the selected option is correct.
+        return $options[$optionnumber - 1]['iscorrect'];
     }
 }

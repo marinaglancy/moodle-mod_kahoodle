@@ -354,9 +354,6 @@ const showPreviewOverlay = async() => {
         return;
     }
 
-    // Render the template.
-    const html = await Templates.render(question.template, question);
-
     // Create or update the overlay container.
     if (!currentPreviewState.overlayContainer) {
         currentPreviewState.overlayContainer = document.createElement('div');
@@ -378,7 +375,9 @@ const showPreviewOverlay = async() => {
         document.addEventListener('keydown', handlePreviewKeyboard);
     }
 
-    currentPreviewState.overlayContainer.innerHTML = html;
+    // Render the template and execute embedded JS.
+    const {html, js} = await Templates.renderForPromise(question.template, question);
+    Templates.replaceNodeContents(currentPreviewState.overlayContainer, html, js);
 
     // Reset elapsed time for the new question.
     currentPreviewState.autoplayElapsed = 0;
