@@ -17,7 +17,7 @@
 {{!
     @template mod_kahoodle/facilitator/common/leaderboard
 
-    TODO describe template leaderboard
+    Leaderboard display showing top participants with their scores and rank changes.
 
     Example context (json):
     {
@@ -25,49 +25,59 @@
             {
                 "rank": 1,
                 "displayname": "Alice",
+                "avatarurl": "/user/pix.php/2/f2.jpg",
                 "score": 100,
-                "updownstatus": "<span class=\"mod_kahoodle-leader-up\">&#9650;</span>"
+                "isup": 1
             },
             {
                 "rank": 2,
                 "displayname": "Bob",
+                "avatarurl": "/user/pix.php/3/f2.jpg",
                 "score": 80,
-                "updownstatus": "<span class=\"mod_kahoodle-leader-down\">&#9660;</span>"
+                "isdown": 1
+            },
+            {
+                "rank": 3,
+                "displayname": "Charlie",
+                "avatarurl": "/user/pix.php/4/f2.jpg",
+                "score": 60
             }
-        ]
+        ],
+        "statusmessage": "Great job everyone! Get ready for the next question..."
     }
 }}
-<table class="mod_kahoodle-leaders-table">
-    <thead>
-        <tr>
-            <th>Rank</th>
-            <th colspan="2">Participant</th>
-            <th>Score</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
+
+<h1 class="mod_kahoodle-leaderboard-title">{{#str}}leaderboard, mod_kahoodle{{/str}}</h1>
+
+<div class="mod_kahoodle-leaderboard-container">
+    <div class="mod_kahoodle-leaderboard-list">
         {{#leaders}}
-        <tr>
-            <td>{{rank}}</td>
-            <td>
-                <div class="mod_kahoodle-participant-avatar-circle">
-                    <img src="{{avatarurl}}" alt="" class="mod_kahoodle-participant-avatar-img">
-                </div>
-            </td>
-            <td>
-                {{{displayname}}}
-            </td>
-            <td>{{score}}</td>
-            <td>
+        <div class="mod_kahoodle-leaderboard-row">
+            <div class="mod_kahoodle-leaderboard-rank">{{rank}}</div>
+            <div class="mod_kahoodle-leaderboard-avatar">
+                <img src="{{avatarurl}}" alt="">
+            </div>
+            <div class="mod_kahoodle-leaderboard-name">{{{displayname}}}</div>
+            <div class="mod_kahoodle-leaderboard-score">{{score}}</div>
+            <div class="mod_kahoodle-leaderboard-change{{#isup}} mod_kahoodle-leaderboard-up{{/isup}}{{#isdown}} mod_kahoodle-leaderboard-down{{/isdown}}">
                 {{#isup}}
-                    <span class="mod_kahoodle-leader-up">&#9650;</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m18 15-6-6-6 6"/>
+                </svg>
                 {{/isup}}
                 {{#isdown}}
-                    <span class="mod_kahoodle-leader-down">&#9660;</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m6 9 6 6 6-6"/>
+                </svg>
                 {{/isdown}}
-            </td>
-        </tr>
+            </div>
+        </div>
         {{/leaders}}
-    </tbody>
-</table>
+    </div>
+</div>
+
+{{#statusmessage}}
+<div class="mod_kahoodle-leaderboard-status">
+    {{{statusmessage}}}
+</div>
+{{/statusmessage}}

@@ -313,7 +313,7 @@ class round_stage {
             $participantdata[] = [
                 'participantid' => $participant->get_id(),
                 'displayname' => $participant->get_display_name(),
-                'imageurl' => $participant->get_avatar_url(35)->out(false),
+                'avatarurl' => $participant->get_avatar_url(35)->out(false),
             ];
         }
 
@@ -366,10 +366,9 @@ class round_stage {
     protected function get_leaders_template_data(): array {
         global $CFG;
 
-        // TODO: Implement actual leaderboard data retrieval.
-        // For now, return placeholder data.
         $round = $this->get_round();
         $kahoodle = $round->get_kahoodle();
+        $isrevision = $this->get_stage_name() === constants::STAGE_REVISION;
 
         $leaderranks = $this->round->get_leaders();
         $leaders = [];
@@ -377,23 +376,30 @@ class round_stage {
             $rankmoved = $rank->get_rank_movement_status();
             $leaders[] = [
                 'displayname' => $rank->participant->get_display_name(),
-                'avatarurl' => $rank->participant->get_avatar_url(100)->out(false),
+                'avatarurl' => $rank->participant->get_avatar_url(64)->out(false),
                 'score' => $rank->score,
-                'rank' => $rank->minrank,
+                'rank' => $rank->get_rank_as_range(),
                 'isup' => $rankmoved < 0,
                 'isdown' => $rankmoved > 0,
             ];
         }
 
+        // TODO use language string and different motivational messages.
+        if ($isrevision) {
+            $statusmessage = "Thanks for participating!";
+        } else {
+            $statusmessage = "Great job everyone! Get ready for the next question...";
+        }
+
         return [
             'quiztitle' => $kahoodle->name,
-            'sortorder' => $this->get_question_number() ?: $round->get_questions_count(),
+            'sortorder' => $this->get_question_number() ?: '',
             'totalquestions' => $round->get_questions_count(),
             'cancontrol' => true,
             'isedit' => false,
             'backgroundurl' => $CFG->wwwroot . '/mod/kahoodle/pix/classroom-bg.jpg',
-            // Placeholder for actual leaderboard.
             'leaders' => $leaders,
+            'statusmessage' => $statusmessage,
         ];
     }
 }

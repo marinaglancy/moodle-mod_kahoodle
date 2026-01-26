@@ -61,6 +61,7 @@ $string['landing_participant_message'] = 'You are participating in this activity
 $string['landing_preparation_message'] = 'The activity is ready to start. Click the button below to begin.';
 $string['landing_waiting_hint'] = 'If you expect the activity to start soon, refresh this page to check for updates.';
 $string['landing_waiting_message'] = 'The activity has not started yet. Please wait for the facilitator to begin.';
+$string['leaderboard'] = 'Leaderboard';
 $string['lobbyduration'] = 'Lobby duration';
 $string['lobbyduration_help'] = 'How long participants have to join the lobby before the round starts.';
 $string['managequestions'] = 'Manage questions';

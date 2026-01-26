@@ -25,12 +25,11 @@
 }}
 <div class="mod_kahoodle-overlay" {{#backgroundurl}}style="background-image: url('{{backgroundurl}}');"{{/backgroundurl}}>
 
-    <main class="mod_kahoodle-main mod_kahoodle-leaders" data-stage="revision">
+    <header class="mod_kahoodle-header">
+        <div class="mod_kahoodle-revision-title">{{quiztitle}}</div>
+    </header>
 
-        <div class="mod_kahoodle-leaders-content">
-            <h1 class="mod_kahoodle-leaders-title">Final leaderboard</h1>
-            <p class="mod_kahoodle-leaders-placeholder">Final leaderboard will be displayed here</p>
-        </div>
+    <main class="mod_kahoodle-main mod_kahoodle-leaderboard-main" data-stage="revision">
 
         {{> mod_kahoodle/facilitator/common/leaderboard }}
 

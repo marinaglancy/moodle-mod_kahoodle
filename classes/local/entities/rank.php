@@ -207,4 +207,17 @@ class rank {
         }
         return $this->minrank - $this->prevquestionrank->minrank;
     }
+
+    /**
+     * Get rank either as a single number or a range (for a tie)
+     *
+     * @return string "4" or "2-5"
+     */
+    public function get_rank_as_range(): string {
+        if ($this->minrank == $this->maxrank) {
+            return (string)$this->minrank;
+        } else {
+            return $this->minrank . '-' . $this->maxrank;
+        }
+    }
 }
