@@ -191,7 +191,7 @@ class round {
      * @return round_stage[] Array of round_stage objects in order
      */
     public function get_all_stages(bool $ispreview = false): array {
-        static $showinpreview = function (round_stage $stage) {
+        $showinpreview = function (round_stage $stage) {
             return in_array($stage->get_stage_name(), [
                 constants::STAGE_QUESTION_PREVIEW,
                 constants::STAGE_QUESTION,
