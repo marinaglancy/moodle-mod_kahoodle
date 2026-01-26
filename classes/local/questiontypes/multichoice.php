@@ -259,7 +259,7 @@ class multichoice extends base {
                 'kahoodle_responses',
                 ['roundquestionid' => $roundquestion->get_id()],
                 '',
-                'response'
+                'id, response'
             );
 
             foreach ($responses as $responserecord) {
