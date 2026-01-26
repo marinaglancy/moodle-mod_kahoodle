@@ -19,20 +19,33 @@
 
     Shown to participants during the question preview phase.
 
+    Context variables:
+    * sortorder - Current question number
+    * closeurl - URL to close/exit the quiz
+
     Example context (json):
     {
-        "sortorder": 1
+        "sortorder": 1,
+        "closeurl": "/mod/kahoodle/view.php?id=123",
+        "avatarurl": "/user/pix.php/2/f1.jpg",
+        "displayname": "Alex Johnson"
     }
 }}
 {{< mod_kahoodle/participant/common/base }}
 {{$ main_content }}
-<div>TODO preview placeholder</div>
+{{> mod_kahoodle/participant/common/questionheader }}
 
-    <div>
-    Question {{sortorder}}
+<div class="mod_kahoodle-participant-result-content">
+    <div class="mod_kahoodle-participant-result-status">{{#str}}question, mod_kahoodle{{/str}} {{sortorder}}</div>
+    <div class="mod_kahoodle-participant-result-icon mod_kahoodle-result-preview">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
     </div>
-    <div>
-    Get ready
-    </div>
+    <div class="mod_kahoodle-participant-result-rank">{{#str}}getready, mod_kahoodle{{/str}}</div>
+</div>
+
+{{> mod_kahoodle/participant/common/participantinfo }}
 {{/ main_content }}
 {{/ mod_kahoodle/participant/common/base }}

@@ -19,40 +19,65 @@
 
     Shown to participants during the results and leaders stages.
 
+    Context variables:
+    * sortorder - Current question number
+    * timeup - Whether time ran out
+    * iscorrect - Whether the answer was correct
+    * points - Points earned for this question
+    * rankstatus - Text describing rank position (e.g. "13 points behind John")
+    * closeurl - URL to close/exit the quiz
+
     Example context (json):
     {
+        "sortorder": 1,
         "timeup": false,
         "iscorrect": true,
-        "rank": 3,
-        "rankstatus": "13 points behind John",
-        "sortorder": 1,
-        "totalscore": 42
+        "points": 847,
+        "rankstatus": "You are in 14th place, 884 points behind John",
+        "closeurl": "/mod/kahoodle/view.php?id=123",
+        "avatarurl": "/user/pix.php/2/f1.jpg",
+        "displayname": "Alex Johnson"
     }
 }}
 {{< mod_kahoodle/participant/common/base }}
 {{$ main_content }}
-<div>TODO results placeholder</div>
-<div>
-    Question {{sortorder}}
-</div>
+{{> mod_kahoodle/participant/common/questionheader }}
+
+<div class="mod_kahoodle-participant-result-content">
     {{#timeup}}
-        <div>Time is up!</div>
+    <div class="mod_kahoodle-participant-result-status">{{#str}}timeup, mod_kahoodle{{/str}}</div>
+    <div class="mod_kahoodle-participant-result-icon mod_kahoodle-result-timeout">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+    </div>
     {{/timeup}}
     {{^timeup}}
-        {{#iscorrect}}
-            <div>Correct!</div>
-
-            <div>+ {{points}} points</div>
-        {{/iscorrect}}
-        {{^iscorrect}}
-            <div>Incorrect</div>
-        {{/iscorrect}}
+    {{#iscorrect}}
+    <div class="mod_kahoodle-participant-result-status">{{#str}}correct, mod_kahoodle{{/str}}</div>
+    <div class="mod_kahoodle-participant-result-icon mod_kahoodle-result-correct">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+    </div>
+    <div class="mod_kahoodle-participant-result-score">+{{points}}</div>
+    {{/iscorrect}}
+    {{^iscorrect}}
+    <div class="mod_kahoodle-participant-result-status">{{#str}}incorrect, mod_kahoodle{{/str}}</div>
+    <div class="mod_kahoodle-participant-result-icon mod_kahoodle-result-incorrect">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+    </div>
+    {{/iscorrect}}
     {{/timeup}}
-
     {{#rankstatus}}
-        <div>{{{rankstatus}}}</div>
+    <div class="mod_kahoodle-participant-result-rank">{{{rankstatus}}}</div>
     {{/rankstatus}}
+</div>
 
-    <div>Total score: {{totalscore}}</div>
+{{> mod_kahoodle/participant/common/participantinfo }}
 {{/ main_content }}
 {{/ mod_kahoodle/participant/common/base }}

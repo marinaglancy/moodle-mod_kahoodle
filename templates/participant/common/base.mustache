@@ -17,20 +17,15 @@
 {{!
     @template mod_kahoodle/participant/common/base
 
-    Base template for participants
+    Base template for participant screens.
 
     Example context (json):
     {
     }
 }}
-<div class="mod_kahoodle-overlay" {{#backgroundurl}}style="background-image: url('{{backgroundurl}}');"{{/backgroundurl}}>
+<div class="mod_kahoodle-overlay mod_kahoodle-overlay-solid">
     <div class="mod_kahoodle-participant-body">
         <div class="mod_kahoodle-participant-container">
-            {{! Close Button }}
-            <a href="#" class="mod_kahoodle-participant-close" data-action="close">
-                {{#pix}}i/window_close, core, {{#str}}close, mod_kahoodle{{/str}}{{/pix}}
-            </a>
-
             {{$ main_content }}
             {{/ main_content }}
         </div>

@@ -99,4 +99,7 @@ class constants {
         'maxpoints',
         'minpoints',
     ];
+
+    /** @var array Symbols used for multichoice options */
+    public const MULTICHOICE_SYMBOLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 }

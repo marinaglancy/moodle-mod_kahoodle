@@ -133,7 +133,7 @@ class multichoice extends base {
             ];
         }
 
-        $letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        $letters = constants::MULTICHOICE_SYMBOLS;
 
         if ($stage == constants::STAGE_QUESTION_RESULTS) {
             $answerscount = $this->get_answers_count($roundquestion, $mockresults);
@@ -196,7 +196,7 @@ class multichoice extends base {
             ];
         }
 
-        $letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+        $letters = constants::MULTICHOICE_SYMBOLS;
 
         foreach ($answers as $index => $answer) {
             $option = [

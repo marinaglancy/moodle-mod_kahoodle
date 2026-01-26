@@ -19,31 +19,49 @@
 
     Shown to participants during the question stage.
 
+    Context variables:
+    * sortorder - Current question number
+    * answered - Whether the participant has answered
+    * closeurl - URL to close/exit the quiz
+
     Example context (json):
     {
+        "sortorder": 1,
         "answered": true,
-        "sortorder": 1
+        "avatarurl": "/user/pix.php/2/f1.jpg",
+        "displayname": "Alex Johnson"
     }
 }}
 {{< mod_kahoodle/participant/common/base }}
 {{$ main_content }}
-<div>TODO question placeholder</div>
-<div>
-    Question {{sortorder}}
-</div>
-{{^answered}}
-        {{! Question type specific content }}
-        {{$ question_type_contents }}
-        {{/ question_type_contents }}
-{{/answered}}
-{{#answered}}
-    <div>
-    Quick answer!
-    </div>
+{{> mod_kahoodle/participant/common/questionheader }}
 
-    <div>
-    Wait for the results...
+<div class="mod_kahoodle-participant-result-content">
+    {{^answered}}
+    <div class="mod_kahoodle-participant-result-status">{{#str}}question, mod_kahoodle{{/str}} {{sortorder}}</div>
+    <div class="mod_kahoodle-participant-result-icon mod_kahoodle-result-question">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
     </div>
-{{/answered}}
+    {{! Question type specific content - answer options }}
+    {{$ question_type_contents }}
+    {{/ question_type_contents }}
+    {{/answered}}
+    {{#answered}}
+    <div class="mod_kahoodle-participant-result-status">{{#str}}goodjob, mod_kahoodle{{/str}}</div>
+    <div class="mod_kahoodle-participant-result-icon mod_kahoodle-result-answered">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+    </div>
+    <div class="mod_kahoodle-participant-result-rank">{{#str}}waitingforresults, mod_kahoodle{{/str}}</div>
+    {{/answered}}
+</div>
+
+{{> mod_kahoodle/participant/common/participantinfo }}
 {{/ main_content }}
 {{/ mod_kahoodle/participant/common/base }}

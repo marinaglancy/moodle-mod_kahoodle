@@ -1,0 +1,40 @@
+{{!
+    This file is part of mod_kahoodle plugin
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_kahoodle/participant/common/participantinfo
+
+    Displayed in the bottom of the participant screens showing user info and total score.
+
+    Example context (json):
+    {
+        "avatarurl": "/user/pix.php/2/f1.jpg",
+        "displayname": "Alex Johnson",
+        "totalscore": 150
+    }
+}}
+
+{{! Bottom bar: User info and total score }}
+<div class="mod_kahoodle-participant-result-footer">
+    <div class="mod_kahoodle-participant-result-user">
+        <img src="{{avatarurl}}" alt="" class="mod_kahoodle-participant-result-avatar">
+        <span class="mod_kahoodle-participant-result-name">{{{displayname}}}</span>
+    </div>
+    <div class="mod_kahoodle-participant-result-total">
+        <span class="mod_kahoodle-participant-result-total-label">Score</span>
+        <span class="mod_kahoodle-participant-result-total-value">{{totalscore}}</span>
+    </div>
+</div>

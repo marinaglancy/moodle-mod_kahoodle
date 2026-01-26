@@ -83,21 +83,24 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   ├── facilitator/          # Facilitator view templates
 │   │   ├── common/           # Shared facilitator partials
 │   │   │   ├── footer.mustache      # Footer with progress bar and controls
+│   │   │   ├── leaderboard.mustache # Leaderboard with ranked participants
 │   │   │   └── questionheader.mustache # Question header with number and text
 │   │   ├── leaders.mustache  # Leaderboard display
 │   │   ├── lobby.mustache    # Lobby waiting room
 │   │   ├── preview.mustache  # Question preview stage
 │   │   ├── question.mustache # Question display stage
 │   │   ├── results.mustache  # Question results stage
-│   │   └── revision.mustache # Revision/review stage
+│   │   └── revision.mustache # Revision/review stage (final leaderboard)
 │   ├── participant/          # Participant view templates
 │   │   ├── common/           # Shared participant partials
-│   │   │   └── base.mustache # Base template for participant overlay
+│   │   │   ├── base.mustache         # Base template for participant overlay
+│   │   │   ├── participantinfo.mustache # Footer with avatar, name, score
+│   │   │   └── questionheader.mustache  # Header with question pill and close button
 │   │   ├── lobby.mustache    # Lobby waiting for participants
 │   │   ├── preview.mustache  # Question preview for participants
 │   │   ├── question.mustache # Question display for participants
 │   │   ├── results.mustache  # Results display for participants
-│   │   ├── revision.mustache # Revision stage for participants
+│   │   ├── revision.mustache # Revision stage for participants (final leaderboard)
 │   │   └── waiting.mustache  # Waiting overlay for participants
 │   ├── questiontypes/        # Question type display templates
 │   │   └── multichoice/      # Multiple choice templates
@@ -667,14 +670,20 @@ vendor/bin/phpunit --filter questions_test
   - Real-time channels for game and participant communication
   - Participant waiting overlay during game stages
   - Facilitator lobby shows list of joined participants
+- Facilitator leaderboard display with ranked participants
+- Participant result screens (preview, question, results, revision)
+  - Mobile-responsive design with 500px max-width container
+  - Question header with question pill and close button
+  - Participant info footer with avatar, name, and score
+  - Interactive multichoice answer buttons (2-column grid)
+  - Result feedback (correct/incorrect/timeout with icons)
+  - Final leaderboard for revision stage
 
 **In Progress:**
 - Round gameplay mechanics
 - Participant response submission and scoring
 
 **To Do:**
-- Implement actual question/answer display for participants
-- Scoreboard and leaderboard displays
-- Mobile-responsive participant view
+- Participant answer submission integration with scoring
 - Additional question types
 - Behat acceptance tests
