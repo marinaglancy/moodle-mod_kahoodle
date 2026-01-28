@@ -16,6 +16,7 @@
 
 namespace mod_kahoodle\local\entities;
 
+use cm_info;
 use mod_kahoodle\constants;
 use stdClass;
 
@@ -43,10 +44,19 @@ class round {
      * Create a round instance from a database record object
      *
      * @param stdClass $record The round record from database
+     * @param stdClass|null $kahoodle Optional Kahoodle activity record, if known
+     * @param cm_info|null $cm Optional course module, if known
      * @return self
      */
-    public static function create_from_object(stdClass $record): self {
-        return new self($record);
+    public static function create_from_object(stdClass $record, ?stdClass $kahoodle = null, ?cm_info $cm = null): self {
+        $round = new self($record);
+        if ($kahoodle !== null) {
+            $round->kahoodle = $kahoodle;
+        }
+        if ($cm !== null) {
+            $round->cm = $cm;
+        }
+        return $round;
     }
 
     /**
@@ -71,12 +81,53 @@ class round {
     }
 
     /**
+     * Get the display name of the round
+     *
+     * @return string
+     */
+    public function get_display_name(): string {
+        return format_string($this->data->name, true, ['context' => $this->get_context()]);
+    }
+
+    /**
      * Get the Kahoodle activity ID
      *
      * @return int
      */
     public function get_kahoodleid(): int {
         return $this->data->kahoodleid;
+    }
+
+    /**
+     * Get the timestamp when the lobby opened (round started)
+     *
+     * @return int|null Timestamp or null if not started
+     */
+    public function get_timestarted(): ?int {
+        return $this->data->timestarted ? (int)$this->data->timestarted : null;
+    }
+
+    /**
+     * Get the timestamp when the round was completed
+     *
+     * @return int|null Timestamp or null if not completed
+     */
+    public function get_timecompleted(): ?int {
+        return $this->data->timecompleted ? (int)$this->data->timecompleted : null;
+    }
+
+    /**
+     * Get the total duration of the round
+     *
+     * @return int|null Duration in seconds, or null if round not completed
+     */
+    public function get_duration(): ?int {
+        $timestarted = $this->get_timestarted();
+        $timecompleted = $this->get_timecompleted();
+        if ($timestarted && $timecompleted) {
+            return $timecompleted - $timestarted;
+        }
+        return null;
     }
 
     /**
@@ -137,19 +188,19 @@ class round {
         return format_string($this->get_kahoodle()->name, true, ['context' => $this->get_context()]);
     }
 
-    /** @var stdClass|null Cached course module record */
-    private ?stdClass $cm = null;
+    /** @var cm_info|null Cached course module */
+    private ?cm_info $cm = null;
 
     /**
-     * Get the course module record
+     * Get the course module
      *
-     * @return stdClass
+     * @return cm_info
      */
-    public function get_cm(): stdClass {
+    public function get_cm(): cm_info {
         if ($this->cm !== null) {
             return $this->cm;
         }
-        $this->cm = get_coursemodule_from_instance('kahoodle', $this->data->kahoodleid, 0, false, MUST_EXIST);
+        [, $this->cm] = get_course_and_cm_from_instance($this->data->kahoodleid, 'kahoodle');
         return $this->cm;
     }
 

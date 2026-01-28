@@ -1,0 +1,109 @@
+{{!
+    This file is part of mod_kahoodle plugin
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_kahoodle/results
+
+    Results page template for Kahoodle activity.
+
+    Context variables required for this template:
+    * hasrounds - bool - Whether there are any completed rounds
+    * rounds - array - List of completed rounds with:
+        * id - int - Round ID
+        * name - string - Round name
+        * date - string - Formatted date (without time)
+        * lobbyopened - string - Formatted time when lobby opened
+        * duration - string - Formatted total round duration
+        * participantcount - int - Number of participants
+        * averagescore - int - Average score
+        * maxscore - int - Maximum score
+        * completedcount - int - Number who completed activity
+        * participantsurl - string - URL to view participants
+        * statisticsurl - string - URL to view statistics
+
+    Example context (json):
+    {
+        "hasrounds": true,
+        "rounds": [
+            {
+                "id": 1,
+                "name": "Round 1",
+                "date": "28/01/26",
+                "lobbyopened": "10:00",
+                "duration": "25 mins",
+                "participantcount": 25,
+                "averagescore": 3500,
+                "maxscore": 5000,
+                "completedcount": 0,
+                "participantsurl": "/mod/kahoodle/results.php?id=1&roundid=1&view=participants",
+                "statisticsurl": "/mod/kahoodle/results.php?id=1&roundid=1&view=statistics"
+            }
+        ]
+    }
+}}
+<div class="mod-kahoodle-results">
+    {{^hasrounds}}
+    <div class="alert alert-info">
+        {{#str}}results_nocompletedround, mod_kahoodle{{/str}}
+    </div>
+    {{/hasrounds}}
+
+    {{#hasrounds}}
+    <div class="row">
+        {{#rounds}}
+        <div class="col-12 col-md-6 col-lg-4 mb-3">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">{{name}}</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-6">{{#str}}results_date, mod_kahoodle{{/str}}</dt>
+                        <dd class="col-6">{{date}}</dd>
+
+                        <dt class="col-6">{{#str}}results_lobbyopened, mod_kahoodle{{/str}}</dt>
+                        <dd class="col-6">{{lobbyopened}}</dd>
+
+                        <dt class="col-6">{{#str}}results_duration, mod_kahoodle{{/str}}</dt>
+                        <dd class="col-6">{{duration}}</dd>
+
+                        <dt class="col-6">{{#str}}results_participants, mod_kahoodle{{/str}}</dt>
+                        <dd class="col-6">{{participantcount}}</dd>
+
+                        <dt class="col-6">{{#str}}results_averagescore, mod_kahoodle{{/str}}</dt>
+                        <dd class="col-6">{{averagescore}}</dd>
+
+                        <dt class="col-6">{{#str}}results_maxscore, mod_kahoodle{{/str}}</dt>
+                        <dd class="col-6">{{maxscore}}</dd>
+
+                        <dt class="col-6">{{#str}}results_completed, mod_kahoodle{{/str}}</dt>
+                        <dd class="col-6">{{completedcount}}</dd>
+                    </dl>
+                </div>
+                <div class="card-footer">
+                    <a href="{{participantsurl}}" class="btn btn-sm btn-outline-primary me-2">
+                        {{#str}}results_viewparticipants, mod_kahoodle{{/str}}
+                    </a>
+                    <a href="{{statisticsurl}}" class="btn btn-sm btn-outline-secondary">
+                        {{#str}}results_viewstatistics, mod_kahoodle{{/str}}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {{/rounds}}
+    </div>
+    {{/hasrounds}}
+</div>

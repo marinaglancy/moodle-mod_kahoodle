@@ -104,6 +104,18 @@ function kahoodle_extend_settings_navigation(settings_navigation $settingsnav, n
             new pix_icon('i/questions', '')
         );
     }
+
+    if (has_capability('mod/kahoodle:viewresults', $PAGE->cm->context)) {
+        $url = new moodle_url('/mod/kahoodle/results.php', ['id' => $PAGE->cm->id]);
+        $node->add(
+            get_string('results', 'mod_kahoodle'),
+            $url,
+            navigation_node::TYPE_SETTING,
+            null,
+            'kahoodle_results',
+            new pix_icon('i/report', '')
+        );
+    }
 }
 
 /**

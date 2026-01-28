@@ -35,8 +35,8 @@ class landing implements renderable, templatable {
     protected round $round;
     /** @var stdClass The kahoodle activity record */
     protected stdClass $kahoodle;
-    /** @var stdClass The course module record */
-    protected stdClass $cm;
+    /** @var \cm_info The course module */
+    protected \cm_info $cm;
     /** @var \context_module The context */
     protected \context_module $context;
 
@@ -133,8 +133,8 @@ class landing implements renderable, templatable {
             // Round is finished.
             $data->showfinished = true;
             $data->resultsurl = (new moodle_url(
-                '/mod/kahoodle/view.php',
-                ['id' => $this->cm->id, 'action' => 'results']
+                '/mod/kahoodle/results.php',
+                ['id' => $this->cm->id]
             ))->out(false);
         }
 
