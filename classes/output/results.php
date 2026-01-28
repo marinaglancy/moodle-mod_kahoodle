@@ -69,7 +69,8 @@ class results implements renderable, templatable {
             $round = \mod_kahoodle\local\entities\round::create_from_object($roundrecord, $this->kahoodle, $this->cm);
             $rounddata = new stdClass();
             $rounddata->id = $round->get_id();
-            $rounddata->name = $round->get_display_name();
+            // Use inplace editable for the round name.
+            $rounddata->name = $output->render($round->get_name_inplace_editable());
 
             // Format date and time fields.
             $timestarted = $round->get_timestarted();

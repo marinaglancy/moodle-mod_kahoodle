@@ -709,4 +709,39 @@ class round {
         }
         return $leaders;
     }
+
+    /**
+     * Update the round name
+     *
+     * @param string $name The new name (not cleaned!)
+     * @return \core\output\inplace_editable
+     */
+    public function update_name(string $name): \core\output\inplace_editable {
+        global $DB;
+        $name = \core_text::substr(trim(clean_param($name, PARAM_TEXT)), 0, 255);
+        $DB->set_field('kahoodle_rounds', 'name', $name, ['id' => $this->get_id()]);
+        $this->data->name = $name;
+        return $this->get_name_inplace_editable();
+    }
+
+    /**
+     * Create an inplace editable element for round name
+     *
+     * @return \core\output\inplace_editable
+     */
+    public function get_name_inplace_editable(): \core\output\inplace_editable {
+        $displayvalue = $this->get_display_name();
+        $editable = has_capability('mod/kahoodle:facilitate', $this->get_context());
+
+        return new \core\output\inplace_editable(
+            'mod_kahoodle',
+            'roundname',
+            $this->get_id(),
+            $editable,
+            $displayvalue,
+            $this->data->name,
+            get_string('editroundname', 'mod_kahoodle'),
+            get_string('editroundname_label', 'mod_kahoodle', $displayvalue)
+        );
+    }
 }

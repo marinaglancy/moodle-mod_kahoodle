@@ -185,6 +185,30 @@ function kahoodle_get_fontawesome_icon_map() {
 }
 
 /**
+ * Callback for inplace editable API
+ *
+ * @param string $itemtype The type of item being edited
+ * @param int $itemid The ID of the item
+ * @param string $newvalue The new value
+ * @return \core\output\inplace_editable
+ */
+function mod_kahoodle_inplace_editable(string $itemtype, int $itemid, string $newvalue): \core\output\inplace_editable {
+    if ($itemtype === 'roundname') {
+        // Get the round record.
+        $round = \mod_kahoodle\local\entities\round::create_from_id($itemid);
+
+        // Validate context and capability.
+        \core_external\external_api::validate_context($round->get_context());
+        require_capability('mod/kahoodle:facilitate', $round->get_context());
+
+        // Update the round name.
+        return $round->update_name($newvalue);
+    }
+
+    throw new coding_exception('Unknown item type: ' . $itemtype);
+}
+
+/**
  * Callback for tool_realtime - handle events received from clients
  *
  * @param \tool_realtime\channel $channel The realtime channel
