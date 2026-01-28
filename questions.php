@@ -44,9 +44,17 @@ $PAGE->set_title(get_string('questions', 'mod_kahoodle'));
 $PAGE->set_heading(format_string($PAGE->course->fullname));
 $PAGE->activityheader->disable();
 
+// Get all rounds for building navigation tabs.
+$allrounds = \mod_kahoodle\api::get_all_rounds($cm->instance);
+
 if (!isset($round)) {
-    $round = \mod_kahoodle\questions::get_last_round($cm->instance);
+    // Default to the first round (which is the editable one or most recent).
+    $round = reset($allrounds);
 }
+
+// Check if this is the last round (for showing "Prepare new round" button).
+$lastround = reset($allrounds);
+$islastround = ($round->get_id() === $lastround->get_id());
 
 // Build question types for JavaScript.
 $questiontypesjs = [];
@@ -62,6 +70,49 @@ $PAGE->requires->js_call_amd('mod_kahoodle/questions', 'init', [$round->get_id()
 echo $OUTPUT->header();
 
 echo html_writer::start_div('', ['data-region' => 'mod_kahoodle-questions']);
+
+// Build round navigation selector.
+$roundoptions = [];
+foreach ($allrounds as $r) {
+    $url = (new moodle_url('/mod/kahoodle/questions.php', ['roundid' => $r->get_id()]))->out(false);
+    $name = $r->get_display_name();
+    if (!$r->is_editable()) {
+        $name .= ' (' . userdate($r->get_timestarted(), get_string('strftimedatetimeshort', 'langconfig')) . ')';
+    }
+    $roundoptions[$url] = $name;
+}
+$currenturl = (new moodle_url('/mod/kahoodle/questions.php', ['roundid' => $round->get_id()]))->out(false);
+$selectmenu = new \core\output\select_menu('roundselector', $roundoptions, $currenturl);
+$selectmenu->set_label(get_string('selectround', 'mod_kahoodle'), ['class' => 'sr-only']);
+echo html_writer::div(
+    $OUTPUT->render_from_template('core/tertiary_navigation_selector', $selectmenu->export_for_template($OUTPUT)),
+    'tertiary-navigation mb-3'
+);
+
+// Display warning if round is not editable.
+if (!$round->is_editable()) {
+    echo $OUTPUT->notification(
+        get_string('questions_roundnoteditable', 'mod_kahoodle'),
+        \core\output\notification::NOTIFY_WARNING
+    );
+
+    // Show "Prepare new round" button if this is the last round, it's archived, and user can facilitate.
+    if (
+        $islastround &&
+        $round->get_current_stage_name() === \mod_kahoodle\constants::STAGE_ARCHIVED &&
+        has_capability('mod/kahoodle:facilitate', $PAGE->context)
+    ) {
+        $newroundurl = new moodle_url('/mod/kahoodle/view.php', [
+            'id' => $cm->id,
+            'action' => 'newround',
+            'sesskey' => sesskey(),
+        ]);
+        echo html_writer::div(
+            html_writer::link($newroundurl, get_string('preparenewround', 'mod_kahoodle'), ['class' => 'btn btn-primary']),
+            'mb-3'
+        );
+    }
+}
 
 // Add question dropdown button.
 $dropdownitems = [];
