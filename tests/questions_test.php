@@ -63,7 +63,6 @@ final class questions_test extends \advanced_testcase {
         $this->assertEquals('Round 1', $round->name);
         $this->assertEquals(constants::STAGE_PREPARATION, $round->currentstage);
         $this->assertNull($round->timestarted);
-        $this->assertEquals($kahoodle->lobbyduration, $round->lobbyduration);
     }
 
     /**

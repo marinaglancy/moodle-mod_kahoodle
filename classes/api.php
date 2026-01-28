@@ -199,10 +199,6 @@ class api {
             $record->currentquestion = null;
             $record->stagestarttime = null;
 
-            // Get default lobby duration from kahoodle instance.
-            $kahoodle = $DB->get_record('kahoodle', ['id' => $kahoodleid], 'lobbyduration', MUST_EXIST);
-            $record->lobbyduration = $kahoodle->lobbyduration;
-
             $record->timecreated = time();
             $record->timestarted = null;
             $record->timecompleted = null;

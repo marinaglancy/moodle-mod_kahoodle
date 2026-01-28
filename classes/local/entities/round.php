@@ -768,7 +768,6 @@ class round {
         $record->currentstage = constants::STAGE_PREPARATION;
         $record->currentquestion = null;
         $record->stagestarttime = null;
-        $record->lobbyduration = $this->data->lobbyduration;
         $record->timecreated = $time;
         $record->timestarted = null;
         $record->timecompleted = null;

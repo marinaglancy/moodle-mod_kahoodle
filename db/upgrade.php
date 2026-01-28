@@ -63,5 +63,20 @@ function xmldb_kahoodle_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026011901, 'kahoodle');
     }
 
+        if ($oldversion < 2026012801) {
+
+        // Define field lobbyduration to be dropped from kahoodle_rounds.
+        $table = new xmldb_table('kahoodle_rounds');
+        $field = new xmldb_field('lobbyduration');
+
+        // Conditionally launch drop field lobbyduration.
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        // Kahoodle savepoint reached.
+        upgrade_mod_savepoint(true, 2026012801, 'kahoodle');
+    }
+
     return true;
 }
