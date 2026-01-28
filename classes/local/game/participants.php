@@ -61,6 +61,17 @@ class participants {
         $participant->id = $DB->insert_record('kahoodle_participants', $participant);
         $round->clear_participant_cache();
 
+        // Trigger participant joined event.
+        $event = \mod_kahoodle\event\participant_joined::create([
+            'objectid' => $participant->id,
+            'context' => $round->get_context(),
+            'other' => [
+                'roundid' => $round->get_id(),
+                'kahoodleid' => $round->get_kahoodleid(),
+            ],
+        ]);
+        $event->trigger();
+
         // If round is in lobby stage, notify facilitators with updated stage data.
         if ($round->get_current_stage_name() === constants::STAGE_LOBBY) {
             realtime_channels::notify_facilitators_participant_joined($round);
@@ -86,6 +97,17 @@ class participants {
 
         // Delete any responses from this participant.
         $DB->delete_records('kahoodle_responses', ['participantid' => $participant->get_id()]);
+
+        // Trigger participant left event before deletion.
+        $event = \mod_kahoodle\event\participant_left::create([
+            'objectid' => $participant->get_id(),
+            'context' => $round->get_context(),
+            'other' => [
+                'roundid' => $round->get_id(),
+                'kahoodleid' => $round->get_kahoodleid(),
+            ],
+        ]);
+        $event->trigger();
 
         // Delete the participant record.
         $DB->delete_records('kahoodle_participants', ['id' => $participant->get_id()]);

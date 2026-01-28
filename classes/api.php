@@ -206,6 +206,19 @@ class api {
 
             $record->id = $DB->insert_record('kahoodle_rounds', $record);
             $rounds = [$record->id => $record];
+
+            // Trigger round created event.
+            if (!$cm) {
+                [$course, $cm] = get_course_and_cm_from_instance($kahoodleid, 'kahoodle');
+            }
+            $event = \mod_kahoodle\event\round_created::create([
+                'objectid' => $record->id,
+                'context' => \context_module::instance($cm->id),
+                'other' => [
+                    'kahoodleid' => $kahoodleid,
+                ],
+            ]);
+            $event->trigger();
         }
 
         return array_map(function ($record) use ($kahoodle, $cm) {

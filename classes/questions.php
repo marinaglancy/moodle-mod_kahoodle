@@ -247,6 +247,16 @@ class questions {
 
         $id = $DB->insert_record('kahoodle_round_questions', $roundquestion);
 
+        $event = \mod_kahoodle\event\question_created::create([
+            'objectid' => $id,
+            'context' => $round->get_context(),
+            'other' => [
+                'kahoodleid' => $kahoodleid,
+                'roundid' => $round->get_id(),
+            ],
+        ]);
+        $event->trigger();
+
         return round_question::create_from_round_question_id($id);
     }
 
@@ -381,6 +391,17 @@ class questions {
                 }
             }
         }
+
+        $event = \mod_kahoodle\event\question_updated::create([
+            'objectid' => $roundquestion->get_question_id(),
+            'context' => $round->get_context(),
+            'other' => [
+                'kahoodleid' => $round->get_kahoodleid(),
+                'roundid' => $round->get_id(),
+                'roundstage' => $round->get_current_stage_name(),
+            ],
+        ]);
+        $event->trigger();
     }
 
     /**
@@ -451,6 +472,17 @@ class questions {
             ['id' => $roundquestion->get_id()]
         );
 
+        $event = \mod_kahoodle\event\question_updated::create([
+            'objectid' => $roundquestion->get_question_id(),
+            'context' => $round->get_context(),
+            'other' => [
+                'kahoodleid' => $round->get_kahoodleid(),
+                'roundid' => $round->get_id(),
+                'roundstage' => $round->get_current_stage_name(),
+            ],
+        ]);
+        $event->trigger();
+
         // Just in case validate that sortorders are sequential.
         self::fix_round_sortorder($round->get_id());
     }
@@ -495,6 +527,17 @@ class questions {
                 $DB->delete_records('kahoodle_questions', ['id' => $questionid]);
             }
         }
+
+        $event = \mod_kahoodle\event\question_removed::create([
+            'objectid' => $roundquestion->get_question_id(),
+            'context' => $round->get_context(),
+            'other' => [
+                'kahoodleid' => $round->get_kahoodleid(),
+                'roundid' => $round->get_id(),
+                'fullydeleted' => !$usedinotherrounds,
+            ],
+        ]);
+        $event->trigger();
     }
 
     /**

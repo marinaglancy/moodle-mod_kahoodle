@@ -100,7 +100,7 @@ class responses {
         }
 
         // Insert response record.
-        $DB->insert_record('kahoodle_responses', (object)[
+        $responseid = $DB->insert_record('kahoodle_responses', (object)[
             'participantid' => $participantid,
             'roundquestionid' => $roundquestion->get_id(),
             'response' => $response,
@@ -117,6 +117,20 @@ class responses {
                 [$points, $participantid]
             );
         }
+
+        // Trigger response submitted event.
+        $event = \mod_kahoodle\event\response_submitted::create([
+            'objectid' => $responseid,
+            'context' => $round->get_context(),
+            'relateduserid' => $participant->get_user_id(),
+            'other' => [
+                'roundid' => $round->get_id(),
+                'questionnumber' => $questionnumber,
+                'iscorrect' => $iscorrect,
+                'points' => $points,
+            ],
+        ]);
+        $event->trigger();
 
         // Send updated stage data to participant via their channel.
         realtime_channels::notify_participants_stage_changed($participant);

@@ -511,6 +511,18 @@ class round {
             $this->data->$key = $value;
         }
 
+        // Trigger round updated event.
+        $event = \mod_kahoodle\event\round_updated::create([
+            'objectid' => $this->get_id(),
+            'context' => $this->get_context(),
+            'other' => [
+                'kahoodleid' => $this->data->kahoodleid,
+                'stage' => $newstage->get_stage_name(),
+                'questionnumber' => $newstage->get_question_number(),
+            ],
+        ]);
+        $event->trigger();
+
         $this->questionrankings = [];
     }
 
@@ -774,6 +786,16 @@ class round {
         $record->timemodified = $time;
 
         $record->id = $DB->insert_record('kahoodle_rounds', $record);
+
+        // Trigger round created event.
+        $event = \mod_kahoodle\event\round_created::create([
+            'objectid' => $record->id,
+            'context' => $this->get_context(),
+            'other' => [
+                'kahoodleid' => $this->data->kahoodleid,
+            ],
+        ]);
+        $event->trigger();
 
         // Copy all round_questions from this round to the new round.
         $questions = $DB->get_records('kahoodle_round_questions', ['roundid' => $this->get_id()], 'sortorder ASC');
