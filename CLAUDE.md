@@ -63,6 +63,7 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   ├── output/               # Output classes for templates
 │   │   ├── landing.php       # Landing page output (stage-based view)
 │   │   ├── renderer.php      # Plugin renderer
+│   │   ├── results.php       # Results page output (all rounds with status)
 │   │   └── roundquestion.php # Round question display output
 │   └── reportbuilder/local/  # Report builder components
 │       ├── entities/
@@ -107,7 +108,8 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │       ├── facilitator_question.mustache # Facilitator question view
 │   │       ├── facilitator_results.mustache  # Facilitator results view
 │   │       └── participant_question.mustache # Participant question view
-│   └── landing.mustache      # Landing page template (view.php)
+│   ├── landing.mustache      # Landing page template (view.php)
+│   └── results.mustache      # Results page template (all rounds)
 ├── tests/
 │   ├── behat/                # Behat acceptance tests
 │   ├── external/             # Web service tests
@@ -121,11 +123,12 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   ├── api_test.php          # PHPUnit tests for api.php
 │   └── questions_test.php    # PHPUnit tests for questions API
 ├── index.php                 # List all instances in a course
-├── lib.php                   # Core module functions
+├── lib.php                   # Core module functions (includes inplace_editable callback)
 ├── mod_form.php              # Activity settings form
-├── questions.php             # Question management page
+├── questions.php             # Question management page (accepts id or roundid)
+├── results.php               # Results page showing all rounds
 ├── version.php               # Plugin version information
-└── view.php                  # Main view page
+└── view.php                  # Main view page (landing page with actions)
 ```
 
 ## Core Functionality
@@ -217,6 +220,9 @@ Represents a game round with lazy-loaded cached access to related data.
 - `get_kahoodle(): stdClass` - Get cached kahoodle activity record
 - `get_cm(): stdClass` - Get cached course module record
 - `get_context(): context_module` - Get context module instance
+- `get_name_inplace_editable(): inplace_editable` - Get inplace editable control for round name
+- `update_name(string $name): inplace_editable` - Update round name and return inplace editable
+- `duplicate(): self` - Create a new round by duplicating question configuration from this round
 
 #### round_question Entity (`round_question.php`)
 
@@ -592,6 +598,7 @@ git push
 - **Event API**: Event triggering and observation
 - **Form API**: `moodleform` for settings and user input
 - **Output API**: Renderers and templates for UI
+- **Inplace Editable API**: `\core\output\inplace_editable` for inline editing with AJAX callback via `mod_kahoodle_inplace_editable()` in lib.php
 - **Gradebook API**: `grade_update()` for grade submission
 - **Completion API**: Activity completion tracking
 - **Group API**: `groups_get_activity_group()`, etc.
@@ -664,7 +671,16 @@ vendor/bin/phpunit --filter questions_test
   - Control panel for facilitators (start button)
   - Waiting message for participants before activity starts
   - Join/Resume buttons when activity is in progress
-  - Results button when activity has finished
+  - View results button when activity has finished (requires viewresults capability)
+  - Prepare new round button for facilitators (duplicates question config from last round)
+- Results page (results.php)
+  - Displays all rounds with status-based field visibility
+  - Preparation rounds: status only
+  - In progress rounds: status, date, lobby opened time
+  - Revision/Completed rounds: all stats including duration, participants, scores
+  - Inplace editable round names (for users with facilitate capability)
+  - Edit questions button for each round (requires manage_questions capability)
+  - View participants and View statistics buttons for completed rounds
 - Participant workflow
   - Join action creates participant record
   - Real-time channels for game and participant communication

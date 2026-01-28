@@ -132,10 +132,18 @@ class landing implements renderable, templatable {
         } else if ($stage === constants::STAGE_ARCHIVED) {
             // Round is finished.
             $data->showfinished = true;
-            $data->resultsurl = (new moodle_url(
-                '/mod/kahoodle/results.php',
-                ['id' => $this->cm->id]
-            ))->out(false);
+            if (has_capability('mod/kahoodle:viewresults', $this->context)) {
+                $data->resultsurl = (new moodle_url(
+                    '/mod/kahoodle/results.php',
+                    ['id' => $this->cm->id]
+                ))->out(false);
+            }
+            if (has_capability('mod/kahoodle:facilitate', $this->context)) {
+                $data->newroundurl = (new moodle_url(
+                    '/mod/kahoodle/view.php',
+                    ['id' => $this->cm->id, 'action' => 'newround', 'sesskey' => sesskey()]
+                ))->out(false);
+            }
         }
 
         // Show manage questions section if user can manage questions and game is not in progress.

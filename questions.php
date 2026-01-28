@@ -25,25 +25,28 @@
 require(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 
-// Course module id.
-$id = required_param('id', PARAM_INT);
+$id = optional_param('id', 0, PARAM_INT);
+$roundid = optional_param('roundid', 0, PARAM_INT);
+$view = optional_param('view', '', PARAM_ALPHANUMEXT);
 
-$cm = get_coursemodule_from_id('kahoodle', $id, 0, false, MUST_EXIST);
-$course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
-$moduleinstance = $DB->get_record('kahoodle', ['id' => $cm->instance], '*', MUST_EXIST);
+$PAGE->set_url('/mod/kahoodle/questions.php', array_filter(['id' => $id, 'roundid' => $roundid]));
 
-require_login($course, true, $cm);
+if ($roundid) {
+    $round = \mod_kahoodle\local\entities\round::create_from_id($roundid);
+    $cm = $round->get_cm();
+} else if ($id) {
+    [$course, $cm] = get_course_and_cm_from_cmid($id, 'kahoodle');
+}
+require_login(isset($course) ? $course : $cm->course, true, $cm);
+require_capability('mod/kahoodle:manage_questions', $PAGE->context);
 
-$context = context_module::instance($cm->id);
-require_capability('mod/kahoodle:manage_questions', $context);
-
-$PAGE->set_url('/mod/kahoodle/questions.php', ['id' => $cm->id]);
 $PAGE->set_title(get_string('questions', 'mod_kahoodle'));
-$PAGE->set_heading(format_string($course->fullname));
-$PAGE->set_context($context);
+$PAGE->set_heading(format_string($PAGE->course->fullname));
 $PAGE->activityheader->disable();
 
-$round = \mod_kahoodle\questions::get_last_round($moduleinstance->id);
+if (!isset($round)) {
+    $round = \mod_kahoodle\questions::get_last_round($cm->instance);
+}
 
 // Build question types for JavaScript.
 $questiontypesjs = [];
@@ -85,6 +88,7 @@ echo html_writer::tag(
         'data-bs-toggle' => 'dropdown',
         'aria-haspopup' => 'true',
         'aria-expanded' => 'false',
+        'disabled' => !$round->is_editable() ? 'disabled' : null,
     ]
 );
 echo html_writer::tag('div', implode('', $dropdownitems), ['class' => 'dropdown-menu']);
@@ -92,7 +96,7 @@ echo html_writer::end_div();
 
 $report = \core_reportbuilder\system_report_factory::create(
     \mod_kahoodle\reportbuilder\local\systemreports\questions::class,
-    $context,
+    $PAGE->context,
     'mod_kahoodle',
     '',
     0,

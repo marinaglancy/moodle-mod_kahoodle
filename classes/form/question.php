@@ -274,6 +274,14 @@ class question extends dynamic_form {
     protected function check_access_for_dynamic_submission(): void {
         $context = $this->get_context_for_dynamic_submission();
         require_capability('mod/kahoodle:manage_questions', $context);
+
+        $roundquestion = $this->get_round_question_data();
+        if (!$roundquestion->get_id()) {
+            // Can not add questions to the round that is not in preparation stage.
+            if (!$roundquestion->get_round()->is_editable()) {
+                throw new \moodle_exception('noeditableround', 'mod_kahoodle'); // TODO better exception message.
+            }
+        }
     }
 
     /**

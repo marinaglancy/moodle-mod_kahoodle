@@ -744,4 +744,55 @@ class round {
             get_string('editroundname_label', 'mod_kahoodle', $displayvalue)
         );
     }
+
+    /**
+     * Create a new round based on this round's question configuration
+     *
+     * Creates a new round in preparation stage and copies all round_questions
+     * from this round to the new one.
+     *
+     * @return self The newly created round
+     */
+    public function duplicate(): self {
+        global $DB;
+
+        $time = time();
+
+        // Count existing rounds for naming.
+        $roundcount = $DB->count_records('kahoodle_rounds', ['kahoodleid' => $this->data->kahoodleid]);
+
+        // Create the new round record.
+        $record = new stdClass();
+        $record->kahoodleid = $this->data->kahoodleid;
+        $record->name = get_string('roundname', 'mod_kahoodle', $roundcount + 1);
+        $record->currentstage = constants::STAGE_PREPARATION;
+        $record->currentquestion = null;
+        $record->stagestarttime = null;
+        $record->lobbyduration = $this->data->lobbyduration;
+        $record->timecreated = $time;
+        $record->timestarted = null;
+        $record->timecompleted = null;
+        $record->timemodified = $time;
+
+        $record->id = $DB->insert_record('kahoodle_rounds', $record);
+
+        // Copy all round_questions from this round to the new round.
+        $questions = $DB->get_records('kahoodle_round_questions', ['roundid' => $this->get_id()], 'sortorder ASC');
+        foreach ($questions as $question) {
+            $newquestion = new stdClass();
+            $newquestion->roundid = $record->id;
+            $newquestion->questionversionid = $question->questionversionid;
+            $newquestion->sortorder = $question->sortorder;
+            foreach (constants::FIELDS_ROUND_QUESTION as $field) {
+                $newquestion->$field = $question->$field;
+            }
+            // Don't copy statistics fields (totalresponses, answerdistribution).
+            $newquestion->timecreated = $time;
+            $newquestion->timemodified = $time;
+
+            $DB->insert_record('kahoodle_round_questions', $newquestion);
+        }
+
+        return self::create_from_object($record);
+    }
 }

@@ -462,4 +462,84 @@ final class round_test extends \advanced_testcase {
             'P2 rank should have changed between questions'
         );
     }
+
+    /**
+     * Test round duplicate creates new round with copied questions
+     *
+     * @covers \mod_kahoodle\local\entities\round::duplicate
+     */
+    public function test_duplicate(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
+
+        /** @var \mod_kahoodle_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
+
+        // Create questions with custom settings.
+        $generator->create_question([
+            'kahoodleid' => $kahoodle->id,
+            'questiontext' => 'Question 1',
+            'maxpoints' => 1500,
+            'minpoints' => 750,
+            'questionduration' => 45,
+        ]);
+        $generator->create_question([
+            'kahoodleid' => $kahoodle->id,
+            'questiontext' => 'Question 2',
+            'maxpoints' => 2000,
+        ]);
+
+        // Get the original round and mark it as archived.
+        $round = questions::get_last_round($kahoodle->id);
+        $DB->set_field('kahoodle_rounds', 'currentstage', constants::STAGE_ARCHIVED, ['id' => $round->get_id()]);
+        $DB->set_field('kahoodle_rounds', 'timestarted', time() - 3600, ['id' => $round->get_id()]);
+        $DB->set_field('kahoodle_rounds', 'timecompleted', time() - 3000, ['id' => $round->get_id()]);
+
+        // Add statistics to original round questions (should not be copied).
+        $DB->execute(
+            "UPDATE {kahoodle_round_questions} SET totalresponses = 10, answerdistribution = ? WHERE roundid = ?",
+            ['{"A":5,"B":3,"C":2}', $round->get_id()]
+        );
+
+        // Reload round to get fresh data.
+        $round = round::create_from_id($round->get_id());
+
+        // Duplicate the round.
+        $newround = $round->duplicate();
+
+        // Verify new round was created.
+        $this->assertNotEquals($round->get_id(), $newround->get_id());
+        $this->assertEquals(2, $DB->count_records('kahoodle_rounds', ['kahoodleid' => $kahoodle->id]));
+
+        // Verify new round properties.
+        $newroundrecord = $DB->get_record('kahoodle_rounds', ['id' => $newround->get_id()], '*', MUST_EXIST);
+        $this->assertEquals('Round 2', $newroundrecord->name);
+        $this->assertEquals(constants::STAGE_PREPARATION, $newroundrecord->currentstage);
+        $this->assertNull($newroundrecord->timestarted);
+        $this->assertNull($newroundrecord->timecompleted);
+
+        // Verify questions were copied.
+        $newquestions = $DB->get_records('kahoodle_round_questions', ['roundid' => $newround->get_id()], 'sortorder ASC');
+        $this->assertCount(2, $newquestions);
+
+        // Verify question settings were copied.
+        $newq1 = array_shift($newquestions);
+        $this->assertEquals(1, $newq1->sortorder);
+        $this->assertEquals(1500, $newq1->maxpoints);
+        $this->assertEquals(750, $newq1->minpoints);
+        $this->assertEquals(45, $newq1->questionduration);
+
+        $newq2 = array_shift($newquestions);
+        $this->assertEquals(2, $newq2->sortorder);
+        $this->assertEquals(2000, $newq2->maxpoints);
+
+        // Verify statistics were NOT copied.
+        $this->assertNull($newq1->totalresponses);
+        $this->assertNull($newq1->answerdistribution);
+        $this->assertNull($newq2->totalresponses);
+        $this->assertNull($newq2->answerdistribution);
+    }
 }

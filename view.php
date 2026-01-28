@@ -97,6 +97,19 @@ if ($action === 'leave') {
     redirect(new moodle_url('/mod/kahoodle/view.php', ['id' => $cm->id]));
 }
 
+if ($action === 'newround') {
+    require_sesskey();
+    require_capability('mod/kahoodle:facilitate', $context);
+
+    // Create a new round based on the last round's question configuration.
+    if ($round->get_current_stage_name() === \mod_kahoodle\constants::STAGE_ARCHIVED) {
+        $round->duplicate();
+    }
+
+    // Redirect to remove action from URL.
+    redirect(new moodle_url('/mod/kahoodle/view.php', ['id' => $cm->id]));
+}
+
 \mod_kahoodle\event\course_module_viewed::create_from_record($moduleinstance, $cm, $course)->trigger();
 
 $PAGE->set_url('/mod/kahoodle/view.php', ['id' => $cm->id]);

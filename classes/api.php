@@ -16,6 +16,8 @@
 
 namespace mod_kahoodle;
 
+use mod_kahoodle\local\entities\round;
+
 /**
  * API class for Kahoodle instance management
  *
@@ -144,5 +146,74 @@ class api {
         $DB->delete_records('kahoodle', ['id' => $id]);
 
         return true;
+    }
+
+    /**
+     * Get all rounds for a Kahoodle activity, creates a new one if none exist
+     *
+     * @param int $kahoodleid The Kahoodle activity ID
+     * @param int $limit
+     * @param \stdClass|null $kahoodle Optional Kahoodle activity record, if known
+     * @param \cm_info|null $cm Optional course module, if known
+     * @return round[] Array of round entities indexed by their IDs, ordered by non-archived first, then by timecreated DESC
+     */
+    public static function get_all_rounds(
+        int $kahoodleid,
+        int $limit = 0,
+        ?\stdClass $kahoodle = null,
+        ?\cm_info $cm = null
+    ): array {
+        global $DB;
+
+        // Get all rounds for this kahoodle, ordered by creation time (newest first).
+        // In the same query we validate that kahoodle itself exists.
+        $order = '
+            CASE WHEN currentstage = :preparation THEN 0 ELSE CASE WHEN currentstage <> :archived THEN 1 ELSE 2 END END,
+            timecreated DESC,
+            id DESC';
+        $rounds = $DB->get_records_sql(
+            "SELECT r.* from {kahoodle} k
+            LEFT JOIN {kahoodle_rounds} r ON r.kahoodleid = k.id
+            WHERE k.id = :kahoodleid
+            ORDER BY $order",
+            [
+                'kahoodleid' => $kahoodleid,
+                'preparation' => constants::STAGE_PREPARATION,
+                'archived' => constants::STAGE_ARCHIVED,
+            ],
+            0,
+            $limit
+        );
+        if (empty($rounds)) {
+            // Kahoodle does not exist. Throw exception.
+            $DB->get_record('kahoodle', ['id' => $kahoodleid], '*', MUST_EXIST);
+        }
+
+        $round = reset($rounds);
+        if (empty($round->id)) {
+            // No rounds yet, create one.
+            $record = new \stdClass();
+            $record->kahoodleid = $kahoodleid;
+            $record->name = get_string('roundname', 'mod_kahoodle', 1);
+            $record->currentstage = constants::STAGE_PREPARATION;
+            $record->currentquestion = null;
+            $record->stagestarttime = null;
+
+            // Get default lobby duration from kahoodle instance.
+            $kahoodle = $DB->get_record('kahoodle', ['id' => $kahoodleid], 'lobbyduration', MUST_EXIST);
+            $record->lobbyduration = $kahoodle->lobbyduration;
+
+            $record->timecreated = time();
+            $record->timestarted = null;
+            $record->timecompleted = null;
+            $record->timemodified = time();
+
+            $record->id = $DB->insert_record('kahoodle_rounds', $record);
+            $rounds = [$record->id => $record];
+        }
+
+        return array_map(function ($record) use ($kahoodle, $cm) {
+            return round::create_from_object($record, $kahoodle, $cm);
+        }, $rounds);
     }
 }

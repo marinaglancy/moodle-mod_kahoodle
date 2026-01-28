@@ -135,9 +135,16 @@
     <div class="card mb-3">
         <div class="card-body">
             <p class="card-text">{{#str}}landing_finished_message, mod_kahoodle{{/str}}</p>
-            <a href="{{resultsurl}}" class="btn btn-primary">
+            {{#resultsurl}}
+            <a href="{{resultsurl}}" class="btn btn-primary me-2">
                 {{#str}}viewresults, mod_kahoodle{{/str}}
             </a>
+            {{/resultsurl}}
+            {{#newroundurl}}
+            <a href="{{newroundurl}}" class="btn btn-secondary">
+                {{#str}}preparenewround, mod_kahoodle{{/str}}
+            </a>
+            {{/newroundurl}}
         </div>
     </div>
     {{/showfinished}}

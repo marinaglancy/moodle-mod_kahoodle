@@ -105,50 +105,8 @@ class questions {
      * @return round Round entity
      */
     public static function get_last_round(int $kahoodleid): round {
-        global $DB;
-
-        // Get all rounds for this kahoodle, ordered by creation time (newest first).
-        // In the same query we validate that kahoodle itself exists.
-        $order = 'CASE WHEN currentstage = :preparation THEN 0 ELSE 1 END, timecreated DESC, id DESC';
-        $rounds = $DB->get_records_sql(
-            "SELECT r.* from {kahoodle} k
-            LEFT JOIN {kahoodle_rounds} r ON r.kahoodleid = k.id
-            WHERE k.id = :kahoodleid
-            ORDER BY $order",
-            ['kahoodleid' => $kahoodleid, 'preparation' => constants::STAGE_PREPARATION],
-            0,
-            1
-        );
-        if (empty($rounds)) {
-            // Kahoodle does not exist. Throw exception.
-            $DB->get_record('kahoodle', ['id' => $kahoodleid], '*', MUST_EXIST);
-        }
-
-        $round = reset($rounds);
-        if (empty($round->id)) {
-            // No rounds yet, create one.
-            $record = new \stdClass();
-            $record->kahoodleid = $kahoodleid;
-            $record->name = 'Round 1'; // TODO do we need a name field?
-            $record->currentstage = constants::STAGE_PREPARATION;
-            $record->currentquestion = null;
-            $record->stagestarttime = null;
-
-            // Get default lobby duration from kahoodle instance.
-            $kahoodle = $DB->get_record('kahoodle', ['id' => $kahoodleid], 'lobbyduration', MUST_EXIST);
-            $record->lobbyduration = $kahoodle->lobbyduration;
-
-            $record->timecreated = time();
-            $record->timestarted = null;
-            $record->timecompleted = null;
-            $record->timemodified = time();
-
-            $record->id = $DB->insert_record('kahoodle_rounds', $record);
-            return round::create_from_object($record);
-        }
-
-        // Get the last (most recent) round.
-        return round::create_from_object($round);
+        $rounds = api::get_all_rounds($kahoodleid, 1);
+        return reset($rounds);
     }
 
     /**
