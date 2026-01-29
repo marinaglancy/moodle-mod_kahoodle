@@ -210,7 +210,7 @@ class round_stage {
      * @return array Stage data including template, templatedata, and duration
      */
     public function export_data_for_participant(participant $participant): array {
-        global $PAGE;
+        global $PAGE, $CFG;
 
         $round = $this->get_round();
 
@@ -235,6 +235,8 @@ class round_stage {
                 'quiztitle' => $round->get_kahoodle_name(),
                 'avatarurl' => $participant->get_avatar_url(100)->out(false),
                 'displayname' => $participant->get_display_name(),
+                'waitingpixdir' => $CFG->wwwroot . '/mod/kahoodle/pix/waiting/',
+                'waitinglastimage' => 23,
             ],
             'duration' => 0, // No auto-advance for participants.
             'template' => 'mod_kahoodle/participant/' . $stagename,

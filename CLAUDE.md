@@ -38,7 +38,15 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   └── overview.php
 │   ├── event/                # Event observers and definitions
 │   │   ├── course_module_viewed.php
-│   │   └── course_module_instance_list_viewed.php
+│   │   ├── course_module_instance_list_viewed.php
+│   │   ├── question_created.php
+│   │   ├── question_updated.php
+│   │   ├── question_removed.php
+│   │   ├── round_created.php
+│   │   ├── round_updated.php
+│   │   ├── participant_joined.php
+│   │   ├── participant_left.php
+│   │   └── response_submitted.php
 │   ├── external/             # Web service definitions
 │   │   ├── add_questions.php # Batch question creation web service
 │   │   ├── change_question_sortorder.php # Question reordering web service
@@ -341,6 +349,50 @@ The activity supports all standard Moodle activity features:
 - **Grading**: Integration with Moodle gradebook
 - **Backup & Restore**: Full backup and restore support
 - **Events**: Proper event logging for reporting and analytics
+
+### Events
+
+The plugin triggers the following events for logging, reporting, and analytics:
+
+#### Standard Activity Events
+- **`course_module_viewed`**: Triggered when a user views the activity (view.php)
+- **`course_module_instance_list_viewed`**: Triggered when viewing list of all instances in a course (index.php)
+
+#### Question Management Events
+- **`question_created`**: Triggered when a new question is added to a round
+  - Context: Activity module context
+  - Related: Question version ID, round ID, kahoodle ID
+
+- **`question_updated`**: Triggered when a question is edited (new version created or existing version modified)
+  - Context: Activity module context
+  - Related: Question version ID, round ID, kahoodle ID
+
+- **`question_removed`**: Triggered when a question is removed from a round
+  - Context: Activity module context
+  - Related: Question ID, round ID, kahoodle ID
+
+#### Round Management Events
+- **`round_created`**: Triggered when a new round is created (automatically or via duplication)
+  - Context: Activity module context
+  - Related: Round ID, kahoodle ID
+
+- **`round_updated`**: Triggered when round properties are modified (e.g., name changed, stage advanced)
+  - Context: Activity module context
+  - Related: Round ID, kahoodle ID
+
+#### Participant Events
+- **`participant_joined`**: Triggered when a user joins a round
+  - Context: Activity module context
+  - Related: Participant ID, round ID, user ID
+
+- **`participant_left`**: Triggered when a participant leaves a round (future feature)
+  - Context: Activity module context
+  - Related: Participant ID, round ID, user ID
+
+#### Gameplay Events
+- **`response_submitted`**: Triggered when a participant submits an answer to a question
+  - Context: Activity module context
+  - Related: Response ID, participant ID, round question ID
 
 ### Development Constraints
 
@@ -666,6 +718,7 @@ vendor/bin/phpunit --filter questions_test
 - Comprehensive test coverage (32 tests)
 - Test data generators
 - Backup/restore support for all activity settings
+- Event logging for all major actions (10 events: view, question CRUD, round management, participants, responses)
 - Landing page with stage-based content display (view.php)
   - Shows different UI based on round stage and user capabilities
   - Control panel for facilitators (start button)
