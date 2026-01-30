@@ -83,7 +83,10 @@ foreach ($allrounds as $r) {
 }
 $currenturl = (new moodle_url('/mod/kahoodle/questions.php', ['roundid' => $round->get_id()]))->out(false);
 $selectmenu = new \core\output\select_menu('roundselector', $roundoptions, $currenturl);
-$selectmenu->set_label(get_string('selectround', 'mod_kahoodle'), ['class' => 'sr-only']);
+$selectmenu->set_label(
+    get_string('selectround', 'mod_kahoodle'),
+    ['class' => $CFG->branch >= 500 ? 'visually-hidden' : 'sr-only']
+);
 echo html_writer::div(
     $OUTPUT->render_from_template('core/tertiary_navigation_selector', $selectmenu->export_for_template($OUTPUT)),
     'tertiary-navigation mb-3'

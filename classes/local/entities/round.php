@@ -318,6 +318,13 @@ class round {
             );
         }
 
+        $stages[] = new round_stage(
+            $this,
+            constants::STAGE_ARCHIVED,
+            null,
+            0
+        );
+
         $this->stagescache = $stages;
 
         if ($ispreview) {

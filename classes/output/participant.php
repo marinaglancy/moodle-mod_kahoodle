@@ -129,9 +129,7 @@ class participant implements \renderable, \templatable {
      */
     protected function get_common_data(): array {
         return [
-            'stage' => $this->stage->get_stage_name(),
-            'currentquestion' => $this->stage->get_question_number(),
-            'totalquestions' => $this->round->get_questions_count(),
+            'stagesignature' => $this->stage->get_stage_signature(),
             'duration' => 0, // No auto-advance for participants.
             'template' => $this->get_template(),
             'templatedata' => [

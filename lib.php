@@ -246,7 +246,6 @@ function mod_kahoodle_realtime_event_received(\tool_realtime\channel $channel, $
 
             case 'get_current':
                 // Get current stage data (used when resuming a game in progress).
-                $currentstage = clean_param($payload['currentstage'] ?? '', PARAM_ALPHANUMEXT);
                 return (new \mod_kahoodle\output\facilitator($round))->export_for_template(
                     $PAGE->get_renderer('mod_kahoodle')
                 );
@@ -294,10 +293,10 @@ function mod_kahoodle_realtime_event_received(\tool_realtime\channel $channel, $
             case 'answer':
                 // Record participant's answer (validation and notification handled inside).
                 $response = (string)($payload['response'] ?? '');
-                $questionnumber = clean_param($payload['questionnumber'] ?? 0, PARAM_INT);
+                $currentstage = clean_param($payload['currentstage'] ?? '', PARAM_ALPHANUMEXT);
                 foreach ($round->get_all_participants() as $participant) {
                     if ($participant->get_id() == $participantid) {
-                        \mod_kahoodle\local\game\responses::record_answer($participant, $response, $questionnumber);
+                        \mod_kahoodle\local\game\responses::record_answer($participant, $response, $currentstage);
                         break;
                     }
                 }

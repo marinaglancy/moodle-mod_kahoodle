@@ -38,13 +38,13 @@ class responses {
      *
      * @param participant $participant The participant
      * @param string $response The participant's answer
-     * @param int $questionnumber The question number (1-based)
+     * @param string $currentstagesignature The current stage signature according to the user (for validation)
      */
-    public static function record_answer(participant $participant, string $response, int $questionnumber): void {
+    public static function record_answer(participant $participant, string $response, string $currentstagesignature): void {
         global $DB;
 
         // Validate parameters.
-        if ($response === '' || $questionnumber <= 0) {
+        if ($response === '' || empty($currentstagesignature)) {
             return;
         }
 
@@ -55,7 +55,7 @@ class responses {
         if ($stage->get_stage_name() !== constants::STAGE_QUESTION) {
             return;
         }
-        if ($stage->get_question_number() !== $questionnumber) {
+        if ($stage->get_stage_signature() !== $currentstagesignature) {
             return;
         }
 
@@ -125,7 +125,7 @@ class responses {
             'relateduserid' => $participant->get_user_id(),
             'other' => [
                 'roundid' => $round->get_id(),
-                'questionnumber' => $questionnumber,
+                'questionnumber' => $stage->get_question_number(),
                 'iscorrect' => $iscorrect,
                 'points' => $points,
             ],

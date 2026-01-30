@@ -99,16 +99,12 @@ const handleLandingPageClick = (e) => {
  * @param {string} response The answer response
  */
 const handleAnswerEvent = async(response) => {
-    if (!participantState.currentStageData || participantState.currentStageData.stage !== 'question') {
-        return;
-    }
-
     try {
         const channel = getParticipantChannel();
         await RealTimeApi.sendToServer(channel, {
             action: 'answer',
             response: response,
-            questionnumber: participantState.currentStageData.currentquestion,
+            currentstage: participantState.currentStageData.stagesignature,
         });
         // Server will send stage update via channel notification if successful.
     } catch (error) {
@@ -131,7 +127,7 @@ const fetchCurrentStage = async() => {
             return;
         }
 
-        if (response.template && response.stage) {
+        if (response.template && response.stagesignature) {
             await showStage(response);
         }
     } catch (error) {
@@ -184,7 +180,7 @@ const handleRealtimeEvent = (eventData) => {
 
     // Handle game channel events (broadcast to all participants).
     if (area === 'game' && parseInt(itemid) === participantState.roundId) {
-        if (payload.template && payload.stage) {
+        if (payload.template && payload.stagesignature) {
             showStage(payload);
         }
         return;
@@ -192,7 +188,7 @@ const handleRealtimeEvent = (eventData) => {
 
     // Handle participant-specific channel events.
     if (area === 'participant' && parseInt(itemid) === participantState.participantId) {
-        if (payload.template && payload.stage) {
+        if (payload.template && payload.stagesignature) {
             showStage(payload);
         }
     }
@@ -242,7 +238,7 @@ const showStage = async(stageData) => {
     participantState.currentStageData = stageData;
 
     // If stage is archived, close the overlay and reload the page.
-    if (stageData.stage === 'archived' || !stageData.template) {
+    if (stageData.stagesignature === 'archived' || !stageData.template) {
         closeOverlay();
         window.location.reload();
         return;
