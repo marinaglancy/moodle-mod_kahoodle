@@ -83,23 +83,43 @@ class rank {
         return new rank($participant, 0, 0, 0, [], null, []);
     }
 
+    public function get_data_for_revision(): array {
+        global $CFG;
+        $hascompletion = false; // TODO placeholder.
+        $pointstocomplete = 0; // TODO placeholder.
+        $completed = !$hascompletion || $this->score >= $pointstocomplete;
+
+        $imagedir = $CFG->wwwroot . '/mod/kahoodle/pix/ranks/';
+
+
+        // TODO image/status (assess in the following order):
+        // - if completion criteria is set and not met, show message "You need X more points to complete.", image fail.png, header "Next time!"
+        // - if completion criteria is not set and score is zero, show motivational message (to define!) and image fail.png, header "Keep trying!"
+        // - else rank message is get_rank_message(), and also:
+        //    - if minrank == 1, 2 or 3, show image 1.png, 2.png, 3.png and header "Congratulations!"
+        //    - else show participation award.png image and header "Well done!" or "Good job!"
+        return [
+            'rankimage' => $imagedir.'award.png', // TODO implement
+            'rankheader' => 'Good job!', // TODO implement
+            'rankstatus' => $this->get_rank_message(true), // TODO implement
+        ];
+    }
+
     /**
      * Rank status message displayed after each question
      *
      * Examples:
-     * - "You are in the 1st place! Well done."
-     * - "You are in the 1st place tied with NAME and NAME."
-     * - "You are in the 5th place, 123 points behind NAME."
-     * - "You are in the 5th place tied with NAME and NAME, 123 points behind NAME."
+     * - "You are in 1st place! Well done."
+     * - "You are in 1st place tied with NAME and NAME."
+     * - "You are in 5th place, 123 points behind NAME."
+     * - "You are in 5th place tied with NAME and NAME, 123 points behind NAME."
      *
-     * @return string
+     * @return array
      */
-    public function get_status_message(): string {
+    public function get_data_for_question_results(): array {
         if ($this->minrank == 0 || $this->maxrank == 0) {
-            return '';
+            return [];
         }
-
-        $isrevision = $this->participant->get_round()->get_current_stage_name() == constants::STAGE_REVISION;
 
         if ($this->score == 0) {
             // TODO review and add language strings.
@@ -110,8 +130,13 @@ class rank {
                 "Every point counts, keep trying!",
                 "Stay motivated, your score will improve!",
             ];
-            return $motivationmessages[array_rand($motivationmessages)];
+            return ['rankstatus' => $motivationmessages[array_rand($motivationmessages)]];
         }
+
+        return ['rankstatus' => $this->get_rank_message(false)];
+    }
+
+    protected function get_rank_message(bool $isrevision = false): string {
 
         $myrank = $this->minrank . $this->get_rank_suffix($this->minrank);
         if ($this->minrank != $this->maxrank) {
@@ -128,14 +153,14 @@ class rank {
         $namelist2 = $this->name_list($this->withprevscore);
         if ($withbehind) {
             // TODO implement with proper language strings.
-            return "You are in the " . $myrank . " place"
+            return "You are in " . $myrank . " place"
                 . (!empty($this->tiewith) ? " tied with " . $namelist1 : "")
                 . ", " . ($this->prevscore - $this->score) . " points behind "
                         . $namelist2
                 . ".";
         } else {
             // TODO implement with proper language strings.
-            return "You are in the " . $myrank . " place"
+            return "You are in " . $myrank . " place"
                 . (!empty($this->tiewith) ? " tied with " . $namelist1 : "")
                 . ".";
         }

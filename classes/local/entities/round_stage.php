@@ -284,12 +284,12 @@ class round_stage {
                 } else {
                     $data['templatedata']['timeup'] = true;
                 }
-                $data['templatedata']['rankstatus'] = $rank->get_status_message();
+                $data['templatedata'] += $rank->get_data_for_question_results();
             }
         }
 
-        if ($stagename === constants::STAGE_QUESTION_RESULTS || $stagename === constants::STAGE_REVISION) {
-            $data['templatedata']['rankstatus'] = $rank->get_status_message();
+        if ($stagename === constants::STAGE_REVISION) {
+            $data['templatedata'] += $rank->get_data_for_revision();
         }
 
         return $data;

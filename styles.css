@@ -1275,12 +1275,6 @@
     color: white;
 }
 
-.mod_kahoodle-result-trophy {
-    background: linear-gradient(135deg, #ffc107, #ff9800);
-    box-shadow: 0 8px 32px rgba(255, 193, 7, 0.4);
-    color: white;
-}
-
 .mod_kahoodle-participant-result-score {
     font-size: 3rem;
     font-weight: 700;
@@ -1289,7 +1283,7 @@
 }
 
 .mod_kahoodle-participant-result-rank {
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     color: rgba(255, 255, 255, 0.7);
     text-align: center;
     max-width: 280px;
@@ -1359,24 +1353,22 @@
     }
 }
 
-@media (max-width: 400px) {
-    .mod_kahoodle-participant-result-status {
-        font-size: 2rem;
-    }
+.mod_kahoodle-participant-result-status {
+    font-size: 2rem;
+}
 
-    .mod_kahoodle-participant-result-icon {
-        width: 100px;
-        height: 100px;
-    }
+.mod_kahoodle-participant-result-icon {
+    width: 200px;
+    height: 150px;
+}
 
-    .mod_kahoodle-participant-result-icon svg {
-        width: 60px;
-        height: 60px;
-    }
+.mod_kahoodle-participant-result-icon img {
+    max-width: 200px;
+    max-height: 150px;
+}
 
-    .mod_kahoodle-participant-result-score {
-        font-size: 2.5rem;
-    }
+.mod_kahoodle-participant-result-score {
+    font-size: 2.5rem;
 }
 
 /* ========================================
