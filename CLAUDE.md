@@ -60,7 +60,7 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   │   ├── participant.php # Participant entity
 │   │   │   ├── round.php     # Round entity with caching for kahoodle/cm/context
 │   │   │   ├── round_question.php # Round question entity (joins 3 tables)
-│   │   │   └── round_stage.php # Round stage entity for stage data export
+│   │   │   └── round_stage.php # Round stage entity (current stage in a round)
 │   │   ├── game/             # Game mechanics
 │   │   │   ├── participants.php # Participant management (join, get)
 │   │   │   ├── progress.php  # Game progress and stage transitions
@@ -69,7 +69,9 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │       ├── base.php      # Abstract base class for question types
 │   │       └── multichoice.php # Multiple choice question type
 │   ├── output/               # Output classes for templates
+│   │   ├── facilitator.php   # Facilitator view template data preparation
 │   │   ├── landing.php       # Landing page output (stage-based view)
+│   │   ├── participant.php   # Participant view template data preparation
 │   │   ├── renderer.php      # Plugin renderer
 │   │   ├── results.php       # Results page output (all rounds with status)
 │   │   └── roundquestion.php # Round question display output
@@ -247,6 +249,104 @@ Represents a question in a round, joining data from 3 tables (kahoodle_round_que
 - `get_round(): round` - Get cached round entity
 - `get_data(): stdClass` - Get combined data from all joined tables
 - `get_question_type(): base` - Get the question type instance for this question
+
+#### round_stage Entity (`round_stage.php`)
+
+Represents the current stage in a round. A stage can be a non-question stage (lobby, leaders, revision) or a question stage (preview, question, results) associated with a specific round_question.
+
+**Factory Methods:**
+- `create_from_round_question(round_question $roundquestion, string $stagename): self` - Create for a question stage
+
+**Methods:**
+- `get_round(): round` - Get the parent round
+- `get_stage_name(): string` - Get the stage constant (STAGE_LOBBY, STAGE_QUESTION, etc.)
+- `get_round_question(): ?round_question` - Get associated round question (null for non-question stages)
+- `get_duration(): int` - Get duration in seconds
+- `get_question_number(): int` - Get question number (1-based), 0 for non-question stages
+- `is_question_stage(): bool` - Check if this is a question-related stage
+- `matches(string $stagename, int $questionnumber): bool` - Check if stage matches given parameters
+
+### Output Classes
+
+The plugin uses output classes in `classes/output/` for template data preparation. These classes implement `\renderable` and `\templatable` interfaces.
+
+#### facilitator Output Class (`output/facilitator.php`)
+
+Prepares template data for the facilitator view managing a kahoodle round. Used when rendering the facilitator interface during gameplay.
+
+**Constructor:**
+- `__construct(round $round)` - Takes the round entity
+
+**Key Methods:**
+- `export_for_template(\renderer_base $output): array` - Main export method
+- `get_template(): ?string` - Returns template name for current stage
+- `get_duration(): int` - Returns auto-advance duration for current stage
+- `get_common_data(): array` - Returns data common to all stages
+- `get_lobby_data(): array` - Returns lobby-specific template data
+- `get_question_data(): array` - Returns question stage template data
+- `get_leaderboard_data(): array` - Returns leaderboard template data (leaders/revision)
+
+**Returned Data Structure:**
+```php
+[
+    'stage' => 'lobby|questionpreview|question|questionresults|leaders|revision|archived',
+    'currentquestion' => 0,        // Question number (0 for non-question stages)
+    'totalquestions' => 5,         // Total questions in round
+    'template' => 'mod_kahoodle/facilitator/lobby',  // Template to render
+    'duration' => 60,              // Auto-advance duration in seconds
+    'templatedata' => [            // Data passed to the template
+        'quiztitle' => '...',
+        'sortorder' => 1,
+        'totalquestions' => 5,
+        'cancontrol' => true,
+        'isedit' => false,
+        'backgroundurl' => '...',
+        // ... stage-specific data
+    ],
+]
+```
+
+#### participant Output Class (`output/participant.php`)
+
+Prepares template data for the participant view playing a kahoodle round. Used when rendering the participant interface during gameplay.
+
+**Constructor:**
+- `__construct(participant_entity $participant)` - Takes the participant entity
+
+**Key Methods:**
+- `export_for_template(\renderer_base $output): array` - Main export method
+- `get_effective_stage_name(): string` - Maps leaders stage to results for participants
+- `is_question_stage(): bool` - Checks if current stage is question-related
+- `get_template(): string` - Returns template name for current stage
+- `get_common_data(): array` - Returns data common to all stages
+- `get_lobby_data(): array` - Returns lobby-specific template data
+- `get_question_data(): array` - Returns question stage template data
+- `get_revision_data(): array` - Returns revision stage template data
+
+**Stage Mapping:**
+- For participants, the `leaders` stage is shown as `questionresults` (they see their results while facilitator sees the leaderboard)
+
+**Returned Data Structure:**
+```php
+[
+    'stage' => 'lobby|questionpreview|question|questionresults|revision',
+    'currentquestion' => 1,
+    'totalquestions' => 5,
+    'duration' => 0,               // No auto-advance for participants
+    'template' => 'mod_kahoodle/participant/lobby',
+    'templatedata' => [
+        'quiztitle' => '...',
+        'avatarurl' => '...',
+        'displayname' => '...',
+        'totalscore' => 1500,
+        // ... stage-specific data
+    ],
+]
+```
+
+#### roundquestion Output Class (`output/roundquestion.php`)
+
+Prepares template data for displaying a single question. Used by both facilitator and participant output classes during question stages.
 
 ### Question Types
 

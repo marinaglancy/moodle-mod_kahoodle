@@ -16,6 +16,13 @@
 
 namespace mod_kahoodle\output;
 
+use mod_kahoodle\constants;
+use mod_kahoodle\local\entities\participant as participant_entity;
+use mod_kahoodle\local\entities\rank;
+use mod_kahoodle\local\entities\round;
+use mod_kahoodle\local\entities\round_stage;
+use mod_kahoodle\local\game\responses;
+
 /**
  * Output class for the participant view playing kahoodle round
  *
@@ -24,15 +31,28 @@ namespace mod_kahoodle\output;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class participant implements \renderable, \templatable {
+    /** @var participant_entity */
+    protected participant_entity $participant;
+
+    /** @var round The round (set during export) */
+    protected round $round;
+
+    /** @var round_stage The current stage (set during export) */
+    protected round_stage $stage;
+
+    /** @var string Effective stage name (leaders mapped to results) */
+    protected string $effectivestagename;
+
+    /** @var rank The participant's rank (set during export) */
+    protected rank $rank;
+
     /**
      * Constructor
      *
-     * @param \mod_kahoodle\local\entities\participant $participant The participant
+     * @param participant_entity $participant The participant
      */
-    public function __construct(
-        /** @var \mod_kahoodle\local\entities\participant */
-        protected \mod_kahoodle\local\entities\participant $participant
-    ) {
+    public function __construct(participant_entity $participant) {
+        $this->participant = $participant;
     }
 
     /**
@@ -42,8 +62,173 @@ class participant implements \renderable, \templatable {
      * @return array
      */
     public function export_for_template(\core\output\renderer_base $output): array {
-        $round = $this->participant->get_round();
-        $stage = $round->get_current_stage();
-        return $stage->export_data_for_participant($this->participant);
+        $this->round = $this->participant->get_round();
+        $this->stage = $this->round->get_current_stage();
+        $this->effectivestagename = $this->get_effective_stage_name();
+        $this->rank = $this->round->get_rankings()[$this->participant->get_id()]
+            ?? rank::create_empty($this->participant);
+
+        $this->ensure_page_setup();
+
+        $data = $this->get_common_data();
+
+        // Add stage-specific templatedata.
+        if ($this->effectivestagename === constants::STAGE_LOBBY) {
+            $data['templatedata'] += $this->get_lobby_data();
+        } else if ($this->is_question_stage()) {
+            $data['templatedata'] += $this->get_question_data();
+        } else if ($this->effectivestagename === constants::STAGE_REVISION) {
+            $data['templatedata'] += $this->get_revision_data();
+        }
+
+        return $data;
+    }
+
+    /**
+     * Get effective stage name (maps leaders to results for participants)
+     *
+     * @return string
+     */
+    protected function get_effective_stage_name(): string {
+        $stagename = $this->stage->get_stage_name();
+        // For participants, leaders stage shows as results.
+        if ($stagename === constants::STAGE_LEADERS) {
+            return constants::STAGE_QUESTION_RESULTS;
+        }
+        return $stagename;
+    }
+
+    /**
+     * Check if this is a question-related stage
+     *
+     * @return bool
+     */
+    protected function is_question_stage(): bool {
+        return in_array($this->effectivestagename, [
+            constants::STAGE_QUESTION_PREVIEW,
+            constants::STAGE_QUESTION,
+            constants::STAGE_QUESTION_RESULTS,
+        ], true);
+    }
+
+    /**
+     * Ensure PAGE is set up for rendering (needed when called from realtime callback)
+     */
+    protected function ensure_page_setup(): void {
+        global $PAGE;
+        if (!$PAGE->has_set_url()) {
+            $cm = $this->round->get_cm();
+            $PAGE->set_url('/mod/kahoodle/view.php', ['id' => $cm->id]);
+            $PAGE->set_context($this->round->get_context());
+        }
+    }
+
+    /**
+     * Get the template name for the current stage
+     *
+     * @return string
+     */
+    protected function get_template(): string {
+        if ($this->is_question_stage()) {
+            $questiontype = $this->stage->get_round_question()->get_question_type();
+            return $questiontype->get_template('participant', $this->effectivestagename);
+        }
+        return 'mod_kahoodle/participant/' . $this->effectivestagename;
+    }
+
+    /**
+     * Get common data for all stages
+     *
+     * @return array
+     */
+    protected function get_common_data(): array {
+        return [
+            'stage' => $this->stage->get_stage_name(),
+            'currentquestion' => $this->stage->get_question_number(),
+            'totalquestions' => $this->round->get_questions_count(),
+            'duration' => 0, // No auto-advance for participants.
+            'template' => $this->get_template(),
+            'templatedata' => [
+                'quiztitle' => $this->round->get_kahoodle_name(),
+                'avatarurl' => $this->participant->get_avatar_url(100)->out(false),
+                'displayname' => $this->participant->get_display_name(),
+                'totalscore' => $this->rank->score,
+            ],
+        ];
+    }
+
+    /**
+     * Get data for the lobby stage
+     *
+     * @return array Template data additions
+     */
+    protected function get_lobby_data(): array {
+        return [
+            'caneditavatar' => false, // TODO: Implement avatar editing.
+        ];
+    }
+
+    /**
+     * Get data for question stages (preview, question, results)
+     *
+     * @return array Template data additions
+     */
+    protected function get_question_data(): array {
+        global $CFG;
+
+        $roundquestion = $this->stage->get_round_question();
+        $questiontype = $roundquestion->get_question_type();
+
+        // Get question type template data.
+        $typedata = $questiontype->export_template_data_participant(
+            $this->participant,
+            $roundquestion,
+            $this->effectivestagename
+        );
+
+        $data = [
+            'sortorder' => $this->stage->get_question_number(),
+            'questiontype' => $questiontype->get_type(),
+            'typedata' => json_encode($typedata),
+        ];
+
+        // Check for existing response (not for preview stage).
+        $response = null;
+        if ($this->effectivestagename !== constants::STAGE_QUESTION_PREVIEW) {
+            $response = responses::get_response($this->participant, $roundquestion);
+            $data['answered'] = $response !== null;
+        }
+
+        // Question stage with answer already submitted: show waiting screen.
+        if ($this->effectivestagename === constants::STAGE_QUESTION && $response !== null) {
+            $imgidx = rand(1, 23);
+            // phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+            // Mdlcode assume: $msgidx ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15'].
+            $msgidx = rand(1, 15);
+            $data['waitingmessage'] = get_string('waitingmessage' . $msgidx, 'mod_kahoodle');
+            $data['waitingimage'] = $CFG->wwwroot . '/mod/kahoodle/pix/waiting/' . $imgidx . '.svg';
+        }
+
+        // Results stage: add answer feedback.
+        if ($this->effectivestagename === constants::STAGE_QUESTION_RESULTS) {
+            if ($response) {
+                $data['iscorrect'] = (bool)$response->iscorrect;
+                $data['points'] = (int)$response->points;
+            } else {
+                $data['timeup'] = true;
+            }
+            $data += $this->rank->get_data_for_question_results();
+        }
+
+        return $data;
+    }
+
+    /**
+     * Get data for the revision stage (final leaderboard)
+     *
+     * @return array Template data additions
+     */
+    protected function get_revision_data(): array {
+        return $this->rank->get_data_for_revision();
     }
 }
