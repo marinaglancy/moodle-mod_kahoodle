@@ -22,46 +22,13 @@
 
     Example context (json):
     {
-        "waitingpixdir": "/mod/kahoodle/pix/waiting",
-        "waitinglastimage": 10
+        "waitingmessage": "Quick answer!",
+        "waitingimage": "/mod/kahoodle/pix/waiting/5.svg"
     }
 }}
-<div class="mod_kahoodle-participant-result-status" id="waiting-message">{{#str}}waitingmessage1, mod_kahoodle{{/str}}</div>
-<div class="mod_kahoodle-participant-result-icon mod_kahoodle-result-waiting">
-
+<div class="mod_kahoodle-participant-result-status">{{waitingmessage}}</div>
+<div class="mod_kahoodle-participant-question-icon mod_kahoodle-result-waiting">
     <div class="mod_kahoodle-waiting-icon"
-         data-pixdir="{{waitingpixdir}}"
-         data-lastimage="{{waitinglastimage}}"></div>
+        style="-webkit-mask-image: url('{{waitingimage}}'); mask-image: url('{{waitingimage}}');"></div>
 </div>
 <div class="mod_kahoodle-participant-result-rank">{{#str}}waitingforresults, mod_kahoodle{{/str}}</div>
-
-{{#js}}
-require(['core/str'], function(Str) {
-    // Randomly select a waiting message.
-    var waitingMessages = [];
-    for (var i = 1; i <= 15; i++) {
-        waitingMessages.push({key: 'waitingmessage' + i, component: 'mod_kahoodle'});
-    }
-    var randomIndex = Math.floor(Math.random() * waitingMessages.length);
-    var messageEl = document.getElementById('waiting-message');
-    if (messageEl) {
-        Str.get_string(waitingMessages[randomIndex].key, waitingMessages[randomIndex].component).then(function(str) {
-            messageEl.textContent = str;
-            return true;
-        }).catch(function() {
-            // Fallback to default message already in template.
-        });
-    }
-
-    // Randomly select a waiting image.
-    var iconEl = document.querySelector('.mod_kahoodle-waiting-icon[data-pixdir]');
-    if (iconEl) {
-        var pixdir = iconEl.dataset.pixdir;
-        var lastImage = parseInt(iconEl.dataset.lastimage, 10) || 1;
-        var randomImage = Math.floor(Math.random() * lastImage) + 1;
-        var imageUrl = "url('" + pixdir + "/" + randomImage + ".svg')";
-        iconEl.style.webkitMaskImage = imageUrl;
-        iconEl.style.maskImage = imageUrl;
-    }
-});
-{{/js}}

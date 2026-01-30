@@ -235,8 +235,6 @@ class round_stage {
                 'quiztitle' => $round->get_kahoodle_name(),
                 'avatarurl' => $participant->get_avatar_url(100)->out(false),
                 'displayname' => $participant->get_display_name(),
-                'waitingpixdir' => $CFG->wwwroot . '/mod/kahoodle/pix/waiting/',
-                'waitinglastimage' => 23,
             ],
             'duration' => 0, // No auto-advance for participants.
             'template' => 'mod_kahoodle/participant/' . $stagename,
@@ -274,6 +272,18 @@ class round_stage {
             if ($stagename !== constants::STAGE_QUESTION_PREVIEW) {
                 $response = \mod_kahoodle\local\game\responses::get_response($participant, $this->roundquestion);
                 $data['templatedata']['answered'] = $response !== null;
+            }
+
+            if ($stagename === constants::STAGE_QUESTION && $response !== null) {
+                // Question screen with an answer already submitted. Show waiting image/message.
+                // phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+                // Mdlcode assume: $msgidx ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15'].
+                $msgidx = rand(1, 15);
+                $imgidx = rand(1, 23);
+                $data['templatedata'] += [
+                    'waitingmessage' => get_string('waitingmessage' . $msgidx, 'mod_kahoodle'),
+                    'waitingimage' => $CFG->wwwroot . '/mod/kahoodle/pix/waiting/' . $imgidx . '.svg',
+                ];
             }
 
             // For results stage, include answer result data.

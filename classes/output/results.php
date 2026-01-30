@@ -25,7 +25,7 @@ use stdClass;
 use templatable;
 
 /**
- * Output class for the results page
+ * Output class for the all rounds results page (mod/view/results.php)
  *
  * @package    mod_kahoodle
  * @copyright  Marina Glancy
