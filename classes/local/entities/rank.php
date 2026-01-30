@@ -83,6 +83,13 @@ class rank {
         return new rank($participant, 0, 0, 0, [], null, []);
     }
 
+    /**
+     * Get data for the revision screen (end of game)
+     *
+     * Returns rankimage, rankheader, and rankstatus based on completion and score.
+     *
+     * @return array{rankimage: string, rankheader: string, rankstatus: string}
+     */
     public function get_data_for_revision(): array {
         global $CFG;
         $hascompletion = false; // TODO placeholder.
@@ -91,30 +98,56 @@ class rank {
 
         $imagedir = $CFG->wwwroot . '/mod/kahoodle/pix/ranks/';
 
+        // Completion criteria set but not met.
+        if ($hascompletion && !$completed) {
+            $pointsneeded = $pointstocomplete - $this->score;
+            return [
+                'rankimage' => $imagedir . 'fail.png',
+                'rankheader' => get_string('rankheader_completionnotmet', 'mod_kahoodle'),
+                'rankstatus' => get_string('rankstatus_completionnotmet', 'mod_kahoodle', $pointsneeded),
+            ];
+        }
 
-        // TODO image/status (assess in the following order):
-        // - if completion criteria is set and not met, show message "You need X more points to complete.", image fail.png, header "Next time!"
-        // - if completion criteria is not set and score is zero, show motivational message (to define!) and image fail.png, header "Keep trying!"
-        // - else rank message is get_rank_message(), and also:
-        //    - if minrank == 1, 2 or 3, show image 1.png, 2.png, 3.png and header "Congratulations!"
-        //    - else show participation award.png image and header "Well done!" or "Good job!"
+        // No completion criteria and score is zero.
+        if ($this->score == 0) {
+            // phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+            // Mdlcode assume: $idx ['1','2','3','4','5'].
+            $idx = rand(1, 5);
+            $messagekey = 'rankrevisionzeroscore' . $idx;
+            return [
+                'rankimage' => $imagedir . 'fail.png',
+                'rankheader' => get_string('rankheader_zeroscore', 'mod_kahoodle'),
+                'rankstatus' => get_string($messagekey, 'mod_kahoodle'),
+            ];
+        }
+
+        // Has score - show rank message.
+        $rankstatus = $this->get_rank_message(true);
+
+        // Podium finishers (1st, 2nd, 3rd).
+        if ($this->minrank >= 1 && $this->minrank <= 3) {
+            return [
+                'rankimage' => $imagedir . $this->minrank . '.png',
+                'rankheader' => get_string('rankheader_medal', 'mod_kahoodle'),
+                'rankstatus' => $rankstatus,
+            ];
+        }
+
+        // Other ranks - participation award with rotating header.
+        // Mdlcode assume: $idx ['1','2','3'].
+        $idx = rand(1, 3);
+        $headerkey = 'rankheader_other' . $idx;
         return [
-            'rankimage' => $imagedir.'award.png', // TODO implement
-            'rankheader' => 'Good job!', // TODO implement
-            'rankstatus' => $this->get_rank_message(true), // TODO implement
+            'rankimage' => $imagedir . 'award.png',
+            'rankheader' => get_string($headerkey, 'mod_kahoodle'),
+            'rankstatus' => $rankstatus,
         ];
     }
 
     /**
-     * Rank status message displayed after each question
+     * Data for the results screen (after each question)
      *
-     * Examples:
-     * - "You are in 1st place! Well done."
-     * - "You are in 1st place tied with NAME and NAME."
-     * - "You are in 5th place, 123 points behind NAME."
-     * - "You are in 5th place tied with NAME and NAME, 123 points behind NAME."
-     *
-     * @return array
+     * @return array{rankstatus: string}
      */
     public function get_data_for_question_results(): array {
         if ($this->minrank == 0 || $this->maxrank == 0) {
@@ -122,26 +155,31 @@ class rank {
         }
 
         if ($this->score == 0) {
-            // TODO review and add language strings.
-            $motivationmessages = [
-                "Keep going, you'll get points soon!",
-                "Don't give up, try the next question!",
-                "You're doing great, stay focused!",
-                "Every point counts, keep trying!",
-                "Stay motivated, your score will improve!",
-            ];
-            return ['rankstatus' => $motivationmessages[array_rand($motivationmessages)]];
+            // phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+            // Mdlcode assume: $idx ['1','2','3','4','5'].
+            $idx = rand(1, 5);
+            $messagekey = 'rankmotivation' . $idx;
+            return ['rankstatus' => get_string($messagekey, 'mod_kahoodle')];
         }
 
         return ['rankstatus' => $this->get_rank_message(false)];
     }
 
+    /**
+     * Build the rank message string
+     *
+     * @param bool $isrevision True for revision screen ("You finished in..."), false for question results ("You are in...")
+     * @return string
+     */
     protected function get_rank_message(bool $isrevision = false): string {
-
         $myrank = $this->minrank . $this->get_rank_suffix($this->minrank);
         if ($this->minrank != $this->maxrank) {
             $myrank = $this->minrank . '-' . $this->maxrank . $this->get_rank_suffix($this->maxrank);
         }
+
+        $tiednames = $this->name_list($this->tiewith);
+        $behindnames = $this->name_list($this->withprevscore);
+        $pointsbehind = $this->prevscore !== null ? $this->prevscore - $this->score : 0;
 
         $withbehind = !$isrevision && count($this->withprevscore) > 0;
         if ($withbehind && count($this->tiewith) > 2 && count($this->withprevscore) > 2) {
@@ -149,21 +187,40 @@ class rank {
             $withbehind = false;
         }
 
-        $namelist1 = $this->name_list($this->tiewith);
-        $namelist2 = $this->name_list($this->withprevscore);
-        if ($withbehind) {
-            // TODO implement with proper language strings.
-            return "You are in " . $myrank . " place"
-                . (!empty($this->tiewith) ? " tied with " . $namelist1 : "")
-                . ", " . ($this->prevscore - $this->score) . " points behind "
-                        . $namelist2
-                . ".";
-        } else {
-            // TODO implement with proper language strings.
-            return "You are in " . $myrank . " place"
-                . (!empty($this->tiewith) ? " tied with " . $namelist1 : "")
-                . ".";
+        if ($isrevision) {
+            // Revision screen: "You finished in Xth place!".
+            if (!empty($this->tiewith)) {
+                return get_string('rankstatus_finished_tied', 'mod_kahoodle', [
+                    'rank' => $myrank,
+                    'names' => $tiednames,
+                ]);
+            }
+            return get_string('rankstatus_finished', 'mod_kahoodle', $myrank);
         }
+
+        // Question results screen: "You are in Xth place...".
+        if ($withbehind && !empty($this->tiewith)) {
+            return get_string('rankstatus_inplace_tied_behind', 'mod_kahoodle', [
+                'rank' => $myrank,
+                'tiednames' => $tiednames,
+                'points' => $pointsbehind,
+                'behindnames' => $behindnames,
+            ]);
+        }
+        if ($withbehind) {
+            return get_string('rankstatus_inplace_behind', 'mod_kahoodle', [
+                'rank' => $myrank,
+                'points' => $pointsbehind,
+                'names' => $behindnames,
+            ]);
+        }
+        if (!empty($this->tiewith)) {
+            return get_string('rankstatus_inplace_tied', 'mod_kahoodle', [
+                'rank' => $myrank,
+                'names' => $tiednames,
+            ]);
+        }
+        return get_string('rankstatus_inplace', 'mod_kahoodle', $myrank);
     }
 
     /**
