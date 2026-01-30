@@ -205,6 +205,16 @@ class round {
     }
 
     /**
+     * Get the URL to view this round
+     *
+     * @return \moodle_url
+     */
+    public function get_url(): \moodle_url {
+        $cm = $this->get_cm();
+        return new \moodle_url('/mod/kahoodle/view.php', ['id' => $cm->id]);
+    }
+
+    /**
      * Get the context module instance
      *
      * @return \context_module

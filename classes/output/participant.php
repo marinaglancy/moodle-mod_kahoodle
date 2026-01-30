@@ -75,7 +75,7 @@ class participant implements \renderable, \templatable {
         // Add stage-specific templatedata.
         if ($this->effectivestagename === constants::STAGE_LOBBY) {
             $data['templatedata'] += $this->get_lobby_data();
-        } else if ($this->is_question_stage()) {
+        } else if ($this->stage->is_question_stage()) {
             $data['templatedata'] += $this->get_question_data();
         } else if ($this->effectivestagename === constants::STAGE_REVISION) {
             $data['templatedata'] += $this->get_revision_data();
@@ -99,26 +99,12 @@ class participant implements \renderable, \templatable {
     }
 
     /**
-     * Check if this is a question-related stage
-     *
-     * @return bool
-     */
-    protected function is_question_stage(): bool {
-        return in_array($this->effectivestagename, [
-            constants::STAGE_QUESTION_PREVIEW,
-            constants::STAGE_QUESTION,
-            constants::STAGE_QUESTION_RESULTS,
-        ], true);
-    }
-
-    /**
      * Ensure PAGE is set up for rendering (needed when called from realtime callback)
      */
     protected function ensure_page_setup(): void {
         global $PAGE;
         if (!$PAGE->has_set_url()) {
-            $cm = $this->round->get_cm();
-            $PAGE->set_url('/mod/kahoodle/view.php', ['id' => $cm->id]);
+            $PAGE->set_url($this->round->get_url());
             $PAGE->set_context($this->round->get_context());
         }
     }
@@ -129,7 +115,7 @@ class participant implements \renderable, \templatable {
      * @return string
      */
     protected function get_template(): string {
-        if ($this->is_question_stage()) {
+        if ($this->stage->is_question_stage()) {
             $questiontype = $this->stage->get_round_question()->get_question_type();
             return $questiontype->get_template('participant', $this->effectivestagename);
         }

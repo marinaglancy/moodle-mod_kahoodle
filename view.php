@@ -59,7 +59,7 @@ if ($action === 'start') {
     }
 
     // Redirect to remove action from URL (prevents re-triggering on refresh).
-    redirect(new moodle_url('/mod/kahoodle/view.php', ['id' => $cm->id]));
+    redirect($round->get_url());
 }
 
 if ($action === 'finish') {
@@ -71,7 +71,7 @@ if ($action === 'finish') {
     }
 
     // Redirect to remove action from URL.
-    redirect(new moodle_url('/mod/kahoodle/view.php', ['id' => $cm->id]));
+    redirect($round->get_url());
 }
 
 if ($action === 'join') {
@@ -82,7 +82,7 @@ if ($action === 'join') {
     \mod_kahoodle\local\game\participants::join_round($round);
 
     // Redirect to remove action from URL.
-    redirect(new moodle_url('/mod/kahoodle/view.php', ['id' => $cm->id]));
+    redirect($round->get_url());
 }
 
 if ($action === 'leave') {
@@ -94,7 +94,7 @@ if ($action === 'leave') {
     }
 
     // Redirect to remove action from URL.
-    redirect(new moodle_url('/mod/kahoodle/view.php', ['id' => $cm->id]));
+    redirect($round->get_url());
 }
 
 if ($action === 'newround') {
@@ -107,7 +107,7 @@ if ($action === 'newround') {
     }
 
     // Redirect to remove action from URL.
-    redirect(new moodle_url('/mod/kahoodle/view.php', ['id' => $cm->id]));
+    redirect($round->get_url());
 }
 
 \mod_kahoodle\event\course_module_viewed::create_from_record($moduleinstance, $cm, $course)->trigger();
@@ -134,7 +134,7 @@ if ($round->is_in_progress()) {
         // User is not a participant but can facilitate - load facilitator JS.
         realtime_channels::subscribe_as_facilitator($round);
 
-        $PAGE->requires->js_call_amd('mod_kahoodle/gamecontroller', 'init', [
+        $PAGE->requires->js_call_amd('mod_kahoodle/facilitator', 'init', [
             $round->get_id(),
             $context->id,
         ]);

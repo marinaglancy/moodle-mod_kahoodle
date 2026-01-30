@@ -23,7 +23,7 @@
  *
  * This module is only loaded when the game is in progress.
  *
- * @module     mod_kahoodle/gamecontroller
+ * @module     mod_kahoodle/facilitator
  * @copyright  Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -132,7 +132,7 @@ const fetchCurrentStage = async() => {
             return;
         }
 
-        if (response.template && response.stage) {
+        if (response.template && response.stagesignature) {
             await showStage(response);
         }
     } catch (error) {
@@ -184,7 +184,7 @@ const handleRealtimeEvent = (eventData) => {
     }
 
     // Show the new stage.
-    if (payload.template && payload.stage) {
+    if (payload.template && payload.stagesignature) {
         showStage(payload);
     }
 };
@@ -323,15 +323,15 @@ const updateLobbyPartial = async(template, templatedata) => {
  * @param {Object} stageData The stage data from the server
  */
 const showStage = async(stageData) => {
+    window.console.log('Showing stage:', stageData);
 
     const stageChanged = !gameState.currentStageData ||
-        gameState.currentStageData.stage !== stageData.stage ||
-        gameState.currentStageData.currentquestion !== stageData.currentquestion;
+        gameState.currentStageData.stagesignature !== stageData.stagesignature;
 
     gameState.currentStageData = stageData;
 
     // If stage is archived, close the overlay.
-    if (stageData.stage === 'archived' || !stageData.template) {
+    if (stageData.stagesignature === 'archived' || !stageData.template) {
         closeOverlay();
         // Reload the page to show updated landing state.
         window.location.reload();
@@ -343,7 +343,7 @@ const showStage = async(stageData) => {
         const templatedata = processTemplateData(stageData.templatedata);
 
         // For lobby stage without stage change, only update dynamic parts to avoid flickering.
-        if (!stageChanged && stageData.stage === 'lobby') {
+        if (!stageChanged && stageData.stagesignature === 'lobby') {
             if (await updateLobbyPartial(stageData.template, templatedata)) {
                 return;
             }
@@ -470,8 +470,7 @@ const advanceToNextStage = async() => {
         const rawResponse = await RealTimeApi.sendToServer(channel, {
             action: 'advance',
             // Also send the current stage to avoid race conditions, double facilitation, and jumping over stages.
-            currentstage: gameState.currentStageData.stage,
-            currentquestion: gameState.currentStageData.currentquestion
+            currentstage: gameState.currentStageData.stagesignature,
         });
         const response = parseRealtimeResponse(rawResponse);
 

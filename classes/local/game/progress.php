@@ -73,19 +73,15 @@ class progress {
      * Advance to the next stage in the game flow
      *
      * @param round $round The round entity
-     * @param string $currentstagename The current stage name (for validation)
-     * @param int $currentquestion The current question number (for validation)
+     * @param string $currentstagesignature The current stage signature (to prevent double-clicking issues)
      * @return round_stage The next stage object
      */
-    public static function advance_to_next_stage(round $round, string $currentstagename, int $currentquestion): round_stage {
+    public static function advance_to_next_stage(round $round, string $currentstagesignature): round_stage {
         global $DB;
 
         // Validate current stage to avoid race conditions.
         $actualstage = $round->get_current_stage();
-        if (
-            $actualstage->get_stage_name() !== $currentstagename ||
-            $actualstage->get_question_number() !== $currentquestion
-        ) {
+        if ($actualstage->get_stage_signature() !== $currentstagesignature) {
             // Stage has already advanced, return current stage.
             return $actualstage;
         }

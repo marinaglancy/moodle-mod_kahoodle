@@ -93,23 +93,9 @@ class facilitator implements \renderable, \templatable {
     protected function ensure_page_setup(): void {
         global $PAGE;
         if (!$PAGE->has_set_url()) {
-            $cm = $this->round->get_cm();
-            $PAGE->set_url('/mod/kahoodle/view.php', ['id' => $cm->id]);
+            $PAGE->set_url($this->round->get_url());
             $PAGE->set_context($this->round->get_context());
         }
-    }
-
-    /**
-     * Check if this is a question-related stage
-     *
-     * @return bool
-     */
-    protected function is_question_stage(): bool {
-        return in_array($this->stage->get_stage_name(), [
-            constants::STAGE_QUESTION_PREVIEW,
-            constants::STAGE_QUESTION,
-            constants::STAGE_QUESTION_RESULTS,
-        ], true);
     }
 
     /**
@@ -120,14 +106,13 @@ class facilitator implements \renderable, \templatable {
     protected function get_template(): ?string {
         $stagename = $this->stage->get_stage_name();
 
-        if ($this->is_question_stage()) {
+        if ($this->stage->is_question_stage()) {
             $questiontype = $this->stage->get_round_question()->get_question_type();
             return $questiontype->get_template('facilitator', $stagename);
         }
 
         $templates = [
             constants::STAGE_LOBBY => 'mod_kahoodle/facilitator/lobby',
-            constants::STAGE_LEADERS => 'mod_kahoodle/facilitator/leaders',
             constants::STAGE_REVISION => 'mod_kahoodle/facilitator/revision',
             constants::STAGE_ARCHIVED => null,
         ];
@@ -143,16 +128,12 @@ class facilitator implements \renderable, \templatable {
     protected function get_duration(): int {
         $stagename = $this->stage->get_stage_name();
 
-        if ($this->is_question_stage()) {
+        if ($this->stage->is_question_stage()) {
             return $this->stage->get_round_question()->get_stage_duration($stagename);
         }
 
         if ($stagename === constants::STAGE_LOBBY) {
             return (int)$this->round->get_kahoodle()->lobbyduration;
-        }
-
-        if ($stagename === constants::STAGE_LEADERS) {
-            return constants::DEFAULT_LEADERS_DURATION;
         }
 
         // Revision and archived have no auto-advance.
@@ -168,14 +149,11 @@ class facilitator implements \renderable, \templatable {
         global $CFG;
 
         return [
-            'stage' => $this->stage->get_stage_name(),
-            'currentquestion' => $this->stage->get_question_number(),
-            'totalquestions' => $this->round->get_questions_count(),
-            'quiztitle' => $this->round->get_kahoodle()->name,
+            'stagesignature' => $this->stage->get_stage_signature(),
             'template' => $this->get_template(),
             'duration' => $this->get_duration(),
             'templatedata' => [
-                'quiztitle' => $this->round->get_kahoodle()->name,
+                'quiztitle' => $this->round->get_kahoodle_name(),
                 'sortorder' => $this->stage->get_question_number() ?: '',
                 'totalquestions' => $this->round->get_questions_count(),
                 'cancontrol' => true,
@@ -204,7 +182,7 @@ class facilitator implements \renderable, \templatable {
             ];
         }
 
-        $url = (new \moodle_url('/mod/kahoodle/view.php', ['id' => $this->round->get_cm()->id]))->out(false);
+        $url = $this->round->get_url()->out(false);
         $qrcode = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" . urlencode($url);
         // TODO use core_qrcode class to generate QR code, save it in filestorage and serve from there.
 

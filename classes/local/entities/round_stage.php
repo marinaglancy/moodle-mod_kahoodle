@@ -16,6 +16,8 @@
 
 namespace mod_kahoodle\local\entities;
 
+use mod_kahoodle\constants;
+
 /**
  * Represents a single stage in a Kahoodle round
  *
@@ -84,6 +86,18 @@ class round_stage {
     }
 
     /**
+     * Unique signature for this stage inside the round (including question number if applicable)
+     *
+     * @return string
+     */
+    public function get_stage_signature(): string {
+        if ($this->is_question_stage()) {
+            return $this->stagename . '-' . $this->get_question_number();
+        }
+        return $this->stagename;
+    }
+
+    /**
      * Get the associated round question
      *
      * @return round_question|null
@@ -116,7 +130,12 @@ class round_stage {
      * @return bool
      */
     public function is_question_stage(): bool {
-        return $this->roundquestion !== null;
+        return in_array($this->get_stage_name(), [
+            constants::STAGE_QUESTION_PREVIEW,
+            constants::STAGE_QUESTION,
+            constants::STAGE_QUESTION_RESULTS,
+            constants::STAGE_LEADERS,
+        ], true);
     }
 
     /**

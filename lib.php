@@ -240,8 +240,7 @@ function mod_kahoodle_realtime_event_received(\tool_realtime\channel $channel, $
             case 'advance':
                 // Advance to the next stage.
                 $currentstage = clean_param($payload['currentstage'] ?? '', PARAM_ALPHANUMEXT);
-                $currentquestion = clean_param($payload['currentquestion'] ?? 0, PARAM_INT);
-                \mod_kahoodle\local\game\progress::advance_to_next_stage($round, $currentstage, $currentquestion);
+                \mod_kahoodle\local\game\progress::advance_to_next_stage($round, $currentstage);
                 // Do not return anything, instead listen to the game channel for updates.
                 return [];
 
