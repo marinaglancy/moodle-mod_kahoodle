@@ -275,11 +275,11 @@ class round_stage {
             }
 
             if ($stagename === constants::STAGE_QUESTION && $response !== null) {
-                // Question screen with an answer already submitted. Show waiting image/message.
+                // Question screen with an answer already submitted. Show waiting image and message.
+                $imgidx = rand(1, 23);
                 // phpcs:ignore Squiz.PHP.CommentedOutCode.Found
                 // Mdlcode assume: $msgidx ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15'].
                 $msgidx = rand(1, 15);
-                $imgidx = rand(1, 23);
                 $data['templatedata'] += [
                     'waitingmessage' => get_string('waitingmessage' . $msgidx, 'mod_kahoodle'),
                     'waitingimage' => $CFG->wwwroot . '/mod/kahoodle/pix/waiting/' . $imgidx . '.svg',

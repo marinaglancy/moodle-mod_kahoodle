@@ -216,6 +216,7 @@ function mod_kahoodle_inplace_editable(string $itemtype, int $itemid, string $ne
  * @return array Response data
  */
 function mod_kahoodle_realtime_event_received(\tool_realtime\channel $channel, $payload): array {
+    global $PAGE, $DB;
     $props = $channel->get_properties();
 
     // Verify this is for our component and the game area.
@@ -240,17 +241,16 @@ function mod_kahoodle_realtime_event_received(\tool_realtime\channel $channel, $
                 // Advance to the next stage.
                 $currentstage = clean_param($payload['currentstage'] ?? '', PARAM_ALPHANUMEXT);
                 $currentquestion = clean_param($payload['currentquestion'] ?? 0, PARAM_INT);
-                $stage = \mod_kahoodle\local\game\progress::advance_to_next_stage($round, $currentstage, $currentquestion);
-                // Notify all subscribers on the game channel with the new stage data.
-                $channel->notify($stage->export_data_for_facilitators());
+                \mod_kahoodle\local\game\progress::advance_to_next_stage($round, $currentstage, $currentquestion);
                 // Do not return anything, instead listen to the game channel for updates.
                 return [];
 
             case 'get_current':
                 // Get current stage data (used when resuming a game in progress).
                 $currentstage = clean_param($payload['currentstage'] ?? '', PARAM_ALPHANUMEXT);
-                $stage = $round->get_current_stage();
-                return $stage->export_data_for_facilitators();
+                return (new \mod_kahoodle\output\facilitator($round))->export_for_template(
+                    $PAGE->get_renderer('mod_kahoodle')
+                );
 
             default:
                 return ['error' => 'Unknown action'];
@@ -275,7 +275,6 @@ function mod_kahoodle_realtime_event_received(\tool_realtime\channel $channel, $
         $action = $payload['action'] ?? '';
 
         // Get the participant and round.
-        global $DB;
         $participantrecord = $DB->get_record('kahoodle_participants', ['id' => $participantid], '*', MUST_EXIST);
         $round = \mod_kahoodle\local\entities\round::create_from_id($participantrecord->roundid);
         $context = $round->get_context();
@@ -284,10 +283,11 @@ function mod_kahoodle_realtime_event_received(\tool_realtime\channel $channel, $
         switch ($action) {
             case 'get_current':
                 // Get current stage data for participant view.
-                $stage = $round->get_current_stage();
                 foreach ($round->get_all_participants() as $participant) {
                     if ($participant->get_id() == $participantid) {
-                        return $stage->export_data_for_participant($participant);
+                        return (new \mod_kahoodle\output\participant($participant))->export_for_template(
+                            $PAGE->get_renderer('mod_kahoodle')
+                        );
                     }
                 }
                 return ['error' => 'Participant not found'];

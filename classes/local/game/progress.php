@@ -66,7 +66,7 @@ class progress {
         // Update round to archived stage.
         $stage = new round_stage($round, constants::STAGE_ARCHIVED, null, 0);
         $round->set_current_stage($stage);
-        realtime_channels::notify_participants_stage_advanced($round);
+        realtime_channels::notify_all_participants_stage_changed($round);
     }
 
     /**
@@ -96,7 +96,8 @@ class progress {
         if ($nextstage != null) {
             // Update round.
             $round->set_current_stage($nextstage);
-            realtime_channels::notify_participants_stage_advanced($round);
+            realtime_channels::notify_facilitators_stage_changed($round);
+            realtime_channels::notify_all_participants_stage_changed($round);
         } else {
             $nextstage = $round->get_current_stage();
         }

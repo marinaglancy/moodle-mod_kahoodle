@@ -54,21 +54,23 @@ class realtime_channels {
     }
 
     /**
-     * Notify facilitators that a participant has joined
+     * Notify facilitators that a stage advanced or participant list changed during the lobby stage
      *
      * Sends the updated lobby stage data to the facilitator channel.
      *
      * @param round $round The round
      */
-    public static function notify_facilitators_participant_joined(round $round): void {
+    public static function notify_facilitators_stage_changed(round $round): void {
+        global $PAGE;
         $context = $round->get_context();
 
         // Create the facilitator channel.
         $channel = new \tool_realtime\channel($context, 'mod_kahoodle', 'facilitator', $round->get_id());
 
         // Get current stage data for facilitators.
-        $stage = $round->get_current_stage();
-        $stagedata = $stage->export_data_for_facilitators();
+        $stagedata = (new \mod_kahoodle\output\facilitator($round))->export_for_template(
+            $PAGE->get_renderer('mod_kahoodle')
+        );
 
         // Notify all subscribers on the facilitator channel.
         $channel->notify($stagedata);
@@ -80,7 +82,8 @@ class realtime_channels {
      * @param round $round
      * @return void
      */
-    public static function notify_participants_stage_advanced(round $round): void {
+    public static function notify_all_participants_stage_changed(round $round): void {
+        global $PAGE;
         $context = $round->get_context();
 
         $participants = $round->get_all_participants();
@@ -90,8 +93,9 @@ class realtime_channels {
             $channel = new \tool_realtime\channel($context, 'mod_kahoodle', 'participant', $participant->get_id());
 
             // Get current stage data for participants.
-            $stage = $round->get_current_stage();
-            $stagedata = $stage->export_data_for_participant($participant);
+            $stagedata = (new \mod_kahoodle\output\participant($participant))->export_for_template(
+                $PAGE->get_renderer('mod_kahoodle')
+            );
 
             // Notify all subscribers on the participant channel.
             $channel->notify($stagedata);
@@ -104,7 +108,8 @@ class realtime_channels {
      * @param participant $participant
      * @return void
      */
-    public static function notify_participants_stage_changed(participant $participant): void {
+    public static function notify_participant_stage_changed(participant $participant): void {
+        global $PAGE;
         $round = $participant->get_round();
         $context = $round->get_context();
 
@@ -112,8 +117,9 @@ class realtime_channels {
         $channel = new \tool_realtime\channel($context, 'mod_kahoodle', 'participant', $participant->get_id());
 
         // Get current stage data for participants.
-        $stage = $round->get_current_stage();
-        $stagedata = $stage->export_data_for_participant($participant);
+        $stagedata = (new \mod_kahoodle\output\participant($participant))->export_for_template(
+            $PAGE->get_renderer('mod_kahoodle')
+        );
 
         // Notify all subscribers on the participant channel.
         $channel->notify($stagedata);

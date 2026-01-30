@@ -74,7 +74,7 @@ class participants {
 
         // If round is in lobby stage, notify facilitators with updated stage data.
         if ($round->get_current_stage_name() === constants::STAGE_LOBBY) {
-            realtime_channels::notify_facilitators_participant_joined($round);
+            realtime_channels::notify_facilitators_stage_changed($round);
         }
     }
 
@@ -115,7 +115,7 @@ class participants {
 
         // If round is in lobby stage, notify facilitators with updated stage data.
         if ($round->get_current_stage_name() === constants::STAGE_LOBBY) {
-            realtime_channels::notify_facilitators_participant_joined($round);
+            realtime_channels::notify_facilitators_stage_changed($round);
         }
     }
 }

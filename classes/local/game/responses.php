@@ -133,7 +133,7 @@ class responses {
         $event->trigger();
 
         // Send updated stage data to participant via their channel.
-        realtime_channels::notify_participants_stage_changed($participant);
+        realtime_channels::notify_participant_stage_changed($participant);
     }
 
     /**
