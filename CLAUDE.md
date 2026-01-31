@@ -315,21 +315,16 @@ Prepares template data for the participant view playing a kahoodle round. Used w
 
 **Key Methods:**
 - `export_for_template(\renderer_base $output): array` - Main export method
-- `get_effective_stage_name(): string` - Maps leaders stage to results for participants
-- `is_question_stage(): bool` - Checks if current stage is question-related
 - `get_template(): string` - Returns template name for current stage
 - `get_common_data(): array` - Returns data common to all stages
 - `get_lobby_data(): array` - Returns lobby-specific template data
-- `get_question_data(): array` - Returns question stage template data
+- `get_question_data(): array` - Returns question stage template data (preview, question, results, leaders)
 - `get_revision_data(): array` - Returns revision stage template data
-
-**Stage Mapping:**
-- For participants, the `leaders` stage is shown as `questionresults` (they see their results while facilitator sees the leaderboard)
 
 **Returned Data Structure:**
 ```php
 [
-    'stage' => 'lobby|questionpreview|question|questionresults|revision',
+    'stagesignature' => 'lobby',   // Unique stage identifier
     'currentquestion' => 1,
     'totalquestions' => 5,
     'duration' => 0,               // No auto-advance for participants

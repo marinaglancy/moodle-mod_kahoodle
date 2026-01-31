@@ -40,9 +40,6 @@ class participant implements \renderable, \templatable {
     /** @var round_stage The current stage (set during export) */
     protected round_stage $stage;
 
-    /** @var string Effective stage name (leaders mapped to results) */
-    protected string $effectivestagename;
-
     /** @var rank The participant's rank (set during export) */
     protected rank $rank;
 
@@ -64,38 +61,33 @@ class participant implements \renderable, \templatable {
     public function export_for_template(\core\output\renderer_base $output): array {
         $this->round = $this->participant->get_round();
         $this->stage = $this->round->get_current_stage();
-        $this->effectivestagename = $this->get_effective_stage_name();
         $this->rank = $this->round->get_rankings()[$this->participant->get_id()]
             ?? rank::create_empty($this->participant);
 
         $this->ensure_page_setup();
 
         $data = $this->get_common_data();
+        $stagename = $this->stage->get_stage_name();
 
         // Add stage-specific templatedata.
-        if ($this->effectivestagename === constants::STAGE_LOBBY) {
-            $data['templatedata'] += $this->get_lobby_data();
-        } else if ($this->stage->is_question_stage()) {
-            $data['templatedata'] += $this->get_question_data();
-        } else if ($this->effectivestagename === constants::STAGE_REVISION) {
-            $data['templatedata'] += $this->get_revision_data();
+        switch ($stagename) {
+            case constants::STAGE_LOBBY:
+                $data['templatedata'] += $this->get_lobby_data();
+                break;
+
+            case constants::STAGE_QUESTION_PREVIEW:
+            case constants::STAGE_QUESTION:
+            case constants::STAGE_QUESTION_RESULTS:
+            case constants::STAGE_LEADERS:
+                $data['templatedata'] += $this->get_question_data();
+                break;
+
+            case constants::STAGE_REVISION:
+                $data['templatedata'] += $this->get_revision_data();
+                break;
         }
 
         return $data;
-    }
-
-    /**
-     * Get effective stage name (maps leaders to results for participants)
-     *
-     * @return string
-     */
-    protected function get_effective_stage_name(): string {
-        $stagename = $this->stage->get_stage_name();
-        // For participants, leaders stage shows as results.
-        if ($stagename === constants::STAGE_LEADERS) {
-            return constants::STAGE_QUESTION_RESULTS;
-        }
-        return $stagename;
     }
 
     /**
@@ -115,11 +107,20 @@ class participant implements \renderable, \templatable {
      * @return string
      */
     protected function get_template(): string {
-        if ($this->stage->is_question_stage()) {
+        $stagename = $this->stage->get_stage_name();
+
+        if (
+            in_array($stagename, [
+            constants::STAGE_QUESTION_PREVIEW,
+            constants::STAGE_QUESTION,
+            constants::STAGE_QUESTION_RESULTS,
+            ], true)
+        ) {
             $questiontype = $this->stage->get_round_question()->get_question_type();
-            return $questiontype->get_template('participant', $this->effectivestagename);
+            return $questiontype->get_template('participant', $stagename);
         }
-        return 'mod_kahoodle/participant/' . $this->effectivestagename;
+
+        return 'mod_kahoodle/participant/' . $stagename;
     }
 
     /**
@@ -160,6 +161,7 @@ class participant implements \renderable, \templatable {
     protected function get_question_data(): array {
         global $CFG;
 
+        $stagename = $this->stage->get_stage_name();
         $roundquestion = $this->stage->get_round_question();
         $questiontype = $roundquestion->get_question_type();
 
@@ -167,7 +169,7 @@ class participant implements \renderable, \templatable {
         $typedata = $questiontype->export_template_data_participant(
             $this->participant,
             $roundquestion,
-            $this->effectivestagename
+            $stagename
         );
 
         $data = [
@@ -178,13 +180,13 @@ class participant implements \renderable, \templatable {
 
         // Check for existing response (not for preview stage).
         $response = null;
-        if ($this->effectivestagename !== constants::STAGE_QUESTION_PREVIEW) {
+        if ($stagename !== constants::STAGE_QUESTION_PREVIEW) {
             $response = responses::get_response($this->participant, $roundquestion);
             $data['answered'] = $response !== null;
         }
 
         // Question stage with answer already submitted: show waiting screen.
-        if ($this->effectivestagename === constants::STAGE_QUESTION && $response !== null) {
+        if ($stagename === constants::STAGE_QUESTION && $response !== null) {
             $imgidx = rand(1, 23);
             // phpcs:ignore Squiz.PHP.CommentedOutCode.Found
             // Mdlcode assume: $msgidx ['1','2','3','4','5','6','7','8','9','10','11','12','13','14','15'].
@@ -193,15 +195,18 @@ class participant implements \renderable, \templatable {
             $data['waitingimage'] = $CFG->wwwroot . '/mod/kahoodle/pix/waiting/' . $imgidx . '.svg';
         }
 
-        // Results stage: add answer feedback.
-        if ($this->effectivestagename === constants::STAGE_QUESTION_RESULTS) {
+        // Results and leaders stages: add answer feedback.
+        if ($stagename === constants::STAGE_QUESTION_RESULTS || $stagename === constants::STAGE_LEADERS) {
             if ($response) {
                 $data['iscorrect'] = (bool)$response->iscorrect;
                 $data['points'] = (int)$response->points;
             } else {
                 $data['timeup'] = true;
             }
-            $data += $this->rank->get_data_for_question_results();
+            // Leaders stage also shows rank information.
+            if ($stagename === constants::STAGE_LEADERS) {
+                $data += $this->rank->get_data_for_question_results();
+            }
         }
 
         return $data;

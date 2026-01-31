@@ -33,7 +33,7 @@
         "timeup": false,
         "iscorrect": true,
         "points": 847,
-        "rankstatus": "You are in 14th place, 884 points behind John",
+        "rankstatus": "",
         "closeurl": "/mod/kahoodle/view.php?id=123",
         "avatarurl": "/user/pix.php/2/f1.jpg",
         "displayname": "Alex Johnson"
@@ -46,7 +46,7 @@
 <div class="mod_kahoodle-participant-result-content">
     {{#timeup}}
     <div class="mod_kahoodle-participant-result-status">{{#str}}timeup, mod_kahoodle{{/str}}</div>
-    <div class="mod_kahoodle-participant-question-icon mod_kahoodle-result-timeout">
+    <div class="mod_kahoodle-participant-icon mod_kahoodle-result-timeout">
         <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
             <polyline points="12 6 12 12 16 14"></polyline>
@@ -56,7 +56,7 @@
     {{^timeup}}
     {{#iscorrect}}
     <div class="mod_kahoodle-participant-result-status">{{#str}}correct, mod_kahoodle{{/str}}</div>
-    <div class="mod_kahoodle-participant-question-icon mod_kahoodle-result-correct">
+    <div class="mod_kahoodle-participant-icon mod_kahoodle-result-correct">
         <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
@@ -65,7 +65,7 @@
     {{/iscorrect}}
     {{^iscorrect}}
     <div class="mod_kahoodle-participant-result-status">{{#str}}incorrect, mod_kahoodle{{/str}}</div>
-    <div class="mod_kahoodle-participant-question-icon mod_kahoodle-result-incorrect">
+    <div class="mod_kahoodle-participant-icon mod_kahoodle-result-incorrect">
         <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -73,9 +73,7 @@
     </div>
     {{/iscorrect}}
     {{/timeup}}
-    {{#rankstatus}}
-    <div class="mod_kahoodle-participant-result-rank">{{{rankstatus}}}</div>
-    {{/rankstatus}}
+    <div class="mod_kahoodle-participant-rank">{{{rankstatus}}}</div>
 </div>
 
 {{> mod_kahoodle/participant/common/participantinfo }}

@@ -15,20 +15,21 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_kahoodle/participant/common/waiting_after_answer
+    @template mod_kahoodle/participant/leaders
 
-    Shown to participants after they have answered a question while waiting for results.
-    Displays a random encouraging message and waiting animation.
+    Displayed for the participants during the leaders stage.
+    The difference with the results stage is that there is also the rank information here.
 
     Example context (json):
     {
-        "waitingmessage": "Quick answer!",
-        "waitingimage": "/mod/kahoodle/pix/waiting/5.svg"
+        "sortorder": 1,
+        "timeup": false,
+        "iscorrect": true,
+        "points": 847,
+        "rankstatus": "You are in 14th place, 884 points behind John",
+        "closeurl": "/mod/kahoodle/view.php?id=123",
+        "avatarurl": "/user/pix.php/2/f1.jpg",
+        "displayname": "Alex Johnson"
     }
 }}
-<div class="mod_kahoodle-participant-result-status">{{waitingmessage}}</div>
-<div class="mod_kahoodle-participant-icon mod_kahoodle-result-waiting">
-    <div class="mod_kahoodle-waiting-icon"
-        style="-webkit-mask-image: url('{{waitingimage}}'); mask-image: url('{{waitingimage}}');"></div>
-</div>
-<div class="mod_kahoodle-participant-rank">{{#str}}waitingforresults, mod_kahoodle{{/str}}</div>
+{{> mod_kahoodle/participant/results}}
