@@ -170,6 +170,7 @@ $string['startingsoonpleasewait'] = 'Starting soon, please wait';
 $string['startsin'] = 'Starts in';
 $string['timeup'] = 'Time\'s up!';
 $string['timing'] = 'Timing';
+$string['topwinners'] = 'Top winners';
 $string['twonames'] = '{$a->one} and {$a->two}';
 $string['version'] = 'Version';
 $string['viewresults'] = 'View results';

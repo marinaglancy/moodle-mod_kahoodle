@@ -1,0 +1,228 @@
+{{!
+    This file is part of mod_kahoodle plugin
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_kahoodle/facilitator/podium
+
+    Podium stage template - shown before the final leaderboard to celebrate top 3 places.
+    This template is designed for wide screens only.
+
+    Context variables required for this template:
+    * quiztitle - The title of the quiz/kahoodle activity
+    * currentquestion - Current question number (for footer context)
+    * totalquestions - Total number of questions in the round
+    * cancontrol - Boolean indicating if user can control the quiz (teacher)
+    * isedit - Boolean indicating if it is rendered for teachers when they edit the questions
+    * backgroundurl - URL for background image
+    * first - Object or array for 1st place winners
+      * istie - Boolean indicating if there's a tie for this position
+      * winners - Array of winner objects when tie, or single winner when not tie
+        * displayname - Winner's display name
+        * avatarurl - Winner's avatar URL
+        * totalscore - Winner's total score
+    * second - Object or array for 2nd place winners (same structure as first)
+    * third - Object or array for 3rd place winners (same structure as first)
+
+    Example context (json):
+    {
+        "quiztitle": "Geography & World Facts Quiz",
+        "currentquestion": 10,
+        "totalquestions": 10,
+        "cancontrol": true,
+        "isedit": false,
+        "backgroundurl": "/mod/kahoodle/pix/classroom-bg.jpg",
+        "first": {
+            "istie": false,
+            "winners": [
+                {"displayname": "Alice Johnson", "avatarurl": "/user/pix.php/3/f2.jpg", "totalscore": 8500}
+            ]
+        },
+        "second": {
+            "istie": false,
+            "winners": [
+                {"displayname": "Bob Smith", "avatarurl": "/user/pix.php/2/f2.jpg", "totalscore": 7200}
+            ]
+        },
+        "third": {
+            "istie": true,
+            "winners": [
+                {"displayname": "Charlie Davis", "avatarurl": "/user/pix.php/5/f2.jpg", "totalscore": 6100},
+                {"displayname": "Diana Evans", "avatarurl": "/user/pix.php/6/f2.jpg", "totalscore": 6100},
+                {"displayname": "Frank Green", "avatarurl": "/user/pix.php/7/f2.jpg", "totalscore": 6100}
+            ]
+        }
+    }
+}}
+<div class="mod_kahoodle-overlay mod_kahoodle-overlay-solid" {{#backgroundurl}}style="background-image: url('{{backgroundurl}}');"{{/backgroundurl}}>
+
+    {{! Header: Quiz title }}
+    <header class="mod_kahoodle-header">
+        <div class="mod_kahoodle-revision-title">{{quiztitle}}</div>
+    </header>
+
+    <main class="mod_kahoodle-main mod_kahoodle-podium-main" data-stage="podium">
+
+        <h2 class="mod_kahoodle-podium-title">{{#str}}topwinners, mod_kahoodle{{/str}}</h2>
+
+        <div class="mod_kahoodle-podium-container">
+            {{! Winner info positioned above each podium stand }}
+            <div class="mod_kahoodle-podium-winners">
+                {{! 2nd place (left) }}
+                <div class="mod_kahoodle-podium-place mod_kahoodle-podium-second">
+                    {{#second}}
+                    {{^istie}}
+                    {{! Single winner - large avatar with name below }}
+                    {{#winners}}
+                    <div class="mod_kahoodle-podium-winner-single">
+                        <div class="mod_kahoodle-podium-avatar-large">
+                            <img src="{{avatarurl}}" alt="" class="mod_kahoodle-podium-avatar-img">
+                        </div>
+                        <div class="mod_kahoodle-podium-winner-name">{{displayname}}</div>
+                        <div class="mod_kahoodle-podium-winner-score">{{totalscore}}</div>
+                    </div>
+                    {{/winners}}
+                    {{/istie}}
+                    {{#istie}}
+                    {{! Tie - pills layout }}
+                    <div class="mod_kahoodle-podium-winners-tie">
+                        {{#winners}}
+                        <div class="mod_kahoodle-podium-winner-pill">
+                            <img src="{{avatarurl}}" alt="" class="mod_kahoodle-podium-pill-avatar">
+                            <span class="mod_kahoodle-podium-pill-name">{{displayname}}</span>
+                        </div>
+                        {{/winners}}
+                    </div>
+                    <div class="mod_kahoodle-podium-tie-score">{{#winners.0}}{{totalscore}}{{/winners.0}}</div>
+                    {{/istie}}
+                    {{/second}}
+                </div>
+
+                {{! 1st place (center) }}
+                <div class="mod_kahoodle-podium-place mod_kahoodle-podium-first">
+                    {{#first}}
+                    {{^istie}}
+                    {{! Single winner - large avatar with name below }}
+                    {{#winners}}
+                    <div class="mod_kahoodle-podium-winner-single">
+                        <div class="mod_kahoodle-podium-avatar-large mod_kahoodle-podium-avatar-gold">
+                            <img src="{{avatarurl}}" alt="" class="mod_kahoodle-podium-avatar-img">
+                        </div>
+                        <div class="mod_kahoodle-podium-winner-name">{{displayname}}</div>
+                        <div class="mod_kahoodle-podium-winner-score">{{totalscore}}</div>
+                    </div>
+                    {{/winners}}
+                    {{/istie}}
+                    {{#istie}}
+                    {{! Tie - pills layout }}
+                    <div class="mod_kahoodle-podium-winners-tie">
+                        {{#winners}}
+                        <div class="mod_kahoodle-podium-winner-pill">
+                            <img src="{{avatarurl}}" alt="" class="mod_kahoodle-podium-pill-avatar">
+                            <span class="mod_kahoodle-podium-pill-name">{{displayname}}</span>
+                        </div>
+                        {{/winners}}
+                    </div>
+                    <div class="mod_kahoodle-podium-tie-score">{{#winners.0}}{{totalscore}}{{/winners.0}}</div>
+                    {{/istie}}
+                    {{/first}}
+                </div>
+
+                {{! 3rd place (right) }}
+                <div class="mod_kahoodle-podium-place mod_kahoodle-podium-third">
+                    {{#third}}
+                    {{^istie}}
+                    {{! Single winner - large avatar with name below }}
+                    {{#winners}}
+                    <div class="mod_kahoodle-podium-winner-single">
+                        <div class="mod_kahoodle-podium-avatar-large">
+                            <img src="{{avatarurl}}" alt="" class="mod_kahoodle-podium-avatar-img">
+                        </div>
+                        <div class="mod_kahoodle-podium-winner-name">{{displayname}}</div>
+                        <div class="mod_kahoodle-podium-winner-score">{{totalscore}}</div>
+                    </div>
+                    {{/winners}}
+                    {{/istie}}
+                    {{#istie}}
+                    {{! Tie - pills layout }}
+                    <div class="mod_kahoodle-podium-winners-tie">
+                        {{#winners}}
+                        <div class="mod_kahoodle-podium-winner-pill">
+                            <img src="{{avatarurl}}" alt="" class="mod_kahoodle-podium-pill-avatar">
+                            <span class="mod_kahoodle-podium-pill-name">{{displayname}}</span>
+                        </div>
+                        {{/winners}}
+                    </div>
+                    <div class="mod_kahoodle-podium-tie-score">{{#winners.0}}{{totalscore}}{{/winners.0}}</div>
+                    {{/istie}}
+                    {{/third}}
+                </div>
+            </div>
+
+            {{! Podium SVG }}
+            <div class="mod_kahoodle-podium-svg">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3640 1430" class="mod_kahoodle-podium-graphic">
+                    <!-- Group 3: Bronze (3rd place) - HIDDEN (dark silhouette) -->
+                    <g id="group3dark" transform="translate(2440,0)">
+                        <ellipse id="bottom3dark" cx="750" cy="970" rx="750" ry="70" fill="#1a1a1a"/>
+                        <rect id="middle3dark" x="0" y="430" width="1500" height="540" fill="#1a1a1a"/>
+                        <ellipse id="top3dark" cx="750" cy="430" rx="750" ry="70" fill="#2a2a2a"/>
+                    </g>
+
+                    <!-- Group 2: Silver (2nd place) - HIDDEN (dark silhouette) -->
+                    <g id="group2dark" transform="translate(0,0)">
+                        <ellipse id="bottom2dark" cx="750" cy="980" rx="750" ry="70" fill="#1a1a1a"/>
+                        <rect id="middle2dark" x="0" y="290" width="1500" height="690" fill="#1a1a1a"/>
+                        <ellipse id="top2dark" cx="750" cy="290" rx="750" ry="70" fill="#2a2a2a"/>
+                    </g>
+
+                    <!-- Group 1: Gold (1st place) - HIDDEN (dark silhouette) -->
+                    <g id="group1dark" transform="translate(1220,0)">
+                        <ellipse id="bottom1dark" cx="750" cy="1060" rx="750" ry="70" fill="#1a1a1a"/>
+                        <rect id="middle1dark" x="0" y="70" width="1500" height="990" fill="#1a1a1a"/>
+                        <ellipse id="top1dark" cx="750" cy="70" rx="750" ry="70" fill="#2a2a2a"/>
+                    </g>
+                    <!-- Group 3: Bronze (3rd place) -->
+                    <g id="group3" style="opacity: 1;" transform="translate(2440,0)">
+                        <ellipse id="bottom3" cx="750" cy="970" rx="750" ry="70" fill="#CD7F32"/>
+                        <rect id="middle3" x="0" y="430" width="1500" height="540" fill="#CD7F32"/>
+                        <ellipse id="top3" cx="750" cy="430" rx="750" ry="70" fill="#E8A961"/>
+                        <text id="rank3" x="750" y="780" text-anchor="middle" font-size="300" font-weight="bold" fill="white" style="opacity: 1">3</text>
+                    </g>
+
+                    <!-- Group 2: Silver (2nd place) -->
+                    <g id="group2" style="opacity: 1;" transform="translate(0,0)">
+                        <ellipse id="bottom2" cx="750" cy="980" rx="750" ry="70" fill="#A8A9AD"/>
+                        <rect id="middle2" x="0" y="290" width="1500" height="690" fill="#A8A9AD"/>
+                        <ellipse id="top2" cx="750" cy="290" rx="750" ry="70" fill="#C0C0C0"/>
+                        <text id="rank2" x="750" y="640" text-anchor="middle" font-size="300" font-weight="bold" fill="white" style="opacity: 1">2</text>
+                    </g>
+
+                    <!-- Group 1: Gold (1st place) -->
+                    <g id="group1" style="opacity: 1;" transform="translate(1220,0)">
+                        <ellipse id="bottom1" cx="750" cy="1060" rx="750" ry="70" fill="#D4AF37"/>
+                        <rect id="middle1" x="0" y="70" width="1500" height="990" fill="#D4AF37"/>
+                        <ellipse id="top1" cx="750" cy="70" rx="750" ry="70" fill="#F0D060"/>
+                        <text id="rank1" x="750" y="420" text-anchor="middle" font-size="300" font-weight="bold" fill="white" style="opacity: 1">1</text>
+                    </g>
+                </svg>
+            </div>
+        </div>
+
+    </main>
+
+    {{> mod_kahoodle/facilitator/common/footer }}
+
+</div>

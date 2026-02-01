@@ -1459,3 +1459,246 @@
     -webkit-mask-position: center;
     mask-position: center;
 }
+
+/* ========================================
+   PODIUM STAGE STYLES
+   ======================================== */
+
+.mod_kahoodle-podium-main {
+    justify-content: flex-start;
+    align-items: center;
+    gap: 1rem;
+    padding-bottom: 0;
+}
+
+.mod_kahoodle-podium-title {
+    color: var(--mod_kahoodle-light);
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    text-align: center;
+    flex-shrink: 0;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.mod_kahoodle-podium-container {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 0;
+    position: relative;
+}
+
+/* Winners positioned above the podium */
+.mod_kahoodle-podium-winners {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    width: 100%;
+    padding: 0 2rem;
+    position: relative;
+    z-index: 2;
+}
+
+.mod_kahoodle-podium-place {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+/* Position each place to match the SVG podium layout */
+/* 2nd place (left) - medium height */
+.mod_kahoodle-podium-second {
+    flex: 1;
+    padding-bottom: 1rem;
+}
+
+/* 1st place (center) - tallest */
+.mod_kahoodle-podium-first {
+    flex: 1;
+    padding-bottom: 3rem;
+}
+
+/* 3rd place (right) - shortest */
+.mod_kahoodle-podium-third {
+    flex: 1;
+    padding-bottom: 0;
+}
+
+/* Single winner display */
+.mod_kahoodle-podium-winner-single {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mod_kahoodle-podium-avatar-large {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    background-color: #fff;
+    border: 4px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.mod_kahoodle-podium-first .mod_kahoodle-podium-avatar-large {
+    width: 130px;
+    height: 130px;
+    border-width: 5px;
+}
+
+.mod_kahoodle-podium-avatar-gold {
+    border-color: #F0D060;
+    box-shadow: 0 4px 30px rgba(240, 208, 96, 0.5);
+}
+
+.mod_kahoodle-podium-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mod_kahoodle-podium-winner-name {
+    color: var(--mod_kahoodle-light);
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mod_kahoodle-podium-first .mod_kahoodle-podium-winner-name {
+    font-size: 1.5rem;
+    max-width: 250px;
+}
+
+.mod_kahoodle-podium-winner-score {
+    color: #0f8;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
+}
+
+.mod_kahoodle-podium-first .mod_kahoodle-podium-winner-score {
+    font-size: 1.75rem;
+}
+
+/* Tie display - pill layout like lobby */
+.mod_kahoodle-podium-winners-tie {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 280px;
+}
+
+.mod_kahoodle-podium-winner-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    padding: 0.35rem 1rem 0.35rem 0.35rem;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.mod_kahoodle-podium-winner-pill:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.02);
+}
+
+.mod_kahoodle-podium-pill-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.mod_kahoodle-podium-pill-name {
+    color: var(--mod_kahoodle-light);
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mod_kahoodle-podium-tie-score {
+    color: #0f8;
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
+    margin-top: 0.25rem;
+}
+
+/* Podium SVG container */
+.mod_kahoodle-podium-svg {
+    width: 100%;
+    flex-shrink: 0;
+    margin-top: -2rem;
+}
+
+.mod_kahoodle-podium-graphic {
+    width: 100%;
+    height: auto;
+    max-height: 35vh;
+}
+
+/* Podium responsive - hide on small screens */
+@media (max-width: 992px) {
+    .mod_kahoodle-podium-main {
+        display: none;
+    }
+}
+
+/* Podium responsive - large screens */
+@media (min-width: 1200px) {
+    .mod_kahoodle-podium-avatar-large {
+        width: 120px;
+        height: 120px;
+    }
+
+    .mod_kahoodle-podium-first .mod_kahoodle-podium-avatar-large {
+        width: 160px;
+        height: 160px;
+    }
+
+    .mod_kahoodle-podium-winner-name {
+        font-size: 1.5rem;
+        max-width: 250px;
+    }
+
+    .mod_kahoodle-podium-first .mod_kahoodle-podium-winner-name {
+        font-size: 1.75rem;
+        max-width: 300px;
+    }
+
+    .mod_kahoodle-podium-winner-score {
+        font-size: 1.75rem;
+    }
+
+    .mod_kahoodle-podium-first .mod_kahoodle-podium-winner-score {
+        font-size: 2rem;
+    }
+
+    .mod_kahoodle-podium-pill-avatar {
+        width: 40px;
+        height: 40px;
+    }
+
+    .mod_kahoodle-podium-pill-name {
+        font-size: 1rem;
+    }
+}
