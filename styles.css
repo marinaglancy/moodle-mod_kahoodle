@@ -1511,19 +1511,19 @@
 
 /* Position each place to match the SVG podium layout */
 /* 2nd place (left) - medium height */
-.mod_kahoodle-podium-second {
+.mod_kahoodle-podium-rank2 {
     flex: 1;
     padding-bottom: 1rem;
 }
 
 /* 1st place (center) - tallest */
-.mod_kahoodle-podium-first {
+.mod_kahoodle-podium-rank1 {
     flex: 1;
     padding-bottom: 3rem;
 }
 
 /* 3rd place (right) - shortest */
-.mod_kahoodle-podium-third {
+.mod_kahoodle-podium-rank3 {
     flex: 1;
     padding-bottom: 0;
 }
@@ -1546,7 +1546,7 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
-.mod_kahoodle-podium-first .mod_kahoodle-podium-avatar-large {
+.mod_kahoodle-podium-rank1 .mod_kahoodle-podium-avatar-large {
     width: 130px;
     height: 130px;
     border-width: 5px;
@@ -1575,20 +1575,9 @@
     text-overflow: ellipsis;
 }
 
-.mod_kahoodle-podium-first .mod_kahoodle-podium-winner-name {
+.mod_kahoodle-podium-rank1 .mod_kahoodle-podium-winner-name {
     font-size: 1.5rem;
     max-width: 250px;
-}
-
-.mod_kahoodle-podium-winner-score {
-    color: #0f8;
-    font-size: 1.5rem;
-    font-weight: 700;
-    text-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
-}
-
-.mod_kahoodle-podium-first .mod_kahoodle-podium-winner-score {
-    font-size: 1.75rem;
 }
 
 /* Tie display - pill layout like lobby */
@@ -1635,13 +1624,6 @@
     text-overflow: ellipsis;
 }
 
-.mod_kahoodle-podium-tie-score {
-    color: #0f8;
-    font-size: 1.25rem;
-    font-weight: 700;
-    text-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
-    margin-top: 0.25rem;
-}
 
 /* Podium SVG container */
 .mod_kahoodle-podium-svg {
@@ -1670,7 +1652,7 @@
         height: 120px;
     }
 
-    .mod_kahoodle-podium-first .mod_kahoodle-podium-avatar-large {
+    .mod_kahoodle-podium-rank1 .mod_kahoodle-podium-avatar-large {
         width: 160px;
         height: 160px;
     }
@@ -1680,17 +1662,9 @@
         max-width: 250px;
     }
 
-    .mod_kahoodle-podium-first .mod_kahoodle-podium-winner-name {
+    .mod_kahoodle-podium-rank1 .mod_kahoodle-podium-winner-name {
         font-size: 1.75rem;
         max-width: 300px;
-    }
-
-    .mod_kahoodle-podium-winner-score {
-        font-size: 1.75rem;
-    }
-
-    .mod_kahoodle-podium-first .mod_kahoodle-podium-winner-score {
-        font-size: 2rem;
     }
 
     .mod_kahoodle-podium-pill-avatar {
