@@ -1514,13 +1514,13 @@
 /* 2nd place (left) - medium height */
 .mod_kahoodle-podium-rank2 {
     flex: 1;
-    padding-top: 2rem;
+    padding-top: 3rem;
 }
 
 /* 3rd place (right) - shortest */
 .mod_kahoodle-podium-rank3 {
     flex: 1;
-    padding-top: 3rem;
+    padding-top: 4rem;
 }
 
 /* Single winner display */
@@ -1545,9 +1545,6 @@
     width: 130px;
     height: 130px;
     border-width: 5px;
-}
-
-.mod_kahoodle-podium-avatar-gold {
     border-color: #F0D060;
     box-shadow: 0 4px 30px rgba(240, 208, 96, 0.5);
 }

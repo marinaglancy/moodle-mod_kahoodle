@@ -87,86 +87,17 @@
             <div class="mod_kahoodle-podium-winners">
                 {{! 2nd place (left) }}
                 <div class="mod_kahoodle-podium-place mod_kahoodle-podium-rank2">
-                    {{#rank2}}
-                    {{^istie}}
-                    {{! Single winner - large avatar with name below }}
-                    {{#winners}}
-                    <div class="mod_kahoodle-podium-winner-single">
-                        <div class="mod_kahoodle-podium-avatar-large">
-                            <img src="{{avatarurl}}" alt="" class="mod_kahoodle-podium-avatar-img">
-                        </div>
-                        <div class="mod_kahoodle-podium-winner-name">{{displayname}}</div>
-                    </div>
-                    {{/winners}}
-                    {{/istie}}
-                    {{#istie}}
-                    {{! Tie - pills layout }}
-                    <div class="mod_kahoodle-podium-winners-tie">
-                        {{#winners}}
-                        <div class="mod_kahoodle-podium-winner-pill">
-                            <img src="{{avatarurl}}" alt="" class="mod_kahoodle-podium-pill-avatar">
-                            <span class="mod_kahoodle-podium-pill-name">{{displayname}}</span>
-                        </div>
-                        {{/winners}}
-                    </div>
-                    {{/istie}}
-                    {{/rank2}}
+                    {{#rank2}}{{> mod_kahoodle/facilitator/common/podiumwinners }}{{/rank2}}
                 </div>
 
                 {{! 1st place (center) }}
                 <div class="mod_kahoodle-podium-place mod_kahoodle-podium-rank1">
-                    {{#rank1}}
-                    {{^istie}}
-                    {{! Single winner - large avatar with name below }}
-                    {{#winners}}
-                    <div class="mod_kahoodle-podium-winner-single">
-                        <div class="mod_kahoodle-podium-avatar-large mod_kahoodle-podium-avatar-gold">
-                            <img src="{{avatarurl}}" alt="" class="mod_kahoodle-podium-avatar-img">
-                        </div>
-                        <div class="mod_kahoodle-podium-winner-name">{{displayname}}</div>
-                    </div>
-                    {{/winners}}
-                    {{/istie}}
-                    {{#istie}}
-                    {{! Tie - pills layout }}
-                    <div class="mod_kahoodle-podium-winners-tie">
-                        {{#winners}}
-                        <div class="mod_kahoodle-podium-winner-pill">
-                            <img src="{{avatarurl}}" alt="" class="mod_kahoodle-podium-pill-avatar">
-                            <span class="mod_kahoodle-podium-pill-name">{{displayname}}</span>
-                        </div>
-                        {{/winners}}
-                    </div>
-                    {{/istie}}
-                    {{/rank1}}
+                    {{#rank1}}{{> mod_kahoodle/facilitator/common/podiumwinners }}{{/rank1}}
                 </div>
 
                 {{! 3rd place (right) }}
                 <div class="mod_kahoodle-podium-place mod_kahoodle-podium-rank3">
-                    {{#rank3}}
-                    {{^istie}}
-                    {{! Single winner - large avatar with name below }}
-                    {{#winners}}
-                    <div class="mod_kahoodle-podium-winner-single">
-                        <div class="mod_kahoodle-podium-avatar-large">
-                            <img src="{{avatarurl}}" alt="" class="mod_kahoodle-podium-avatar-img">
-                        </div>
-                        <div class="mod_kahoodle-podium-winner-name">{{displayname}}</div>
-                    </div>
-                    {{/winners}}
-                    {{/istie}}
-                    {{#istie}}
-                    {{! Tie - pills layout }}
-                    <div class="mod_kahoodle-podium-winners-tie">
-                        {{#winners}}
-                        <div class="mod_kahoodle-podium-winner-pill">
-                            <img src="{{avatarurl}}" alt="" class="mod_kahoodle-podium-pill-avatar">
-                            <span class="mod_kahoodle-podium-pill-name">{{displayname}}</span>
-                        </div>
-                        {{/winners}}
-                    </div>
-                    {{/istie}}
-                    {{/rank3}}
+                    {{#rank3}}{{> mod_kahoodle/facilitator/common/podiumwinners }}{{/rank3}}
                 </div>
             </div>
 

@@ -1,0 +1,58 @@
+{{!
+    This file is part of mod_kahoodle plugin
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_kahoodle/facilitator/common/podiumwinners
+
+    Displays winners for a single podium place (1st, 2nd, or 3rd).
+    Handles both single winner and tie scenarios.
+
+    Context variables required for this template:
+    * istie - Boolean indicating if there's a tie for this position
+    * winners - Array of winner objects
+      * displayname - Winner's display name
+      * avatarurl - Winner's avatar URL
+
+    Example context (json):
+    {
+        "istie": false,
+        "winners": [
+            {"displayname": "Alice Johnson", "avatarurl": "/user/pix.php/3/f2.jpg"}
+        ]
+    }
+}}
+{{^istie}}
+{{! Single winner - large avatar with name below }}
+{{#winners}}
+<div class="mod_kahoodle-podium-winner-single">
+    <div class="mod_kahoodle-podium-avatar-large">
+        <img src="{{avatarurl}}" alt="" class="mod_kahoodle-podium-avatar-img">
+    </div>
+    <div class="mod_kahoodle-podium-winner-name">{{displayname}}</div>
+</div>
+{{/winners}}
+{{/istie}}
+{{#istie}}
+{{! Tie - pills layout }}
+<div class="mod_kahoodle-podium-winners-tie">
+    {{#winners}}
+    <div class="mod_kahoodle-podium-winner-pill">
+        <img src="{{avatarurl}}" alt="" class="mod_kahoodle-podium-pill-avatar">
+        <span class="mod_kahoodle-podium-pill-name">{{displayname}}</span>
+    </div>
+    {{/winners}}
+</div>
+{{/istie}}
