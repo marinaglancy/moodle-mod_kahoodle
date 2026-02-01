@@ -1514,13 +1514,13 @@
 /* 2nd place (left) - medium height */
 .mod_kahoodle-podium-rank2 {
     flex: 1;
-    padding-top: 3rem;
+    padding-top: 4rem;
 }
 
 /* 3rd place (right) - shortest */
 .mod_kahoodle-podium-rank3 {
     flex: 1;
-    padding-top: 4rem;
+    padding-top: 5rem;
 }
 
 /* Single winner display */
@@ -1532,8 +1532,8 @@
 }
 
 .mod_kahoodle-podium-avatar-large {
-    width: 100px;
-    height: 100px;
+    width: 108px;
+    height: 108px;
     border-radius: 50%;
     overflow: hidden;
     background-color: #fff;
@@ -1542,8 +1542,8 @@
 }
 
 .mod_kahoodle-podium-rank1 .mod_kahoodle-podium-avatar-large {
-    width: 130px;
-    height: 130px;
+    width: 140px;
+    height: 140px;
     border-width: 5px;
     border-color: #F0D060;
     box-shadow: 0 4px 30px rgba(240, 208, 96, 0.5);
@@ -1570,6 +1570,23 @@
 .mod_kahoodle-podium-rank1 .mod_kahoodle-podium-winner-name {
     font-size: 1.5rem;
     max-width: 250px;
+}
+
+/* Rank1 tie - larger pills for 1st place */
+.mod_kahoodle-podium-rank1 .mod_kahoodle-podium-winner-pill {
+    padding: 0.5rem 1.25rem 0.5rem 0.5rem;
+}
+
+.mod_kahoodle-podium-rank1 .mod_kahoodle-podium-pill-avatar {
+    width: 70px;
+    height: 70px;
+    border-width: 3px;
+    border-color: #F0D060;
+}
+
+.mod_kahoodle-podium-rank1 .mod_kahoodle-podium-pill-name {
+    font-size: 1.25rem;
+    max-width: 200px;
 }
 
 /* Tie display - pill layout like lobby */
@@ -1599,8 +1616,8 @@
 }
 
 .mod_kahoodle-podium-pill-avatar {
-    width: 32px;
-    height: 32px;
+    width: 39px;
+    height: 39px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid rgba(255, 255, 255, 0.4);
@@ -1616,6 +1633,11 @@
     text-overflow: ellipsis;
 }
 
+.mod_kahoodle-podium-more {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+    font-style: italic;
+}
 
 /* Podium SVG container */
 .mod_kahoodle-podium-svg {
@@ -1638,16 +1660,6 @@
 
 /* Podium responsive - large screens */
 @media (min-width: 1200px) {
-    .mod_kahoodle-podium-avatar-large {
-        width: 120px;
-        height: 120px;
-    }
-
-    .mod_kahoodle-podium-rank1 .mod_kahoodle-podium-avatar-large {
-        width: 160px;
-        height: 160px;
-    }
-
     .mod_kahoodle-podium-winner-name {
         font-size: 1.5rem;
         max-width: 250px;
@@ -1656,11 +1668,6 @@
     .mod_kahoodle-podium-rank1 .mod_kahoodle-podium-winner-name {
         font-size: 1.75rem;
         max-width: 300px;
-    }
-
-    .mod_kahoodle-podium-pill-avatar {
-        width: 40px;
-        height: 40px;
     }
 
     .mod_kahoodle-podium-pill-name {

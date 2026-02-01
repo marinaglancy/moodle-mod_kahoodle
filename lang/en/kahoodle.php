@@ -30,6 +30,7 @@ $string['addquestion'] = 'Add question';
 $string['addquestiontype'] = 'Add question: {$a}';
 $string['allowrepeat'] = 'Allow repeat participation';
 $string['allowrepeat_help'] = 'If enabled, users can participate in multiple rounds of this activity.';
+$string['andxmore'] = 'and {$a} more';
 $string['close'] = 'Close';
 $string['correct'] = 'Correct!';
 $string['defaultvalue'] = 'Default: {$a}';

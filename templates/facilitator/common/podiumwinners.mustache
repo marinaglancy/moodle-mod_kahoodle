@@ -22,15 +22,21 @@
 
     Context variables required for this template:
     * istie - Boolean indicating if there's a tie for this position
-    * winners - Array of winner objects
+    * winners - Array of winner objects (max 3 when hasmore is true)
       * displayname - Winner's display name
       * avatarurl - Winner's avatar URL
+    * hasmore - Boolean indicating if there are more winners not shown
+    * morecount - Number of additional winners not displayed
 
     Example context (json):
     {
-        "istie": false,
+        "istie": true,
+        "hasmore": true,
+        "morecount": 2,
         "winners": [
-            {"displayname": "Alice Johnson", "avatarurl": "/user/pix.php/3/f2.jpg"}
+            {"displayname": "Alice Johnson", "avatarurl": "/user/pix.php/3/f2.jpg"},
+            {"displayname": "Bob Smith", "avatarurl": "/user/pix.php/4/f2.jpg"},
+            {"displayname": "Charlie Davis", "avatarurl": "/user/pix.php/5/f2.jpg"}
         ]
     }
 }}
@@ -54,5 +60,8 @@
         <span class="mod_kahoodle-podium-pill-name">{{displayname}}</span>
     </div>
     {{/winners}}
+    {{#hasmore}}
+    <div class="mod_kahoodle-podium-more">{{#str}}andxmore, mod_kahoodle, {{morecount}}{{/str}}</div>
+    {{/hasmore}}
 </div>
 {{/istie}}

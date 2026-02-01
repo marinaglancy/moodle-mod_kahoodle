@@ -30,9 +30,11 @@
     * rank1 - Object for 1st place winners
       * istie - Boolean indicating if there's a tie for this position
       * totalscore - Score for this rank (displayed inside podium)
-      * winners - Array of winner objects when tie, or single winner when not tie
+      * winners - Array of winner objects (max 3 when hasmore is true)
         * displayname - Winner's display name
         * avatarurl - Winner's avatar URL
+      * hasmore - Boolean indicating if there are more winners not shown (when > 4 winners)
+      * morecount - Number of additional winners not displayed
     * rank2 - Object for 2nd place winners (same structure as rank1)
     * rank3 - Object for 3rd place winners (same structure as rank1)
 
@@ -48,22 +50,22 @@
             "istie": false,
             "totalscore": 8500,
             "winners": [
-                {"displayname": "Alice Johnson", "avatarurl": "/user/pix.php/3/f2.jpg"}
+                {"displayname": "Alice Johnson", "avatarurl": "/user/pix.php/2/f1.jpg"}
             ]
         },
         "rank2": {
             "istie": false,
             "totalscore": 7200,
             "winners": [
-                {"displayname": "Bob Smith", "avatarurl": "/user/pix.php/2/f2.jpg"}
+                {"displayname": "Bob Smith", "avatarurl": "/user/pix.php/3/f1.jpg"}
             ]
         },
         "rank3": {
             "istie": true,
             "totalscore": 6100,
+            "hasmore": true,
+            "morecount": 2,
             "winners": [
-                {"displayname": "Charlie Davis", "avatarurl": "/user/pix.php/5/f2.jpg"},
-                {"displayname": "Diana Evans", "avatarurl": "/user/pix.php/6/f2.jpg"},
                 {"displayname": "Charlie Davis", "avatarurl": "/user/pix.php/5/f2.jpg"},
                 {"displayname": "Diana Evans", "avatarurl": "/user/pix.php/6/f2.jpg"},
                 {"displayname": "Frank Green", "avatarurl": "/user/pix.php/7/f2.jpg"}
@@ -129,8 +131,10 @@
                         <ellipse id="bottom3" cx="750" cy="970" rx="750" ry="70" fill="#CD7F32"/>
                         <rect id="middle3" x="0" y="430" width="1500" height="540" fill="#CD7F32"/>
                         <ellipse id="top3" cx="750" cy="430" rx="750" ry="70" fill="#E8A961"/>
+                        {{#rank3}}{{#totalscore}}
                         <text id="rank3-number" x="750" y="720" text-anchor="middle" font-size="250" font-weight="bold" fill="white">3</text>
-                        {{#rank3}}<text id="rank3-points" x="750" y="900" text-anchor="middle" font-size="120" fill="white">{{totalscore}}</text>{{/rank3}}
+                        <text id="rank3-points" x="750" y="900" text-anchor="middle" font-size="120" fill="white">{{totalscore}}</text>
+                        {{/totalscore}}{{/rank3}}
                     </g>
 
                     <!-- Group 2: Silver (2nd place) -->
@@ -138,8 +142,10 @@
                         <ellipse id="bottom2" cx="750" cy="980" rx="750" ry="70" fill="#A8A9AD"/>
                         <rect id="middle2" x="0" y="290" width="1500" height="690" fill="#A8A9AD"/>
                         <ellipse id="top2" cx="750" cy="290" rx="750" ry="70" fill="#C0C0C0"/>
+                        {{#rank2}}{{#totalscore}}
                         <text id="rank2-number" x="750" y="580" text-anchor="middle" font-size="250" font-weight="bold" fill="white">2</text>
-                        {{#rank2}}<text id="rank2-points" x="750" y="760" text-anchor="middle" font-size="120" fill="white">{{totalscore}}</text>{{/rank2}}
+                        <text id="rank2-points" x="750" y="760" text-anchor="middle" font-size="120" fill="white">{{totalscore}}</text>
+                        {{/totalscore}}{{/rank2}}
                     </g>
 
                     <!-- Group 1: Gold (1st place) -->
@@ -171,10 +177,21 @@
 
     const positionElements = function() {
         const containerHeight = container.offsetHeight;
+        const containerWidth = container.offsetWidth;
         const bottomMargin = 20;
 
         // Podium is 45% of container height.
-        const podiumHeight = Math.round(containerHeight * 0.45);
+        let podiumHeight = Math.round(containerHeight * 0.45);
+
+        // SVG aspect ratio is approximately 3940:1130 (width:height).
+        const svgAspectRatio = 3940 / 1130;
+        let podiumWidth = podiumHeight * svgAspectRatio;
+
+        // Ensure podium doesn't exceed container width.
+        if (podiumWidth > containerWidth) {
+            podiumWidth = containerWidth;
+            podiumHeight = podiumWidth / svgAspectRatio;
+        }
 
         // Position podium at bottom with margin.
         podiumSvg.style.bottom = bottomMargin + 'px';
@@ -183,8 +200,8 @@
 
         // Wait for SVG to render, then match winners width.
         requestAnimationFrame(function() {
-            const podiumWidth = podiumSvg.offsetWidth;
-            winners.style.width = podiumWidth + 'px';
+            const actualPodiumWidth = podiumSvg.offsetWidth;
+            winners.style.width = (actualPodiumWidth * 183 / 197) + 'px';
             // Position winners just above the podium.
             winners.style.bottom = (bottomMargin + podiumHeight) + 'px';
         });
