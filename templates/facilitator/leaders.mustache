@@ -45,7 +45,15 @@
 
     <main class="mod_kahoodle-main mod_kahoodle-leaders" data-stage="leaders">
 
+        <h1 class="mod_kahoodle-leaderboard-title">{{#str}}leaderboard, mod_kahoodle{{/str}}</h1>
+
         {{> mod_kahoodle/facilitator/common/leaderboard }}
+
+        {{#statusmessage}}
+        <div class="mod_kahoodle-leaderboard-status">
+            {{{statusmessage}}}
+        </div>
+        {{/statusmessage}}
 
     </main>
 

@@ -740,6 +740,26 @@ class round {
     }
 
     /**
+     * Get all winners on the podium (ranks 1, 2, and 3)
+     *
+     * @return rank[][] Array of arrays of rank objects, keyed by rank number (1, 2, 3).
+     *      Some indexes may be missing, i.e. if two people tied for first place, there will be no second place.
+     */
+    public function get_podium_ranks(): array {
+        $rankings = $this->get_rankings();
+        $podium = [];
+        foreach ($rankings as $rank) {
+            if ($rank->minrank <= 3) {
+                $podium[$rank->minrank] = $podium[$rank->minrank] ?? [];
+                $podium[$rank->minrank][] = $rank;
+            } else {
+                break;
+            }
+        }
+        return $podium;
+    }
+
+    /**
      * Update the round name
      *
      * @param string $name The new name (not cleaned!)

@@ -1,0 +1,151 @@
+{{!
+    This file is part of mod_kahoodle plugin
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_kahoodle/facilitator/podium
+
+    Podium stage template - shown before the final leaderboard to celebrate top 3 places.
+    This template is designed for wide screens only.
+
+    Context variables required for this template:
+    * quiztitle - The title of the quiz/kahoodle activity
+    * currentquestion - Current question number (for footer context)
+    * totalquestions - Total number of questions in the round
+    * cancontrol - Boolean indicating if user can control the quiz (teacher)
+    * isedit - Boolean indicating if it is rendered for teachers when they edit the questions
+    * backgroundurl - URL for background image
+    * rank1 - Object for 1st place winners
+      * istie - Boolean indicating if there's a tie for this position
+      * totalscore - Score for this rank (displayed inside podium)
+      * winners - Array of winner objects (max 3 when hasmore is true)
+        * displayname - Winner's display name
+        * avatarurl - Winner's avatar URL
+      * hasmore - Boolean indicating if there are more winners not shown (when > 4 winners)
+      * morecount - Number of additional winners not displayed
+    * rank2 - Object for 2nd place winners (same structure as rank1)
+    * rank3 - Object for 3rd place winners (same structure as rank1)
+
+    Example context (json):
+    {
+        "quiztitle": "Geography & World Facts Quiz",
+        "currentquestion": 10,
+        "totalquestions": 10,
+        "cancontrol": true,
+        "isedit": false,
+        "backgroundurl": "/mod/kahoodle/pix/classroom-bg.jpg",
+        "rank1": {
+            "istie": false,
+            "totalscore": 8500,
+            "winners": [
+                {"displayname": "Alice Johnson", "avatarurl": "/user/pix.php/2/f1.jpg"}
+            ]
+        },
+        "rank2": {
+            "istie": false,
+            "totalscore": 7200,
+            "winners": [
+                {"displayname": "Bob Smith", "avatarurl": "/user/pix.php/3/f1.jpg"}
+            ]
+        },
+        "rank3": {
+            "istie": true,
+            "totalscore": 6100,
+            "hasmore": true,
+            "morecount": 2,
+            "winners": [
+                {"displayname": "Charlie Davis", "avatarurl": "/user/pix.php/5/f2.jpg"},
+                {"displayname": "Diana Evans", "avatarurl": "/user/pix.php/6/f2.jpg"},
+                {"displayname": "Frank Green", "avatarurl": "/user/pix.php/7/f2.jpg"}
+            ]
+        }
+    }
+}}
+
+<div class="mod_kahoodle-podium-container" style="opacity: 0;">
+    {{! Winner info positioned above each podium stand }}
+    <div class="mod_kahoodle-podium-winners">
+        {{! 2nd place (left) }}
+        <div class="mod_kahoodle-podium-place mod_kahoodle-podium-rank2">
+            {{#rank2}}{{> mod_kahoodle/facilitator/common/podiumwinners }}{{/rank2}}
+        </div>
+
+        {{! 1st place (center) }}
+        <div class="mod_kahoodle-podium-place mod_kahoodle-podium-rank1">
+            {{#rank1}}{{> mod_kahoodle/facilitator/common/podiumwinners }}{{/rank1}}
+        </div>
+
+        {{! 3rd place (right) }}
+        <div class="mod_kahoodle-podium-place mod_kahoodle-podium-rank3">
+            {{#rank3}}{{> mod_kahoodle/facilitator/common/podiumwinners }}{{/rank3}}
+        </div>
+    </div>
+
+    {{! Podium SVG }}
+    <div class="mod_kahoodle-podium-svg">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3940 1130" class="mod_kahoodle-podium-graphic">
+            <!-- Group 3: Bronze (3rd place) - HIDDEN (dark silhouette) -->
+            <g id="group3dark" transform="translate(2440,0)">
+                <ellipse id="bottom3dark" cx="750" cy="970" rx="750" ry="70" fill="#1a1a1a"/>
+                <rect id="middle3dark" x="0" y="430" width="1500" height="540" fill="#1a1a1a"/>
+                <ellipse id="top3dark" cx="750" cy="430" rx="750" ry="70" fill="#2a2a2a"/>
+            </g>
+
+            <!-- Group 2: Silver (2nd place) - HIDDEN (dark silhouette) -->
+            <g id="group2dark" transform="translate(0,0)">
+                <ellipse id="bottom2dark" cx="750" cy="980" rx="750" ry="70" fill="#1a1a1a"/>
+                <rect id="middle2dark" x="0" y="290" width="1500" height="690" fill="#1a1a1a"/>
+                <ellipse id="top2dark" cx="750" cy="290" rx="750" ry="70" fill="#2a2a2a"/>
+            </g>
+
+            <!-- Group 1: Gold (1st place) - HIDDEN (dark silhouette) -->
+            <g id="group1dark" transform="translate(1220,0)">
+                <ellipse id="bottom1dark" cx="750" cy="1060" rx="750" ry="70" fill="#1a1a1a"/>
+                <rect id="middle1dark" x="0" y="70" width="1500" height="990" fill="#1a1a1a"/>
+                <ellipse id="top1dark" cx="750" cy="70" rx="750" ry="70" fill="#2a2a2a"/>
+            </g>
+            <!-- Group 3: Bronze (3rd place) -->
+            <g id="group3" style="opacity: 1;" transform="translate(2440,0)">
+                <ellipse id="bottom3" cx="750" cy="970" rx="750" ry="70" fill="#CD7F32"/>
+                <rect id="middle3" x="0" y="430" width="1500" height="540" fill="#CD7F32"/>
+                <ellipse id="top3" cx="750" cy="430" rx="750" ry="70" fill="#E8A961"/>
+                {{#rank3}}{{#totalscore}}
+                <text id="rank3-number" x="750" y="720" text-anchor="middle" font-size="250" font-weight="bold" fill="white">3</text>
+                <text id="rank3-points" x="750" y="900" text-anchor="middle" font-size="120" fill="white">{{totalscore}}</text>
+                {{/totalscore}}{{/rank3}}
+            </g>
+
+            <!-- Group 2: Silver (2nd place) -->
+            <g id="group2" style="opacity: 1;" transform="translate(0,0)">
+                <ellipse id="bottom2" cx="750" cy="980" rx="750" ry="70" fill="#A8A9AD"/>
+                <rect id="middle2" x="0" y="290" width="1500" height="690" fill="#A8A9AD"/>
+                <ellipse id="top2" cx="750" cy="290" rx="750" ry="70" fill="#C0C0C0"/>
+                {{#rank2}}{{#totalscore}}
+                <text id="rank2-number" x="750" y="580" text-anchor="middle" font-size="250" font-weight="bold" fill="white">2</text>
+                <text id="rank2-points" x="750" y="760" text-anchor="middle" font-size="120" fill="white">{{totalscore}}</text>
+                {{/totalscore}}{{/rank2}}
+            </g>
+
+            <!-- Group 1: Gold (1st place) -->
+            <g id="group1" style="opacity: 1;" transform="translate(1220,0)">
+                <ellipse id="bottom1" cx="750" cy="1060" rx="750" ry="70" fill="#D4AF37"/>
+                <rect id="middle1" x="0" y="70" width="1500" height="990" fill="#D4AF37"/>
+                <ellipse id="top1" cx="750" cy="70" rx="750" ry="70" fill="#F0D060"/>
+                <text id="rank1-number" x="750" y="420" text-anchor="middle" font-size="250" font-weight="bold" fill="white">1</text>
+                {{#rank1}}<text id="rank1-points" x="750" y="600" text-anchor="middle" font-size="120" fill="white">{{totalscore}}</text>{{/rank1}}
+            </g>
+        </svg>
+    </div>
+</div>

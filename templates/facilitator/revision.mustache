@@ -21,6 +21,58 @@
 
     Example context (json):
     {
+        "skippodium": false,
+        "quiztitle": "Geography & World Facts Quiz",
+        "cancontrol": true,
+        "isedit": false,
+        "backgroundurl": "/mod/kahoodle/pix/classroom-bg.jpg",
+        "rank1": {
+            "istie": false,
+            "totalscore": 8500,
+            "winners": [
+                {"displayname": "Alice Johnson", "avatarurl": "/user/pix.php/2/f1.jpg"}
+            ]
+        },
+        "rank2": {
+            "istie": false,
+            "totalscore": 7200,
+            "winners": [
+                {"displayname": "Bob Smith", "avatarurl": "/user/pix.php/3/f1.jpg"}
+            ]
+        },
+        "rank3": {
+            "istie": true,
+            "totalscore": 6100,
+            "hasmore": true,
+            "morecount": 2,
+            "winners": [
+                {"displayname": "Charlie Davis", "avatarurl": "/user/pix.php/5/f2.jpg"},
+                {"displayname": "Diana Evans", "avatarurl": "/user/pix.php/6/f2.jpg"},
+                {"displayname": "Frank Green", "avatarurl": "/user/pix.php/7/f2.jpg"}
+            ]
+        },
+        "leaders": [
+            {
+                "rank": 1,
+                "displayname": "Alice",
+                "avatarurl": "/user/pix.php/2/f2.jpg",
+                "score": 100,
+                "isup": 1
+            },
+            {
+                "rank": 2,
+                "displayname": "Bob",
+                "avatarurl": "/user/pix.php/3/f2.jpg",
+                "score": 80,
+                "isdown": 1
+            },
+            {
+                "rank": 3,
+                "displayname": "Charlie",
+                "avatarurl": "/user/pix.php/4/f2.jpg",
+                "score": 60
+            }
+        ]
     }
 }}
 <div class="mod_kahoodle-overlay" {{#backgroundurl}}style="background-image: url('{{backgroundurl}}');"{{/backgroundurl}}>
@@ -29,8 +81,13 @@
         <div class="mod_kahoodle-revision-title">{{{quiztitle}}}</div>
     </header>
 
-    <main class="mod_kahoodle-main mod_kahoodle-leaderboard-main" data-stage="revision">
+    <main class="mod_kahoodle-main mod_kahoodle-leaderboard-main" data-stage="revision"
+            data-skippodium="{{#skippodium}}1{{/skippodium}}{{^skippodium}}0{{/skippodium}}"
+            data-substage="podium">
 
+        <h2 class="mod_kahoodle-podium-title">{{#str}}topwinners, mod_kahoodle{{/str}}</h2>
+
+        {{> mod_kahoodle/facilitator/common/podium }}
         {{> mod_kahoodle/facilitator/common/leaderboard }}
 
     </main>
@@ -38,3 +95,8 @@
     {{> mod_kahoodle/facilitator/common/footer }}
 
 </div>
+{{#js}}
+require(['mod_kahoodle/animation'], function(Animation) {
+    Animation.initRevisionStage();
+});
+{{/js}}

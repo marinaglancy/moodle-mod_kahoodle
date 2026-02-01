@@ -1667,3 +1667,13 @@
         font-size: 1rem;
     }
 }
+
+.mod_kahoodle-leaderboard-main[data-stage="revision"][data-substage="none"] .mod_kahoodle-leaderboard-container,
+.mod_kahoodle-leaderboard-main[data-stage="revision"][data-substage="podium"] .mod_kahoodle-leaderboard-container {
+    display: none;
+}
+
+.mod_kahoodle-leaderboard-main[data-stage="revision"][data-substage="none"] .mod_kahoodle-podium-container,
+.mod_kahoodle-leaderboard-main[data-stage="revision"][data-substage="leaders"] .mod_kahoodle-podium-container {
+    display: none;
+}

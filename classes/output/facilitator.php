@@ -72,8 +72,11 @@ class facilitator implements \renderable, \templatable {
                 break;
 
             case constants::STAGE_LEADERS:
-            case constants::STAGE_REVISION:
                 $data['templatedata'] += $this->get_leaderboard_data();
+                break;
+
+            case constants::STAGE_REVISION:
+                $data['templatedata'] += $this->get_revision_data();
                 break;
 
             case constants::STAGE_ARCHIVED:
@@ -214,10 +217,10 @@ class facilitator implements \renderable, \templatable {
     /**
      * Get leaderboard data for leaders or revision stage
      *
+     * @param bool $isrevision Whether this is for the revision stage (false - leaders stage after a question)
      * @return array Template data additions
      */
-    protected function get_leaderboard_data(): array {
-        $isrevision = $this->stage->get_stage_name() === constants::STAGE_REVISION;
+    protected function get_leaderboard_data(bool $isrevision = false): array {
 
         $leaderranks = $this->round->get_leaders();
         $leaders = [];
@@ -244,5 +247,46 @@ class facilitator implements \renderable, \templatable {
             'leaders' => $leaders,
             'statusmessage' => $statusmessage,
         ];
+    }
+
+    /**
+     * Get data for the revision stage (including podium)
+     *
+     * @return array Template data additions
+     */
+    protected function get_revision_data(): array {
+        $templatedata = $this->get_leaderboard_data(true);
+
+        // TODO if there was more than 30 seconds since the beginning of the revision stage,
+        // skip the podium display.
+
+        // Prepare data for the podium.
+        $podiumranks = $this->round->get_podium_ranks();
+        if (count($podiumranks) < 2) {
+            // Not enough participants for podium.
+            $templatedata['skippodium'] = true;
+            return $templatedata;
+        }
+
+        foreach ($podiumranks as $position => $ranks) {
+            $istie = count($ranks) > 1;
+            $hasmore = count($ranks) > 4;
+            $displayedranks = $hasmore ? array_slice($ranks, 0, 3) : $ranks;
+            $avatarsize = $istie ? ($position == 1 ? 64 : 35) : 100;
+
+            $templatedata['rank' . $position] = [
+                'istie' => $istie,
+                'totalscore' => $ranks[0]->score,
+                'hasmore' => $hasmore,
+                'winners' => array_values(array_map(function ($rank) use ($avatarsize) {
+                    return [
+                        'displayname' => $rank->participant->get_display_name(),
+                        'avatarurl' => $rank->participant->get_avatar_url($avatarsize)->out(false),
+                    ];
+                }, $displayedranks)),
+            ];
+        }
+
+        return $templatedata;
     }
 }
