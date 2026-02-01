@@ -1484,9 +1484,6 @@
 .mod_kahoodle-podium-container {
     flex: 1;
     width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
     min-height: 0;
     position: relative;
 }
@@ -1494,11 +1491,11 @@
 /* Winners positioned above the podium */
 .mod_kahoodle-podium-winners {
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start;
     justify-content: center;
-    width: 100%;
-    padding: 0 2rem;
-    position: relative;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 2;
 }
 
@@ -1506,26 +1503,24 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-end;
 }
 
 /* Position each place to match the SVG podium layout */
+/* 1st place (center) - tallest, no padding */
+.mod_kahoodle-podium-rank1 {
+    flex: 1;
+}
+
 /* 2nd place (left) - medium height */
 .mod_kahoodle-podium-rank2 {
     flex: 1;
-    padding-bottom: 1rem;
-}
-
-/* 1st place (center) - tallest */
-.mod_kahoodle-podium-rank1 {
-    flex: 1;
-    padding-bottom: 3rem;
+    padding-top: 2rem;
 }
 
 /* 3rd place (right) - shortest */
 .mod_kahoodle-podium-rank3 {
     flex: 1;
-    padding-bottom: 0;
+    padding-top: 3rem;
 }
 
 /* Single winner display */
@@ -1627,15 +1622,14 @@
 
 /* Podium SVG container */
 .mod_kahoodle-podium-svg {
-    width: 100%;
-    flex-shrink: 0;
-    margin-top: -2rem;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .mod_kahoodle-podium-graphic {
-    width: 100%;
-    height: auto;
-    max-height: 35vh;
+    width: auto;
+    height: 100%;
 }
 
 /* Podium responsive - hide on small screens */

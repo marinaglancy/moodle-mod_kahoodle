@@ -64,6 +64,8 @@
             "winners": [
                 {"displayname": "Charlie Davis", "avatarurl": "/user/pix.php/5/f2.jpg"},
                 {"displayname": "Diana Evans", "avatarurl": "/user/pix.php/6/f2.jpg"},
+                {"displayname": "Charlie Davis", "avatarurl": "/user/pix.php/5/f2.jpg"},
+                {"displayname": "Diana Evans", "avatarurl": "/user/pix.php/6/f2.jpg"},
                 {"displayname": "Frank Green", "avatarurl": "/user/pix.php/7/f2.jpg"}
             ]
         }
@@ -170,7 +172,7 @@
 
             {{! Podium SVG }}
             <div class="mod_kahoodle-podium-svg">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3940 1430" class="mod_kahoodle-podium-graphic">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3940 1130" class="mod_kahoodle-podium-graphic">
                     <!-- Group 3: Bronze (3rd place) - HIDDEN (dark silhouette) -->
                     <g id="group3dark" transform="translate(2440,0)">
                         <ellipse id="bottom3dark" cx="750" cy="970" rx="750" ry="70" fill="#1a1a1a"/>
@@ -226,3 +228,41 @@
     {{> mod_kahoodle/facilitator/common/footer }}
 
 </div>
+{{#js}}
+(function() {
+    const container = document.querySelector('.mod_kahoodle-podium-container');
+    const podiumSvg = document.querySelector('.mod_kahoodle-podium-svg');
+    const winners = document.querySelector('.mod_kahoodle-podium-winners');
+
+    if (!container || !podiumSvg || !winners) {
+        return;
+    }
+
+    const positionElements = function() {
+        const containerHeight = container.offsetHeight;
+        const bottomMargin = 20;
+
+        // Podium is 45% of container height.
+        const podiumHeight = Math.round(containerHeight * 0.45);
+
+        // Position podium at bottom with margin.
+        podiumSvg.style.bottom = bottomMargin + 'px';
+        podiumSvg.style.height = podiumHeight + 'px';
+        podiumSvg.style.width = 'auto';
+
+        // Wait for SVG to render, then match winners width.
+        requestAnimationFrame(function() {
+            const podiumWidth = podiumSvg.offsetWidth;
+            winners.style.width = podiumWidth + 'px';
+            // Position winners just above the podium.
+            winners.style.bottom = (bottomMargin + podiumHeight) + 'px';
+        });
+    };
+
+    // Initial positioning.
+    positionElements();
+
+    // Reposition on resize.
+    window.addEventListener('resize', positionElements);
+})();
+{{/js}}
