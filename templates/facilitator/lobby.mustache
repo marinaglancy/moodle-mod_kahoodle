@@ -56,7 +56,7 @@
 
     {{! Header: Game title }}
     <header class="mod_kahoodle-header">
-        <div class="mod_kahoodle-game-title">{{quiztitle}}</div>
+        <div class="mod_kahoodle-game-title">{{{quiztitle}}}</div>
     </header>
 
     {{! Main content: Participants and QR code }}
@@ -68,7 +68,7 @@
                 {{#participants}}
                 <div class="mod_kahoodle-participant" data-participantid="{{participantid}}">
                     <img src="{{avatarurl}}" alt="" class="mod_kahoodle-participant-avatar">
-                    <span class="mod_kahoodle-participant-name">{{displayname}}</span>
+                    <span class="mod_kahoodle-participant-name">{{{displayname}}}</span>
                 </div>
                 {{/participants}}
             </div>
@@ -82,7 +82,7 @@
             {{#joincode}}
             <div class="mod_kahoodle-join-code">
                 <span class="mod_kahoodle-join-label">{{#str}}accesscode, mod_kahoodle{{/str}}</span>
-                <span class="mod_kahoodle-join-value">{{joincode}}</span>
+                <span class="mod_kahoodle-join-value">{{{joincode}}}</span>
             </div>
             {{/joincode}}
         </div>
@@ -93,11 +93,11 @@
     <div class="mod_kahoodle-lobby-status">
         <div class="mod_kahoodle-participant-count">
 
-            <span class="mod_kahoodle-count-label">{{#str}}participantsjoined, mod_kahoodle, <span class="mod_kahoodle-count-number">{{participantcount}}</span>{{/str}}</span>
+            <span class="mod_kahoodle-count-label">{{#str}}participantsjoined, mod_kahoodle, <span class="mod_kahoodle-count-number">{{{participantcount}}}</span>{{/str}}</span>
         </div>
         <div class="mod_kahoodle-countdown">
             <span class="mod_kahoodle-countdown-label">{{#str}}startsin, mod_kahoodle{{/str}}</span>
-            <span class="mod_kahoodle-countdown-time">{{countdowntime}}</span>
+            <span class="mod_kahoodle-countdown-time">{{{countdowntime}}}</span>
         </div>
     </div>
 

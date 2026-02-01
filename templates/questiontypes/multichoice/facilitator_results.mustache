@@ -63,14 +63,14 @@
         <div class="mod_kahoodle-chart-bar-wrapper{{#iscorrect}} mod_kahoodle-bar-correct{{/iscorrect}}{{#isshort}} mod_kahoodle-bar-short{{/isshort}}">
             <div class="mod_kahoodle-chart-bar-container">
                 <div class="mod_kahoodle-chart-bar mod_kahoodle-bar-option{{optionnumber}}" style="height: {{heightpercent}}%;">
-                    <span class="mod_kahoodle-bar-count-above">{{count}}</span>
-                    <span class="mod_kahoodle-bar-count">{{count}}</span>
+                    <span class="mod_kahoodle-bar-count-above">{{{count}}}</span>
+                    <span class="mod_kahoodle-bar-count">{{{count}}}</span>
                     {{#iscorrect}}
                     <span class="mod_kahoodle-correct-badge">✓</span>
                     {{/iscorrect}}
                 </div>
             </div>
-            <div class="mod_kahoodle-bar-label mod_kahoodle-bar-label-option{{optionnumber}}">{{letter}}</div>
+            <div class="mod_kahoodle-bar-label mod_kahoodle-bar-label-option{{optionnumber}}">{{{letter}}}</div>
         </div>
         {{/options}}
     </div>
@@ -82,9 +82,9 @@
         {{#options}}
         <div class="mod_kahoodle-option mod_kahoodle-option{{optionnumber}}{{#iscorrect}} mod_kahoodle-option-correct{{/iscorrect}}" data-option="{{optionnumber}}">
             <div class="mod_kahoodle-option-icon">
-                <span class="mod_kahoodle-icon-letter">{{letter}}</span>
+                <span class="mod_kahoodle-icon-letter">{{{letter}}}</span>
             </div>
-            <span class="mod_kahoodle-option-text">{{text}}</span>
+            <span class="mod_kahoodle-option-text">{{{text}}}</span>
             {{#iscorrect}}
             <span class="mod_kahoodle-correct-indicator">✓</span>
             {{/iscorrect}}

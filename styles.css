@@ -1464,13 +1464,6 @@
    PODIUM STAGE STYLES
    ======================================== */
 
-.mod_kahoodle-podium-main {
-    justify-content: flex-start;
-    align-items: center;
-    gap: 1rem;
-    padding-bottom: 0;
-}
-
 .mod_kahoodle-podium-title {
     color: var(--mod_kahoodle-light);
     font-size: 2.5rem;

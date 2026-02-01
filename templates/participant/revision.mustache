@@ -40,7 +40,7 @@
 {{$ main_content }}
 {{! Custom header with quiz title instead of question number }}
 <div class="mod_kahoodle-participant-result-header">
-    <div class="mod_kahoodle-participant-quiz-title">{{quiztitle}}</div>
+    <div class="mod_kahoodle-participant-quiz-title">{{{quiztitle}}}</div>
     <a href="{{closeurl}}" class="mod_kahoodle-participant-close" data-action="close" aria-label="{{#str}}close, mod_kahoodle{{/str}}">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -50,7 +50,7 @@
 </div>
 
 <div class="mod_kahoodle-participant-revision-content">
-    <div class="mod_kahoodle-participant-result-status">{{rankheader}}</div>
+    <div class="mod_kahoodle-participant-result-status">{{{rankheader}}}</div>
     <div class="mod_kahoodle-participant-icon mod_kahoodle-result-trophy">
         <img src="{{rankimage}}" alt="">
     </div>

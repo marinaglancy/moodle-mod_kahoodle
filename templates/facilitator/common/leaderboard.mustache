@@ -53,12 +53,12 @@
     <div class="mod_kahoodle-leaderboard-list">
         {{#leaders}}
         <div class="mod_kahoodle-leaderboard-row">
-            <div class="mod_kahoodle-leaderboard-rank">{{rank}}</div>
+            <div class="mod_kahoodle-leaderboard-rank">{{{rank}}}</div>
             <div class="mod_kahoodle-leaderboard-avatar">
                 <img src="{{avatarurl}}" alt="">
             </div>
             <div class="mod_kahoodle-leaderboard-name">{{{displayname}}}</div>
-            <div class="mod_kahoodle-leaderboard-score">{{score}}</div>
+            <div class="mod_kahoodle-leaderboard-score">{{{score}}}</div>
             <div class="mod_kahoodle-leaderboard-change{{#isup}} mod_kahoodle-leaderboard-up{{/isup}}{{#isdown}} mod_kahoodle-leaderboard-down{{/isdown}}">
                 {{#isup}}
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">

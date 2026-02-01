@@ -75,12 +75,11 @@
 }}
 <div class="mod_kahoodle-overlay " {{#backgroundurl}}style="background-image: url('{{backgroundurl}}');"{{/backgroundurl}}>
 
-    {{! Header: Quiz title }}
     <header class="mod_kahoodle-header">
-        <div class="mod_kahoodle-revision-title">{{quiztitle}}</div>
+        <div class="mod_kahoodle-revision-title">{{{quiztitle}}}</div>
     </header>
 
-    <main class="mod_kahoodle-main mod_kahoodle-podium-main" data-stage="podium">
+    <main class="mod_kahoodle-main" data-stage="revision">
 
         <h2 class="mod_kahoodle-podium-title">{{#str}}topwinners, mod_kahoodle{{/str}}</h2>
 
@@ -159,6 +158,7 @@
                 </svg>
             </div>
         </div>
+
 
     </main>
 
