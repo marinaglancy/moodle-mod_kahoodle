@@ -162,6 +162,18 @@ class round {
         return $this->data->currentstage;
     }
 
+    /**
+     * Time elapsed since the current stage started
+     *
+     * @return int|null
+     */
+    public function get_current_stage_elapsed_time(): ?int {
+        if ($this->data->stagestarttime === null) {
+            return null;
+        }
+        return time() - (int)$this->data->stagestarttime;
+    }
+
     /** @var stdClass|null Cached Kahoodle activity record */
     private ?stdClass $kahoodle = null;
 
@@ -314,7 +326,7 @@ class round {
                 $this,
                 constants::STAGE_REVISION,
                 null,
-                0 // No auto-advance from revision.
+                constants::DEFAULT_REVISION_DURATION
             );
         }
 
@@ -768,6 +780,19 @@ class round {
             }
         }
         return $podium;
+    }
+
+    /**
+     * Should the podium be shown (more than one rank on podium)
+     *
+     * For example, if there are three or more participants tied for the first place we
+     * can just go straight to the leaderboard.
+     *
+     * @return bool
+     */
+    public function is_podium_shown(): bool {
+        $podiumranks = $this->get_podium_ranks();
+        return count($podiumranks) > 1;
     }
 
     /**

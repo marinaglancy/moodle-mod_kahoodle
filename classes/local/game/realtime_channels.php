@@ -141,7 +141,7 @@ class realtime_channels {
         if ($rank === 'all') {
             $channels[] = new \tool_realtime\channel($context, 'mod_kahoodle', 'game', $round->get_id());
         } else if (preg_match('/^rank([123])$/', $rank, $matches)) {
-            $x = $round->get_podium_ranks()[(int)$matches[1]] ?? [];
+            $x = $round->get_podium_ranks()[(int)($matches[1])] ?? [];
             foreach ($x as $r) {
                 $channels[] = new \tool_realtime\channel($context, 'mod_kahoodle', 'participant', $r->participant->get_id());
             }

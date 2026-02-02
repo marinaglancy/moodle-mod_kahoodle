@@ -54,6 +54,9 @@ abstract class base {
      * @return string
      */
     public function get_template(string $role, string $stage): string {
+        // Mdlcode uses: template 'mod_kahoodle/questiontypes/multichoice/facilitator_question'.
+        // Mdlcode uses: template 'mod_kahoodle/questiontypes/multichoice/facilitator_results'.
+        // Mdlcode uses: template 'mod_kahoodle/questiontypes/multichoice/participant_question'.
         $template = 'mod_kahoodle/questiontypes/' . $this->get_type() . '/' . $role . '_' . $stage;
         try {
             \core\output\mustache_template_finder::get_template_filepath($template);
@@ -62,6 +65,9 @@ abstract class base {
         } catch (\moodle_exception $e) {
             // Template not found, will use fallback.
         }
+        // Mdlcode returns: template.
+        // Mdlcode assume-optional: $this->get_type() ['multiplechoice'].
+        // Mdlcode assume: $role ['facilitator', 'participant'].
         return 'mod_kahoodle/' . $role . '/' . $stage;
     }
 

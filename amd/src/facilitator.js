@@ -187,7 +187,7 @@ const handleRealtimeEvent = (eventData) => {
     }
 
     // Show the new stage.
-    if (payload.template && payload.stagesignature) {
+    if (payload.stagesignature) {
         showStage(payload);
     }
 };

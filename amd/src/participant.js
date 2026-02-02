@@ -185,7 +185,7 @@ const handleRealtimeEvent = (eventData) => {
     }
 
     // Handle game channel events.
-    if (payload.template && payload.stagesignature) {
+    if (payload.stagesignature) {
         showStage(payload);
     }
     if (payload.action === 'reveal_rank') {

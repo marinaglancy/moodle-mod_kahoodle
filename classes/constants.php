@@ -31,13 +31,16 @@ class constants {
     public const DEFAULT_LOBBY_DURATION = 300;
 
     /** @var int Default question preview duration in seconds */
-    public const DEFAULT_QUESTION_PREVIEW_DURATION = 10;
+    public const DEFAULT_QUESTION_PREVIEW_DURATION = 5;
 
     /** @var int Default question duration in seconds */
-    public const DEFAULT_QUESTION_DURATION = 30;
+    public const DEFAULT_QUESTION_DURATION = 15;
 
     /** @var int Default question results display duration in seconds */
     public const DEFAULT_QUESTION_RESULTS_DURATION = 10;
+
+    /** @var int Default revision duration in seconds (5 minutes) */
+    public const DEFAULT_REVISION_DURATION = 300;
 
     /** @var int Default maximum points for fastest correct answer */
     public const DEFAULT_MAX_POINTS = 1000;

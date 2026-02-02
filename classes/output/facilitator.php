@@ -115,32 +115,14 @@ class facilitator implements \renderable, \templatable {
         }
 
         $templates = [
+            // Mdlcode uses-next-line: template 'mod_kahoodle/facilitator/lobby'.
             constants::STAGE_LOBBY => 'mod_kahoodle/facilitator/lobby',
+            // Mdlcode uses-next-line: template 'mod_kahoodle/facilitator/revision'.
             constants::STAGE_REVISION => 'mod_kahoodle/facilitator/revision',
             constants::STAGE_ARCHIVED => null,
         ];
 
         return $templates[$stagename] ?? null;
-    }
-
-    /**
-     * Get the duration for the current stage
-     *
-     * @return int
-     */
-    protected function get_duration(): int {
-        $stagename = $this->stage->get_stage_name();
-
-        if ($this->stage->is_question_stage()) {
-            return $this->stage->get_round_question()->get_stage_duration($stagename);
-        }
-
-        if ($stagename === constants::STAGE_LOBBY) {
-            return (int)$this->round->get_kahoodle()->lobbyduration;
-        }
-
-        // Revision and archived have no auto-advance.
-        return 0;
     }
 
     /**
@@ -154,7 +136,7 @@ class facilitator implements \renderable, \templatable {
         return [
             'stagesignature' => $this->stage->get_stage_signature(),
             'template' => $this->get_template(),
-            'duration' => $this->get_duration(),
+            'duration' => $this->stage->get_duration(),
             'templatedata' => [
                 'quiztitle' => $this->round->get_kahoodle_name(),
                 'sortorder' => $this->stage->get_question_number() ?: '',
@@ -262,7 +244,7 @@ class facilitator implements \renderable, \templatable {
 
         // Prepare data for the podium.
         $podiumranks = $this->round->get_podium_ranks();
-        if (count($podiumranks) < 2) {
+        if (!$this->round->is_podium_shown()) {
             // Not enough participants for podium.
             $templatedata['skippodium'] = true;
             return $templatedata;

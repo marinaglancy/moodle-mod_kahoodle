@@ -141,11 +141,10 @@ function mod_kahoodle_check_updates_since(cm_info $cm, $from, $filter = []) {
  * @param array $args extra arguments
  * @param bool $forcedownload whether or not force download
  * @param array $options additional options affecting the file serving
- * @return bool false if file not found, does not return if found - just send the file
  */
 function kahoodle_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options = []) {
     if ($context->contextlevel != CONTEXT_MODULE) {
-        return false;
+        return;
     }
 
     require_course_login($course, true, $cm);
@@ -153,7 +152,7 @@ function kahoodle_pluginfile($course, $cm, $context, $filearea, $args, $forcedow
     // Check the file area.
     if ($filearea !== \mod_kahoodle\constants::FILEAREA_QUESTION_IMAGE) {
         // The intro file area is handled automatically.
-        return false;
+        return;
     }
 
     // The item ID is the question version ID.
@@ -164,7 +163,7 @@ function kahoodle_pluginfile($course, $cm, $context, $filearea, $args, $forcedow
     $fs = get_file_storage();
     $file = $fs->get_file_by_hash(sha1($fullpath));
     if (!$file || $file->is_directory()) {
-        return false;
+        return;
     }
 
     send_stored_file($file, null, 0, $forcedownload, $options);
