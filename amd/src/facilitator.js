@@ -83,6 +83,9 @@ export const init = (roundId, contextId) => {
     // Set up event listeners for landing page buttons.
     document.addEventListener('click', handleLandingPageClick);
 
+    // Listen for reveal events from animation.
+    PubSub.subscribe('mod_kahoodle:reveal_rank', handleRevealEvent);
+
     // Fetch current stage and display the game overlay.
     fetchCurrentStage();
 };
@@ -191,17 +194,14 @@ const handleRealtimeEvent = (eventData) => {
 
 /**
  * Handle connection lost events
- *
- * @param {Object} e The error event
  */
-const handleConnectionLost = (e) => {
+const handleConnectionLost = () => {
     // Pause autoplay when connection is lost.
     pauseAutoplay();
     Notification.addNotification({
-        message: 'Connection lost. Please check your network.',
+        message: 'Connection lost. Please refresh the page.',
         type: 'error',
     });
-    window.console.error('Realtime connection lost', e);
 };
 
 /**
@@ -323,8 +323,6 @@ const updateLobbyPartial = async(template, templatedata) => {
  * @param {Object} stageData The stage data from the server
  */
 const showStage = async(stageData) => {
-    window.console.log('Showing stage:', stageData);
-
     const stageChanged = !gameState.currentStageData ||
         gameState.currentStageData.stagesignature !== stageData.stagesignature;
 
@@ -676,4 +674,22 @@ const closeOverlay = () => {
     gameState.autoplayTimerId = null;
     gameState.autoplayStartTime = null;
     gameState.autoplayElapsed = 0;
+};
+
+/**
+ * Handle reveal events from animation
+ *
+ * @param {string} data What was revealed ('rank1', 'rank2', 'rank3', or 'all')
+ */
+const handleRevealEvent = async(data) => {
+    try {
+        const channel = getChannel();
+        await RealTimeApi.sendToServer(channel, {
+            action: 'reveal_rank',
+            data
+        });
+        // Server will send stage update via channel notification if successful.
+    } catch (error) {
+        // Silent failure.
+    }
 };

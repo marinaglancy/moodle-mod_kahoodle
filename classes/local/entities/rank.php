@@ -98,10 +98,16 @@ class rank {
 
         $imagedir = $CFG->wwwroot . '/mod/kahoodle/pix/ranks/';
 
+        $basedata = [
+            'rank' => $this->minrank,
+            'suspenseheader' => get_string('suspenserevisionheader', 'mod_kahoodle'),
+            'suspenseimage' => $imagedir . 'drums.png',
+        ];
+
         // Completion criteria set but not met.
         if ($hascompletion && !$completed) {
             $pointsneeded = $pointstocomplete - $this->score;
-            return [
+            return $basedata + [
                 'rankimage' => $imagedir . 'fail.png',
                 'rankheader' => get_string('rankheader_completionnotmet', 'mod_kahoodle'),
                 'rankstatus' => get_string('rankstatus_completionnotmet', 'mod_kahoodle', $pointsneeded),
@@ -114,7 +120,7 @@ class rank {
             // Mdlcode assume: $idx ['1','2','3','4','5'].
             $idx = rand(1, 5);
             $messagekey = 'rankrevisionzeroscore' . $idx;
-            return [
+            return $basedata + [
                 'rankimage' => $imagedir . 'fail.png',
                 'rankheader' => get_string('rankheader_zeroscore', 'mod_kahoodle'),
                 'rankstatus' => get_string($messagekey, 'mod_kahoodle'),
@@ -126,7 +132,7 @@ class rank {
 
         // Podium finishers (1st, 2nd, 3rd).
         if ($this->minrank >= 1 && $this->minrank <= 3) {
-            return [
+            return $basedata + [
                 'rankimage' => $imagedir . $this->minrank . '.png',
                 'rankheader' => get_string('rankheader_medal', 'mod_kahoodle'),
                 'rankstatus' => $rankstatus,
@@ -137,7 +143,7 @@ class rank {
         // Mdlcode assume: $idx ['1','2','3'].
         $idx = rand(1, 3);
         $headerkey = 'rankheader_other' . $idx;
-        return [
+        return $basedata + [
             'rankimage' => $imagedir . 'award.png',
             'rankheader' => get_string($headerkey, 'mod_kahoodle'),
             'rankstatus' => $rankstatus,

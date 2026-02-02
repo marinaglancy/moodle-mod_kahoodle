@@ -235,6 +235,7 @@ function mod_kahoodle_realtime_event_received(\tool_realtime\channel $channel, $
         $round = \mod_kahoodle\local\entities\round::create_from_id($roundid);
         $context = $round->get_context();
         \core_external\external_api::validate_context($context);
+        require_capability('mod/kahoodle:facilitate', $context);
 
         switch ($action) {
             case 'advance':
@@ -249,6 +250,12 @@ function mod_kahoodle_realtime_event_received(\tool_realtime\channel $channel, $
                 return (new \mod_kahoodle\output\facilitator($round))->export_for_template(
                     $PAGE->get_renderer('mod_kahoodle')
                 );
+
+            case 'reveal_rank':
+                // During revision stage - reveal rank3, rank2, rank1, all.
+                $data = clean_param($payload['data'] ?? '', PARAM_ALPHANUMEXT);
+                \mod_kahoodle\local\game\realtime_channels::notify_participants_rank_revealed($round, $data);
+                return [];
 
             default:
                 return ['error' => 'Unknown action'];
@@ -273,33 +280,33 @@ function mod_kahoodle_realtime_event_received(\tool_realtime\channel $channel, $
         $action = $payload['action'] ?? '';
 
         // Get the participant and round.
-        $participantrecord = $DB->get_record('kahoodle_participants', ['id' => $participantid], '*', MUST_EXIST);
-        $round = \mod_kahoodle\local\entities\round::create_from_id($participantrecord->roundid);
+        $roundrecord = $DB->get_record_sql('SELECT r.*
+            FROM {kahoodle_rounds} r
+            JOIN {kahoodle_participants} p ON p.roundid = r.id
+            WHERE p.id = :participantid', ['participantid' => $participantid], MUST_EXIST);
+        $round = \mod_kahoodle\local\entities\round::create_from_object($roundrecord);
         $context = $round->get_context();
         \core_external\external_api::validate_context($context);
+        require_capability('mod/kahoodle:participate', $context);
+        if (!$round->is_in_progress()) {
+            return ['error' => 'Round is not in progress'];
+        }
+        if (!$participant = $round->get_participant_by_id($participantid)) {
+            return ['error' => 'Participant not found'];
+        }
 
         switch ($action) {
             case 'get_current':
                 // Get current stage data for participant view.
-                foreach ($round->get_all_participants() as $participant) {
-                    if ($participant->get_id() == $participantid) {
-                        return (new \mod_kahoodle\output\participant($participant))->export_for_template(
-                            $PAGE->get_renderer('mod_kahoodle')
-                        );
-                    }
-                }
-                return ['error' => 'Participant not found'];
+                return (new \mod_kahoodle\output\participant($participant))->export_for_template(
+                    $PAGE->get_renderer('mod_kahoodle')
+                );
 
             case 'answer':
                 // Record participant's answer (validation and notification handled inside).
                 $response = (string)($payload['response'] ?? '');
                 $currentstage = clean_param($payload['currentstage'] ?? '', PARAM_ALPHANUMEXT);
-                foreach ($round->get_all_participants() as $participant) {
-                    if ($participant->get_id() == $participantid) {
-                        \mod_kahoodle\local\game\responses::record_answer($participant, $response, $currentstage);
-                        break;
-                    }
-                }
+                \mod_kahoodle\local\game\responses::record_answer($participant, $response, $currentstage);
                 return [];
 
             default:

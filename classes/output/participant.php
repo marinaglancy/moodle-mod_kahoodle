@@ -218,6 +218,8 @@ class participant implements \renderable, \templatable {
      * @return array Template data additions
      */
     protected function get_revision_data(): array {
-        return $this->rank->get_data_for_revision();
+        return $this->rank->get_data_for_revision() + [
+            'autorevealin' => 20, // TODO calculate.
+        ];
     }
 }

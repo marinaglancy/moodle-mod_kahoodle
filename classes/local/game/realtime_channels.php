@@ -124,4 +124,32 @@ class realtime_channels {
         // Notify all subscribers on the participant channel.
         $channel->notify($stagedata);
     }
+
+    /**
+     * Notify relevant participants that ranks were revealed on facilitator screen and need to be revealed on participant screens
+     *
+     * During the revision stage we show the suspense screen first (drumroll).
+     *
+     * @param round $round
+     * @param string $rank which rank to reveal - 'rank1', 'rank2', 'rank3', 'all'
+     * @return void
+     */
+    public static function notify_participants_rank_revealed(round $round, string $rank): void {
+        $context = $round->get_context();
+        $channels = [];
+
+        if ($rank === 'all') {
+            $channels[] = new \tool_realtime\channel($context, 'mod_kahoodle', 'game', $round->get_id());
+        } else if (preg_match('/^rank([123])$/', $rank, $matches)) {
+            $x = $round->get_podium_ranks()[(int)$matches[1]] ?? [];
+            foreach ($x as $r) {
+                $channels[] = new \tool_realtime\channel($context, 'mod_kahoodle', 'participant', $r->participant->get_id());
+            }
+        }
+
+        foreach ($channels as $channel) {
+            // Notify all subscribers on the participant channel.
+            $channel->notify(['action' => 'reveal_rank']);
+        }
+    }
 }

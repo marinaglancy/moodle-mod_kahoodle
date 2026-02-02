@@ -427,6 +427,17 @@ class round {
         return $this->participantscache;
     }
 
+    /**
+     * Get participant by id (if exists)
+     *
+     * @param int $participantid
+     * @return participant|null
+     */
+    public function get_participant_by_id(int $participantid): ?participant {
+        $participants = $this->get_all_participants();
+        return $participants[$participantid] ?? null;
+    }
+
     /** @var stdClass|false|null Cached participant record for current user (null = not checked, false = not participant) */
     protected $currentuserparticipant = null;
 

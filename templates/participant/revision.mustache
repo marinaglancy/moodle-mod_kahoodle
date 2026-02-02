@@ -33,7 +33,9 @@
         "rankimage": "/mod/kahoodle/pix/3.png",
         "closeurl": "/mod/kahoodle/view.php?id=123",
         "avatarurl": "/user/pix.php/2/f1.jpg",
-        "displayname": "Alex Johnson"
+        "displayname": "Alex Johnson",
+        "suspenseimage": "/mod/kahoodle/pix/drums.png",
+        "suspenseheader": "Drumroll please..."
     }
 }}
 {{< mod_kahoodle/participant/common/base }}
@@ -49,13 +51,17 @@
     </a>
 </div>
 
-<div class="mod_kahoodle-participant-revision-content">
-    <div class="mod_kahoodle-participant-result-status">{{{rankheader}}}</div>
-    <div class="mod_kahoodle-participant-icon mod_kahoodle-result-trophy">
+<div class="mod_kahoodle-participant-revision-content" data-autorevealin="{{autorevealin}}" data-rank="{{rank}}">
+    <div class="mod_kahoodle-participant-result-status" data-region="suspense">{{{suspenseheader}}}</div>
+    <div class="mod_kahoodle-participant-icon mod_kahoodle-result-trophy" data-region="suspense">
+        <img src="{{suspenseimage}}" alt="">
+    </div>
+    <div class="mod_kahoodle-participant-result-status" data-region="aftersuspense" style="display: none;">{{{rankheader}}}</div>
+    <div class="mod_kahoodle-participant-icon mod_kahoodle-result-trophy" data-region="aftersuspense" style="display: none;">
         <img src="{{rankimage}}" alt="">
     </div>
     {{#rankstatus}}
-    <div class="mod_kahoodle-participant-rank">{{{rankstatus}}}</div>
+    <div class="mod_kahoodle-participant-rank" data-region="aftersuspense" style="display: none;">{{{rankstatus}}}</div>
     {{/rankstatus}}
 </div>
 

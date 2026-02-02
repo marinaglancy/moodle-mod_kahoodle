@@ -33,12 +33,14 @@ import RealTimeEvents from 'tool_realtime/events';
 import * as RealTimeApi from 'tool_realtime/api';
 import Templates from 'core/templates';
 import Notification from 'core/notification';
+import {getString} from 'core/str';
 
 const SELECTORS = {
     OVERLAY: '.mod_kahoodle-overlay',
     CONTROL_CLOSE: '[data-action="close"]',
     // Landing page buttons.
     LANDING_RESUME: '[data-action="resume-participant"]',
+    REVISION_CONTENT: '.mod_kahoodle-participant-revision-content',
 };
 
 // Current participant state.
@@ -173,38 +175,34 @@ const getParticipantChannel = () => {
 const handleRealtimeEvent = (eventData) => {
     const {component, area, itemid, payload} = eventData;
 
+    const isMyEvent = (component === 'mod_kahoodle') &&
+        ((area === 'participant' && parseInt(itemid) === participantState.participantId) ||
+        (area === 'game' && parseInt(itemid) === participantState.roundId));
+
     // Verify this event is for our participant or for the game channel.
-    if (component !== 'mod_kahoodle') {
+    if (!isMyEvent) {
         return;
     }
 
-    // Handle game channel events (broadcast to all participants).
-    if (area === 'game' && parseInt(itemid) === participantState.roundId) {
-        if (payload.template && payload.stagesignature) {
-            showStage(payload);
-        }
-        return;
+    // Handle game channel events.
+    if (payload.template && payload.stagesignature) {
+        showStage(payload);
     }
-
-    // Handle participant-specific channel events.
-    if (area === 'participant' && parseInt(itemid) === participantState.participantId) {
-        if (payload.template && payload.stagesignature) {
-            showStage(payload);
-        }
+    if (payload.action === 'reveal_rank') {
+        revealRank();
     }
 };
 
 /**
  * Handle connection lost events
- *
- * @param {Object} e The error event
  */
-const handleConnectionLost = (e) => {
-    Notification.addNotification({
-        message: 'Connection lost. Please check your network.',
-        type: 'error',
-    });
-    window.console.error('Realtime connection lost', e);
+const handleConnectionLost = () => {
+    getString('error_connectionlost', 'kahoodle').then((message) => {
+        return Notification.addNotification({
+            message,
+            type: 'error',
+        });
+    }).catch(() => null);
 };
 
 /**
@@ -256,6 +254,11 @@ const showStage = async(stageData) => {
         // Render the template and execute embedded JS.
         const {html, js} = await Templates.renderForPromise(stageData.template, templatedata);
         Templates.replaceNodeContents(participantState.overlayContainer, html, js);
+
+        if (stageData.stagesignature === 'revision') {
+            // Special handling for revision stage.
+            onRevisionStageStart();
+        }
     } catch (error) {
         Notification.exception(error);
     }
@@ -327,4 +330,33 @@ const closeOverlay = () => {
 
     // Reset state (but keep IDs).
     participantState.currentStageData = null;
+};
+
+/**
+ * Executed when revision stage starts
+ */
+const onRevisionStageStart = () => {
+    const el = document.querySelector(SELECTORS.REVISION_CONTENT);
+    const autorevealin = el ? parseInt(el.dataset.autorevealin, 10) : 0;
+    if (autorevealin > 0) {
+        setTimeout(revealRank, autorevealin * 1000);
+    } else {
+        revealRank();
+    }
+};
+
+/**
+ * During revision stage hide suspense and reveal actual rank
+ */
+const revealRank = () => {
+    const el = document.querySelector(SELECTORS.REVISION_CONTENT);
+    if (!el) {
+        return;
+    }
+    el.querySelectorAll('[data-region="suspense"]').forEach(element => {
+        element.style.display = 'none';
+    });
+    el.querySelectorAll('[data-region="aftersuspense"]').forEach(element => {
+        element.style.display = '';
+    });
 };
