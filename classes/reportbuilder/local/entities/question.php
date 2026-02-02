@@ -205,6 +205,51 @@ class question extends base {
             ->add_field("{$versionalias}.version")
             ->set_is_sortable(true);
 
+        // Total responses column (count of responses for this question).
+        $columns[] = (new column(
+            'totalresponses',
+            new lang_string('totalresponses', 'mod_kahoodle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->set_type(column::TYPE_INTEGER)
+            ->add_field("(SELECT COUNT(*) FROM {kahoodle_responses} r
+                WHERE r.roundquestionid = {$roundquestionalias}.id)", 'totalresponses')
+            ->set_is_sortable(true)
+            ->add_callback(static function (?int $value): string {
+                return $value !== null ? (string)$value : '0';
+            });
+
+        // Correct responses column (count of correct responses).
+        $columns[] = (new column(
+            'correctresponses',
+            new lang_string('correctresponses', 'mod_kahoodle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->set_type(column::TYPE_INTEGER)
+            ->add_field("(SELECT COUNT(*) FROM {kahoodle_responses} r
+                WHERE r.roundquestionid = {$roundquestionalias}.id AND r.iscorrect = 1)", 'correctresponses')
+            ->set_is_sortable(true)
+            ->add_callback(static function (?int $value): string {
+                return $value !== null ? (string)$value : '0';
+            });
+
+        // Average score column.
+        // Calculate average including participants who didn't answer (counted as 0).
+        // Sum of points / total participants in the round.
+        // Note: The callback needs totalparticipants which should be set by the system report.
+        $columns[] = (new column(
+            'averagescore',
+            new lang_string('results_averagescore', 'mod_kahoodle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->set_type(column::TYPE_FLOAT)
+            ->add_field("(SELECT COALESCE(SUM(r.points), 0) FROM {kahoodle_responses} r
+                WHERE r.roundquestionid = {$roundquestionalias}.id)", 'totalpoints')
+            ->set_is_sortable(true);
+
         return $columns;
     }
 

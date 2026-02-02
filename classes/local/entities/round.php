@@ -440,6 +440,19 @@ class round {
     }
 
     /**
+     * Get the count of participants in this round
+     *
+     * @return int
+     */
+    public function get_participants_count(): int {
+        global $DB;
+        if ($this->participantscache !== null) {
+            return count($this->participantscache);
+        }
+        return $DB->count_records('kahoodle_participants', ['roundid' => $this->get_id()]);
+    }
+
+    /**
      * Get participant by id (if exists)
      *
      * @param int $participantid

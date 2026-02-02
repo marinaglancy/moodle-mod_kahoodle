@@ -71,6 +71,29 @@ if (!empty($roundid) && $view === 'participants') {
     );
 
     echo $report->output();
+} else if (!empty($roundid) && $view === 'statistics') {
+    // Show statistics report for this round.
+
+    // Back button.
+    $backurl = new moodle_url('/mod/kahoodle/results.php', ['id' => $cm->id]);
+    echo html_writer::div(
+        html_writer::link($backurl, get_string('back'), ['class' => 'btn btn-secondary mb-3']),
+        'mb-3'
+    );
+
+    // Round name as heading.
+    echo $OUTPUT->heading($round->get_display_name() . ' - ' . get_string('statistics', 'mod_kahoodle'), 3);
+
+    $report = \core_reportbuilder\system_report_factory::create(
+        \mod_kahoodle\reportbuilder\local\systemreports\statistics::class,
+        $PAGE->context,
+        'mod_kahoodle',
+        '',
+        0,
+        ['roundid' => $round->get_id()]
+    );
+
+    echo $report->output();
 } else {
     // Show the default rounds list.
     $resultspage = new \mod_kahoodle\output\results($PAGE->activityrecord, $cm);
