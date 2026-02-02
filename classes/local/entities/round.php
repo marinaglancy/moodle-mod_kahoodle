@@ -530,6 +530,7 @@ class round {
      */
     public function set_current_stage(round_stage $newstage): void {
         global $DB;
+        $oldstage = $this->get_current_stage();
         $updaterecord = [
             'currentstage' => $newstage->get_stage_name(),
             'currentquestion' => $newstage->get_question_number(),
@@ -563,7 +564,59 @@ class round {
         ]);
         $event->trigger();
 
+        // Clear ranking cache.
         $this->questionrankings = [];
+
+        // Update question statistics cache if we changed question.
+        if ($oldstage->get_stage_name() === constants::STAGE_QUESTION && $oldstage->get_round_question()) {
+            $oldstage->get_round_question()->update_statistics();
+        }
+
+        // Update final ranks when entering revision stage.
+        if (
+            $newstage->get_stage_name() === constants::STAGE_REVISION
+                || $newstage->get_stage_name() === constants::STAGE_ARCHIVED
+        ) {
+            $this->update_final_ranks();
+        }
+    }
+
+    /**
+     * Update final ranks and total scores for all participants in this round
+     *
+     * This should be called when the round enters the revision stage to persist
+     * the final standings. Uses the standard competition ranking where tied
+     * participants share the same rank.
+     *
+     * @return void
+     */
+    public function update_final_ranks(): void {
+        global $DB;
+
+        $rankings = $this->get_rankings();
+        $haschanges = false;
+
+        foreach ($rankings as $participantid => $rank) {
+            $participant = $rank->participant;
+            if (
+                $participant->get_final_rank() === $rank->minrank &&
+                $participant->get_total_score() === $rank->score
+            ) {
+                // No change, skip update.
+                continue;
+            }
+            $DB->update_record('kahoodle_participants', [
+                'id' => $participantid,
+                'finalrank' => $rank->minrank,
+                'totalscore' => $rank->score,
+            ]);
+            $haschanges = true;
+        }
+
+        // Clear participant cache since we updated the data.
+        if ($haschanges) {
+            $this->clear_participant_cache();
+        }
     }
 
     /**

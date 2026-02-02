@@ -378,4 +378,13 @@ class round_question {
     public function get_max_points(): int {
         return $this->data->maxpoints ?? $this->get_round()->get_kahoodle()->maxpoints;
     }
+
+    /**
+     * When question is finished, update stats fields - totalresponses, answerdistribution
+     *
+     * @return void
+     */
+    public function update_statistics(): void {
+        // TODO.
+    }
 }

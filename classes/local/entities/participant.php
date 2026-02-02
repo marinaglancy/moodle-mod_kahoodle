@@ -72,7 +72,7 @@ class participant {
         $participants = $DB->get_records_sql(
             'SELECT p.* ' . $userfieldssql . '
             FROM {kahoodle_participants} p
-            JOIN {user} u ON u.id = p.userid ' . $userfieldsjoin . '
+            LEFT JOIN {user} u ON u.deleted = 0 AND u.id = p.userid ' . $userfieldsjoin . '
             WHERE p.roundid = :roundid ' . $extraquery . '
             ORDER BY p.timecreated DESC',
             ['roundid' => $round->get_id()] + $extraparams + $userfieldsparams
@@ -144,5 +144,15 @@ class participant {
      */
     public function get_total_score(): int {
         return (int)$this->participantdata->totalscore;
+    }
+
+    /**
+     * Get participant final rank (null if round is not finished and final rank not assigned)
+     *
+     * @return int|null
+     */
+    public function get_final_rank(): ?int {
+        $rank = $this->participantdata->finalrank;
+        return $rank === null ? null : (int)$rank;
     }
 }

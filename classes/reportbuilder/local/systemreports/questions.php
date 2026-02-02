@@ -110,9 +110,7 @@ class questions extends system_report {
      * @return bool
      */
     protected function can_view(): bool {
-        $cm = get_coursemodule_from_instance('kahoodle', $this->get_round()->get_kahoodleid(), 0, false, MUST_EXIST);
-        $context = \context_module::instance($cm->id);
-
+        $context = $this->get_round()->get_context();
         return has_capability('mod/kahoodle:manage_questions', $context);
     }
 

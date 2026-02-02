@@ -45,9 +45,36 @@ $PAGE->set_title(get_string('results', 'mod_kahoodle'));
 $PAGE->set_heading(format_string($PAGE->course->fullname));
 $PAGE->activityheader->disable();
 
-// TODO if roundid and view are specified, show participants or statistics view instead of the rounds list.
-$resultspage = new \mod_kahoodle\output\results($PAGE->activityrecord, $cm);
-
 echo $OUTPUT->header();
-echo $OUTPUT->render($resultspage);
+
+// If roundid and view are specified, show participants or statistics view instead of the rounds list.
+if (!empty($roundid) && $view === 'participants') {
+    // Show participants report for this round.
+
+    // Back button.
+    $backurl = new moodle_url('/mod/kahoodle/results.php', ['id' => $cm->id]);
+    echo html_writer::div(
+        html_writer::link($backurl, get_string('back'), ['class' => 'btn btn-secondary mb-3']),
+        'mb-3'
+    );
+
+    // Round name as heading.
+    echo $OUTPUT->heading($round->get_display_name() . ' - ' . get_string('participants', 'mod_kahoodle'), 3);
+
+    $report = \core_reportbuilder\system_report_factory::create(
+        \mod_kahoodle\reportbuilder\local\systemreports\participants::class,
+        $PAGE->context,
+        'mod_kahoodle',
+        '',
+        0,
+        ['roundid' => $round->get_id()]
+    );
+
+    echo $report->output();
+} else {
+    // Show the default rounds list.
+    $resultspage = new \mod_kahoodle\output\results($PAGE->activityrecord, $cm);
+    echo $OUTPUT->render($resultspage);
+}
+
 echo $OUTPUT->footer();
