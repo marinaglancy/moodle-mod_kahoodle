@@ -78,6 +78,22 @@ class participant extends base {
     }
 
     /**
+     * Return syntax for joining on the user table.
+     * Uses LEFT JOIN with deleted = 0 condition to allow showing participants
+     * even if the user has been deleted.
+     *
+     * @return string
+     */
+    public function get_user_join(): string {
+        $participantalias = $this->get_table_alias('kahoodle_participants');
+        $useralias = $this->get_table_alias('user');
+
+        return "LEFT JOIN {user} {$useralias}
+            ON {$useralias}.id = {$participantalias}.userid
+            AND {$useralias}.deleted = 0";
+    }
+
+    /**
      * Get the list of user fields required for userpic and fullname.
      *
      * @return string[]
@@ -118,6 +134,7 @@ class participant extends base {
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())
+            ->add_join($this->get_user_join())
             ->set_type(column::TYPE_TEXT)
             ->add_field("{$participantalias}.displayname")
             ->add_field("{$participantalias}.userid")
@@ -147,6 +164,7 @@ class participant extends base {
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())
+            ->add_join($this->get_user_join())
             ->set_type(column::TYPE_TEXT)
             ->set_is_sortable(true, ["{$useralias}.lastname", "{$useralias}.firstname"])
             ->add_callback(static function ($value, stdClass $row): string {

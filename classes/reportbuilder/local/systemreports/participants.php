@@ -56,18 +56,9 @@ class participants extends system_report {
     protected function initialise(): void {
         $participantentity = new participant();
         $participantalias = $participantentity->get_table_alias('kahoodle_participants');
-        $useralias = $participantentity->get_table_alias('user');
 
         $this->set_main_table('kahoodle_participants', $participantalias);
         $this->add_entity($participantentity);
-
-        // LEFT JOIN to user table with condition that user is not deleted.
-        // This allows showing participants even if the user has been deleted.
-        $this->add_join("
-            LEFT JOIN {user} {$useralias}
-                ON {$useralias}.id = {$participantalias}.userid
-                AND {$useralias}.deleted = 0
-        ");
 
         // Filter by roundid parameter.
         $this->add_base_condition_simple("{$participantalias}.roundid", $this->get_round()->get_id());

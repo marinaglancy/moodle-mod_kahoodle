@@ -72,9 +72,6 @@ class participant_answers extends system_report {
         // Add question entity for question-related columns.
         $questionentity = new question();
         $roundquestionalias = $questionentity->get_table_alias('kahoodle_round_questions');
-        $versionalias = $questionentity->get_table_alias('kahoodle_question_versions');
-        $questionalias = $questionentity->get_table_alias('kahoodle_questions');
-        $kahoodlealias = $questionentity->get_table_alias('kahoodle');
 
         // Add response entity for response-specific columns.
         $responseentity = new response();
@@ -84,24 +81,6 @@ class participant_answers extends system_report {
         $this->set_main_table('kahoodle_round_questions', $roundquestionalias);
         $this->add_entity($questionentity);
         $this->add_entity($responseentity);
-
-        // Join to question versions table.
-        $this->add_join("
-            JOIN {kahoodle_question_versions} {$versionalias}
-                ON {$versionalias}.id = {$roundquestionalias}.questionversionid
-        ");
-
-        // Join to questions table for question type.
-        $this->add_join("
-            JOIN {kahoodle_questions} {$questionalias}
-                ON {$questionalias}.id = {$versionalias}.questionid
-        ");
-
-        // Join to kahoodle table for question format.
-        $this->add_join("
-            JOIN {kahoodle} {$kahoodlealias}
-                ON {$kahoodlealias}.id = {$questionalias}.kahoodleid
-        ");
 
         // LEFT JOIN to responses for this specific participant.
         $participantid = $this->get_parameter('participantid', 0, PARAM_INT);

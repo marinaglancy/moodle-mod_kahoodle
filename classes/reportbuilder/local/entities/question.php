@@ -77,6 +77,45 @@ class question extends base {
     }
 
     /**
+     * Return syntax for joining on the question versions table
+     *
+     * @return string
+     */
+    public function get_question_versions_join(): string {
+        $roundquestionalias = $this->get_table_alias('kahoodle_round_questions');
+        $versionalias = $this->get_table_alias('kahoodle_question_versions');
+
+        return "JOIN {kahoodle_question_versions} {$versionalias}
+            ON {$versionalias}.id = {$roundquestionalias}.questionversionid";
+    }
+
+    /**
+     * Return syntax for joining on the questions table (requires version join)
+     *
+     * @return string
+     */
+    public function get_questions_join(): string {
+        $versionalias = $this->get_table_alias('kahoodle_question_versions');
+        $questionalias = $this->get_table_alias('kahoodle_questions');
+
+        return "JOIN {kahoodle_questions} {$questionalias}
+            ON {$questionalias}.id = {$versionalias}.questionid";
+    }
+
+    /**
+     * Return syntax for joining on the kahoodle table (requires questions join)
+     *
+     * @return string
+     */
+    public function get_kahoodle_join(): string {
+        $questionalias = $this->get_table_alias('kahoodle_questions');
+        $kahoodlealias = $this->get_table_alias('kahoodle');
+
+        return "JOIN {kahoodle} {$kahoodlealias}
+            ON {$kahoodlealias}.id = {$questionalias}.kahoodleid";
+    }
+
+    /**
      * Returns list of all available columns
      *
      * @return column[]
@@ -106,6 +145,8 @@ class question extends base {
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())
+            ->add_join($this->get_question_versions_join())
+            ->add_join($this->get_questions_join())
             ->set_type(column::TYPE_TEXT)
             ->add_field("{$questionalias}.questiontype")
             ->set_is_sortable(true)
@@ -124,6 +165,9 @@ class question extends base {
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())
+            ->add_join($this->get_question_versions_join())
+            ->add_join($this->get_questions_join())
+            ->add_join($this->get_kahoodle_join())
             ->set_type(column::TYPE_LONGTEXT)
             ->add_field("{$versionalias}.questiontext")
             ->add_field("{$kahoodlealias}.questionformat")
@@ -142,6 +186,9 @@ class question extends base {
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())
+            ->add_join($this->get_question_versions_join())
+            ->add_join($this->get_questions_join())
+            ->add_join($this->get_kahoodle_join())
             ->set_type(column::TYPE_LONGTEXT)
             ->add_field("{$versionalias}.questiontext")
             ->add_field("{$kahoodlealias}.questionformat")
@@ -160,6 +207,9 @@ class question extends base {
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())
+            ->add_join($this->get_question_versions_join())
+            ->add_join($this->get_questions_join())
+            ->add_join($this->get_kahoodle_join())
             ->set_type(column::TYPE_TEXT)
             ->add_field("{$roundquestionalias}.questionpreviewduration")
             ->add_field("{$roundquestionalias}.questionduration")
@@ -182,6 +232,9 @@ class question extends base {
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())
+            ->add_join($this->get_question_versions_join())
+            ->add_join($this->get_questions_join())
+            ->add_join($this->get_kahoodle_join())
             ->set_type(column::TYPE_TEXT)
             ->add_field("{$roundquestionalias}.minpoints")
             ->add_field("{$roundquestionalias}.maxpoints")
@@ -201,6 +254,7 @@ class question extends base {
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())
+            ->add_join($this->get_question_versions_join())
             ->set_type(column::TYPE_INTEGER)
             ->add_field("{$versionalias}.version")
             ->set_is_sortable(true);
@@ -283,7 +337,9 @@ class question extends base {
             $this->get_entity_name(),
             "{$questionalias}.questiontype"
         ))
-            ->add_joins($this->get_joins());
+            ->add_joins($this->get_joins())
+            ->add_join($this->get_question_versions_join())
+            ->add_join($this->get_questions_join());
 
         // Question text filter.
         $filters[] = (new filter(
@@ -293,7 +349,8 @@ class question extends base {
             $this->get_entity_name(),
             "{$versionalias}.questiontext"
         ))
-            ->add_joins($this->get_joins());
+            ->add_joins($this->get_joins())
+            ->add_join($this->get_question_versions_join());
 
         return $filters;
     }

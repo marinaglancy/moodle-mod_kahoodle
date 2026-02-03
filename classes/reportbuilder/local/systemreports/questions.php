@@ -57,30 +57,10 @@ class questions extends system_report {
     protected function initialise(): void {
         $questionentity = new question();
         $roundquestionalias = $questionentity->get_table_alias('kahoodle_round_questions');
-        $versionalias = $questionentity->get_table_alias('kahoodle_question_versions');
         $questionalias = $questionentity->get_table_alias('kahoodle_questions');
-        $kahoodlealias = $questionentity->get_table_alias('kahoodle');
 
         $this->set_main_table('kahoodle_round_questions', $roundquestionalias);
         $this->add_entity($questionentity);
-
-        // Join to question versions table.
-        $this->add_join("
-            JOIN {kahoodle_question_versions} {$versionalias}
-                ON {$versionalias}.id = {$roundquestionalias}.questionversionid
-        ");
-
-        // Join to questions table for question type.
-        $this->add_join("
-            JOIN {kahoodle_questions} {$questionalias}
-                ON {$questionalias}.id = {$versionalias}.questionid
-        ");
-
-        // Join to kahoodle table for question format.
-        $this->add_join("
-            JOIN {kahoodle} {$kahoodlealias}
-                ON {$kahoodlealias}.id = {$questionalias}.kahoodleid
-        ");
 
         // Filter by roundid parameter.
         $this->add_base_condition_simple("{$roundquestionalias}.roundid", $this->get_round()->get_id());
