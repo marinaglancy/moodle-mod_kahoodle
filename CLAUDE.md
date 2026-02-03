@@ -80,8 +80,11 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │       ├── entities/
 │       │   ├── participant.php # Participant entity for reports
 │       │   ├── question.php  # Question entity for reports
-│       │   └── response.php  # Response entity for participant answers
+│       │   ├── response.php  # Response entity for participant answers
+│       │   └── round.php     # Round entity for reports (name column/filter)
 │       └── systemreports/
+│           ├── all_rounds_participants.php # All rounds participants system report
+│           ├── all_rounds_statistics.php # All rounds statistics system report
 │           ├── participant_answers.php # Participant answers system report
 │           ├── participants.php # Round participants system report
 │           ├── questions.php # Questions list system report
@@ -457,6 +460,15 @@ Question-related columns should come from the question entity.
 
 **Filters:** `correct` (select with Yes/No/No answer), `score`
 
+**round Entity (`round.php`)**
+Provides columns and filters for displaying round information.
+
+**Columns:**
+- `name`: Round name (plain text, falls back to "Round N" if empty)
+- `namelinked`: Round name with link to participants view
+
+**Filters:** `name`
+
 #### System Reports (`reportbuilder/local/systemreports/`)
 
 **questions Report (`questions.php`)**
@@ -490,6 +502,26 @@ Question-related columns should come from the question entity.
 - Average score is calculated as: sum of points / total participants (non-responders count as 0)
 - Downloadable
 - Used in: `results.php?view=statistics&roundid=X`
+
+**all_rounds_participants Report (`all_rounds_participants.php`)**
+- Shows participants from all completed rounds (revision or archived) for a kahoodle activity
+- Uses round entity for round name column and filter
+- Columns: round:namelinked, participant, user, rank, score, correctanswers, questionsanswered
+- Filters: round:name, displayname, user, rank, score
+- Actions: View answers (links to participant details)
+- Downloadable
+- Used in: `results.php?id=X&view=allparticipants`
+- Only visible when there are 2+ completed rounds
+
+**all_rounds_statistics Report (`all_rounds_statistics.php`)**
+- Shows question statistics from all completed rounds (revision or archived) for a kahoodle activity
+- Uses round entity for round name column and filter
+- Columns: round:namelinked, sortorder, questiontype, questionimages, questiontext, totalresponses, correctresponses, averagescore
+- Filters: round:name, questiontype, questiontext
+- Average score calculated per-round (different participant counts per round)
+- Downloadable
+- Used in: `results.php?id=X&view=allstatistics`
+- Only visible when there are 2+ completed rounds
 
 ### Web Services
 
@@ -948,10 +980,12 @@ vendor/bin/phpunit --filter questions_test
   - View participants and View statistics buttons for completed rounds
   - Participants view: system report showing all participants with rank, score, and answer counts
   - Statistics view: system report showing question statistics with response counts and average scores
+  - All rounds participants/statistics buttons (shown when 2+ completed rounds)
 - Report Builder integration
   - Question entity with columns for question management and statistics
   - Participant entity with columns for participant data and answer statistics
-  - Three system reports: questions (management), participants (results), statistics (results)
+  - Round entity with columns for round name (used in all-rounds reports)
+  - Six system reports: questions (management), participants (results), statistics (results), all_rounds_participants, all_rounds_statistics, participant_answers
 - Participant workflow
   - Join action creates participant record
   - Real-time channels for game and participant communication

@@ -144,6 +144,24 @@ class results implements renderable, templatable {
             $data->rounds[] = $rounddata;
         }
 
+        // Count completed rounds (revision or archived stages).
+        $completedroundscount = array_reduce($data->rounds, function ($count, $round) {
+            return $count + ($round->showfullstats ? 1 : 0);
+        }, 0);
+
+        // Show "all rounds" buttons if there are more than 1 completed round.
+        $data->showallroundsbuttons = ($completedroundscount > 1);
+        if ($data->showallroundsbuttons) {
+            $data->allparticipantsurl = (new moodle_url(
+                '/mod/kahoodle/results.php',
+                ['id' => $this->cm->id, 'view' => 'allparticipants']
+            ))->out(false);
+            $data->allstatisticsurl = (new moodle_url(
+                '/mod/kahoodle/results.php',
+                ['id' => $this->cm->id, 'view' => 'allstatistics']
+            ))->out(false);
+        }
+
         return $data;
     }
 }

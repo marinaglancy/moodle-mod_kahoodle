@@ -48,6 +48,8 @@ if ($participantid && $view === 'details') {
     $cm = $round->get_cm();
 } else if ($id) {
     [$course, $cm] = get_course_and_cm_from_cmid($id, 'kahoodle');
+} else if ($view === 'allparticipants' || $view === 'allstatistics') {
+    throw new \moodle_exception('missingparam', '', '', 'id');
 } else {
     throw new \moodle_exception('missingparam', '', '', 'id/roundid/participantid');
 }
@@ -63,7 +65,7 @@ echo $OUTPUT->header();
 // Handle different views.
 if (!empty($participantid) && $view === 'details') {
     // Show participant answers report.
-    /** @var \mod_kahoodle\reportbuilder\local\systemreports\participant_answers */
+    /** @var \mod_kahoodle\reportbuilder\local\systemreports\participant_answers $report */
     $report = \core_reportbuilder\system_report_factory::create(
         \mod_kahoodle\reportbuilder\local\systemreports\participant_answers::class,
         $PAGE->context,
@@ -160,6 +162,52 @@ if (!empty($participantid) && $view === 'details') {
         '',
         0,
         ['roundid' => $round->get_id()]
+    );
+
+    echo $report->output();
+} else if ($view === 'allparticipants') {
+    // Show participants report for all rounds.
+
+    // Back button.
+    $backurl = new moodle_url('/mod/kahoodle/results.php', ['id' => $cm->id]);
+    echo html_writer::div(
+        html_writer::link($backurl, get_string('back'), ['class' => 'btn btn-secondary mb-3']),
+        'mb-3'
+    );
+
+    // Heading.
+    echo $OUTPUT->heading(get_string('allroundsparticipants', 'mod_kahoodle'), 3);
+
+    $report = \core_reportbuilder\system_report_factory::create(
+        \mod_kahoodle\reportbuilder\local\systemreports\all_rounds_participants::class,
+        $PAGE->context,
+        'mod_kahoodle',
+        '',
+        0,
+        ['kahoodleid' => $PAGE->activityrecord->id]
+    );
+
+    echo $report->output();
+} else if ($view === 'allstatistics') {
+    // Show statistics report for all rounds.
+
+    // Back button.
+    $backurl = new moodle_url('/mod/kahoodle/results.php', ['id' => $cm->id]);
+    echo html_writer::div(
+        html_writer::link($backurl, get_string('back'), ['class' => 'btn btn-secondary mb-3']),
+        'mb-3'
+    );
+
+    // Heading.
+    echo $OUTPUT->heading(get_string('allroundsstatistics', 'mod_kahoodle'), 3);
+
+    $report = \core_reportbuilder\system_report_factory::create(
+        \mod_kahoodle\reportbuilder\local\systemreports\all_rounds_statistics::class,
+        $PAGE->context,
+        'mod_kahoodle',
+        '',
+        0,
+        ['kahoodleid' => $PAGE->activityrecord->id]
     );
 
     echo $report->output();

@@ -49,10 +49,23 @@
                 "participantsurl": "/mod/kahoodle/results.php?roundid=1&view=participants",
                 "statisticsurl": "/mod/kahoodle/results.php?roundid=1&view=statistics"
             }
-        ]
+        ],
+        "showallroundsbuttons": true,
+        "allparticipantsurl": "/mod/kahoodle/results.php?id=1&view=allparticipants",
+        "allstatisticsurl": "/mod/kahoodle/results.php?id=1&view=allstatistics"
     }
 }}
 <div class="mod-kahoodle-results">
+    {{#showallroundsbuttons}}
+    <div class="mb-3">
+        <a href="{{allparticipantsurl}}" class="btn btn-outline-primary me-2">
+            {{#str}}allroundsparticipants, mod_kahoodle{{/str}}
+        </a>
+        <a href="{{allstatisticsurl}}" class="btn btn-outline-secondary">
+            {{#str}}allroundsstatistics, mod_kahoodle{{/str}}
+        </a>
+    </div>
+    {{/showallroundsbuttons}}
     <div class="row">
         {{#rounds}}
         <div class="col-12 col-md-6 col-lg-4 mb-3">
