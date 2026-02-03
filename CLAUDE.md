@@ -58,6 +58,7 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   ├── local/
 │   │   ├── entities/         # Domain entity classes
 │   │   │   ├── participant.php # Participant entity
+│   │   │   ├── rank.php      # Participant ranking entity (score, rank, ties)
 │   │   │   ├── round.php     # Round entity with caching for kahoodle/cm/context
 │   │   │   ├── round_question.php # Round question entity (joins 3 tables)
 │   │   │   └── round_stage.php # Round stage entity (current stage in a round)
@@ -77,9 +78,12 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   └── roundquestion.php # Round question display output
 │   └── reportbuilder/local/  # Report builder components
 │       ├── entities/
+│       │   ├── participant.php # Participant entity for reports
 │       │   └── question.php  # Question entity for reports
 │       └── systemreports/
-│           └── questions.php # Questions list system report
+│           ├── participants.php # Round participants system report
+│           ├── questions.php # Questions list system report
+│           └── statistics.php # Question statistics system report
 ├── db/
 │   ├── access.php            # Capability definitions
 │   ├── install.xml           # Database schema
@@ -233,6 +237,10 @@ Represents a game round with lazy-loaded cached access to related data.
 - `get_name_inplace_editable(): inplace_editable` - Get inplace editable control for round name
 - `update_name(string $name): inplace_editable` - Update round name and return inplace editable
 - `duplicate(): self` - Create a new round by duplicating question configuration from this round
+- `get_all_participants(): array` - Get all participants in the round (cached)
+- `get_participants_count(): int` - Get count of participants (uses cache or COUNT query)
+- `get_rankings(): array` - Get rankings for all participants (keyed by participant ID)
+- `update_final_ranks(): void` - Update finalrank and totalscore for all participants (called on revision stage)
 
 #### round_question Entity (`round_question.php`)
 
@@ -249,6 +257,29 @@ Represents a question in a round, joining data from 3 tables (kahoodle_round_que
 - `get_round(): round` - Get cached round entity
 - `get_data(): stdClass` - Get combined data from all joined tables
 - `get_question_type(): base` - Get the question type instance for this question
+
+#### rank Entity (`rank.php`)
+
+Represents a participant's score and rank in a round, including tie information.
+
+**Properties:**
+- `participant`: The participant entity
+- `score`: Total score after this question
+- `minrank`: Minimum rank (best possible in case of ties)
+- `maxrank`: Maximum rank (worst possible in case of ties)
+- `tiewith`: Array of participants tied with this participant
+- `prevscore`: Score of the participant with the previous rank
+- `withprevscore`: Array of participants with the previous score
+- `prevquestionrank`: Rank after the previous question (for showing rank movement)
+
+**Factory Methods:**
+- `create_empty(participant $participant): rank` - Create empty rank for no data
+
+**Methods:**
+- `get_data_for_revision(): array` - Get template data for revision screen (rank image, header, status)
+- `get_data_for_question_results(): array` - Get template data for question results
+- `get_rank_movement_status(): int` - Get rank movement (positive=down, negative=up, 0=no change)
+- `get_rank_as_range(): string` - Get rank as "4" or "2-5" for ties
 
 #### round_stage Entity (`round_stage.php`)
 
@@ -373,6 +404,66 @@ Multiple choice questions with 2-8 answer options.
 **Validation:**
 - Requires 2-8 options
 - Exactly one option must be marked as correct
+
+### Report Builder Components
+
+The plugin uses Moodle Report Builder for displaying tabular data with filtering, sorting, and export capabilities.
+
+#### Entities (`reportbuilder/local/entities/`)
+
+**question Entity (`question.php`)**
+Provides columns and filters for displaying round questions.
+
+**Columns:**
+- `sortorder`: Question order in round
+- `questiontype`: Type of question (multichoice, etc.)
+- `questiontext`: Question text content
+- `questionimages`: Question images (for plain text format)
+- `timing`: Preview/question/results durations
+- `score`: Min-max points range
+- `version`: Question version number
+- `totalresponses`: Count of responses (statistics)
+- `correctresponses`: Count of correct responses (statistics)
+- `averagescore`: Average score across all participants (statistics)
+
+**Filters:** `questiontype`, `questiontext`
+
+**participant Entity (`participant.php`)**
+Provides columns and filters for displaying round participants.
+
+**Columns:**
+- `participant`: Avatar + display name
+- `user`: Profile picture + full name with link to profile (handles deleted users)
+- `rank`: Final rank in round
+- `score`: Total score
+- `correctanswers`: Count of correct answers (subquery)
+- `questionsanswered`: Count of questions answered (subquery)
+
+**Filters:** `displayname`, `user`, `rank`, `score`
+
+**Note:** Uses `\core_user\fields::for_userpic()->with_name()` for dynamic user field retrieval.
+
+#### System Reports (`reportbuilder/local/systemreports/`)
+
+**questions Report (`questions.php`)**
+- Lists questions for a round on the question management page
+- Columns: sortorder (with drag handle), questiontype, questionimages, questiontext, timing, score
+- Actions: preview, edit, delete (delete only for editable rounds)
+- Used in: `questions.php`
+
+**participants Report (`participants.php`)**
+- Lists participants for a completed round
+- Columns: participant, user, rank, score, correctanswers, questionsanswered
+- Sorted by score (descending)
+- Downloadable
+- Used in: `results.php?view=participants&roundid=X`
+
+**statistics Report (`statistics.php`)**
+- Shows question statistics for a completed round
+- Columns: sortorder, questiontype, questionimages, questiontext, totalresponses, correctresponses, averagescore
+- Average score is calculated as: sum of points / total participants (non-responders count as 0)
+- Downloadable
+- Used in: `results.php?view=statistics&roundid=X`
 
 ### Web Services
 
@@ -829,6 +920,12 @@ vendor/bin/phpunit --filter questions_test
   - Inplace editable round names (for users with facilitate capability)
   - Edit questions button for each round (requires manage_questions capability)
   - View participants and View statistics buttons for completed rounds
+  - Participants view: system report showing all participants with rank, score, and answer counts
+  - Statistics view: system report showing question statistics with response counts and average scores
+- Report Builder integration
+  - Question entity with columns for question management and statistics
+  - Participant entity with columns for participant data and answer statistics
+  - Three system reports: questions (management), participants (results), statistics (results)
 - Participant workflow
   - Join action creates participant record
   - Real-time channels for game and participant communication

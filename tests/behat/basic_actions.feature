@@ -109,8 +109,8 @@ Feature: Basic operations with module Kahoodle
       | Allow repeat participation          | 0       |
       | lobbyduration[number]               | 5       |
       | lobbyduration[timeunit]             | minutes |
-      | Question preview duration, seconds  | 10      |
-      | Question duration, seconds          | 30      |
+      | Question preview duration, seconds  | 5       |
+      | Question duration, seconds          | 15      |
       | Question results duration, seconds  | 10      |
       | Maximum points                      | 1000    |
       | Minimum points                      | 500     |
