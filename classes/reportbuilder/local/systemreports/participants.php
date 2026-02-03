@@ -18,9 +18,13 @@ declare(strict_types=1);
 
 namespace mod_kahoodle\reportbuilder\local\systemreports;
 
+use core_reportbuilder\local\report\action;
 use core_reportbuilder\system_report;
+use lang_string;
 use mod_kahoodle\local\entities\round;
 use mod_kahoodle\reportbuilder\local\entities\participant;
+use moodle_url;
+use pix_icon;
 
 /**
  * Round participants list system report
@@ -69,13 +73,16 @@ class participants extends system_report {
         $this->add_base_condition_simple("{$participantalias}.roundid", $this->get_round()->get_id());
 
         // Add base fields for potential actions.
-        $this->add_base_fields("{$participantalias}.id, {$participantalias}.userid");
+        $this->add_base_fields("{$participantalias}.id AS participantid, {$participantalias}.userid");
 
         // Add columns.
         $this->add_columns();
 
         // Add filters.
         $this->add_filters();
+
+        // Add actions.
+        $this->add_actions();
 
         // Set initial sort order by rank (ascending), then by score (descending).
         $this->set_initial_sort_column('participant:score', SORT_DESC);
@@ -122,5 +129,21 @@ class participants extends system_report {
             'participant:rank',
             'participant:score',
         ]);
+    }
+
+    /**
+     * Adds the actions we want to display in the report
+     *
+     * @return void
+     */
+    protected function add_actions(): void {
+        // View answers action.
+        $this->add_action(new action(
+            new moodle_url('/mod/kahoodle/results.php', ['view' => 'details', 'participantid' => ':participantid']),
+            new pix_icon('i/preview', ''),
+            [],
+            false,
+            new lang_string('viewanswers', 'mod_kahoodle')
+        ));
     }
 }

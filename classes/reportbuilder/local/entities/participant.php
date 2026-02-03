@@ -132,11 +132,8 @@ class participant extends base {
                     $user = self::extract_user_record($row);
                     $avatar = $OUTPUT->user_picture($user, ['size' => 35, 'link' => false, 'class' => 'mr-2']);
                 } else {
-                    // User deleted - show initials avatar.
-                    $avatar = html_writer::span(
-                        self::get_initials($displayname),
-                        'userinitials size-35 mr-2'
-                    );
+                    // User deleted.
+                    $avatar = '';
                 }
 
                 return $avatar . $displayname;

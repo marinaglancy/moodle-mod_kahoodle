@@ -79,8 +79,10 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   └── reportbuilder/local/  # Report builder components
 │       ├── entities/
 │       │   ├── participant.php # Participant entity for reports
-│       │   └── question.php  # Question entity for reports
+│       │   ├── question.php  # Question entity for reports
+│       │   └── response.php  # Response entity for participant answers
 │       └── systemreports/
+│           ├── participant_answers.php # Participant answers system report
 │           ├── participants.php # Round participants system report
 │           ├── questions.php # Questions list system report
 │           └── statistics.php # Question statistics system report
@@ -443,6 +445,17 @@ Provides columns and filters for displaying round participants.
 
 **Note:** Uses `\core_user\fields::for_userpic()->with_name()` for dynamic user field retrieval.
 
+**response Entity (`response.php`)**
+Provides columns and filters for displaying participant response data.
+Question-related columns should come from the question entity.
+
+**Columns:**
+- `correct`: Answer correctness (Yes/No/No answer)
+- `score`: Points earned for this question
+- `responsetime`: Time taken to answer (in seconds)
+
+**Filters:** `correct` (select with Yes/No/No answer), `score`
+
 #### System Reports (`reportbuilder/local/systemreports/`)
 
 **questions Report (`questions.php`)**
@@ -454,9 +467,21 @@ Provides columns and filters for displaying round participants.
 **participants Report (`participants.php`)**
 - Lists participants for a completed round
 - Columns: participant, user, rank, score, correctanswers, questionsanswered
+- Actions: View answers (links to participant details)
 - Sorted by score (descending)
 - Downloadable
 - Used in: `results.php?view=participants&roundid=X`
+
+**participant_answers Report (`participant_answers.php`)**
+- Shows all answers for a specific participant
+- Uses both question entity (for question columns) and response entity (for response columns)
+- Columns: question:sortorder, question:questiontype, question:questionimages, question:questiontext, response:correct, response:score, response:responsetime
+- Filters: question:questiontext, response:correct, response:score
+- Shows all questions (even unanswered ones via LEFT JOIN to responses)
+- Sorted by question order (ascending)
+- Downloadable
+- Used in: `results.php?participantid=X&view=details`
+- Header shows: back link to participants, participant avatar/name, user picture/name, total score
 
 **statistics Report (`statistics.php`)**
 - Shows question statistics for a completed round

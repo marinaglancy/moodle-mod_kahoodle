@@ -89,6 +89,10 @@ class participant {
                     $participant->{$field} = $value;
                 }
             }
+            if (empty($user->id)) {
+                // User deleted, remove userid from participant record too.
+                $participant->userid = null;
+            }
             $result[$participant->id] = new self($round, $participant, $user);
         }
         return $result;
@@ -104,12 +108,21 @@ class participant {
     }
 
     /**
-     * Get user id
+     * Get user id. If user is deleted, returns null.
      *
-     * @return int
+     * @return int|null
      */
-    public function get_user_id(): int {
-        return (int)$this->userdata->id;
+    public function get_user_id(): ?int {
+        return empty($this->userdata->id) ? null : (int)$this->userdata->id;
+    }
+
+    /**
+     * Get user record. If user is deleted, returns empty user record.
+     *
+     * @return stdClass
+     */
+    public function get_user_record(): stdClass {
+        return $this->userdata;
     }
 
     /**
