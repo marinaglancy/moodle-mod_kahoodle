@@ -73,22 +73,22 @@ class participant_answers extends system_report {
         $questionentity = new question();
         $roundquestionalias = $questionentity->get_table_alias('kahoodle_round_questions');
 
-        // Add response entity for response-specific columns.
-        $responseentity = new response();
-        $responsealias = $responseentity->get_table_alias('kahoodle_responses');
-
         // Use round_questions as main table to show all questions (even unanswered ones).
         $this->set_main_table('kahoodle_round_questions', $roundquestionalias);
         $this->add_entity($questionentity);
-        $this->add_entity($responseentity);
+
+        // Add response entity for response-specific columns.
+        // Set the same alias for round_questions as the main table.
+        $responseentity = (new response())
+            ->set_table_alias('kahoodle_round_questions', $roundquestionalias);
+        $responsealias = $responseentity->get_table_alias('kahoodle_responses');
 
         // LEFT JOIN to responses for this specific participant.
         $participantid = $this->get_parameter('participantid', 0, PARAM_INT);
-        $this->add_join("
-            LEFT JOIN {kahoodle_responses} {$responsealias}
+        $this->add_entity($responseentity
+            ->add_join("LEFT JOIN {kahoodle_responses} {$responsealias}
                 ON {$responsealias}.roundquestionid = {$roundquestionalias}.id
-                AND {$responsealias}.participantid = {$participantid}
-        ");
+                AND {$responsealias}.participantid = {$participantid}"));
 
         // Filter by roundid from the participant.
         $this->add_base_condition_simple("{$roundquestionalias}.roundid", $this->get_round()->get_id());

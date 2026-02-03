@@ -44,6 +44,7 @@ class response extends base {
     protected function get_default_tables(): array {
         return [
             'kahoodle_responses',
+            'kahoodle_round_questions',
         ];
     }
 
