@@ -103,11 +103,24 @@ class round_question {
     /**
      * Create an instance from a record where some fields may be missing, used in report formatters
      *
-     * @param stdClass $record
+     * The record may contain fields from multiple tables (see get_fields_sql()):
+     * - From kahoodle_round_questions: id, roundid, questionversionid, sortorder, timecreated, timemodified,
+     *   questionpreviewduration, questionduration, questionresultsduration, maxpoints, minpoints,
+     *   totalresponses, answerdistribution
+     * - From kahoodle_question_versions: questionid, version, questiontext, questionconfig
+     * - From kahoodle_questions: kahoodleid, questiontype
+     * - From kahoodle: questionformat
+     *
+     * @param stdClass $record Record with some or all of the fields listed above
+     * @param round|null $round Optional round entity
      * @return round_question
      */
-    public static function create_from_partial_record(stdClass $record): self {
-        return new self($record);
+    public static function create_from_partial_record(stdClass $record, ?round $round = null): self {
+        $q = new self($record);
+        if ($round !== null) {
+            $q->round = $round;
+        }
+        return $q;
     }
 
     /**

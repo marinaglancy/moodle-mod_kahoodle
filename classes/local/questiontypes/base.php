@@ -202,4 +202,13 @@ abstract class base {
      * @return bool|null True if correct, false if incorrect, null if invalid
      */
     abstract public function validate_answer(round_question $roundquestion, string $response): ?bool;
+
+    /**
+     * Format response for display in reports
+     *
+     * @param string|null $response
+     * @param round_question $roundquestion
+     * @return string|null
+     */
+    abstract public function format_response(?string $response, round_question $roundquestion): ?string;
 }

@@ -23,7 +23,9 @@ use core_reportbuilder\local\filters\number;
 use core_reportbuilder\local\filters\select;
 use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
+use html_writer;
 use lang_string;
+use mod_kahoodle\local\entities\round_question;
 
 /**
  * Response entity for report builder - displays participant response data
@@ -45,6 +47,8 @@ class response extends base {
         return [
             'kahoodle_responses',
             'kahoodle_round_questions',
+            'kahoodle_question_versions',
+            'kahoodle_questions',
         ];
     }
 
@@ -77,12 +81,40 @@ class response extends base {
     }
 
     /**
+     * Return syntax for joining on the question versions table
+     *
+     * @return string
+     */
+    public function get_question_versions_join(): string {
+        $roundquestionalias = $this->get_table_alias('kahoodle_round_questions');
+        $versionalias = $this->get_table_alias('kahoodle_question_versions');
+
+        return "JOIN {kahoodle_question_versions} {$versionalias}
+            ON {$versionalias}.id = {$roundquestionalias}.questionversionid";
+    }
+
+    /**
+     * Return syntax for joining on the questions table (requires version join)
+     *
+     * @return string
+     */
+    public function get_questions_join(): string {
+        $versionalias = $this->get_table_alias('kahoodle_question_versions');
+        $questionalias = $this->get_table_alias('kahoodle_questions');
+
+        return "JOIN {kahoodle_questions} {$questionalias}
+            ON {$questionalias}.id = {$versionalias}.questionid";
+    }
+
+    /**
      * Returns list of all available columns
      *
      * @return column[]
      */
     protected function get_all_columns(): array {
         $responsealias = $this->get_table_alias('kahoodle_responses');
+        $versionalias = $this->get_table_alias('kahoodle_question_versions');
+        $questionalias = $this->get_table_alias('kahoodle_questions');
 
         $columns = [];
 
@@ -98,10 +130,14 @@ class response extends base {
             ->add_field("{$responsealias}.id", 'responseid')
             ->set_is_sortable(true)
             ->add_callback(static function (?int $value, \stdClass $row): string {
+                // TODO in Moodle 5.0+ we can use $OUTPUT->notice_badge() instead.
                 if ($row->responseid === null) {
-                    return get_string('noanswer', 'mod_kahoodle');
+                    return html_writer::span(get_string('noanswer', 'mod_kahoodle'), 'badge badge-warning');
                 }
-                return $value ? get_string('yes') : get_string('no');
+                if ($value) {
+                    return html_writer::span(get_string('yes'), 'badge badge-success');
+                }
+                return html_writer::span(get_string('no'), 'badge badge-danger');
             });
 
         // Score column.
@@ -127,17 +163,41 @@ class response extends base {
             ->add_joins($this->get_joins())
             ->set_type(column::TYPE_FLOAT)
             ->add_field("{$responsealias}.responsetime")
-            ->add_field("{$responsealias}.id", 'responseid2')
+            ->add_field("{$responsealias}.id", 'responseid')
             ->set_is_sortable(true)
             ->add_callback(static function (?float $value, \stdClass $row): string {
-                if ($row->responseid2 === null) {
+                if ($row->responseid === null) {
                     return '-';
                 }
                 if ($value === null) {
                     return '-';
                 }
-                // Format as seconds with 1 decimal place.
-                return number_format($value, 1) . 's';
+                return get_string('numseconds', 'moodle', number_format($value, 1));
+            });
+
+        // Response column (formatted response text).
+        $columns[] = (new column(
+            'response',
+            new lang_string('response', 'mod_kahoodle'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_join($this->get_question_versions_join())
+            ->add_join($this->get_questions_join())
+            ->set_type(column::TYPE_TEXT)
+            ->add_field("{$responsealias}.response")
+            ->add_field("{$responsealias}.id", 'responseid')
+            ->add_field("{$versionalias}.id", 'questionversionid')
+            ->add_field("{$versionalias}.questionconfig")
+            ->add_field("{$questionalias}.questiontype")
+            ->set_is_sortable(false)
+            ->add_callback(static function (?string $value, \stdClass $row): string {
+                if ($row->responseid === null) {
+                    return '';
+                }
+                $roundquestion = round_question::create_from_partial_record($row);
+                $formatted = $roundquestion->get_question_type()->format_response($value, $roundquestion);
+                return $formatted ?? '';
             });
 
         return $columns;

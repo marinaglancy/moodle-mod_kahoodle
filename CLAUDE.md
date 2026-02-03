@@ -450,9 +450,10 @@ Provides columns and filters for displaying participant response data.
 Question-related columns should come from the question entity.
 
 **Columns:**
-- `correct`: Answer correctness (Yes/No/No answer)
+- `correct`: Answer correctness (Yes/No/No answer) displayed as colored badges
 - `score`: Points earned for this question
 - `responsetime`: Time taken to answer (in seconds)
+- `response`: Formatted response text (uses question type's `format_response()` method)
 
 **Filters:** `correct` (select with Yes/No/No answer), `score`
 
@@ -475,7 +476,7 @@ Question-related columns should come from the question entity.
 **participant_answers Report (`participant_answers.php`)**
 - Shows all answers for a specific participant
 - Uses both question entity (for question columns) and response entity (for response columns)
-- Columns: question:sortorder, question:questiontype, question:questionimages, question:questiontext, response:correct, response:score, response:responsetime
+- Columns: question:sortorder, question:questiontype, question:questionimages, question:questiontext, response:response, response:correct, response:score, response:responsetime
 - Filters: question:questiontext, response:correct, response:score
 - Shows all questions (even unanswered ones via LEFT JOIN to responses)
 - Sorted by question order (ascending)

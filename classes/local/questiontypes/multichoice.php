@@ -294,4 +294,27 @@ class multichoice extends base {
         // Return whether the selected option is correct.
         return $options[$optionnumber - 1]['iscorrect'];
     }
+
+    /**
+     * Format response for display in reports
+     *
+     * @param string|null $response
+     * @param round_question $roundquestion
+     * @return string|null
+     */
+    public function format_response(?string $response, round_question $roundquestion): ?string {
+        if (!$response) {
+            return null;
+        }
+
+        $optionnumber = (int)$response;
+        $options = $this->get_answers_options($roundquestion->get_data()->questionconfig);
+
+        // Invalid option number - return null to indicate no answer.
+        if ($optionnumber < 1 || $optionnumber > count($options)) {
+            return null;
+        }
+
+        return format_string($options[$optionnumber - 1]['text']);
+    }
 }

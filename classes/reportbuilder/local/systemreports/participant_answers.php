@@ -130,6 +130,7 @@ class participant_answers extends system_report {
             'question:questiontype',
             'question:questionimages',
             'question:questiontext',
+            'response:response',
             'response:correct',
             'response:score',
             'response:responsetime',
