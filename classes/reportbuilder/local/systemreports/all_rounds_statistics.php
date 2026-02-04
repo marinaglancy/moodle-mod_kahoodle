@@ -18,18 +18,15 @@ declare(strict_types=1);
 
 namespace mod_kahoodle\reportbuilder\local\systemreports;
 
-use core_reportbuilder\local\helpers\database;
-use core_reportbuilder\local\report\column;
 use core_reportbuilder\system_report;
-use lang_string;
-use mod_kahoodle\constants;
-use mod_kahoodle\questions;
+use mod_kahoodle\reportbuilder\local\entities\question;
+use mod_kahoodle\reportbuilder\local\entities\question_version;
+use mod_kahoodle\reportbuilder\local\entities\round_question;
 
 /**
  * All rounds question statistics system report
  *
- * Shows aggregated question statistics from all completed rounds for a kahoodle activity.
- * Each question appears once with totals across all rounds.
+ * Shows questions from a kahoodle activity with their latest version.
  *
  * @package    mod_kahoodle
  * @copyright  Marina Glancy
@@ -38,9 +35,6 @@ use mod_kahoodle\questions;
 class all_rounds_statistics extends system_report {
     /** @var int|null Cached kahoodle ID */
     protected ?int $kahoodleid = null;
-
-    /** @var int|null Total participants across all completed rounds */
-    protected ?int $totalparticipants = null;
 
     /**
      * Get the kahoodle ID for this report
@@ -55,56 +49,60 @@ class all_rounds_statistics extends system_report {
     }
 
     /**
-     * Get total participants across all completed rounds
-     *
-     * @return int
-     */
-    protected function get_total_participants(): int {
-        global $DB;
-
-        if ($this->totalparticipants === null) {
-            $sql = "SELECT COUNT(*)
-                      FROM {kahoodle_participants} p
-                      JOIN {kahoodle_rounds} r ON r.id = p.roundid
-                     WHERE r.kahoodleid = :kahoodleid
-                       AND r.currentstage IN (:stagerevision, :stagearchived)";
-            $this->totalparticipants = (int)$DB->count_records_sql($sql, [
-                'kahoodleid' => $this->get_kahoodleid(),
-                'stagerevision' => constants::STAGE_REVISION,
-                'stagearchived' => constants::STAGE_ARCHIVED,
-            ]);
-        }
-        return $this->totalparticipants;
-    }
-
-    /**
      * Initialise report, we need to set the main table, load our entities and set columns/filters
      */
     protected function initialise(): void {
-        // Use kahoodle_questions as the main table since we want one row per question.
-        $this->set_main_table('kahoodle_questions', 'kq');
+        // Set up question entity and get kahoodle alias.
+        $questionentity = new question();
+        $kahoodlealias = $questionentity->get_table_alias('kahoodle');
 
-        // Filter to only questions that have been used in completed rounds for this kahoodle.
-        $paramkahoodleid = database::generate_param_name();
-        $paramstagerevision = database::generate_param_name();
-        $paramstagearchived = database::generate_param_name();
-        $this->add_base_condition_sql(
-            "kq.kahoodleid = :{$paramkahoodleid} AND EXISTS (
-                SELECT 1 FROM {kahoodle_round_questions} krq
-                JOIN {kahoodle_question_versions} kqv ON kqv.id = krq.questionversionid
-                JOIN {kahoodle_rounds} kr ON kr.id = krq.roundid
-                WHERE kqv.questionid = kq.id
-                  AND kr.currentstage IN (:{$paramstagerevision}, :{$paramstagearchived})
-            )",
-            [
-                $paramkahoodleid => $this->get_kahoodleid(),
-                $paramstagerevision => constants::STAGE_REVISION,
-                $paramstagearchived => constants::STAGE_ARCHIVED,
-            ]
+        // Set up kahoodle as main table.
+        $this->set_main_table('kahoodle', $kahoodlealias);
+
+        // Add question entity with join.
+        $questionentity->add_join($questionentity->get_questions_join());
+        $this->add_entity($questionentity);
+
+        // Set up last question version entity with join for islast=1 only.
+        $lastversionentity = new question_version();
+        $questionalias = $questionentity->get_table_alias('kahoodle_questions');
+        $versionalias = $lastversionentity->get_table_alias('kahoodle_question_versions');
+        $lastversionentity->set_table_aliases([
+            'kahoodle' => $kahoodlealias,
+            'kahoodle_questions' => $questionalias,
+        ]);
+        $lastversionentity->add_join($questionentity->get_questions_join());
+        // Custom join that only includes the latest version (islast=1).
+        $lastversionjoin = "JOIN {kahoodle_question_versions} {$versionalias}
+                ON {$versionalias}.questionid = {$questionalias}.id
+                AND {$versionalias}.islast = 1";
+        $lastversionentity->add_join($lastversionjoin);
+        $this->add_entity($lastversionentity);
+
+        // Get the last round for sortorder lookup.
+        $lastround = \mod_kahoodle\questions::get_last_round($this->get_kahoodleid());
+
+        // Set up last round question entity with LEFT JOIN for the last round only.
+        $lastroundquestionentity = new round_question();
+        $roundquestionalias = $lastroundquestionentity->get_table_alias('kahoodle_round_questions');
+        $lastroundquestionentity->set_table_aliases([
+            'kahoodle' => $kahoodlealias,
+            'kahoodle_questions' => $questionalias,
+            'kahoodle_question_versions' => $versionalias,
+        ]);
+        $lastroundquestionentity->add_join($questionentity->get_questions_join());
+        $lastroundquestionentity->add_join($lastversionjoin);
+        // LEFT JOIN to get sortorder from the last round (if question is in that round).
+        $lastroundid = $lastround->get_id();
+        $lastroundquestionentity->add_join(
+            "LEFT JOIN {kahoodle_round_questions} {$roundquestionalias}
+                ON {$roundquestionalias}.questionversionid = {$versionalias}.id
+                AND {$roundquestionalias}.roundid = {$lastroundid}"
         );
+        $this->add_entity($lastroundquestionentity);
 
-        // Add base fields.
-        $this->add_base_fields("kq.id, kq.questiontype");
+        // Filter by kahoodleid.
+        $this->add_base_condition_simple("{$kahoodlealias}.id", $this->get_kahoodleid());
 
         // Add columns.
         $this->add_columns();
@@ -113,7 +111,7 @@ class all_rounds_statistics extends system_report {
         $this->add_filters();
 
         // Set initial sort order.
-        $this->set_initial_sort_column('question:questiontext', SORT_ASC);
+        $this->set_initial_sort_column('round_question:sortorder', SORT_ASC);
 
         // Set downloadable.
         $this->set_downloadable(true, get_string('allroundsstatistics', 'mod_kahoodle'));
@@ -134,103 +132,12 @@ class all_rounds_statistics extends system_report {
      * @return void
      */
     protected function add_columns(): void {
-        $totalparticipants = $this->get_total_participants();
-
-        // Question type column.
-        $this->add_column((new column(
-            'questiontype',
-            new lang_string('questiontype', 'mod_kahoodle'),
-            'question'
-        ))
-            ->set_type(column::TYPE_TEXT)
-            ->add_field("kq.questiontype")
-            ->set_is_sortable(true)
-            ->add_callback(static function (?string $value): string {
-                if ($value === null) {
-                    return '';
-                }
-                $type = questions::get_question_type_instance($value);
-                return $type ? $type->get_display_name() : s($value);
-            }));
-
-        // Question text column - get the latest version's text.
-        $this->add_column((new column(
-            'questiontext',
-            new lang_string('questiontext', 'mod_kahoodle'),
-            'question'
-        ))
-            ->set_type(column::TYPE_LONGTEXT)
-            ->add_field("(SELECT kqv.questiontext FROM {kahoodle_question_versions} kqv
-                WHERE kqv.questionid = kq.id ORDER BY kqv.version DESC LIMIT 1)", 'questiontext')
-            ->set_is_sortable(false));
-
-        // Total responses column - sum across all completed rounds.
-        $stagerevision = constants::STAGE_REVISION;
-        $stagearchived = constants::STAGE_ARCHIVED;
-        $this->add_column((new column(
-            'totalresponses',
-            new lang_string('totalresponses', 'mod_kahoodle'),
-            'question'
-        ))
-            ->set_type(column::TYPE_INTEGER)
-            ->add_field("(SELECT COUNT(*)
-                FROM {kahoodle_responses} r
-                JOIN {kahoodle_round_questions} krq ON krq.id = r.roundquestionid
-                JOIN {kahoodle_question_versions} kqv ON kqv.id = krq.questionversionid
-                JOIN {kahoodle_rounds} kr ON kr.id = krq.roundid
-                WHERE kqv.questionid = kq.id
-                  AND kr.currentstage IN ('{$stagerevision}', '{$stagearchived}')
-            )", 'totalresponses')
-            ->set_is_sortable(true)
-            ->add_callback(static function (?int $value): string {
-                return $value !== null ? (string)$value : '0';
-            }));
-
-        // Correct responses column - sum across all completed rounds.
-        $this->add_column((new column(
-            'correctresponses',
-            new lang_string('correctresponses', 'mod_kahoodle'),
-            'question'
-        ))
-            ->set_type(column::TYPE_INTEGER)
-            ->add_field("(SELECT COUNT(*)
-                FROM {kahoodle_responses} r
-                JOIN {kahoodle_round_questions} krq ON krq.id = r.roundquestionid
-                JOIN {kahoodle_question_versions} kqv ON kqv.id = krq.questionversionid
-                JOIN {kahoodle_rounds} kr ON kr.id = krq.roundid
-                WHERE kqv.questionid = kq.id
-                  AND kr.currentstage IN ('{$stagerevision}', '{$stagearchived}')
-                  AND r.iscorrect = 1
-            )", 'correctresponses')
-            ->set_is_sortable(true)
-            ->add_callback(static function (?int $value): string {
-                return $value !== null ? (string)$value : '0';
-            }));
-
-        // Average score column - total points / total participants.
-        $this->add_column((new column(
-            'averagescore',
-            new lang_string('results_averagescore', 'mod_kahoodle'),
-            'question'
-        ))
-            ->set_type(column::TYPE_FLOAT)
-            ->add_field("(SELECT COALESCE(SUM(r.points), 0)
-                FROM {kahoodle_responses} r
-                JOIN {kahoodle_round_questions} krq ON krq.id = r.roundquestionid
-                JOIN {kahoodle_question_versions} kqv ON kqv.id = krq.questionversionid
-                JOIN {kahoodle_rounds} kr ON kr.id = krq.roundid
-                WHERE kqv.questionid = kq.id
-                  AND kr.currentstage IN ('{$stagerevision}', '{$stagearchived}')
-            )", 'totalpoints')
-            ->set_is_sortable(true)
-            ->add_callback(static function ($value, \stdClass $row) use ($totalparticipants): string {
-                $totalpoints = (int)($row->totalpoints ?? 0);
-                if ($totalparticipants === 0) {
-                    return '-';
-                }
-                $average = $totalpoints / $totalparticipants;
-                return number_format($average, 1);
-            }));
+        $this->add_columns_from_entities([
+            'round_question:sortorder',
+            'question:questiontype',
+            'question_version:questionimages',
+            'question_version:questiontext',
+        ]);
     }
 
     /**
@@ -239,13 +146,9 @@ class all_rounds_statistics extends system_report {
      * @return void
      */
     protected function add_filters(): void {
-        // Question type filter.
-        $this->add_filter(new \core_reportbuilder\local\report\filter(
-            \core_reportbuilder\local\filters\text::class,
-            'questiontype',
-            new lang_string('questiontype', 'mod_kahoodle'),
-            'question',
-            "kq.questiontype"
-        ));
+        $this->add_filters_from_entities([
+            'question:questiontype',
+            'question_version:questiontext',
+        ]);
     }
 }
