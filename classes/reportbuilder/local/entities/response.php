@@ -58,7 +58,7 @@ class response extends base {
      * @return lang_string
      */
     protected function get_default_entity_title(): lang_string {
-        return new lang_string('response', 'mod_kahoodle');
+        return new lang_string('entity_response', 'mod_kahoodle');
     }
 
     /**
@@ -78,32 +78,6 @@ class response extends base {
         }
 
         return $this;
-    }
-
-    /**
-     * Return syntax for joining on the question versions table
-     *
-     * @return string
-     */
-    public function get_question_versions_join(): string {
-        $roundquestionalias = $this->get_table_alias('kahoodle_round_questions');
-        $versionalias = $this->get_table_alias('kahoodle_question_versions');
-
-        return "JOIN {kahoodle_question_versions} {$versionalias}
-            ON {$versionalias}.id = {$roundquestionalias}.questionversionid";
-    }
-
-    /**
-     * Return syntax for joining on the questions table (requires version join)
-     *
-     * @return string
-     */
-    public function get_questions_join(): string {
-        $versionalias = $this->get_table_alias('kahoodle_question_versions');
-        $questionalias = $this->get_table_alias('kahoodle_questions');
-
-        return "JOIN {kahoodle_questions} {$questionalias}
-            ON {$questionalias}.id = {$versionalias}.questionid";
     }
 
     /**
@@ -176,14 +150,13 @@ class response extends base {
             });
 
         // Response column (formatted response text).
+        // Assumes question_versions and questions tables are already joined.
         $columns[] = (new column(
             'response',
             new lang_string('response', 'mod_kahoodle'),
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())
-            ->add_join($this->get_question_versions_join())
-            ->add_join($this->get_questions_join())
             ->set_type(column::TYPE_TEXT)
             ->add_field("{$responsealias}.response")
             ->add_field("{$responsealias}.id", 'responseid')

@@ -22,7 +22,9 @@ use core_reportbuilder\system_report;
 use mod_kahoodle\local\entities\participant;
 use mod_kahoodle\local\entities\round;
 use mod_kahoodle\reportbuilder\local\entities\question;
+use mod_kahoodle\reportbuilder\local\entities\question_version;
 use mod_kahoodle\reportbuilder\local\entities\response;
+use mod_kahoodle\reportbuilder\local\entities\round_question;
 
 /**
  * Participant answers system report - shows all answers for a specific participant
@@ -69,18 +71,47 @@ class participant_answers extends system_report {
      * Initialise report, we need to set the main table, load our entities and set columns/filters
      */
     protected function initialise(): void {
-        // Add question entity for question-related columns.
+        // Set up question entity and get kahoodle alias.
         $questionentity = new question();
-        $roundquestionalias = $questionentity->get_table_alias('kahoodle_round_questions');
+        $kahoodlealias = $questionentity->get_table_alias('kahoodle');
 
-        // Use round_questions as main table to show all questions (even unanswered ones).
-        $this->set_main_table('kahoodle_round_questions', $roundquestionalias);
+        // Set up kahoodle as main table.
+        $this->set_main_table('kahoodle', $kahoodlealias);
+
+        // Add question entity with join.
+        $questionentity->add_join($questionentity->get_questions_join());
         $this->add_entity($questionentity);
 
+        // Set up question_version entity and join.
+        $questionversionentity = new question_version();
+        $questionversionentity->set_table_aliases([
+            'kahoodle' => $kahoodlealias,
+            'kahoodle_questions' => $questionentity->get_table_alias('kahoodle_questions'),
+        ]);
+        $questionversionentity->add_join($questionentity->get_questions_join());
+        $questionversionentity->add_join($questionversionentity->get_question_versions_join());
+        $this->add_entity($questionversionentity);
+
+        // Set up round_question entity and join.
+        $roundquestionentity = new round_question();
+        $roundquestionentity->set_table_aliases([
+            'kahoodle' => $kahoodlealias,
+            'kahoodle_questions' => $questionentity->get_table_alias('kahoodle_questions'),
+            'kahoodle_question_versions' => $questionversionentity->get_table_alias('kahoodle_question_versions'),
+        ]);
+        $roundquestionentity->add_join($questionentity->get_questions_join());
+        $roundquestionentity->add_join($questionversionentity->get_question_versions_join());
+        $roundquestionentity->add_join($roundquestionentity->get_round_questions_join());
+        $this->add_entity($roundquestionentity);
+
         // Add response entity for response-specific columns.
-        // Set the same alias for round_questions as the main table.
-        $responseentity = (new response())
-            ->set_table_alias('kahoodle_round_questions', $roundquestionalias);
+        $roundquestionalias = $roundquestionentity->get_table_alias('kahoodle_round_questions');
+        $responseentity = new response();
+        $responseentity->set_table_aliases([
+            'kahoodle_round_questions' => $roundquestionalias,
+            'kahoodle_question_versions' => $questionversionentity->get_table_alias('kahoodle_question_versions'),
+            'kahoodle_questions' => $questionentity->get_table_alias('kahoodle_questions'),
+        ]);
         $responsealias = $responseentity->get_table_alias('kahoodle_responses');
 
         // LEFT JOIN to responses for this specific participant.
@@ -90,7 +121,8 @@ class participant_answers extends system_report {
                 ON {$responsealias}.roundquestionid = {$roundquestionalias}.id
                 AND {$responsealias}.participantid = {$participantid}"));
 
-        // Filter by roundid from the participant.
+        // Filter by kahoodleid and roundid.
+        $this->add_base_condition_simple("{$kahoodlealias}.id", $this->get_round()->get_kahoodle()->id);
         $this->add_base_condition_simple("{$roundquestionalias}.roundid", $this->get_round()->get_id());
 
         // Add base fields.
@@ -103,7 +135,7 @@ class participant_answers extends system_report {
         $this->add_filters();
 
         // Set initial sort order by question order.
-        $this->set_initial_sort_column('question:sortorder', SORT_ASC);
+        $this->set_initial_sort_column('round_question:sortorder', SORT_ASC);
 
         // Set downloadable.
         $this->set_downloadable(true, get_string('participantanswers', 'mod_kahoodle'));
@@ -126,10 +158,10 @@ class participant_answers extends system_report {
      */
     protected function add_columns(): void {
         $this->add_columns_from_entities([
-            'question:sortorder',
+            'round_question:sortorder',
             'question:questiontype',
-            'question:questionimages',
-            'question:questiontext',
+            'question_version:questionimages',
+            'question_version:questiontext',
             'response:response',
             'response:correct',
             'response:score',
@@ -144,7 +176,7 @@ class participant_answers extends system_report {
      */
     protected function add_filters(): void {
         $this->add_filters_from_entities([
-            'question:questiontext',
+            'question_version:questiontext',
             'response:correct',
             'response:score',
         ]);

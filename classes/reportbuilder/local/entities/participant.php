@@ -53,7 +53,7 @@ class participant extends base {
      * @return lang_string
      */
     protected function get_default_entity_title(): lang_string {
-        return new lang_string('participant', 'mod_kahoodle');
+        return new lang_string('entity_participant', 'mod_kahoodle');
     }
 
     /**

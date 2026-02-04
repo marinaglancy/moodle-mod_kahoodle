@@ -79,9 +79,11 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   └── reportbuilder/local/  # Report builder components
 │       ├── entities/
 │       │   ├── participant.php # Participant entity for reports
-│       │   ├── question.php  # Question entity for reports
+│       │   ├── question.php  # Question entity (kahoodle_questions table)
+│       │   ├── question_version.php # Question version entity (kahoodle_question_versions table)
 │       │   ├── response.php  # Response entity for participant answers
-│       │   └── round.php     # Round entity for reports (name column/filter)
+│       │   ├── round.php     # Round entity for reports (name column/filter)
+│       │   └── round_question.php # Round question entity (kahoodle_round_questions table)
 │       └── systemreports/
 │           ├── all_rounds_participants.php # All rounds participants system report
 │           ├── all_rounds_statistics.php # All rounds statistics system report
@@ -416,22 +418,41 @@ The plugin uses Moodle Report Builder for displaying tabular data with filtering
 
 #### Entities (`reportbuilder/local/entities/`)
 
+The question-related entities follow a consistent join direction: **kahoodle → question → question_version → round_question**. Each entity provides a join method and assumes the previous entities in the chain are already joined.
+
 **question Entity (`question.php`)**
-Provides columns and filters for displaying round questions.
+Provides columns and filters for question base data (kahoodle_questions table).
+
+**Join Method:** `get_questions_join()` - joins kahoodle_questions to kahoodle (assumes kahoodle is already the main table or joined)
+
+**Columns:**
+- `questiontype`: Type of question (multichoice, etc.)
+
+**Filters:** `questiontype`
+
+**question_version Entity (`question_version.php`)**
+Provides columns and filters for question version data (kahoodle_question_versions table).
+
+**Join Method:** `get_question_versions_join()` - joins kahoodle_question_versions to kahoodle_questions (assumes questions is already joined)
+
+**Columns:**
+- `questiontext`: Question text content
+- `questionimages`: Question images (for plain text format)
+- `version`: Question version number
+
+**Filters:** `questiontext`
+
+**round_question Entity (`round_question.php`)**
+Provides columns for round-specific question settings (kahoodle_round_questions table).
+
+**Join Method:** `get_round_questions_join()` - joins kahoodle_round_questions to kahoodle_question_versions (assumes question_versions is already joined)
 
 **Columns:**
 - `sortorder`: Question order in round
-- `questiontype`: Type of question (multichoice, etc.)
-- `questiontext`: Question text content
-- `questionimages`: Question images (for plain text format)
-- `timing`: Preview/question/results durations
-- `score`: Min-max points range
-- `version`: Question version number
-- `totalresponses`: Count of responses (statistics)
-- `correctresponses`: Count of correct responses (statistics)
-- `averagescore`: Average score across all participants (statistics)
+- `timing`: Preview/question/results durations (shows defaults in normal, overrides in bold)
+- `score`: Min-max points range (shows defaults in normal, overrides in bold)
 
-**Filters:** `questiontype`, `questiontext`
+**Note:** Statistics columns (totalresponses, correctresponses, averagescore) are defined directly in the statistics report, not in the entity.
 
 **participant Entity (`participant.php`)**
 Provides columns and filters for displaying round participants.
@@ -450,7 +471,8 @@ Provides columns and filters for displaying round participants.
 
 **response Entity (`response.php`)**
 Provides columns and filters for displaying participant response data.
-Question-related columns should come from the question entity.
+Assumes kahoodle_round_questions, kahoodle_question_versions, and kahoodle_questions tables are already joined.
+Question-related columns should come from the question/question_version entities.
 
 **Columns:**
 - `correct`: Answer correctness (Yes/No/No answer) displayed as colored badges
@@ -982,8 +1004,10 @@ vendor/bin/phpunit --filter questions_test
   - Statistics view: system report showing question statistics with response counts and average scores
   - All rounds participants/statistics buttons (shown when 2+ completed rounds)
 - Report Builder integration
-  - Question entity with columns for question management and statistics
+  - Question entities split into three: question (type), question_version (text, images), round_question (sortorder, timing, score)
+  - Consistent join direction: kahoodle → question → question_version → round_question
   - Participant entity with columns for participant data and answer statistics
+  - Response entity for participant answers (assumes question tables are joined)
   - Round entity with columns for round name (used in all-rounds reports)
   - Six system reports: questions (management), participants (results), statistics (results), all_rounds_participants, all_rounds_statistics, participant_answers
 - Participant workflow
