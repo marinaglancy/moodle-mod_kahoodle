@@ -18,9 +18,12 @@ declare(strict_types=1);
 
 namespace mod_kahoodle\reportbuilder\local\systemreports;
 
+use core_reportbuilder\local\report\column;
 use core_reportbuilder\system_report;
+use lang_string;
 use mod_kahoodle\reportbuilder\local\entities\question;
 use mod_kahoodle\reportbuilder\local\entities\question_version;
+use mod_kahoodle\reportbuilder\local\entities\response;
 use mod_kahoodle\reportbuilder\local\entities\round_question;
 
 /**
@@ -101,6 +104,60 @@ class all_rounds_statistics extends system_report {
         );
         $this->add_entity($lastroundquestionentity);
 
+        // Set up entity for ALL question versions (LEFT JOIN, no islast filter).
+        $allversionsentity = new question_version();
+        $allversionsentity->set_entity_name('all_versions');
+        $allversionsalias = 'kqv_all';
+        $allversionsentity->set_table_alias('kahoodle_question_versions', $allversionsalias);
+        $allversionsentity->set_table_aliases([
+            'kahoodle' => $kahoodlealias,
+            'kahoodle_questions' => $questionalias,
+        ]);
+        $allversionsentity->add_join($questionentity->get_questions_join());
+        // LEFT JOIN to get all versions (not filtered by islast).
+        $allversionsjoin = "LEFT JOIN {kahoodle_question_versions} {$allversionsalias}
+                ON {$allversionsalias}.questionid = {$questionalias}.id";
+        $allversionsentity->add_join($allversionsjoin);
+        $this->add_entity($allversionsentity);
+
+        // Set up entity for ALL round questions (LEFT JOIN through all versions).
+        $allroundquestionsentity = new round_question();
+        $allroundquestionsentity->set_entity_name('all_round_questions');
+        $allroundquestionsalias = 'krq_all';
+        $allroundquestionsentity->set_table_alias('kahoodle_round_questions', $allroundquestionsalias);
+        $allroundquestionsentity->set_table_aliases([
+            'kahoodle' => $kahoodlealias,
+            'kahoodle_questions' => $questionalias,
+            'kahoodle_question_versions' => $allversionsalias,
+        ]);
+        $allroundquestionsentity->add_join($questionentity->get_questions_join());
+        $allroundquestionsentity->add_join($allversionsjoin);
+        // LEFT JOIN to get all round questions (not filtered by round).
+        $allroundquestionsjoin = "LEFT JOIN {kahoodle_round_questions} {$allroundquestionsalias}
+                ON {$allroundquestionsalias}.questionversionid = {$allversionsalias}.id";
+        $allroundquestionsentity->add_join($allroundquestionsjoin);
+        $this->add_entity($allroundquestionsentity);
+
+        // Set up entity for ALL responses (LEFT JOIN through all round questions).
+        $allresponsesentity = new response();
+        $allresponsesentity->set_entity_name('all_responses');
+        $allresponsesalias = 'kr_all';
+        $allresponsesentity->set_table_alias('kahoodle_responses', $allresponsesalias);
+        $allresponsesentity->set_table_aliases([
+            'kahoodle_round_questions' => $allroundquestionsalias,
+            'kahoodle_question_versions' => $allversionsalias,
+            'kahoodle_questions' => $questionalias,
+        ]);
+        $allresponsesentity->add_join($questionentity->get_questions_join());
+        $allresponsesentity->add_join($allversionsjoin);
+        $allresponsesentity->add_join($allroundquestionsjoin);
+        // LEFT JOIN to get all responses.
+        $allresponsesentity->add_join(
+            "LEFT JOIN {kahoodle_responses} {$allresponsesalias}
+                ON {$allresponsesalias}.roundquestionid = {$allroundquestionsalias}.id"
+        );
+        $this->add_entity($allresponsesentity);
+
         // Filter by kahoodleid.
         $this->add_base_condition_simple("{$kahoodlealias}.id", $this->get_kahoodleid());
 
@@ -138,6 +195,51 @@ class all_rounds_statistics extends system_report {
             'question_version:questionimages',
             'question_version:questiontext',
         ]);
+
+        // Add totalresponses column using joined responses table with SUM aggregation.
+        $allresponsesentity = $this->get_entity('all_responses');
+        $allresponsesalias = $allresponsesentity->get_table_alias('kahoodle_responses');
+        $allresponsejoins = $allresponsesentity->get_joins();
+        $this->add_column(
+            (new column(
+                'totalresponses',
+                new lang_string('totalresponses', 'mod_kahoodle'),
+                'all_responses'
+            ))
+                ->add_joins($allresponsejoins)
+                ->set_type(column::TYPE_INTEGER)
+                ->add_field("CASE WHEN {$allresponsesalias}.id IS NOT NULL THEN 1 ELSE 0 END", 'totalresponses')
+                ->set_is_sortable(true)
+                ->set_aggregation('sum')
+        );
+
+        // Add correctresponses column using joined responses table with SUM aggregation.
+        $this->add_column(
+            (new column(
+                'correctresponses',
+                new lang_string('correctresponses', 'mod_kahoodle'),
+                'all_responses'
+            ))
+                ->add_joins($allresponsejoins)
+                ->set_type(column::TYPE_INTEGER)
+                ->add_field("CASE WHEN {$allresponsesalias}.iscorrect = 1 THEN 1 ELSE 0 END", 'correctresponses')
+                ->set_is_sortable(true)
+                ->set_aggregation('sum')
+        );
+
+        // Add averagescore column using joined responses table with AVG aggregation.
+        $this->add_column(
+            (new column(
+                'averagescore',
+                new lang_string('results_averagescore', 'mod_kahoodle'),
+                'all_responses'
+            ))
+                ->add_joins($allresponsejoins)
+                ->set_type(column::TYPE_FLOAT)
+                ->add_field("COALESCE({$allresponsesalias}.points, 0)", 'points')
+                ->set_is_sortable(true)
+                ->set_aggregation('avg')
+        );
     }
 
     /**
