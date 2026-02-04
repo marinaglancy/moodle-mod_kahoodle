@@ -224,6 +224,20 @@ class all_rounds_statistics extends system_report {
                 ->set_aggregation('sum')
         );
 
+        // Total responses.
+        $this->add_column(
+            (new column(
+                'totalresponses',
+                new lang_string('totalresponses', 'mod_kahoodle'),
+                'all_responses'
+            ))
+                ->add_joins($allresponsejoins)
+                ->set_type(column::TYPE_INTEGER)
+                ->add_field("CASE WHEN {$allresponsesalias}.id IS NOT NULL THEN 1 ELSE 0 END", 'totalresponses')
+                ->set_is_sortable(true)
+                ->set_aggregation('sum')
+        );
+
         // Correct responses (counts only actual correct responses).
         $this->add_column(
             (new column(
@@ -247,7 +261,8 @@ class all_rounds_statistics extends system_report {
             ))
                 ->add_joins($allresponsejoins)
                 ->set_type(column::TYPE_FLOAT)
-                ->add_field("COALESCE({$allresponsesalias}.points, 0)", 'points')
+                ->add_field("CASE WHEN {$allparticipantsalias}.id IS NOT NULL " .
+                    "THEN COALESCE({$allresponsesalias}.points, 0) ELSE NULL END", 'points')
                 ->set_is_sortable(true)
                 ->set_aggregation('avg')
                 ->add_callback(static fn(?float $value): string => number_format($value ?? 0, 1))
