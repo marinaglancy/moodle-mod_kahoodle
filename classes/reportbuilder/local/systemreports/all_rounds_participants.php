@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 namespace mod_kahoodle\reportbuilder\local\systemreports;
 
+use core_reportbuilder\local\entities\user;
 use core_reportbuilder\local\helpers\database;
 use core_reportbuilder\local\report\action;
 use core_reportbuilder\system_report;
@@ -63,6 +64,12 @@ class all_rounds_participants extends system_report {
 
         $this->set_main_table('kahoodle_participants', $participantalias);
         $this->add_entity($participantentity);
+
+        // Set up user entity and join (reuse join from participant entity).
+        $userentity = new user();
+        $userentity->set_table_alias('user', $participantentity->get_table_alias('user'));
+        $userentity->add_join($participantentity->get_user_join());
+        $this->add_entity($userentity);
 
         // Set up round entity and join.
         $roundentity = new round();
@@ -121,7 +128,7 @@ class all_rounds_participants extends system_report {
         $this->add_columns_from_entities([
             'round:namelinked',
             'participant:participant',
-            'participant:user',
+            'user:fullnamewithpicturelink',
             'participant:rank',
             'participant:score',
             'participant:correctanswers',
@@ -138,7 +145,7 @@ class all_rounds_participants extends system_report {
         $this->add_filters_from_entities([
             'round:name',
             'participant:displayname',
-            'participant:user',
+            'user:userselect',
             'participant:rank',
             'participant:score',
         ]);

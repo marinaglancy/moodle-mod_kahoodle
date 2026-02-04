@@ -24,9 +24,7 @@ use core_reportbuilder\local\filters\text;
 use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
 use core_user\fields;
-use html_writer;
 use lang_string;
-use moodle_url;
 use stdClass;
 
 /**
@@ -157,32 +155,6 @@ class participant extends base {
             });
         $columns[] = $this->add_user_fields_to_column($participantcolumn, $useralias);
 
-        // User column (profile picture + fullname, link to profile).
-        $usercolumn = (new column(
-            'user',
-            new lang_string('user'),
-            $this->get_entity_name()
-        ))
-            ->add_joins($this->get_joins())
-            ->add_join($this->get_user_join())
-            ->set_type(column::TYPE_TEXT)
-            ->set_is_sortable(true, ["{$useralias}.lastname", "{$useralias}.firstname"])
-            ->add_callback(static function ($value, stdClass $row): string {
-                global $OUTPUT;
-
-                if (empty($row->user_id)) {
-                    return html_writer::tag('em', get_string('deleteduser', 'bulkusers'));
-                }
-
-                $user = self::extract_user_record($row);
-                $fullname = fullname($user);
-                $avatar = $OUTPUT->user_picture($user, ['size' => 35, 'link' => false, 'class' => 'mr-2']);
-                $profileurl = new moodle_url('/user/profile.php', ['id' => $user->id]);
-
-                return html_writer::link($profileurl, $avatar . $fullname);
-            });
-        $columns[] = $this->add_user_fields_to_column($usercolumn, $useralias);
-
         // Rank column.
         $columns[] = (new column(
             'rank',
@@ -280,7 +252,6 @@ class participant extends base {
      */
     protected function get_all_filters(): array {
         $participantalias = $this->get_table_alias('kahoodle_participants');
-        $useralias = $this->get_table_alias('user');
 
         $filters = [];
 
@@ -291,16 +262,6 @@ class participant extends base {
             new lang_string('participantdisplayname', 'mod_kahoodle'),
             $this->get_entity_name(),
             "{$participantalias}.displayname"
-        ))
-            ->add_joins($this->get_joins());
-
-        // User filter (user selector).
-        $filters[] = (new filter(
-            \core_reportbuilder\local\filters\user::class,
-            'user',
-            new lang_string('user'),
-            $this->get_entity_name(),
-            "{$participantalias}.userid"
         ))
             ->add_joins($this->get_joins());
 
