@@ -155,6 +155,13 @@ if (!empty($participantid) && $view === 'details') {
     // Round name as heading.
     echo $OUTPUT->heading($round->get_display_name() . ' - ' . get_string('statistics', 'mod_kahoodle'), 3);
 
+    // Show total participants count.
+    $participantscount = $round->get_participants_count();
+    echo html_writer::div(
+        get_string('totalparticipants', 'mod_kahoodle') . ': ' . $participantscount,
+        'text-muted mb-3'
+    );
+
     $report = \core_reportbuilder\system_report_factory::create(
         \mod_kahoodle\reportbuilder\local\systemreports\statistics::class,
         $PAGE->context,

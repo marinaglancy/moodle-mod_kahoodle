@@ -24,8 +24,8 @@ use lang_string;
 use mod_kahoodle\local\entities\round;
 use mod_kahoodle\reportbuilder\local\entities\question;
 use mod_kahoodle\reportbuilder\local\entities\question_version;
+use mod_kahoodle\reportbuilder\local\entities\response;
 use mod_kahoodle\reportbuilder\local\entities\round_question;
-use stdClass;
 
 /**
  * Round question statistics system report
@@ -78,26 +78,59 @@ class statistics extends system_report {
 
         // Set up round_question entity and join.
         $roundquestionentity = new round_question();
+        $questionalias = $questionentity->get_table_alias('kahoodle_questions');
+        $versionalias = $questionversionentity->get_table_alias('kahoodle_question_versions');
+        $roundquestionalias = $roundquestionentity->get_table_alias('kahoodle_round_questions');
         $roundquestionentity->set_table_aliases([
             'kahoodle' => $kahoodlealias,
-            'kahoodle_questions' => $questionentity->get_table_alias('kahoodle_questions'),
-            'kahoodle_question_versions' => $questionversionentity->get_table_alias('kahoodle_question_versions'),
+            'kahoodle_questions' => $questionalias,
+            'kahoodle_question_versions' => $versionalias,
         ]);
-        $roundquestionentity->add_join($questionentity->get_questions_join());
-        $roundquestionentity->add_join($questionversionentity->get_question_versions_join());
-        $roundquestionentity->add_join($roundquestionentity->get_round_questions_join());
+        $questionsjoin = $questionentity->get_questions_join();
+        $versionsjoin = $questionversionentity->get_question_versions_join();
+        $roundquestionsjoin = $roundquestionentity->get_round_questions_join();
+        $roundquestionentity->add_join($questionsjoin);
+        $roundquestionentity->add_join($versionsjoin);
+        $roundquestionentity->add_join($roundquestionsjoin);
         $this->add_entity($roundquestionentity);
+
+        // Set up response entity with LEFT JOIN through participants.
+        // Join chain: round_questions -> participants (via roundid) -> responses (via participantid + roundquestionid).
+        // This ensures participants who didn't respond are still counted with 0 points.
+        $responseentity = new response();
+        $responseentity->set_entity_name('responses');
+        $participantsalias = 'kp';
+        $responsesalias = 'kr';
+        $responseentity->set_table_alias('kahoodle_responses', $responsesalias);
+        $responseentity->set_table_aliases([
+            'kahoodle_round_questions' => $roundquestionalias,
+            'kahoodle_question_versions' => $versionalias,
+            'kahoodle_questions' => $questionalias,
+        ]);
+        $responseentity->add_join($questionsjoin);
+        $responseentity->add_join($versionsjoin);
+        $responseentity->add_join($roundquestionsjoin);
+        // LEFT JOIN to get all participants for this round.
+        $participantsjoin = "LEFT JOIN {kahoodle_participants} {$participantsalias}
+                ON {$participantsalias}.roundid = {$roundquestionalias}.roundid";
+        $responseentity->add_join($participantsjoin);
+        // LEFT JOIN to get responses (linking participant to round question).
+        $responseentity->add_join(
+            "LEFT JOIN {kahoodle_responses} {$responsesalias}
+                ON {$responsesalias}.participantid = {$participantsalias}.id
+                AND {$responsesalias}.roundquestionid = {$roundquestionalias}.id"
+        );
+        $this->add_entity($responseentity);
 
         // Filter by kahoodleid and roundid.
         $this->add_base_condition_simple("{$kahoodlealias}.id", $this->get_round()->get_kahoodle()->id);
-        $roundquestionalias = $roundquestionentity->get_table_alias('kahoodle_round_questions');
         $this->add_base_condition_simple("{$roundquestionalias}.roundid", $this->get_round()->get_id());
 
         // Add base fields for potential actions.
         $this->add_base_fields("{$roundquestionalias}.id");
 
         // Add columns.
-        $this->add_columns($roundquestionentity);
+        $this->add_columns();
 
         // Add filters.
         $this->add_filters();
@@ -122,10 +155,9 @@ class statistics extends system_report {
     /**
      * Adds the columns we want to display in the report
      *
-     * @param round_question $roundquestionentity The round question entity
      * @return void
      */
-    protected function add_columns(round_question $roundquestionentity): void {
+    protected function add_columns(): void {
         $this->add_columns_from_entities([
             'round_question:sortorder',
             'question:questiontype',
@@ -133,59 +165,39 @@ class statistics extends system_report {
             'question_version:questiontext',
         ]);
 
-        // Add statistics columns directly in the report.
-        $roundquestionalias = $roundquestionentity->get_table_alias('kahoodle_round_questions');
-        $entityname = $roundquestionentity->get_entity_name();
+        // Add statistics columns using joined participants/responses tables.
+        $responseentity = $this->get_entity('responses');
+        $responsesalias = $responseentity->get_table_alias('kahoodle_responses');
+        $responsejoins = $responseentity->get_joins();
 
-        // Total responses column.
-        $this->add_column((new column(
-            'totalresponses',
-            new lang_string('totalresponses', 'mod_kahoodle'),
-            $entityname
-        ))
-            ->set_type(column::TYPE_INTEGER)
-            ->add_field("(SELECT COUNT(*) FROM {kahoodle_responses} r
-                WHERE r.roundquestionid = {$roundquestionalias}.id)", 'totalresponses')
-            ->set_is_sortable(true)
-            ->add_callback(static function (?int $value): string {
-                return $value !== null ? (string)$value : '0';
-            }));
+        // Correct responses (counts only actual correct responses).
+        $this->add_column(
+            (new column(
+                'correctresponses',
+                new lang_string('correctresponses', 'mod_kahoodle'),
+                'responses'
+            ))
+                ->add_joins($responsejoins)
+                ->set_type(column::TYPE_INTEGER)
+                ->add_field("CASE WHEN {$responsesalias}.iscorrect = 1 THEN 1 ELSE 0 END", 'correctresponses')
+                ->set_is_sortable(true)
+                ->set_aggregation('sum')
+        );
 
-        // Correct responses column.
-        $this->add_column((new column(
-            'correctresponses',
-            new lang_string('correctresponses', 'mod_kahoodle'),
-            $entityname
-        ))
-            ->set_type(column::TYPE_INTEGER)
-            ->add_field("(SELECT COUNT(*) FROM {kahoodle_responses} r
-                WHERE r.roundquestionid = {$roundquestionalias}.id AND r.iscorrect = 1)", 'correctresponses')
-            ->set_is_sortable(true)
-            ->add_callback(static function (?int $value): string {
-                return $value !== null ? (string)$value : '0';
-            }));
-
-        // Average score column.
-        // Get participant count once for the entire report.
-        $totalparticipants = $this->get_round()->get_participants_count();
-
-        $this->add_column((new column(
-            'averagescore',
-            new lang_string('results_averagescore', 'mod_kahoodle'),
-            $entityname
-        ))
-            ->set_type(column::TYPE_FLOAT)
-            ->add_field("(SELECT COALESCE(SUM(r.points), 0) FROM {kahoodle_responses} r
-                WHERE r.roundquestionid = {$roundquestionalias}.id)", 'totalpoints')
-            ->set_is_sortable(true)
-            ->add_callback(static function ($value, stdClass $row) use ($totalparticipants): string {
-                $totalpoints = (int)($row->totalpoints ?? 0);
-                if ($totalparticipants === 0) {
-                    return '-';
-                }
-                $average = $totalpoints / $totalparticipants;
-                return number_format($average, 1);
-            }));
+        // Average score (includes participants who didn't respond as 0 points).
+        $this->add_column(
+            (new column(
+                'averagescore',
+                new lang_string('results_averagescore', 'mod_kahoodle'),
+                'responses'
+            ))
+                ->add_joins($responsejoins)
+                ->set_type(column::TYPE_FLOAT)
+                ->add_field("COALESCE({$responsesalias}.points, 0)", 'points')
+                ->set_is_sortable(true)
+                ->set_aggregation('avg')
+                ->add_callback(static fn(?float $value): string => number_format($value ?? 0, 1))
+        );
     }
 
     /**

@@ -452,7 +452,7 @@ Provides columns for round-specific question settings (kahoodle_round_questions 
 - `timing`: Preview/question/results durations (shows defaults in normal, overrides in bold)
 - `score`: Min-max points range (shows defaults in normal, overrides in bold)
 
-**Note:** Statistics columns (totalresponses, correctresponses, averagescore) are defined directly in the statistics report, not in the entity.
+**Note:** Statistics columns (totalparticipants, correctresponses, averagescore) are defined directly in the statistics reports using LEFT JOINs and aggregation, not in the entity.
 
 **participant Entity (`participant.php`)**
 Provides columns and filters for displaying round participants.
@@ -520,8 +520,10 @@ Provides columns and filters for displaying round information.
 
 **statistics Report (`statistics.php`)**
 - Shows question statistics for a completed round
-- Columns: sortorder, questiontype, questionimages, questiontext, totalresponses, correctresponses, averagescore
-- Average score is calculated as: sum of points / total participants (non-responders count as 0)
+- Uses LEFT JOIN through participants to responses (ensures non-responders are counted with 0 points)
+- Columns: sortorder, questiontype, questionimages, questiontext, correctresponses, averagescore
+- Total participants count is shown as a subheader above the report (not in table)
+- Statistics columns use aggregation (SUM for correct, AVG for score) instead of subqueries
 - Downloadable
 - Used in: `results.php?view=statistics&roundid=X`
 
@@ -536,14 +538,14 @@ Provides columns and filters for displaying round information.
 - Only visible when there are 2+ completed rounds
 
 **all_rounds_statistics Report (`all_rounds_statistics.php`)**
-- Shows question statistics from all completed rounds (revision or archived) for a kahoodle activity
-- Uses round entity for round name column and filter
-- Columns: round:namelinked, sortorder, questiontype, questionimages, questiontext, totalresponses, correctresponses, averagescore
-- Filters: round:name, questiontype, questiontext
-- Average score calculated per-round (different participant counts per round)
+- Shows question statistics aggregated across all rounds for each question in a kahoodle activity
+- Uses LEFT JOINs: question → versions (islast=1) → round_questions → participants → responses
+- Columns: sortorder (from last round), questiontype, questionimages, questiontext, totalparticipants, correctresponses, averagescore
+- Filters: questiontype, questiontext
+- Statistics columns use aggregation (SUM for participants/correct, AVG for score) instead of subqueries
+- Non-responders are included in averages with 0 points (via LEFT JOIN through participants)
 - Downloadable
 - Used in: `results.php?id=X&view=allstatistics`
-- Only visible when there are 2+ completed rounds
 
 ### Web Services
 
@@ -723,14 +725,17 @@ Stores all versions of question content. Questions can be edited, creating new v
 - `version`: Version number (increments with each edit)
 - `questiontext`: Question text content (format determined by kahoodle.questionformat)
 - `questionconfig`: JSON for question-specific settings (e.g., answer options for multichoice)
+- `islast`: 1 if this is the latest version of the question, 0 otherwise (maintained by questions API)
 - `timecreated`, `timemodified`: Timestamps
 
 **Unique Index:** `questionid, version` - ensures one version record per version number
 
 **Usage:**
-- When question is created: Insert version 1
-- When question is edited: Insert new version with incremented number
+- When question is created: Insert version 1 with `islast=1`
+- When question is edited: Set `islast=0` for all existing versions, insert new version with `islast=1`
+- When latest version is deleted: Update the previous version to `islast=1`
 - Rounds reference specific version IDs for historical accuracy
+- The `islast` field enables efficient queries to find the current version of each question
 
 #### 4. kahoodle_rounds (Game Rounds)
 Individual gameplay sessions.

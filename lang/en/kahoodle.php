@@ -195,6 +195,7 @@ $string['suspenserevisionheader'] = 'Drumroll, please!';
 $string['timeup'] = 'Time\'s up!';
 $string['timing'] = 'Timing';
 $string['topwinners'] = 'Top winners';
+$string['totalparticipants'] = 'Total participants';
 $string['totalresponses'] = 'Total responses';
 $string['twonames'] = '{$a->one} and {$a->two}';
 $string['version'] = 'Version';

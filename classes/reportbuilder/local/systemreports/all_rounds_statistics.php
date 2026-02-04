@@ -138,9 +138,12 @@ class all_rounds_statistics extends system_report {
         $allroundquestionsentity->add_join($allroundquestionsjoin);
         $this->add_entity($allroundquestionsentity);
 
-        // Set up entity for ALL responses (LEFT JOIN through all round questions).
+        // Set up entity for ALL responses (LEFT JOIN through participants).
+        // Join chain: round_questions -> participants (via roundid) -> responses (via participantid + roundquestionid).
+        // This ensures participants who didn't respond are still counted with 0 points.
         $allresponsesentity = new response();
         $allresponsesentity->set_entity_name('all_responses');
+        $allparticipantsalias = 'kp_all';
         $allresponsesalias = 'kr_all';
         $allresponsesentity->set_table_alias('kahoodle_responses', $allresponsesalias);
         $allresponsesentity->set_table_aliases([
@@ -151,10 +154,15 @@ class all_rounds_statistics extends system_report {
         $allresponsesentity->add_join($questionentity->get_questions_join());
         $allresponsesentity->add_join($allversionsjoin);
         $allresponsesentity->add_join($allroundquestionsjoin);
-        // LEFT JOIN to get all responses.
+        // LEFT JOIN to get all participants for each round.
+        $allparticipantsjoin = "LEFT JOIN {kahoodle_participants} {$allparticipantsalias}
+                ON {$allparticipantsalias}.roundid = {$allroundquestionsalias}.roundid";
+        $allresponsesentity->add_join($allparticipantsjoin);
+        // LEFT JOIN to get responses (linking participant to round question).
         $allresponsesentity->add_join(
             "LEFT JOIN {kahoodle_responses} {$allresponsesalias}
-                ON {$allresponsesalias}.roundquestionid = {$allroundquestionsalias}.id"
+                ON {$allresponsesalias}.participantid = {$allparticipantsalias}.id
+                AND {$allresponsesalias}.roundquestionid = {$allroundquestionsalias}.id"
         );
         $this->add_entity($allresponsesentity);
 
@@ -196,24 +204,27 @@ class all_rounds_statistics extends system_report {
             'question_version:questiontext',
         ]);
 
-        // Add totalresponses column using joined responses table with SUM aggregation.
+        // Add statistics columns using joined participants/responses tables.
         $allresponsesentity = $this->get_entity('all_responses');
         $allresponsesalias = $allresponsesentity->get_table_alias('kahoodle_responses');
+        $allparticipantsalias = 'kp_all'; // Defined in initialise().
         $allresponsejoins = $allresponsesentity->get_joins();
+
+        // Total participants (counts all participants, including those who didn't respond).
         $this->add_column(
             (new column(
-                'totalresponses',
-                new lang_string('totalresponses', 'mod_kahoodle'),
+                'totalparticipants',
+                new lang_string('totalparticipants', 'mod_kahoodle'),
                 'all_responses'
             ))
                 ->add_joins($allresponsejoins)
                 ->set_type(column::TYPE_INTEGER)
-                ->add_field("CASE WHEN {$allresponsesalias}.id IS NOT NULL THEN 1 ELSE 0 END", 'totalresponses')
+                ->add_field("CASE WHEN {$allparticipantsalias}.id IS NOT NULL THEN 1 ELSE 0 END", 'totalparticipants')
                 ->set_is_sortable(true)
                 ->set_aggregation('sum')
         );
 
-        // Add correctresponses column using joined responses table with SUM aggregation.
+        // Correct responses (counts only actual correct responses).
         $this->add_column(
             (new column(
                 'correctresponses',
@@ -227,7 +238,7 @@ class all_rounds_statistics extends system_report {
                 ->set_aggregation('sum')
         );
 
-        // Add averagescore column using joined responses table with AVG aggregation.
+        // Average score (includes participants who didn't respond as 0 points).
         $this->add_column(
             (new column(
                 'averagescore',
@@ -239,6 +250,7 @@ class all_rounds_statistics extends system_report {
                 ->add_field("COALESCE({$allresponsesalias}.points, 0)", 'points')
                 ->set_is_sortable(true)
                 ->set_aggregation('avg')
+                ->add_callback(static fn(?float $value): string => number_format($value ?? 0, 1))
         );
     }
 
