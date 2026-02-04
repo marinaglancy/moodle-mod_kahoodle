@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/kahoodle/db" VERSION="20260113" COMMENT="XMLDB file for Moodle mod/kahoodle"
+<XMLDB PATH="mod/kahoodle/db" VERSION="20260204" COMMENT="XMLDB file for Moodle mod/kahoodle"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -48,6 +48,7 @@
         <FIELD NAME="questionconfig" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Type-specific settings (list of options, etc)"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="islast" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1 if this is the latest version of the question, 0 otherwise"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

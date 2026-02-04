@@ -77,5 +77,31 @@ function xmldb_kahoodle_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026012801, 'kahoodle');
     }
 
+    if ($oldversion < 2026020400) {
+        // Define field islast to be added to kahoodle_question_versions.
+        $table = new xmldb_table('kahoodle_question_versions');
+        $field = new xmldb_field('islast', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0', 'timemodified');
+
+        // Conditionally launch add field islast.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Populate islast for existing questions - set to 1 for the highest version of each question.
+        $sql = "UPDATE {kahoodle_question_versions}
+                   SET islast = 1
+                 WHERE id IN (
+                       SELECT maxid FROM (
+                           SELECT MAX(id) AS maxid
+                             FROM {kahoodle_question_versions}
+                            GROUP BY questionid
+                       ) subquery
+                 )";
+        $DB->execute($sql);
+
+        // Kahoodle savepoint reached.
+        upgrade_mod_savepoint(true, 2026020400, 'kahoodle');
+    }
+
     return true;
 }

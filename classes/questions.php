@@ -188,6 +188,7 @@ class questions {
         }
         $version->timecreated = $time;
         $version->timemodified = $time;
+        $version->islast = 1;
 
         $versionid = $DB->insert_record('kahoodle_question_versions', $version);
 
@@ -344,6 +345,10 @@ class questions {
                 $content['version'] = $lastversion + 1;
                 $content['questionid'] = $questionid;
                 $content['timecreated'] = $content['timemodified'] = time();
+                $content['islast'] = 1;
+
+                // Set islast=0 for all existing versions of this question.
+                $DB->set_field('kahoodle_question_versions', 'islast', 0, ['questionid' => $questionid]);
 
                 $versionid = $DB->insert_record('kahoodle_question_versions', $content);
 
@@ -518,13 +523,26 @@ class questions {
 
         if ($usedinotherrounds == 0) {
             // This version is not used in any started rounds, we can delete it.
-            $DB->delete_records('kahoodle_question_versions', ['id' => $questionversionid]);
-            // Check if this was the only version of the question.
+            // First check if it was the last version (islast=1) so we can update the next version.
+            $waslastversion = $DB->get_field('kahoodle_question_versions', 'islast', ['id' => $questionversionid]);
             $questionid = $roundquestion->get_question_id();
+
+            $DB->delete_records('kahoodle_question_versions', ['id' => $questionversionid]);
+
+            // Check if this was the only version of the question.
             $remainingversions = $DB->count_records('kahoodle_question_versions', ['questionid' => $questionid]);
             if ($remainingversions == 0) {
                 // Delete the question itself.
                 $DB->delete_records('kahoodle_questions', ['id' => $questionid]);
+            } else if ($waslastversion) {
+                // The deleted version was the last one. Update the new highest version to be the last.
+                $newlastversionid = $DB->get_field_sql(
+                    'SELECT id FROM {kahoodle_question_versions} WHERE questionid = ? ORDER BY version DESC LIMIT 1',
+                    [$questionid]
+                );
+                if ($newlastversionid) {
+                    $DB->set_field('kahoodle_question_versions', 'islast', 1, ['id' => $newlastversionid]);
+                }
             }
         }
 
