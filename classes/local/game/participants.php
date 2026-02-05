@@ -60,8 +60,13 @@ class participants {
 
         $participant->id = $DB->insert_record('kahoodle_participants', $participant);
 
-        // Save the user's profile picture as the participant avatar.
-        $avatar = self::save_profile_picture_to_avatar($round, (int)$participant->id);
+        // Save avatar: use profile picture for real name mode, random avatar otherwise.
+        $kahoodle = $round->get_kahoodle();
+        if ($kahoodle->identitymode == constants::IDENTITYMODE_REALNAME) {
+            $avatar = self::save_profile_picture_to_avatar($round, (int)$participant->id);
+        } else {
+            $avatar = self::save_random_avatar($round, (int)$participant->id);
+        }
         if ($avatar) {
             $DB->set_field('kahoodle_participants', 'avatar', $avatar, ['id' => $participant->id]);
         }
@@ -124,6 +129,48 @@ class participants {
         if ($round->get_current_stage_name() === constants::STAGE_LOBBY) {
             realtime_channels::notify_facilitators_stage_changed($round);
         }
+    }
+
+    /**
+     * Save a random avatar from the admin-uploaded allavatars file area.
+     *
+     * Picks a random image from the mod_kahoodle/allavatars file area (system context,
+     * may contain subfolders) and copies it to the participant's avatar file area.
+     *
+     * @param round $round The round the participant belongs to
+     * @param int $participantid The participant record ID
+     * @return string|null The filename of the saved avatar, or null if no avatars are available.
+     */
+    public static function save_random_avatar(round $round, int $participantid): ?string {
+        $fs = get_file_storage();
+        $context = $round->get_context();
+
+        // Get all files from the allavatars file area (system context, may have subfolders).
+        $syscontext = \context_system::instance();
+        $files = $fs->get_area_files($syscontext->id, 'mod_kahoodle', 'allavatars', 0, 'filepath, filename', false);
+
+        if (empty($files)) {
+            return null;
+        }
+
+        // Delete any existing avatar files for this participant.
+        $fs->delete_area_files($context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $participantid);
+
+        // Pick a random file.
+        $randomfile = $files[array_rand($files)];
+
+        // Copy it to the participant's avatar area.
+        $filerecord = [
+            'contextid' => $context->id,
+            'component' => 'mod_kahoodle',
+            'filearea' => constants::FILEAREA_AVATAR,
+            'itemid' => $participantid,
+            'filepath' => '/',
+            'filename' => $randomfile->get_filename(),
+        ];
+
+        $fs->create_file_from_storedfile($filerecord, $randomfile);
+        return $randomfile->get_filename();
     }
 
     /**

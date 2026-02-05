@@ -57,13 +57,13 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   └── question.php      # Question add/edit modal form
 │   ├── local/
 │   │   ├── entities/         # Domain entity classes
-│   │   │   ├── participant.php # Participant entity
+│   │   │   ├── participant.php # Participant entity (avatar, display name, scoring)
 │   │   │   ├── rank.php      # Participant ranking entity (score, rank, ties)
-│   │   │   ├── round.php     # Round entity with caching for kahoodle/cm/context
+│   │   │   ├── round.php     # Round entity with caching for kahoodle/cm/context/guess_context
 │   │   │   ├── round_question.php # Round question entity (joins 3 tables)
 │   │   │   └── round_stage.php # Round stage entity (current stage in a round)
 │   │   ├── game/             # Game mechanics
-│   │   │   ├── participants.php # Participant management (join, get)
+│   │   │   ├── participants.php # Participant management (join, avatar save, get)
 │   │   │   ├── progress.php  # Game progress and stage transitions
 │   │   │   └── realtime_channels.php # Realtime channel management
 │   │   └── questiontypes/    # Question type implementations
@@ -162,7 +162,8 @@ All plugin constants are defined in `classes/constants.php`:
 - **Question Format**: `QUESTIONFORMAT_PLAIN` (0) for plain text with image, `QUESTIONFORMAT_RICHTEXT` (1) for rich text editor
 - **Text Limits**: `QUESTIONTEXT_MAXLENGTH` (300 characters for plain text mode)
 - **Round Stages**: `STAGE_PREPARATION`, `STAGE_LOBBY`, `STAGE_QUESTION_PREVIEW`, `STAGE_QUESTION`, `STAGE_QUESTION_RESULTS`, `STAGE_LEADERS`, `STAGE_REVISION`, `STAGE_ARCHIVED`
-- **File Areas**: `FILEAREA_QUESTION_IMAGE` for question images
+- **Identity Mode**: `IDENTITYMODE_NORMAL` (0) shows real names, `IDENTITYMODE_ANONYMOUS` (1) shows Kahoot-style random display names
+- **File Areas**: `FILEAREA_QUESTION_IMAGE` for question images, `FILEAREA_AVATAR` for participant avatars
 - **Field Lists**: `FIELDS_QUESTION_VERSION` and `FIELDS_ROUND_QUESTION` for consistent field handling across entities and API methods
 
 ### Activity Model
@@ -241,6 +242,7 @@ Represents a game round with lazy-loaded cached access to related data.
 - `get_kahoodle(): stdClass` - Get cached kahoodle activity record
 - `get_cm(): stdClass` - Get cached course module record
 - `get_context(): context_module` - Get context module instance
+- `guess_context(): context_module` - Get context from `$PAGE->context` if available (avoids DB query), falls back to `get_context()`
 - `get_name_inplace_editable(): inplace_editable` - Get inplace editable control for round name
 - `update_name(string $name): inplace_editable` - Update round name and return inplace editable
 - `duplicate(): self` - Create a new round by duplicating question configuration from this round
@@ -264,6 +266,20 @@ Represents a question in a round, joining data from 3 tables (kahoodle_round_que
 - `get_round(): round` - Get cached round entity
 - `get_data(): stdClass` - Get combined data from all joined tables
 - `get_question_type(): base` - Get the question type instance for this question
+
+#### participant Entity (`participant.php`)
+
+Represents a participant in a round with display name, avatar, and scoring data.
+
+**Factory Methods:**
+- `from_partial_record(stdClass $record, ?round $round = null): self` - Create from a partial database record (used by reportbuilder callbacks)
+
+**Methods:**
+- `get_id(): int` - Get participant ID
+- `get_display_name(): string` - Get display name (falls back to user fullname)
+- `get_avatar_url(): moodle_url` - Get stored avatar URL (pluginfile URL) or default user picture
+- `get_profile_picture_url(int $size = 35): moodle_url` - Get Moodle profile picture URL (not stored avatar)
+- `get_final_rank(): ?int` - Get final rank (null if round not finished)
 
 #### rank Entity (`rank.php`)
 
@@ -455,19 +471,20 @@ Provides columns for round-specific question settings (kahoodle_round_questions 
 **Note:** Statistics columns (totalparticipants, correctresponses, averagescore) are defined directly in the statistics reports using LEFT JOINs and aggregation, not in the entity.
 
 **participant Entity (`participant.php`)**
-Provides columns and filters for displaying round participants.
+Provides columns and filters for displaying round participants. Declares `kahoodle`, `kahoodle_participants`, and `user` tables.
+
+**Join Method:** `get_user_join()` - LEFT JOIN to user table (allows showing participants even if user is deleted)
 
 **Columns:**
-- `participant`: Avatar + display name
-- `user`: Profile picture + full name with link to profile (handles deleted users)
+- `participant`: Stored avatar + display name (uses `from_partial_record()` with `get_avatar_url()` and `get_display_name()`)
 - `rank`: Final rank in round
 - `score`: Total score
 - `correctanswers`: Count of correct answers (subquery)
 - `questionsanswered`: Count of questions answered (subquery)
 
-**Filters:** `displayname`, `user`, `rank`, `score`
+**Filters:** `displayname`, `rank`, `score`
 
-**Note:** Uses `\core_user\fields::for_userpic()->with_name()` for dynamic user field retrieval.
+**Note:** The `participant` column requires the `kahoodle` table to be available (either as main table or via joins). System reports must provide the join chain from kahoodle to kahoodle_rounds to kahoodle_participants. The user entity is added separately by system reports for user-specific columns/filters.
 
 **response Entity (`response.php`)**
 Provides columns and filters for displaying participant response data.
@@ -501,7 +518,8 @@ Provides columns and filters for displaying round information.
 
 **participants Report (`participants.php`)**
 - Lists participants for a completed round
-- Columns: participant, user, rank, score, correctanswers, questionsanswered
+- Main table: `kahoodle`, with joins to rounds then participants
+- Columns: participant:participant, user:fullnamewithpicturelink, rank, score, correctanswers, questionsanswered
 - Actions: View answers (links to participant details)
 - Sorted by score (descending)
 - Downloadable
@@ -529,9 +547,10 @@ Provides columns and filters for displaying round information.
 
 **all_rounds_participants Report (`all_rounds_participants.php`)**
 - Shows participants from all completed rounds (revision or archived) for a kahoodle activity
+- Main table: `kahoodle`, with joins to rounds then participants
 - Uses round entity for round name column and filter
-- Columns: round:namelinked, participant, user, rank, score, correctanswers, questionsanswered
-- Filters: round:name, displayname, user, rank, score
+- Columns: round:namelinked, participant:participant, user:fullnamewithpicturelink, rank, score, correctanswers, questionsanswered
+- Filters: round:name, displayname, user:userselect, rank, score
 - Actions: View answers (links to participant details)
 - Downloadable
 - Used in: `results.php?id=X&view=allparticipants`
@@ -696,6 +715,7 @@ Main activity configuration table.
 
 **Key Fields:**
 - `questionformat`: Question input format (0=plain text with image, 1=rich text editor)
+- `identitymode`: Identity mode (0=normal shows real names, 1=anonymous shows random display names)
 - `allowrepeat`: Allow users to participate in multiple rounds
 - `lobbyduration`: Default lobby duration (60s)
 - `questionpreviewduration`: Default preview time (5s)
@@ -771,7 +791,7 @@ User participation in rounds with customization.
 **Key Fields:**
 - `userid`: FK to core user table
 - `displayname`: Custom display name chosen by participant
-- `avatar`: Avatar identifier/path
+- `avatar`: Filename of stored avatar in `mod_kahoodle/avatar/{participantid}` file area (copied from user's profile picture on join, null if no picture)
 - `totalscore`: Total points earned in round
 - `finalrank`: Final leaderboard position
 
@@ -1028,6 +1048,8 @@ vendor/bin/phpunit --filter questions_test
   - Interactive multichoice answer buttons (2-column grid)
   - Result feedback (correct/incorrect/timeout with icons)
   - Final leaderboard for revision stage
+- Identity mode setting (normal vs anonymous game mode)
+- Participant avatar storage (profile picture saved on join for consistent display in reports)
 
 **In Progress:**
 - Round gameplay mechanics
