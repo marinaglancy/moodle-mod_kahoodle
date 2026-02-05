@@ -89,7 +89,7 @@ if (!empty($participantid) && $view === 'details') {
     echo html_writer::start_div('participant-details-header d-flex align-items-center mb-4 p-3 bg-light rounded');
 
     // Participant avatar and display name.
-    $avatarurl = $participant->get_avatar_url(64);
+    $avatarurl = $participant->get_avatar_url();
     echo html_writer::img($avatarurl->out(false), '', ['class' => 'rounded-circle mr-3', 'width' => 64, 'height' => 64]);
     echo html_writer::start_div('participant-info');
     echo html_writer::tag('h4', s($participant->get_display_name()), ['class' => 'mb-1']);

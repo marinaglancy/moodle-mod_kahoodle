@@ -135,7 +135,7 @@ class participant implements \renderable, \templatable {
             'template' => $this->get_template(),
             'templatedata' => [
                 'quiztitle' => $this->round->get_kahoodle_name(),
-                'avatarurl' => $this->participant->get_avatar_url(100)->out(false),
+                'avatarurl' => $this->participant->get_avatar_url()->out(false),
                 'displayname' => $this->participant->get_display_name(),
                 'totalscore' => $this->rank->score,
             ],

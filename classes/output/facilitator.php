@@ -163,7 +163,7 @@ class facilitator implements \renderable, \templatable {
             $participantdata[] = [
                 'participantid' => $participant->get_id(),
                 'displayname' => $participant->get_display_name(),
-                'avatarurl' => $participant->get_avatar_url(35)->out(false),
+                'avatarurl' => $participant->get_avatar_url()->out(false),
             ];
         }
 
@@ -210,7 +210,7 @@ class facilitator implements \renderable, \templatable {
             $rankmoved = $rank->get_rank_movement_status();
             $leaders[] = [
                 'displayname' => $rank->participant->get_display_name(),
-                'avatarurl' => $rank->participant->get_avatar_url(64)->out(false),
+                'avatarurl' => $rank->participant->get_avatar_url()->out(false),
                 'score' => $rank->score,
                 'rank' => $rank->get_rank_as_range(),
                 'isup' => $rankmoved < 0,
@@ -254,16 +254,14 @@ class facilitator implements \renderable, \templatable {
             $istie = count($ranks) > 1;
             $hasmore = count($ranks) > 4;
             $displayedranks = $hasmore ? array_slice($ranks, 0, 3) : $ranks;
-            $avatarsize = $istie ? ($position == 1 ? 64 : 35) : 100;
-
             $templatedata['rank' . $position] = [
                 'istie' => $istie,
                 'totalscore' => $ranks[0]->score,
                 'hasmore' => $hasmore,
-                'winners' => array_values(array_map(function ($rank) use ($avatarsize) {
+                'winners' => array_values(array_map(function ($rank) {
                     return [
                         'displayname' => $rank->participant->get_display_name(),
-                        'avatarurl' => $rank->participant->get_avatar_url($avatarsize)->out(false),
+                        'avatarurl' => $rank->participant->get_avatar_url()->out(false),
                     ];
                 }, $displayedranks)),
             ];

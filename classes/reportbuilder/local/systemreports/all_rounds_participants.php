@@ -71,10 +71,12 @@ class all_rounds_participants extends system_report {
         $userentity->add_join($participantentity->get_user_join());
         $this->add_entity($userentity);
 
-        // Set up round entity and join.
+        // Set up round entity and join. Share the alias with participant entity
+        // so that the participant column's rounds join is deduplicated.
         $roundentity = new round();
         $roundalias = $roundentity->get_table_alias('kahoodle_rounds');
-        $roundentity->add_join("JOIN {kahoodle_rounds} {$roundalias} ON {$roundalias}.id = {$participantalias}.roundid");
+        $participantentity->set_table_alias('kahoodle_rounds', $roundalias);
+        $roundentity->add_join($participantentity->get_rounds_join());
         $this->add_entity($roundentity);
 
         // Filter by kahoodleid - only show completed rounds (revision or archived).

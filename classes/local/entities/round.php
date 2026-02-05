@@ -235,6 +235,25 @@ class round {
         return \context_module::instance($this->get_cm()->id);
     }
 
+    /**
+     * In most cases we can use the page context and save on DB queries
+     *
+     * @return \context_module
+     */
+    public function guess_context(): \context_module {
+        global $PAGE;
+        if (
+            $PAGE->context->contextlevel == CONTEXT_MODULE &&
+                $PAGE->cm &&
+                $PAGE->activityrecord->id == $this->data->kahoodleid &&
+                $PAGE->cm->modname == 'kahoodle'
+        ) {
+            return $PAGE->context;
+        } else {
+            return $this->get_context();
+        }
+    }
+
     /** @var int|null Cached questions count */
     protected ?int $questionscount = null;
 

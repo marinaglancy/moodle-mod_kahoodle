@@ -59,6 +59,13 @@ class participants {
         ];
 
         $participant->id = $DB->insert_record('kahoodle_participants', $participant);
+
+        // Save the user's profile picture as the participant avatar.
+        $avatar = self::save_profile_picture_to_avatar($round, (int)$participant->id);
+        if ($avatar) {
+            $DB->set_field('kahoodle_participants', 'avatar', $avatar, ['id' => $participant->id]);
+        }
+
         $round->clear_participant_cache();
 
         // Trigger participant joined event.
@@ -117,5 +124,74 @@ class participants {
         if ($round->get_current_stage_name() === constants::STAGE_LOBBY) {
             realtime_channels::notify_facilitators_stage_changed($round);
         }
+    }
+
+    /**
+     * Save the current user's profile picture to the participant's avatar file area.
+     *
+     * Retrieves the profile picture (f3, 120px) and stores it in
+     * mod_kahoodle/avatar/{participantid}. If the user has an uploaded picture,
+     * it is copied from file storage. Otherwise (gravatar or generated), the
+     * URL is downloaded and saved.
+     *
+     * @param round $round The round the participant belongs to
+     * @param int $participantid The participant record ID
+     * @return string|null The filename of the saved avatar, or null if no picture could be saved.
+     */
+    public static function save_profile_picture_to_avatar(round $round, int $participantid): ?string {
+        global $USER, $PAGE;
+
+        $fs = get_file_storage();
+        $context = $round->get_context();
+
+        // Delete any existing avatar files for this participant.
+        $fs->delete_area_files($context->id, 'mod_kahoodle', 'avatar', $participantid);
+
+        // Try to get the uploaded profile picture from file storage (f3 = 120px).
+        $usercontext = \context_user::instance($USER->id, IGNORE_MISSING);
+        $file = null;
+        if ($usercontext) {
+            $file = $fs->get_file($usercontext->id, 'user', 'icon', 0, '/', 'f3.png');
+            if (!$file) {
+                $file = $fs->get_file($usercontext->id, 'user', 'icon', 0, '/', 'f3.jpg');
+            }
+        }
+
+        $filerecord = [
+            'contextid' => $context->id,
+            'component' => 'mod_kahoodle',
+            'filearea' => 'avatar',
+            'itemid' => $participantid,
+            'filepath' => '/',
+        ];
+
+        if ($file) {
+            // User has an uploaded picture - copy it from file storage.
+            $filerecord['filename'] = $file->get_filename();
+            $fs->create_file_from_storedfile($filerecord, $file);
+            return $file->get_filename();
+        }
+
+        // No uploaded picture - download from the profile picture URL (gravatar/generated).
+        $picture = \core_user::get_profile_picture($USER, $context, ['size' => 120]);
+        $url = $picture->get_url($PAGE)->out(false);
+        $response = download_file_content($url, null, null, true);
+        if ($response->status == 200 && !empty($response->results)) {
+            $mimetype = $response->headers['Content-Type'] ?? 'image/png';
+            // Strip any charset or parameters from the Content-Type header.
+            $mimetype = trim(explode(';', $mimetype)[0]);
+            $ext = match ($mimetype) {
+                'image/jpeg' => 'jpg',
+                'image/gif' => 'gif',
+                'image/webp' => 'webp',
+                'image/svg+xml' => 'svg',
+                default => 'png',
+            };
+            $filerecord['filename'] = "profile.$ext";
+            $fs->create_file_from_string($filerecord, $response->results);
+            return "profile.$ext";
+        }
+
+        return null;
     }
 }

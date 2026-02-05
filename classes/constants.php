@@ -79,6 +79,9 @@ class constants {
     /** @var string File area for question images */
     public const FILEAREA_QUESTION_IMAGE = 'questionimage';
 
+    /** @var string File area for participant avatars */
+    public const FILEAREA_AVATAR = 'avatar';
+
     // Round stages.
     /** @var string Round stage: preparation (before round starts) */
     public const STAGE_PREPARATION = 'preparation';

@@ -150,12 +150,16 @@ function kahoodle_pluginfile($course, $cm, $context, $filearea, $args, $forcedow
     require_course_login($course, true, $cm);
 
     // Check the file area.
-    if ($filearea !== \mod_kahoodle\constants::FILEAREA_QUESTION_IMAGE) {
+    $allowedareas = [
+        \mod_kahoodle\constants::FILEAREA_QUESTION_IMAGE,
+        \mod_kahoodle\constants::FILEAREA_AVATAR,
+    ];
+    if (!in_array($filearea, $allowedareas)) {
         // The intro file area is handled automatically.
         return;
     }
 
-    // The item ID is the question version ID.
+    // The item ID is the question version ID (for question images) or participant ID (for avatars).
     $itemid = array_shift($args);
     $relativepath = implode('/', $args);
     $fullpath = "/{$context->id}/mod_kahoodle/{$filearea}/{$itemid}/{$relativepath}";

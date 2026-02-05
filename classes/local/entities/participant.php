@@ -98,6 +98,24 @@ class participant {
         return $result;
     }
 
+    public static function from_partial_record(stdClass $record, ?round $round = null): self {
+        $round = $round ?? round::create_from_object((object)[
+            'id' => $record->roundid,
+            'kahoodleid' => $record->kahoodleid,
+        ]);
+        $userdata = (object)[
+            'id' => $record->user_id ?? null,
+        ];
+        $participantdata = (object)[
+            'id' => $record->id,
+            'roundid' => $round->get_id(),
+            'userid' => $userdata->id,
+            'displayname' => $record->displayname,
+            'avatar' => $record->avatar ?? null,
+        ];
+        return new self($round, $participantdata, $userdata);
+    }
+
     /**
      * Get participant id
      *
@@ -135,12 +153,37 @@ class participant {
     }
 
     /**
-     * Get avatar URL
+     * Get avatar URL from the stored avatar file.
      *
-     * @param int $size Avatar size. Recommended values (supporting user initials too): 16, 35, 64 and 100.
+     * Returns the pluginfile URL for the participant's saved avatar.
+     * If no avatar is stored, returns the default user picture URL.
+     *
      * @return moodle_url
      */
-    public function get_avatar_url(int $size = 35): moodle_url {
+    public function get_avatar_url(): moodle_url {
+        global $OUTPUT;
+        $avatar = $this->participantdata->avatar ?? null;
+        if ($avatar) {
+            $context = $this->round->guess_context();
+            return moodle_url::make_pluginfile_url(
+                $context->id,
+                'mod_kahoodle',
+                \mod_kahoodle\constants::FILEAREA_AVATAR,
+                $this->get_id(),
+                '/',
+                $avatar
+            );
+        }
+        return $OUTPUT->image_url('u/f3');
+    }
+
+    /**
+     * Get the user's profile picture URL (from Moodle core, not the stored avatar).
+     *
+     * @param int $size Picture size. Recommended values: 16, 35, 64, 100, 120.
+     * @return moodle_url
+     */
+    public function get_profile_picture_url(int $size = 35): moodle_url {
         global $PAGE;
         $picture = \core_user::get_profile_picture(
             $this->userdata,
