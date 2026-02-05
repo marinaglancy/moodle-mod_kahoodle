@@ -58,36 +58,44 @@ class all_rounds_participants extends system_report {
      * Initialise report, we need to set the main table, load our entities and set columns/filters
      */
     protected function initialise(): void {
-        // Set up participant entity.
+        // Set up participant entity and get kahoodle alias.
         $participantentity = new participant();
+        $kahoodlealias = $participantentity->get_table_alias('kahoodle');
         $participantalias = $participantentity->get_table_alias('kahoodle_participants');
 
-        $this->set_main_table('kahoodle_participants', $participantalias);
+        // Set up kahoodle as main table.
+        $this->set_main_table('kahoodle', $kahoodlealias);
+
+        // Set up round entity and join from kahoodle to rounds.
+        $roundentity = new round();
+        $roundalias = $roundentity->get_table_alias('kahoodle_rounds');
+        $roundsjoin = "JOIN {kahoodle_rounds} {$roundalias}
+            ON {$roundalias}.kahoodleid = {$kahoodlealias}.id";
+        $roundentity->add_join($roundsjoin);
+        $this->add_entity($roundentity);
+
+        // Set up participant entity with joins (rounds + participants).
+        $participantsjoin = "JOIN {kahoodle_participants} {$participantalias}
+            ON {$participantalias}.roundid = {$roundalias}.id";
+        $participantentity->add_join($roundsjoin);
+        $participantentity->add_join($participantsjoin);
         $this->add_entity($participantentity);
 
-        // Set up user entity and join (reuse join from participant entity).
+        // Set up user entity and join.
         $userentity = new user();
         $userentity->set_table_alias('user', $participantentity->get_table_alias('user'));
+        $userentity->add_join($roundsjoin);
+        $userentity->add_join($participantsjoin);
         $userentity->add_join($participantentity->get_user_join());
         $this->add_entity($userentity);
 
-        // Set up round entity and join. Share the alias with participant entity
-        // so that the participant column's rounds join is deduplicated.
-        $roundentity = new round();
-        $roundalias = $roundentity->get_table_alias('kahoodle_rounds');
-        $participantentity->set_table_alias('kahoodle_rounds', $roundalias);
-        $roundentity->add_join($participantentity->get_rounds_join());
-        $this->add_entity($roundentity);
-
         // Filter by kahoodleid - only show completed rounds (revision or archived).
-        $paramkahoodleid = database::generate_param_name();
+        $this->add_base_condition_simple("{$kahoodlealias}.id", $this->get_kahoodleid());
         $paramstagerevision = database::generate_param_name();
         $paramstagearchived = database::generate_param_name();
         $this->add_base_condition_sql(
-            "{$roundalias}.kahoodleid = :{$paramkahoodleid} " .
-            "AND {$roundalias}.currentstage IN (:{$paramstagerevision}, :{$paramstagearchived})",
+            "{$roundalias}.currentstage IN (:{$paramstagerevision}, :{$paramstagearchived})",
             [
-                $paramkahoodleid => $this->get_kahoodleid(),
                 $paramstagerevision => constants::STAGE_REVISION,
                 $paramstagearchived => constants::STAGE_ARCHIVED,
             ]

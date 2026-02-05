@@ -43,8 +43,7 @@ class participant extends base {
         return [
             'kahoodle_participants',
             'user',
-            // TODO we actually need kahoodle table here, not kahoodle_rounds.
-            'kahoodle_rounds',
+            'kahoodle',
         ];
     }
 
@@ -93,26 +92,13 @@ class participant extends base {
     }
 
     /**
-     * Return syntax for joining on the rounds table.
-     *
-     * @return string
-     */
-    public function get_rounds_join(): string {
-        $participantalias = $this->get_table_alias('kahoodle_participants');
-        $roundsalias = $this->get_table_alias('kahoodle_rounds');
-
-        return "JOIN {kahoodle_rounds} {$roundsalias}
-            ON {$roundsalias}.id = {$participantalias}.roundid";
-    }
-
-    /**
      * Returns list of all available columns
      *
      * @return column[]
      */
     protected function get_all_columns(): array {
         $participantalias = $this->get_table_alias('kahoodle_participants');
-        $roundsalias = $this->get_table_alias('kahoodle_rounds');
+        $kahoodlealias = $this->get_table_alias('kahoodle');
 
         $columns = [];
 
@@ -123,21 +109,23 @@ class participant extends base {
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())
-            ->add_join($this->get_rounds_join())
             ->set_type(column::TYPE_TEXT)
             ->add_field("{$participantalias}.id")
             ->add_field("{$participantalias}.displayname")
             ->add_field("{$participantalias}.avatar")
             ->add_field("{$participantalias}.roundid")
-            ->add_field("{$roundsalias}.kahoodleid")
+            ->add_field("{$kahoodlealias}.id", 'kahoodleid')
             ->add_field("{$participantalias}.userid", 'user_id')
             ->set_is_sortable(true, ["{$participantalias}.displayname"])
             ->add_callback(static function (?string $value, stdClass $row): string {
                 $participant = \mod_kahoodle\local\entities\participant::from_partial_record($row);
                 $avatarurl = $participant->get_avatar_url();
                 $displayname = $participant->get_display_name();
-                $img = \html_writer::img($avatarurl->out(false), $displayname,
-                    ['class' => 'rounded-circle mr-2', 'width' => 35, 'height' => 35]);
+                $img = \html_writer::img(
+                    $avatarurl->out(false),
+                    $displayname,
+                    ['class' => 'rounded-circle mr-2', 'width' => 35, 'height' => 35]
+                );
                 return $img . $displayname;
             });
 

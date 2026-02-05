@@ -19,6 +19,7 @@ declare(strict_types=1);
 namespace mod_kahoodle\reportbuilder\local\systemreports;
 
 use core_reportbuilder\local\entities\user;
+use core_reportbuilder\local\helpers\database;
 use core_reportbuilder\local\report\action;
 use core_reportbuilder\system_report;
 use lang_string;
@@ -55,20 +56,35 @@ class participants extends system_report {
      * Initialise report, we need to set the main table, load our entities and set columns/filters
      */
     protected function initialise(): void {
+        // Set up participant entity and get kahoodle alias.
         $participantentity = new participant();
+        $kahoodlealias = $participantentity->get_table_alias('kahoodle');
         $participantalias = $participantentity->get_table_alias('kahoodle_participants');
 
-        $this->set_main_table('kahoodle_participants', $participantalias);
+        // Set up kahoodle as main table.
+        $this->set_main_table('kahoodle', $kahoodlealias);
+
+        // Join rounds from kahoodle, then participants from rounds.
+        $roundalias = database::generate_alias();
+        $roundsjoin = "JOIN {kahoodle_rounds} {$roundalias}
+            ON {$roundalias}.kahoodleid = {$kahoodlealias}.id";
+        $participantsjoin = "JOIN {kahoodle_participants} {$participantalias}
+            ON {$participantalias}.roundid = {$roundalias}.id";
+        $participantentity->add_join($roundsjoin);
+        $participantentity->add_join($participantsjoin);
         $this->add_entity($participantentity);
 
-        // Set up user entity and join (reuse join from participant entity).
+        // Set up user entity and join.
         $userentity = new user();
         $userentity->set_table_alias('user', $participantentity->get_table_alias('user'));
+        $userentity->add_join($roundsjoin);
+        $userentity->add_join($participantsjoin);
         $userentity->add_join($participantentity->get_user_join());
         $this->add_entity($userentity);
 
-        // Filter by roundid parameter.
-        $this->add_base_condition_simple("{$participantalias}.roundid", $this->get_round()->get_id());
+        // Filter by kahoodleid and roundid.
+        $this->add_base_condition_simple("{$kahoodlealias}.id", $this->get_round()->get_kahoodle()->id);
+        $this->add_base_condition_simple("{$roundalias}.id", $this->get_round()->get_id());
 
         // Add base fields for potential actions.
         $this->add_base_fields("{$participantalias}.id AS participantid, {$participantalias}.userid");

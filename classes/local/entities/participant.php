@@ -98,6 +98,13 @@ class participant {
         return $result;
     }
 
+    /**
+     * Create a participant from a partial database record.
+     *
+     * @param stdClass $record Record containing id, roundid, kahoodleid, displayname, avatar, and optionally user_id
+     * @param round|null $round Optional round instance, created from record data if not provided
+     * @return self
+     */
     public static function from_partial_record(stdClass $record, ?round $round = null): self {
         $round = $round ?? round::create_from_object((object)[
             'id' => $record->roundid,
