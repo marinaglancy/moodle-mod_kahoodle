@@ -51,6 +51,22 @@ class constants {
     /** @var int Default leaders (leaderboard) display duration in seconds */
     public const DEFAULT_LEADERS_DURATION = 10;
 
+    // Identity modes.
+    /** @var int Identity mode: real name and profile picture always shown */
+    public const IDENTITYMODE_REALNAME = 0;
+
+    /** @var int Identity mode: optional alias (defaults to real identity) */
+    public const IDENTITYMODE_OPTIONAL = 1;
+
+    /** @var int Identity mode: required alias (teacher sees real name in reports) */
+    public const IDENTITYMODE_ALIAS = 2;
+
+    /** @var int Identity mode: fully anonymous (no user data logged) */
+    public const IDENTITYMODE_ANONYMOUS = 3;
+
+    /** @var int Default identity mode */
+    public const DEFAULT_IDENTITY_MODE = 0;
+
     /** @var int Question format: plain text with optional image */
     public const QUESTIONFORMAT_PLAIN = 0;
 

@@ -65,6 +65,21 @@ class mod_kahoodle_mod_form extends moodleform_mod {
         $mform->setDefault('questionformat', constants::QUESTIONFORMAT_PLAIN);
         $mform->addHelpButton('questionformat', 'questionformat', 'mod_kahoodle');
 
+        // Participant identity mode.
+        $mform->addElement(
+            'select',
+            'identitymode',
+            get_string('identitymode', 'mod_kahoodle'),
+            [
+                constants::IDENTITYMODE_REALNAME => get_string('identitymode_realname', 'mod_kahoodle'),
+                constants::IDENTITYMODE_OPTIONAL => get_string('identitymode_optional', 'mod_kahoodle'),
+                constants::IDENTITYMODE_ALIAS => get_string('identitymode_alias', 'mod_kahoodle'),
+                constants::IDENTITYMODE_ANONYMOUS => get_string('identitymode_anonymous', 'mod_kahoodle'),
+            ]
+        );
+        $mform->setDefault('identitymode', constants::DEFAULT_IDENTITY_MODE);
+        $mform->addHelpButton('identitymode', 'identitymode', 'mod_kahoodle');
+
         // Allow repeat participation.
         $mform->addElement(
             'advcheckbox',

@@ -103,5 +103,19 @@ function xmldb_kahoodle_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026020400, 'kahoodle');
     }
 
+    if ($oldversion < 2026020500) {
+        // Define field identitymode to be added to kahoodle.
+        $table = new xmldb_table('kahoodle');
+        $field = new xmldb_field('identitymode', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0', 'questionformat');
+
+        // Conditionally launch add field identitymode.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Kahoodle savepoint reached.
+        upgrade_mod_savepoint(true, 2026020500, 'kahoodle');
+    }
+
     return true;
 }

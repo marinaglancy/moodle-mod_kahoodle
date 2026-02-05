@@ -39,6 +39,7 @@ class backup_kahoodle_activity_structure_step extends backup_activity_structure_
                 'intro',
                 'introformat',
                 'questionformat',
+                'identitymode',
                 'allowrepeat',
                 'lobbyduration',
                 'questionpreviewduration',

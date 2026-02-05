@@ -66,6 +66,17 @@ $string['facilitator_controls'] = 'Facilitator controls';
 $string['finishgame'] = 'Finish activity';
 $string['finishgame_confirm'] = 'Are you sure you want to finish the activity? This will end the round for all participants.';
 $string['getready'] = 'Get ready!';
+$string['identitymode'] = 'Participant identity';
+$string['identitymode_alias'] = 'Required alias';
+$string['identitymode_anonymous'] = 'Fully anonymous';
+$string['identitymode_help'] = 'Controls how participants are identified during the game and in reports.
+
+* **Real name** - Participants always appear with their actual name and profile picture.
+* **Optional alias** - Participants may choose a custom display name and avatar. Their actual name and profile picture are used by default.
+* **Required alias** - Participants must enter a display name (not pre-filled) and are assigned a random avatar they may change. Teachers can still see the real identity in reports.
+* **Fully anonymous** - Participants are completely anonymous. No user identity is recorded or shown in reports.';
+$string['identitymode_optional'] = 'Optional alias';
+$string['identitymode_realname'] = 'Real name';
 $string['incorrect'] = 'Incorrect';
 $string['invalidstage'] = 'Invalid activity stage';
 $string['join_as_facilitator'] = 'Join as facilitator';
