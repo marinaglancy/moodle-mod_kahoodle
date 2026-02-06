@@ -277,8 +277,13 @@ class participants {
 
         // Get existing candidates already stored for this participant.
         $existingcandidates = $fs->get_directory_files(
-            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR,
-            $participantid, '/candidates/', false, false
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_AVATAR,
+            $participantid,
+            '/candidates/',
+            false,
+            false
         );
         $existingcount = count($existingcandidates);
 
@@ -287,8 +292,12 @@ class participants {
             $candidates = [];
             foreach ($existingcandidates as $file) {
                 $url = \moodle_url::make_pluginfile_url(
-                    $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR,
-                    $participantid, '/candidates/', $file->get_filename()
+                    $context->id,
+                    'mod_kahoodle',
+                    constants::FILEAREA_AVATAR,
+                    $participantid,
+                    '/candidates/',
+                    $file->get_filename()
                 );
                 $candidates[] = [
                     'filename' => $file->get_filename(),
@@ -314,8 +323,13 @@ class participants {
         // Build a set of content hashes to exclude (current avatar + existing candidates).
         $excludedhashes = [];
         $currentfiles = $fs->get_directory_files(
-            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR,
-            $participantid, '/', false, false
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_AVATAR,
+            $participantid,
+            '/',
+            false,
+            false
         );
         foreach ($currentfiles as $file) {
             $excludedhashes[$file->get_contenthash()] = true;
@@ -371,8 +385,12 @@ class participants {
             $addednames[$candidatefilename] = true;
 
             $url = \moodle_url::make_pluginfile_url(
-                $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR,
-                $participantid, '/candidates/', $candidatefilename
+                $context->id,
+                'mod_kahoodle',
+                constants::FILEAREA_AVATAR,
+                $participantid,
+                '/candidates/',
+                $candidatefilename
             );
 
             $candidates[] = [
@@ -415,8 +433,12 @@ class participants {
 
         // Validate the chosen file exists in candidates.
         $chosenfile = $fs->get_file(
-            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR,
-            $participantid, '/candidates/', $filename
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_AVATAR,
+            $participantid,
+            '/candidates/',
+            $filename
         );
         if (!$chosenfile || $chosenfile->is_directory()) {
             throw new \moodle_exception('error_invalidavatarcandidate', 'mod_kahoodle');
@@ -424,8 +446,13 @@ class participants {
 
         // Delete the current avatar at /.
         $currentfiles = $fs->get_directory_files(
-            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR,
-            $participantid, '/', false, false
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_AVATAR,
+            $participantid,
+            '/',
+            false,
+            false
         );
         foreach ($currentfiles as $file) {
             $file->delete();
@@ -442,13 +469,22 @@ class participants {
         ], $chosenfile);
 
         // Update the participant record with the new avatar filename.
-        $DB->set_field('kahoodle_participants', 'avatar', $chosenfile->get_filename(),
-            ['id' => $participantid]);
+        $DB->set_field(
+            'kahoodle_participants',
+            'avatar',
+            $chosenfile->get_filename(),
+            ['id' => $participantid]
+        );
 
         // Delete all candidates.
         $allcandidates = $fs->get_directory_files(
-            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR,
-            $participantid, '/candidates/', false, false
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_AVATAR,
+            $participantid,
+            '/candidates/',
+            false,
+            false
         );
         foreach ($allcandidates as $file) {
             $file->delete();
@@ -458,8 +494,12 @@ class participants {
 
         // Return the pluginfile URL for the new avatar.
         return \moodle_url::make_pluginfile_url(
-            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR,
-            $participantid, '/', $chosenfile->get_filename()
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_AVATAR,
+            $participantid,
+            '/',
+            $chosenfile->get_filename()
         )->out(false);
     }
 
@@ -476,8 +516,13 @@ class participants {
 
         foreach ($round->get_all_participants() as $participant) {
             $candidates = $fs->get_directory_files(
-                $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR,
-                $participant->get_id(), '/candidates/', false, false
+                $context->id,
+                'mod_kahoodle',
+                constants::FILEAREA_AVATAR,
+                $participant->get_id(),
+                '/candidates/',
+                false,
+                false
             );
             foreach ($candidates as $file) {
                 $file->delete();
@@ -508,8 +553,13 @@ class participants {
         // Build excluded hashes from current avatar and existing candidates.
         $excludedhashes = [];
         $currentfiles = $fs->get_directory_files(
-            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR,
-            $participantid, '/', false, false
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_AVATAR,
+            $participantid,
+            '/',
+            false,
+            false
         );
         foreach ($currentfiles as $file) {
             $excludedhashes[$file->get_contenthash()] = true;
@@ -540,7 +590,12 @@ class participants {
         $fs = get_file_storage();
         $syscontext = \context_system::instance();
         $files = $fs->get_area_files(
-            $syscontext->id, 'mod_kahoodle', 'allavatars', 0, 'filepath, filename', false
+            $syscontext->id,
+            'mod_kahoodle',
+            'allavatars',
+            0,
+            'filepath, filename',
+            false
         );
         return array_values(array_filter($files, function (\stored_file $file) {
             return file_mimetype_in_typegroup($file->get_mimetype(), ['web_image']);

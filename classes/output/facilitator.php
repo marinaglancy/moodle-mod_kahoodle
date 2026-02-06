@@ -238,6 +238,7 @@ class facilitator implements \renderable, \templatable {
      */
     protected function get_revision_data(): array {
         $templatedata = $this->get_leaderboard_data(true);
+        $templatedata['isrevision'] = true;
 
         // TODO if there was more than 30 seconds since the beginning of the revision stage,
         // skip the podium display.

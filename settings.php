@@ -26,7 +26,6 @@
 defined('MOODLE_INTERNAL') || die;
 
 if ($ADMIN->fulltree) {
-
     $settings->add(new admin_setting_configstoredfile(
         'mod_kahoodle/allavatars',
         get_string('allavatars', 'mod_kahoodle'),
@@ -34,6 +33,5 @@ if ($ADMIN->fulltree) {
         'allavatars',
         0,
         ['maxfiles' => EDITOR_UNLIMITED_FILES, 'subdirs' => true]
-        ));
-
+    ));
 }

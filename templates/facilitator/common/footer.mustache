@@ -53,12 +53,21 @@
         <a href="#" class="mod_kahoodle-control-btn" data-action="resume">
             {{#pix}}resume, mod_kahoodle{{/pix}} {{#str}}resume, mod_kahoodle{{/str}}
         </a>
+        {{^isrevision}}
         <a href="#" class="mod_kahoodle-control-btn" data-action="next">
             {{#pix}}next, mod_kahoodle{{/pix}} {{#str}}next{{/str}}
         </a>
+        {{/isrevision}}
+        {{^isrevision}}
         <a href="#" class="mod_kahoodle-control-btn" data-action="close">
             {{#pix}}i/window_close, core{{/pix}} {{#str}}close, mod_kahoodle{{/str}}
         </a>
+        {{/isrevision}}
+        {{#isrevision}}
+        <a href="#" class="mod_kahoodle-control-btn" data-action="next">
+            {{#pix}}i/window_close, core{{/pix}} {{#str}}finishgame, mod_kahoodle{{/str}}
+        </a>
+        {{/isrevision}}
     </div>
     {{/cancontrol}}
 

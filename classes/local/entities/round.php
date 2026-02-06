@@ -458,8 +458,12 @@ class round {
         $fs = get_file_storage();
         $syscontext = \context_system::instance();
         $files = $fs->get_area_files(
-            $syscontext->id, 'mod_kahoodle', 'allavatars', 0,
-            'filepath, filename', false
+            $syscontext->id,
+            'mod_kahoodle',
+            'allavatars',
+            0,
+            'filepath, filename',
+            false
         );
         // Only count web image files, ignoring any non-image files in the area.
         $this->allavatarscount = count(array_filter($files, function (\stored_file $file) {
