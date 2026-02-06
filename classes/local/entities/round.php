@@ -440,6 +440,31 @@ class round {
         return $stages[count($stages) - 1];
     }
 
+    /** @var int|null Cached count of files in allavatars area */
+    protected ?int $allavatarscount = null;
+
+    /**
+     * Get the number of avatar images in the admin-uploaded pool.
+     *
+     * Cached on the round instance so it's only queried once per request,
+     * even when called in a loop across many participants.
+     *
+     * @return int
+     */
+    public function get_allavatars_count(): int {
+        if ($this->allavatarscount !== null) {
+            return $this->allavatarscount;
+        }
+        $fs = get_file_storage();
+        $syscontext = \context_system::instance();
+        $files = $fs->get_area_files(
+            $syscontext->id, 'mod_kahoodle', 'allavatars', 0,
+            'filepath, filename', false
+        );
+        $this->allavatarscount = count($files);
+        return $this->allavatarscount;
+    }
+
     /** @var array|null Cached participants array */
     protected ?array $participantscache = null;
 

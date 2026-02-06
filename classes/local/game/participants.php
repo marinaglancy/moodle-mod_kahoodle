@@ -68,7 +68,7 @@ class participants {
         } else {
             $avatar = self::save_random_avatar($round, (int)$participant->id);
         }
-        if ($avatar) {
+        if ($avatar !== null) {
             $DB->set_field('kahoodle_participants', 'avatar', $avatar, ['id' => $participant->id]);
         }
 
@@ -140,9 +140,9 @@ class participants {
      *
      * @param round $round The round the participant belongs to
      * @param int $participantid The participant record ID
-     * @return string|null The filename of the saved avatar, or null if no avatars are available.
+     * @return string The filename of the saved avatar.
      */
-    public static function save_random_avatar(round $round, int $participantid): ?string {
+    public static function save_random_avatar(round $round, int $participantid): string {
         $fs = get_file_storage();
         $context = $round->get_context();
 
@@ -150,12 +150,23 @@ class participants {
         $syscontext = \context_system::instance();
         $files = $fs->get_area_files($syscontext->id, 'mod_kahoodle', 'allavatars', 0, 'filepath, filename', false);
 
-        if (empty($files)) {
-            return null;
-        }
-
         // Delete any existing avatar files for this participant.
         $fs->delete_area_files($context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $participantid);
+
+        if (empty($files)) {
+            // No admin-uploaded avatars — generate a unique geopattern.
+            global $OUTPUT;
+            $svg = $OUTPUT->get_generated_svg_for_id($participantid);
+            $fs->create_file_from_string([
+                'contextid' => $context->id,
+                'component' => 'mod_kahoodle',
+                'filearea' => constants::FILEAREA_AVATAR,
+                'itemid' => $participantid,
+                'filepath' => '/',
+                'filename' => 'geopattern.svg',
+            ], $svg);
+            return 'geopattern.svg';
+        }
 
         // Pick a random file.
         $randomfile = $files[array_rand($files)];

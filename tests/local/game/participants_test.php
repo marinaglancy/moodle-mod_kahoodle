@@ -126,4 +126,164 @@ final class participants_test extends \advanced_testcase {
         sort($combined);
         $this->assertEquals($combined, $filenames3);
     }
+
+    /**
+     * Test save_random_avatar picks a random file from the pool.
+     */
+    public function test_save_random_avatar_with_pool(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $this->create_allavatars(5);
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', [
+            'course' => $course->id,
+            'identitymode' => constants::IDENTITYMODE_ALIAS,
+        ]);
+        $round = questions::get_last_round($kahoodle->id);
+
+        /** @var \mod_kahoodle_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
+        $user = $this->getDataGenerator()->create_user();
+        $pid = $generator->create_participant(['roundid' => $round->get_id(), 'userid' => $user->id]);
+
+        $filename = participants::save_random_avatar($round, $pid);
+
+        // Should return a filename from the pool (avatar1.png through avatar5.png).
+        $this->assertNotNull($filename);
+        $this->assertMatchesRegularExpression('/^avatar\d+\.png$/', $filename);
+
+        // Verify the file was stored in the participant's avatar area.
+        $fs = get_file_storage();
+        $context = $round->get_context();
+        $file = $fs->get_file($context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid, '/', $filename);
+        $this->assertNotFalse($file);
+    }
+
+    /**
+     * Test save_random_avatar generates a geopattern when pool is empty.
+     */
+    public function test_save_random_avatar_empty_pool(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        // No avatars in the pool.
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', [
+            'course' => $course->id,
+            'identitymode' => constants::IDENTITYMODE_ALIAS,
+        ]);
+        $round = questions::get_last_round($kahoodle->id);
+
+        /** @var \mod_kahoodle_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
+        $user1 = $this->getDataGenerator()->create_user();
+        $user2 = $this->getDataGenerator()->create_user();
+        $pid1 = $generator->create_participant(['roundid' => $round->get_id(), 'userid' => $user1->id]);
+        $pid2 = $generator->create_participant(['roundid' => $round->get_id(), 'userid' => $user2->id]);
+
+        $filename1 = participants::save_random_avatar($round, $pid1);
+        $filename2 = participants::save_random_avatar($round, $pid2);
+
+        // Both should return a geopattern SVG file.
+        $this->assertEquals('geopattern.svg', $filename1);
+        $this->assertEquals('geopattern.svg', $filename2);
+
+        // Verify files were stored and contain SVG content.
+        $fs = get_file_storage();
+        $context = $round->get_context();
+        $file1 = $fs->get_file($context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid1, '/', 'geopattern.svg');
+        $file2 = $fs->get_file($context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid2, '/', 'geopattern.svg');
+        $this->assertNotFalse($file1);
+        $this->assertNotFalse($file2);
+        $this->assertStringContainsString('<svg', $file1->get_content());
+        $this->assertStringContainsString('<svg', $file2->get_content());
+
+        // Different participants should get different patterns.
+        $this->assertNotEquals($file1->get_contenthash(), $file2->get_contenthash());
+    }
+
+    /**
+     * Test save_profile_picture_to_avatar copies an uploaded profile picture.
+     */
+    public function test_save_profile_picture_with_uploaded_picture(): void {
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', [
+            'course' => $course->id,
+            'identitymode' => constants::IDENTITYMODE_REALNAME,
+        ]);
+        $round = questions::get_last_round($kahoodle->id);
+
+        $user = $this->getDataGenerator()->create_user();
+        $this->setUser($user);
+
+        // Upload a fake profile picture (f3.png) to the user's icon file area.
+        $fs = get_file_storage();
+        $usercontext = \context_user::instance($user->id);
+        $fakecontent = 'fake-profile-picture-content';
+        $fs->create_file_from_string([
+            'contextid' => $usercontext->id,
+            'component' => 'user',
+            'filearea' => 'icon',
+            'itemid' => 0,
+            'filepath' => '/',
+            'filename' => 'f3.png',
+        ], $fakecontent);
+
+        /** @var \mod_kahoodle_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
+        $pid = $generator->create_participant(['roundid' => $round->get_id(), 'userid' => $user->id]);
+
+        $filename = participants::save_profile_picture_to_avatar($round, $pid);
+
+        // Should return the profile picture filename.
+        $this->assertEquals('f3.png', $filename);
+
+        // Verify the file was copied to the participant's avatar area with the same content.
+        $context = $round->get_context();
+        $file = $fs->get_file($context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid, '/', 'f3.png');
+        $this->assertNotFalse($file);
+        $this->assertEquals($fakecontent, $file->get_content());
+    }
+
+    /**
+     * Test save_profile_picture_to_avatar downloads gravatar/generated picture when no upload exists.
+     */
+    public function test_save_profile_picture_without_uploaded_picture(): void {
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', [
+            'course' => $course->id,
+            'identitymode' => constants::IDENTITYMODE_REALNAME,
+        ]);
+        $round = questions::get_last_round($kahoodle->id);
+
+        // User with no uploaded profile picture.
+        $user = $this->getDataGenerator()->create_user();
+        $this->setUser($user);
+
+        /** @var \mod_kahoodle_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
+        $pid = $generator->create_participant(['roundid' => $round->get_id(), 'userid' => $user->id]);
+
+        // Mock the HTTP response so download_file_content succeeds.
+        $fakecontent = 'fake-downloaded-image';
+        \curl::mock_response($fakecontent);
+
+        $filename = participants::save_profile_picture_to_avatar($round, $pid);
+
+        // Mock response has no Content-Type header, so defaults to png.
+        $this->assertEquals('profile.png', $filename);
+
+        // Verify the file was stored with the downloaded content.
+        $fs = get_file_storage();
+        $context = $round->get_context();
+        $file = $fs->get_file($context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid, '/', 'profile.png');
+        $this->assertNotFalse($file);
+        $this->assertEquals($fakecontent, $file->get_content());
+    }
 }

@@ -125,6 +125,9 @@ class constants {
     /** @var int Maximum number of avatar candidates that can be requested */
     public const MAX_AVATAR_CANDIDATES = 40;
 
+    /** @var int Minimum number of avatars in pool required to allow avatar change */
+    public const MIN_AVATARS_FOR_CHANGE = 10;
+
     /** @var array Symbols used for multichoice options */
     public const MULTICHOICE_SYMBOLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 }

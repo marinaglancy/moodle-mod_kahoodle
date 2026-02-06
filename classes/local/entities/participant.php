@@ -198,7 +198,10 @@ class participant {
         if ((int)$kahoodle->identitymode === \mod_kahoodle\constants::IDENTITYMODE_REALNAME) {
             return false;
         }
-        return $this->round->get_current_stage_name() === \mod_kahoodle\constants::STAGE_LOBBY;
+        if ($this->round->get_current_stage_name() !== \mod_kahoodle\constants::STAGE_LOBBY) {
+            return false;
+        }
+        return $this->round->get_allavatars_count() >= \mod_kahoodle\constants::MIN_AVATARS_FOR_CHANGE;
     }
 
     /**
