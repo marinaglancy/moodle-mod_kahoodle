@@ -146,9 +146,8 @@ class participants {
         $fs = get_file_storage();
         $context = $round->get_context();
 
-        // Get all files from the allavatars file area (system context, may have subfolders).
-        $syscontext = \context_system::instance();
-        $files = $fs->get_area_files($syscontext->id, 'mod_kahoodle', 'allavatars', 0, 'filepath, filename', false);
+        // Get all image files from the allavatars file area.
+        $files = self::get_allavatars_images();
 
         // Delete any existing avatar files for this participant.
         $fs->delete_area_files($context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $participantid);
@@ -300,11 +299,8 @@ class participants {
             return ['candidates' => $candidates, 'hasmore' => $hasmore, 'count' => $existingcount];
         }
 
-        // Get all files from the allavatars file area (system context, may have subfolders).
-        $syscontext = \context_system::instance();
-        $allfiles = $fs->get_area_files(
-            $syscontext->id, 'mod_kahoodle', 'allavatars', 0, 'filepath, filename', false
-        );
+        // Get all image files from the allavatars file area.
+        $allfiles = self::get_allavatars_images();
 
         if (empty($allfiles)) {
             return ['candidates' => [], 'hasmore' => false];
@@ -522,10 +518,7 @@ class participants {
             $excludedhashes[$file->get_contenthash()] = true;
         }
 
-        $syscontext = \context_system::instance();
-        $allfiles = $fs->get_area_files(
-            $syscontext->id, 'mod_kahoodle', 'allavatars', 0, 'filepath, filename', false
-        );
+        $allfiles = self::get_allavatars_images();
 
         foreach ($allfiles as $file) {
             if (!isset($excludedhashes[$file->get_contenthash()])) {
@@ -533,5 +526,24 @@ class participants {
             }
         }
         return false;
+    }
+
+    /**
+     * Get all image files from the allavatars file area.
+     *
+     * Filters out non-image files (e.g. text files, PDFs) that may have been
+     * accidentally uploaded to the avatar pool.
+     *
+     * @return \stored_file[]
+     */
+    private static function get_allavatars_images(): array {
+        $fs = get_file_storage();
+        $syscontext = \context_system::instance();
+        $files = $fs->get_area_files(
+            $syscontext->id, 'mod_kahoodle', 'allavatars', 0, 'filepath, filename', false
+        );
+        return array_values(array_filter($files, function (\stored_file $file) {
+            return file_mimetype_in_typegroup($file->get_mimetype(), ['web_image']);
+        }));
     }
 }

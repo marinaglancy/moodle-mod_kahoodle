@@ -461,7 +461,10 @@ class round {
             $syscontext->id, 'mod_kahoodle', 'allavatars', 0,
             'filepath, filename', false
         );
-        $this->allavatarscount = count($files);
+        // Only count web image files, ignoring any non-image files in the area.
+        $this->allavatarscount = count(array_filter($files, function (\stored_file $file) {
+            return file_mimetype_in_typegroup($file->get_mimetype(), ['web_image']);
+        }));
         return $this->allavatarscount;
     }
 
