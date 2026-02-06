@@ -701,6 +701,7 @@
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid rgba(255, 255, 255, 0.4);
+    background-color: #fff;
 }
 
 .mod_kahoodle-participant-name {
@@ -909,10 +910,10 @@
 }
 
 .mod_kahoodle-participant-avatar-wrapper .mod_kahoodle-participant-avatar-circle {
-    width: 100px;
-    height: 100px;
+    width: 126px;
+    height: 126px;
     border-radius: 50%;
-    background-color: #3d3d3d;
+    background-color: #fff;
     overflow: hidden;
     border: 3px solid rgba(255, 255, 255, 0.2);
 }
@@ -992,6 +993,113 @@
     .mod_kahoodle-participant-container .mod_kahoodle-participant-display-name {
         font-size: 1.75rem;
     }
+}
+
+/* ========================================
+   AVATAR PICKER OVERLAY
+   ======================================== */
+
+.mod_kahoodle-avatar-picker {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #2a2a2a;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+}
+
+.mod_kahoodle-avatar-picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-shrink: 0;
+}
+
+.mod_kahoodle-avatar-picker-title {
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.mod_kahoodle-avatar-picker-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.mod_kahoodle-avatar-picker-close:hover {
+    color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.mod_kahoodle-avatar-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 126px);
+    gap: 1.25rem 3.75rem;
+    justify-content: center;
+    overflow-y: auto;
+    min-height: 0;
+    flex: 1;
+    padding: 0.25rem;
+}
+
+.mod_kahoodle-avatar-picker-item {
+    width: 126px;
+    height: 126px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid transparent;
+    background: #fff;
+    cursor: pointer;
+    padding: 0;
+    transition: border-color 0.2s ease, transform 0.15s ease;
+}
+
+.mod_kahoodle-avatar-picker-item:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.08);
+}
+
+.mod_kahoodle-avatar-picker-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.mod_kahoodle-avatar-picker-more {
+    flex-shrink: 0;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.mod_kahoodle-avatar-picker-more:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.mod_kahoodle-avatar-picker-more:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* ========================================

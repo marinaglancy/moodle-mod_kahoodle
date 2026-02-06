@@ -41,6 +41,14 @@ const SELECTORS = {
     // Landing page buttons.
     LANDING_RESUME: '[data-action="resume-participant"]',
     REVISION_CONTENT: '.mod_kahoodle-participant-revision-content',
+    // Avatar picker.
+    EDIT_AVATAR: '[data-action="editavatar"]',
+    AVATAR_PICKER: '[data-region="avatar-picker"]',
+    AVATAR_GRID: '[data-region="avatar-grid"]',
+    CLOSE_PICKER: '[data-action="closepicker"]',
+    SHOW_MORE: '[data-action="showmore"]',
+    AVATAR_CANDIDATE: '[data-action="selectavatar"]',
+    LOBBY_AVATAR_IMG: '.mod_kahoodle-participant-avatar-img',
 };
 
 // Current participant state.
@@ -359,4 +367,180 @@ const revealRank = () => {
     el.querySelectorAll('[data-region="aftersuspense"]').forEach(element => {
         element.style.display = '';
     });
+};
+
+/**
+ * Initialize avatar picker click handlers
+ *
+ * Called from the lobby template's {{#js}} block to register
+ * click listeners for avatar editing controls. Uses the lobby
+ * stage element as the listener target to avoid duplicate registration.
+ */
+export const initAvatarPicker = () => {
+    const stage = document.querySelector('.mod_kahoodle-participant-content[data-stage="lobby"]');
+    if (!stage || stage.dataset.avatarPickerInit) {
+        return;
+    }
+    stage.dataset.avatarPickerInit = '1';
+    stage.addEventListener('click', handleAvatarPickerClick);
+};
+
+/**
+ * Handle avatar picker click events
+ *
+ * @param {Event} e The click event
+ */
+const handleAvatarPickerClick = (e) => {
+    window.console.log('Avatar picker click', e);
+    const editAvatarBtn = e.target.closest(SELECTORS.EDIT_AVATAR);
+    if (editAvatarBtn) {
+        e.preventDefault();
+        openAvatarPicker();
+        return;
+    }
+
+    const closePickerBtn = e.target.closest(SELECTORS.CLOSE_PICKER);
+    if (closePickerBtn) {
+        e.preventDefault();
+        closeAvatarPicker();
+        return;
+    }
+
+    const showMoreBtn = e.target.closest(SELECTORS.SHOW_MORE);
+    if (showMoreBtn) {
+        window.console.log('Show more avatar candidates');
+        e.preventDefault();
+        loadAvatarCandidates(true);
+        return;
+    }
+
+    const candidateBtn = e.target.closest(SELECTORS.AVATAR_CANDIDATE);
+    if (candidateBtn) {
+        e.preventDefault();
+        selectAvatar(candidateBtn.dataset.filename);
+    }
+};
+
+/**
+ * Open the avatar picker overlay and load initial candidates
+ */
+const openAvatarPicker = () => {
+    const picker = document.querySelector(SELECTORS.AVATAR_PICKER);
+    if (!picker) {
+        return;
+    }
+    picker.style.display = '';
+    loadAvatarCandidates(false);
+};
+
+/**
+ * Close the avatar picker overlay
+ */
+const closeAvatarPicker = () => {
+    const picker = document.querySelector(SELECTORS.AVATAR_PICKER);
+    if (picker) {
+        picker.style.display = 'none';
+    }
+};
+
+/**
+ * Load avatar candidates from the server and append to the grid
+ *
+ * @param {boolean} onlynew If true, only fetch new candidates (for "Show more")
+ */
+const loadAvatarCandidates = async(onlynew) => {
+    const showMoreBtn = document.querySelector(SELECTORS.SHOW_MORE);
+    if (showMoreBtn) {
+        showMoreBtn.disabled = true;
+    }
+
+    try {
+        const channel = getParticipantChannel();
+        const payload = {action: 'get_avatar_candidates'};
+        if (onlynew) {
+            payload.onlynew = true;
+        }
+        const rawResponse = await RealTimeApi.sendToServer(channel, payload);
+        const response = parseRealtimeResponse(rawResponse);
+
+        if (response.error) {
+            window.console.error('Failed to load avatar candidates', response.error);
+            return;
+        }
+
+        const grid = document.querySelector(SELECTORS.AVATAR_GRID);
+        if (!grid) {
+            return;
+        }
+
+        // On initial load, clear the grid since the server returns all existing candidates.
+        if (!onlynew) {
+            grid.innerHTML = '';
+        }
+
+        // Append candidates to the grid.
+        (response.candidates || []).forEach(candidate => {
+            const btn = document.createElement('button');
+            btn.className = 'mod_kahoodle-avatar-picker-item';
+            btn.dataset.action = 'selectavatar';
+            btn.dataset.filename = candidate.filename;
+            const img = document.createElement('img');
+            img.src = candidate.url;
+            img.alt = '';
+            img.className = 'mod_kahoodle-avatar-picker-img';
+            btn.appendChild(img);
+            grid.appendChild(btn);
+        });
+
+        // Show/hide the "Show more" button.
+        if (showMoreBtn) {
+            showMoreBtn.style.display = response.hasmore ? '' : 'none';
+            showMoreBtn.disabled = false;
+        }
+    } catch (error) {
+        window.console.error('Failed to load avatar candidates', error);
+        if (showMoreBtn) {
+            showMoreBtn.disabled = false;
+        }
+    }
+};
+
+/**
+ * Select an avatar candidate and apply it
+ *
+ * @param {string} filename The filename of the chosen candidate
+ */
+const selectAvatar = async(filename) => {
+    try {
+        const channel = getParticipantChannel();
+        const rawResponse = await RealTimeApi.sendToServer(channel, {
+            action: 'change_avatar',
+            filename: filename,
+        });
+        const response = parseRealtimeResponse(rawResponse);
+
+        if (response.error) {
+            window.console.error('Failed to change avatar', response.error);
+            return;
+        }
+
+        // Update the lobby avatar image with the new URL.
+        if (response.avatarurl) {
+            const avatarImg = document.querySelector(SELECTORS.LOBBY_AVATAR_IMG);
+            if (avatarImg) {
+                avatarImg.src = response.avatarurl;
+            }
+        }
+
+        // Close the picker.
+        closeAvatarPicker();
+
+        // Remove the edit button so the user cannot change avatar again.
+        const editBtn = document.querySelector(SELECTORS.EDIT_AVATAR);
+        if (editBtn) {
+            editBtn.remove();
+        }
+    } catch (error) {
+        window.console.error('Failed to change avatar', error);
+    }
 };

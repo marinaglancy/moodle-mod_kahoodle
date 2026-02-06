@@ -315,6 +315,22 @@ function mod_kahoodle_realtime_event_received(\tool_realtime\channel $channel, $
                 \mod_kahoodle\local\game\responses::record_answer($participant, $response, $currentstage);
                 return [];
 
+            case 'get_avatar_candidates':
+                // Return candidate avatars for the participant to choose from.
+                $onlynew = !empty($payload['onlynew']);
+                return \mod_kahoodle\local\game\participants::get_avatar_candidates($participant, $onlynew);
+
+            case 'change_avatar':
+                // Change the participant's avatar to one of the stored candidates.
+                $filename = clean_param($payload['filename'] ?? '', PARAM_FILE);
+                if (empty($filename)) {
+                    return ['error' => 'Missing filename'];
+                }
+                $avatarurl = \mod_kahoodle\local\game\participants::change_avatar($participant, $filename);
+                // Notify facilitators so the lobby display refreshes with the new avatar.
+                \mod_kahoodle\local\game\realtime_channels::notify_facilitators_stage_changed($round);
+                return ['avatarurl' => $avatarurl];
+
             default:
                 return ['error' => 'Unknown action'];
         }

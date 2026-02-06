@@ -91,6 +91,11 @@ class progress {
         $nextstage = $round->get_next_stage();
 
         if ($nextstage != null) {
+            // Clean up avatar candidates when leaving the lobby stage.
+            if ($actualstage->get_stage_name() === constants::STAGE_LOBBY) {
+                participants::cleanup_avatar_candidates($round);
+            }
+
             // Update round.
             $round->set_current_stage($nextstage);
             realtime_channels::notify_facilitators_stage_changed($round);

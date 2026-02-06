@@ -122,6 +122,9 @@ class constants {
         'minpoints',
     ];
 
+    /** @var int Maximum number of avatar candidates that can be requested */
+    public const MAX_AVATAR_CANDIDATES = 40;
+
     /** @var array Symbols used for multichoice options */
     public const MULTICHOICE_SYMBOLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 }

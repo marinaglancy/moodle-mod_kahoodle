@@ -149,7 +149,7 @@ class participant implements \renderable, \templatable {
      */
     protected function get_lobby_data(): array {
         return [
-            'caneditavatar' => false, // TODO: Implement avatar editing.
+            'caneditavatar' => $this->participant->can_change_avatar(),
         ];
     }
 

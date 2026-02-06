@@ -185,6 +185,23 @@ class participant {
     }
 
     /**
+     * Whether this participant can change their avatar right now.
+     *
+     * Avatar change is allowed when the identity mode is not REALNAME
+     * (real name mode always uses the actual profile picture) and the
+     * round is currently in the LOBBY stage.
+     *
+     * @return bool
+     */
+    public function can_change_avatar(): bool {
+        $kahoodle = $this->round->get_kahoodle();
+        if ((int)$kahoodle->identitymode === \mod_kahoodle\constants::IDENTITYMODE_REALNAME) {
+            return false;
+        }
+        return $this->round->get_current_stage_name() === \mod_kahoodle\constants::STAGE_LOBBY;
+    }
+
+    /**
      * Get the user's profile picture URL (from Moodle core, not the stored avatar).
      *
      * @param int $size Picture size. Recommended values: 16, 35, 64, 100, 120.
