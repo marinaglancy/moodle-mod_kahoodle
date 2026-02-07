@@ -25,6 +25,7 @@
     * startgamebuttondisabled - bool - Whether the start button should be disabled
     * starturl - string - URL for the start action
     * managequestionsurl - string - URL for manage questions page
+    * showsectionheaders - bool - Show section headers (when user has both facilitate and participate capabilities)
     * showfacilitatorcontrols - bool - Show facilitator controls when game is in progress
     * finishurl - string - URL for the finish action
     * showparticipantcontrols - bool - Show participant controls when user is playing
@@ -75,9 +76,11 @@
 
     {{#showfacilitatorcontrols}}
     <div class="card mb-3">
+        {{#showsectionheaders}}
         <div class="card-header">
             <h5 class="mb-0">{{#str}}facilitator_controls, mod_kahoodle{{/str}}</h5>
         </div>
+        {{/showsectionheaders}}
         <div class="card-body">
             <p class="card-text">{{#str}}landing_facilitator_message, mod_kahoodle{{/str}}</p>
             <button type="button" class="btn btn-primary me-2" data-action="resume-game">
@@ -92,9 +95,11 @@
 
     {{#showparticipantcontrols}}
     <div class="card mb-3">
+        {{#showsectionheaders}}
         <div class="card-header">
             <h5 class="mb-0">{{#str}}participant_controls, mod_kahoodle{{/str}}</h5>
         </div>
+        {{/showsectionheaders}}
         <div class="card-body">
             <p class="card-text">{{#str}}landing_participant_message, mod_kahoodle{{/str}}</p>
             <button type="button" class="btn btn-primary me-2" data-action="resume-participant">
@@ -111,6 +116,11 @@
 
     {{#showjoinoption}}
     <div class="card mb-3">
+        {{#showsectionheaders}}
+        <div class="card-header">
+            <h5 class="mb-0">{{#str}}join_as_participant, mod_kahoodle{{/str}}</h5>
+        </div>
+        {{/showsectionheaders}}
         <div class="card-body">
             {{{joinformhtml}}}
         </div>

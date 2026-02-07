@@ -86,6 +86,10 @@ class landing implements renderable, templatable {
 
         $isinprogress = $this->round->is_in_progress();
 
+        // Show section headers when the user has both capabilities and may see multiple sections.
+        $canfacilitate = has_capability('mod/kahoodle:facilitate', $this->context);
+        $data->showsectionheaders = $canfacilitate && $canparticipate;
+
         // Determine which section to show based on stage and capabilities.
         if ($stage === constants::STAGE_PREPARATION) {
             // Round is in preparation stage.
