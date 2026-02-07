@@ -30,7 +30,7 @@
     * showparticipantcontrols - bool - Show participant controls when user is playing
     * leaveurl - string - URL for leave action
     * showjoinoption - bool - Show join as participant option
-    * joinurl - string - URL for join action
+    * joinformhtml - string - Rendered join form HTML
     * showwaitingtostart - bool - Show waiting message for participants
     * showfinished - bool - Show finished section
     * resultsurl - string - URL for results page
@@ -112,10 +112,7 @@
     {{#showjoinoption}}
     <div class="card mb-3">
         <div class="card-body">
-            <p class="card-text">{{#str}}landing_join_message, mod_kahoodle{{/str}}</p>
-            <a href="{{joinurl}}" class="btn btn-success">
-                {{#str}}join_as_participant, mod_kahoodle{{/str}}
-            </a>
+            {{{joinformhtml}}}
         </div>
     </div>
     {{/showjoinoption}}

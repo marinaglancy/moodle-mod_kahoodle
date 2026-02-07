@@ -39,17 +39,21 @@ class landing implements renderable, templatable {
     protected \cm_info $cm;
     /** @var \context_module The context */
     protected \context_module $context;
+    /** @var \moodleform|null The join form */
+    protected ?\moodleform $joinform;
 
     /**
      * Constructor
      *
      * @param round $round The round entity
+     * @param \moodleform|null $joinform The join form
      */
-    public function __construct(round $round) {
+    public function __construct(round $round, ?\moodleform $joinform = null) {
         $this->round = $round;
         $this->kahoodle = $round->get_kahoodle();
         $this->cm = $round->get_cm();
         $this->context = $round->get_context();
+        $this->joinform = $joinform;
     }
 
     /**
@@ -125,14 +129,11 @@ class landing implements renderable, templatable {
                         ['id' => $this->cm->id, 'action' => 'finish', 'sesskey' => sesskey()]
                     ))->out(false);
                 }
-                if ($canparticipate) {
+                if ($canparticipate && $this->joinform) {
                     // Show join option (for users with participate capability who haven't joined yet).
                     // This includes users with both capabilities.
                     $data->showjoinoption = true;
-                    $data->joinurl = (new moodle_url(
-                        '/mod/kahoodle/view.php',
-                        ['id' => $this->cm->id, 'action' => 'join', 'sesskey' => sesskey()]
-                    ))->out(false);
+                    $data->joinformhtml = $this->joinform->render();
                 }
             }
         } else if ($stage === constants::STAGE_ARCHIVED) {

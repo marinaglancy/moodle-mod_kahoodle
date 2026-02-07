@@ -74,17 +74,6 @@ if ($action === 'finish') {
     redirect($round->get_url());
 }
 
-if ($action === 'join') {
-    require_sesskey();
-    require_capability('mod/kahoodle:participate', $context);
-
-    // Join the round as a participant.
-    \mod_kahoodle\local\game\participants::join_round($round);
-
-    // Redirect to remove action from URL.
-    redirect($round->get_url());
-}
-
 if ($action === 'leave') {
     require_sesskey();
 
@@ -108,6 +97,19 @@ if ($action === 'newround') {
 
     // Redirect to remove action from URL.
     redirect($round->get_url());
+}
+
+// Create join form if the user can participate and the round is in progress.
+$joinform = null;
+if ($round->is_in_progress() && $round->is_participant() === null && has_capability('mod/kahoodle:participate', $context)) {
+    $joinform = new \mod_kahoodle\form\join(
+        new moodle_url('/mod/kahoodle/view.php'),
+        ['round' => $round]
+    );
+    if ($joinform->get_data()) {
+        \mod_kahoodle\local\game\participants::join_round($round);
+        redirect($round->get_url());
+    }
 }
 
 \mod_kahoodle\event\course_module_viewed::create_from_record($moduleinstance, $cm, $course)->trigger();
@@ -141,7 +143,7 @@ if ($round->is_in_progress()) {
     }
 }
 
-$landing = new \mod_kahoodle\output\landing($round);
+$landing = new \mod_kahoodle\output\landing($round, $joinform);
 
 echo $OUTPUT->header();
 
