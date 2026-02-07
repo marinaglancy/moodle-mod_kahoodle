@@ -41,9 +41,6 @@ class round_updated extends \core\event\base {
     public function get_description() {
         $description = "The user with id '$this->userid' updated round with id '$this->objectid' " .
             "in kahoodle with id '{$this->other['kahoodleid']}' to stage '{$this->other['stage']}'";
-        if (!empty($this->other['questionnumber'])) {
-            $description .= ", question number {$this->other['questionnumber']}";
-        }
         return $description . '.';
     }
 

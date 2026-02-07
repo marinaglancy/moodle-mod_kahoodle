@@ -42,6 +42,9 @@ class all_rounds_participants extends system_report {
     /** @var int|null Cached kahoodle ID */
     protected ?int $kahoodleid = null;
 
+    /** @var \stdClass|null Cached kahoodle record */
+    protected ?\stdClass $kahoodle = null;
+
     /**
      * Get the kahoodle ID for this report
      *
@@ -52,6 +55,19 @@ class all_rounds_participants extends system_report {
             $this->kahoodleid = $this->get_parameter('kahoodleid', 0, PARAM_INT);
         }
         return $this->kahoodleid;
+    }
+
+    /**
+     * Get the kahoodle record for this report
+     *
+     * @return \stdClass
+     */
+    protected function get_kahoodle(): \stdClass {
+        global $DB;
+        if ($this->kahoodle === null) {
+            $this->kahoodle = $DB->get_record('kahoodle', ['id' => $this->get_kahoodleid()], '*', MUST_EXIST);
+        }
+        return $this->kahoodle;
     }
 
     /**
@@ -81,13 +97,16 @@ class all_rounds_participants extends system_report {
         $participantentity->add_join($participantsjoin);
         $this->add_entity($participantentity);
 
-        // Set up user entity and join.
-        $userentity = new user();
-        $userentity->set_table_alias('user', $participantentity->get_table_alias('user'));
-        $userentity->add_join($roundsjoin);
-        $userentity->add_join($participantsjoin);
-        $userentity->add_join($participantentity->get_user_join());
-        $this->add_entity($userentity);
+        // Set up user entity and join (not needed in anonymous mode).
+        $isanonymous = (int)$this->get_kahoodle()->identitymode === constants::IDENTITYMODE_ANONYMOUS;
+        if (!$isanonymous) {
+            $userentity = new user();
+            $userentity->set_table_alias('user', $participantentity->get_table_alias('user'));
+            $userentity->add_join($roundsjoin);
+            $userentity->add_join($participantsjoin);
+            $userentity->add_join($participantentity->get_user_join());
+            $this->add_entity($userentity);
+        }
 
         // Filter by kahoodleid - only show completed rounds (revision or archived).
         $this->add_base_condition_simple("{$kahoodlealias}.id", $this->get_kahoodleid());
@@ -135,7 +154,7 @@ class all_rounds_participants extends system_report {
      * @return void
      */
     protected function add_columns(): void {
-        $this->add_columns_from_entities([
+        $columns = [
             'round:namelinked',
             'participant:participant',
             'user:fullnamewithpicturelink',
@@ -143,7 +162,11 @@ class all_rounds_participants extends system_report {
             'participant:score',
             'participant:correctanswers',
             'participant:questionsanswered',
-        ]);
+        ];
+        if ((int)$this->get_kahoodle()->identitymode === constants::IDENTITYMODE_ANONYMOUS) {
+            $columns = array_diff($columns, ['user:fullnamewithpicturelink']);
+        }
+        $this->add_columns_from_entities($columns);
     }
 
     /**
@@ -152,13 +175,17 @@ class all_rounds_participants extends system_report {
      * @return void
      */
     protected function add_filters(): void {
-        $this->add_filters_from_entities([
+        $filters = [
             'round:name',
             'participant:displayname',
             'user:userselect',
             'participant:rank',
             'participant:score',
-        ]);
+        ];
+        if ((int)$this->get_kahoodle()->identitymode === constants::IDENTITYMODE_ANONYMOUS) {
+            $filters = array_diff($filters, ['user:userselect']);
+        }
+        $this->add_filters_from_entities($filters);
     }
 
     /**

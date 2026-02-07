@@ -103,7 +103,8 @@
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="roundid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="participantcode" TYPE="char" LENGTH="32" NOTNULL="false" SEQUENCE="false" COMMENT="MD5 hash for anonymous participant identification within a session"/>
         <FIELD NAME="displayname" TYPE="char" LENGTH="100" NOTNULL="true" SEQUENCE="false" COMMENT="Custom display name for this round"/>
         <FIELD NAME="avatar" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="Avatar identifier or path"/>
         <FIELD NAME="totalscore" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Total points earned in this round"/>
@@ -117,6 +118,7 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="roundid_userid" UNIQUE="true" FIELDS="roundid, userid"/>
+        <INDEX NAME="roundid_participantcode" UNIQUE="true" FIELDS="roundid, participantcode"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="kahoodle_responses" COMMENT="User responses to questions in a round">

@@ -23,6 +23,7 @@ use core_reportbuilder\local\helpers\database;
 use core_reportbuilder\local\report\action;
 use core_reportbuilder\system_report;
 use lang_string;
+use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
 use mod_kahoodle\reportbuilder\local\entities\participant;
 use moodle_url;
@@ -74,13 +75,16 @@ class participants extends system_report {
         $participantentity->add_join($participantsjoin);
         $this->add_entity($participantentity);
 
-        // Set up user entity and join.
-        $userentity = new user();
-        $userentity->set_table_alias('user', $participantentity->get_table_alias('user'));
-        $userentity->add_join($roundsjoin);
-        $userentity->add_join($participantsjoin);
-        $userentity->add_join($participantentity->get_user_join());
-        $this->add_entity($userentity);
+        // Set up user entity and join (not needed in anonymous mode).
+        $isanonymous = (int)$this->get_round()->get_kahoodle()->identitymode === constants::IDENTITYMODE_ANONYMOUS;
+        if (!$isanonymous) {
+            $userentity = new user();
+            $userentity->set_table_alias('user', $participantentity->get_table_alias('user'));
+            $userentity->add_join($roundsjoin);
+            $userentity->add_join($participantsjoin);
+            $userentity->add_join($participantentity->get_user_join());
+            $this->add_entity($userentity);
+        }
 
         // Filter by kahoodleid and roundid.
         $this->add_base_condition_simple("{$kahoodlealias}.id", $this->get_round()->get_kahoodle()->id);
@@ -121,14 +125,18 @@ class participants extends system_report {
      * @return void
      */
     protected function add_columns(): void {
-        $this->add_columns_from_entities([
+        $columns = [
             'participant:participant',
             'user:fullnamewithpicturelink',
             'participant:rank',
             'participant:score',
             'participant:correctanswers',
             'participant:questionsanswered',
-        ]);
+        ];
+        if ((int)$this->get_round()->get_kahoodle()->identitymode === constants::IDENTITYMODE_ANONYMOUS) {
+            $columns = array_diff($columns, ['user:fullnamewithpicturelink']);
+        }
+        $this->add_columns_from_entities($columns);
     }
 
     /**
@@ -137,12 +145,16 @@ class participants extends system_report {
      * @return void
      */
     protected function add_filters(): void {
-        $this->add_filters_from_entities([
+        $filters = [
             'participant:displayname',
             'user:userselect',
             'participant:rank',
             'participant:score',
-        ]);
+        ];
+        if ((int)$this->get_round()->get_kahoodle()->identitymode === constants::IDENTITYMODE_ANONYMOUS) {
+            $filters = array_diff($filters, ['user:userselect']);
+        }
+        $this->add_filters_from_entities($filters);
     }
 
     /**

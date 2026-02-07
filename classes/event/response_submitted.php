@@ -65,8 +65,10 @@ class response_submitted extends \core\event\base {
      */
     public function get_description() {
         $result = $this->other['iscorrect'] ? 'a correct' : 'an incorrect';
-        return "The user with id '$this->userid' submitted $result response with id '$this->objectid' " .
-            "to question number {$this->other['questionnumber']} in round with id '{$this->other['roundid']}' " .
+        $roundquestionid = $this->other['roundquestionid'] ?? 'unknown';
+        $user = $this->relateduserid ? "The user with id '{$this->relateduserid}'" : 'An anonymous user';
+        return "$user submitted $result response with id '$this->objectid' " .
+            "to round question with id '{$roundquestionid}' in round with id '{$this->other['roundid']}' " .
             "earning {$this->other['points']} points.";
     }
 

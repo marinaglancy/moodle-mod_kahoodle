@@ -539,8 +539,18 @@ class round {
             return null;
         }
 
-        // Check if user has joined this round.
-        $result = participant::load_round_participants($this, ' AND p.userid = :userid', ['userid' => $USER->id]);
+        // In anonymous mode, find participant by participantcode instead of userid.
+        $isanonymous = (int)$this->get_kahoodle()->identitymode === constants::IDENTITYMODE_ANONYMOUS;
+        if ($isanonymous) {
+            $code = \mod_kahoodle\local\game\participants::generate_participant_code($this->get_id());
+            $result = participant::load_round_participants(
+                $this,
+                ' AND p.participantcode = :participantcode',
+                ['participantcode' => $code]
+            );
+        } else {
+            $result = participant::load_round_participants($this, ' AND p.userid = :userid', ['userid' => $USER->id]);
+        }
 
         $this->currentuserparticipant = !empty($result) ? reset($result) : false;
         return $this->currentuserparticipant ?: null;
@@ -628,8 +638,7 @@ class round {
             'context' => $this->get_context(),
             'other' => [
                 'kahoodleid' => $this->data->kahoodleid,
-                'stage' => $newstage->get_stage_name(),
-                'questionnumber' => $newstage->get_question_number(),
+                'stage' => $newstage->get_stage_signature(),
             ],
         ]);
         $event->trigger();

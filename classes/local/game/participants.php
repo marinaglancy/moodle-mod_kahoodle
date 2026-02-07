@@ -59,9 +59,11 @@ class participants {
         }
 
         // Create participant record.
+        $isanonymous = $identitymode === constants::IDENTITYMODE_ANONYMOUS;
         $participant = (object)[
             'roundid' => $round->get_id(),
-            'userid' => $USER->id,
+            'userid' => $isanonymous ? null : $USER->id,
+            'participantcode' => $isanonymous ? self::generate_participant_code($round->get_id()) : null,
             'displayname' => $displayname,
             'avatar' => null,
             'totalscore' => 0,
@@ -590,6 +592,21 @@ class participants {
             }
         }
         return false;
+    }
+
+    /**
+     * Generate a participant code for anonymous mode.
+     *
+     * The code is deterministic within a session (same user + same sesskey + same round
+     * always produces the same hash), so page refreshes don't break identification.
+     * If the session expires, a new sesskey produces a new code.
+     *
+     * @param int $roundid The round ID
+     * @return string 32-character MD5 hex string
+     */
+    public static function generate_participant_code(int $roundid): string {
+        global $USER;
+        return md5($USER->id . sesskey() . $roundid);
     }
 
     /**

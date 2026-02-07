@@ -117,5 +117,42 @@ function xmldb_kahoodle_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026020500, 'kahoodle');
     }
 
+    if ($oldversion < 2026020700) {
+        $table = new xmldb_table('kahoodle_participants');
+
+        // Make userid field nullable (drop dependent indexes first, re-add after).
+        $useridindex = new xmldb_index('userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+        $compositeindex = new xmldb_index('roundid_userid', XMLDB_INDEX_UNIQUE, ['roundid', 'userid']);
+        if ($dbman->index_exists($table, $compositeindex)) {
+            $dbman->drop_index($table, $compositeindex);
+        }
+        if ($dbman->index_exists($table, $useridindex)) {
+            $dbman->drop_index($table, $useridindex);
+        }
+        $field = new xmldb_field('userid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'roundid');
+        $dbman->change_field_notnull($table, $field);
+        if (!$dbman->index_exists($table, $useridindex)) {
+            $dbman->add_index($table, $useridindex);
+        }
+        if (!$dbman->index_exists($table, $compositeindex)) {
+            $dbman->add_index($table, $compositeindex);
+        }
+
+        // Add participantcode field.
+        $field = new xmldb_field('participantcode', XMLDB_TYPE_CHAR, '32', null, null, null, null, 'userid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Add unique index on (roundid, participantcode).
+        $index = new xmldb_index('roundid_participantcode', XMLDB_INDEX_UNIQUE, ['roundid', 'participantcode']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Kahoodle savepoint reached.
+        upgrade_mod_savepoint(true, 2026020700, 'kahoodle');
+    }
+
     return true;
 }
