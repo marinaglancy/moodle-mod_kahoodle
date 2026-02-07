@@ -19,8 +19,6 @@ namespace mod_kahoodle\form;
 use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
 
-require_once($CFG->libdir . '/formslib.php');
-
 /**
  * Form for joining a round as a participant
  *
@@ -50,8 +48,10 @@ class join extends \moodleform {
      */
     protected function create_identity_img(string $url): \HTML_QuickForm_element {
         $imgattrs = 'class="mod_kahoodle-identity-img rounded-circle mr-2" width="35" height="35"';
-        return $this->_form->createElement('html',
-            '<img src="' . s($url) . '" ' . $imgattrs . ' alt="">');
+        return $this->_form->createElement(
+            'html',
+            '<img src="' . s($url) . '" ' . $imgattrs . ' alt="">'
+        );
     }
 
     /**
@@ -60,8 +60,10 @@ class join extends \moodleform {
      * @param string $stringkey Language string key from mod_kahoodle
      */
     protected function add_identity_caption(string $stringkey): void {
-        $this->_form->addElement('html',
-            '<small class="text-muted d-block mb-2">' . get_string($stringkey, 'mod_kahoodle') . '</small>');
+        $this->_form->addElement(
+            'html',
+            '<small class="text-muted d-block mb-2">' . get_string($stringkey, 'mod_kahoodle') . '</small>'
+        );
     }
 
     /**
@@ -109,8 +111,13 @@ class join extends \moodleform {
                 $mform->createElement('radio', 'identitychoice', '', '', 'realname'),
                 ...$this->create_realname_elements(),
             ];
-            $mform->addGroup($group1, 'identity_realname_grp',
-                get_string('joinas', 'mod_kahoodle'), ' ', false);
+            $mform->addGroup(
+                $group1,
+                'identity_realname_grp',
+                get_string('joinas', 'mod_kahoodle'),
+                ' ',
+                false
+            );
             $mform->setDefault('identitychoice', 'realname');
 
             // Option 2: nickname + random avatar.
@@ -128,8 +135,13 @@ class join extends \moodleform {
             $this->add_identity_caption('identitycaption_alias');
         } else if ($identitymode === constants::IDENTITYMODE_REALNAME) {
             // REALNAME: show static "Join as" with profile picture and real name.
-            $mform->addGroup($this->create_realname_elements(), 'identity_realname_grp',
-                get_string('joinas', 'mod_kahoodle'), ' ', false);
+            $mform->addGroup(
+                $this->create_realname_elements(),
+                'identity_realname_grp',
+                get_string('joinas', 'mod_kahoodle'),
+                ' ',
+                false
+            );
         } else {
             // ALIAS or ANONYMOUS: always show display name field.
             $mform->addElement(
@@ -173,8 +185,10 @@ class join extends \moodleform {
 
         if ($identitymode === constants::IDENTITYMODE_REALNAME) {
             $data->displayname = null;
-        } else if ($identitymode === constants::IDENTITYMODE_OPTIONAL
-                && ($data->identitychoice ?? '') !== 'alias') {
+        } else if (
+            $identitymode === constants::IDENTITYMODE_OPTIONAL
+                && ($data->identitychoice ?? '') !== 'alias'
+        ) {
             $data->displayname = null;
         }
 
@@ -195,8 +209,10 @@ class join extends \moodleform {
         $identitymode = (int)($kahoodle->identitymode ?? constants::DEFAULT_IDENTITY_MODE);
         $maxlen = constants::DISPLAYNAME_MAXLENGTH;
 
-        if ($identitymode === constants::IDENTITYMODE_OPTIONAL
-                && ($data['identitychoice'] ?? '') === 'alias') {
+        if (
+            $identitymode === constants::IDENTITYMODE_OPTIONAL
+                && ($data['identitychoice'] ?? '') === 'alias'
+        ) {
             $displayname = trim($data['displayname'] ?? '');
             if ($displayname === '') {
                 $errors['identity_alias_grp'] = get_string('required');

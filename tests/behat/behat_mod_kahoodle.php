@@ -31,7 +31,6 @@ use mod_kahoodle\questions;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class behat_mod_kahoodle extends behat_base {
-
     /**
      * Advances the round for the given kahoodle activity to the specified stage using the API.
      *
