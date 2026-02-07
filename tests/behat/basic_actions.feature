@@ -137,3 +137,31 @@ Feature: Basic operations with module Kahoodle
     And I click on "Test module name" "link" in the "region-main" "region"
     Then I should see "Test module description"
     And I should see "Test module name"
+
+  @javascript
+  Scenario: Duplicating a Kahoodle activity preserves questions
+    Given the following "activities" exist:
+      | activity | name          | course | idnumber  | section |
+      | kahoodle | Test Kahoodle | C1     | kahoodle1 | 1       |
+    And the following "mod_kahoodle > questions" exist:
+      | kahoodle  | questiontext                  | questionconfig        |
+      | kahoodle1 | What is the capital of France? | Berlin\n*Paris\nRome  |
+      | kahoodle1 | What is 2 + 2?                | 3\n*4\n5              |
+      | kahoodle1 | Which planet is largest?      | Mars\nVenus\n*Jupiter |
+    When I log in as "teacher1"
+    And I am on "Course 1" course homepage with editing mode on
+    And I duplicate "Test Kahoodle" activity
+    And I am on "Course 1" course homepage
+    Then I should see "Test Kahoodle (copy)"
+    # Verify the original activity still has its questions.
+    When I am on the "Test Kahoodle" "kahoodle activity" page
+    And I navigate to "Questions" in current page administration
+    Then I should see "What is the capital of France?"
+    And I should see "What is 2 + 2?"
+    And I should see "Which planet is largest?"
+    # Verify the duplicated activity has the same questions.
+    When I am on the "Test Kahoodle (copy)" "kahoodle activity" page
+    And I navigate to "Questions" in current page administration
+    Then I should see "What is the capital of France?"
+    And I should see "What is 2 + 2?"
+    And I should see "Which planet is largest?"
