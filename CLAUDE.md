@@ -52,6 +52,7 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   ├── change_question_sortorder.php # Question reordering web service
 │   │   ├── create_instance.php # Activity instance creation web service
 │   │   ├── delete_question.php # Question deletion web service
+│   │   ├── duplicate_question.php # Question duplication web service (supports optional targetroundid for cross-round duplication)
 │   │   └── preview_questions.php # Question preview web service
 │   ├── form/                 # Dynamic forms
 │   │   ├── join.php          # Join round form (identity mode aware, normalises displayname in get_data)
@@ -138,7 +139,8 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   ├── add_questions_test.php
 │   │   ├── change_question_sortorder_test.php
 │   │   ├── create_instance_test.php
-│   │   └── delete_question_test.php
+│   │   ├── delete_question_test.php
+│   │   └── duplicate_question_test.php
 │   ├── generator/            # Test data generators
 │   │   ├── behat_mod_kahoodle_generator.php
 │   │   └── lib.php
@@ -150,7 +152,7 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 ├── questions.php             # Question management page (accepts id or roundid)
 ├── results.php               # Results page showing all rounds
 ├── version.php               # Plugin version information
-└── view.php                  # Main view page (landing page with actions)
+└── view.php                  # Main view page (landing page with actions, newround action supports returnto parameter)
 ```
 
 ## Core Functionality
@@ -209,18 +211,31 @@ The `\mod_kahoodle\questions` class provides the core question management functi
    - Updates question content and/or behavior data
    - Creates new version if current version is used in started rounds
    - Otherwise updates existing version in-place
-   - Throws exception if no editable round exists
+   - Works in any round (not just fully editable ones)
+   - Validates changes against existing responses via question type's `validate_edit_changes()`
 
 6. **`delete_question(round_question $roundquestion): void`**
-   - Removes question from editable round
+   - Removes question from fully editable round
    - Preserves version if used in started rounds
    - Deletes version and question if not used elsewhere
-   - Throws exception if no editable round exists
+   - Throws exception if round is not fully editable
+
+7. **`duplicate_question(round_question $roundquestion, ?round $targetround = null): round_question`**
+   - Creates a copy of the question (new question + version + files)
+   - When duplicating within the same round, places the duplicate right after the original in sort order
+   - When duplicating to a different round (`$targetround`), appends at the end
+   - Only works if the target round is fully editable
+   - Returns the newly created round_question entity
+
+8. **`question_has_responses(int $questionid): bool`**
+   - Checks if any version of a question has responses from participants
+   - Used to determine whether edit restrictions apply
 
 #### Versioning Logic
 
-- **Editable Round**: Questions in preparation-stage rounds (not yet started) can be freely edited
-- **Started Rounds**: Once a round starts, its questions are "locked" at their current version
+- **Fully Editable Round**: Questions in preparation-stage rounds (not yet started) can be freely edited, added, deleted, reordered, and duplicated
+- **Started Rounds**: Once a round starts, questions can still be edited (content changes) but cannot be added, deleted, or reordered. Questions can be duplicated into a different fully editable round (cross-round duplication).
+- **Edit Restrictions**: When a question has existing responses, the question type may restrict certain changes (e.g., multichoice prevents changing the number of options or the correct answer position)
 - **Smart Versioning**: When editing a question that's used in started rounds, a new version is created automatically
 - **Historical Accuracy**: Past rounds always reference the exact version that was shown during gameplay
 
@@ -239,7 +254,7 @@ Represents a game round with lazy-loaded cached access to related data.
 **Methods:**
 - `get_id(): int` - Get round ID
 - `get_kahoodleid(): int` - Get parent activity ID
-- `is_editable(): bool` - Check if round is in preparation stage
+- `is_fully_editable(): bool` - Check if round is in preparation stage (can add/delete/reorder/duplicate questions)
 - `get_kahoodle(): stdClass` - Get cached kahoodle activity record
 - `get_cm(): stdClass` - Get cached course module record
 - `get_context(): context_module` - Get context module instance
@@ -415,6 +430,7 @@ Abstract class that all question types must extend:
 **Provided Methods:**
 - `get_type(): string` - Returns the type identifier (class name, e.g., 'multichoice')
 - `sanitize_data(round_question $roundquestion, \stdClass $data): void` - Common sanitization (validates fields, formats, durations, points) then calls `sanitize_question_config_data()`
+- `validate_edit_changes(round_question $roundquestion, \stdClass $newdata): array` - Validate proposed edit changes against existing responses. Returns error messages if changes are not allowed. Default implementation allows all changes; override in subclasses to add restrictions.
 
 #### Multichoice Type (`multichoice.php`)
 
@@ -424,6 +440,10 @@ Multiple choice questions with 2-8 answer options.
 - One option per line
 - Prefix correct answer with asterisk (`*`)
 - Example: `"Option A\n*Option B\nOption C"` (Option B is correct)
+
+**Edit Restrictions (when responses exist):**
+- Cannot change the number of answer options
+- Cannot change the position of the correct answer
 
 **Validation:**
 - Requires 2-8 options
@@ -513,8 +533,9 @@ Provides columns and filters for displaying round information.
 
 **questions Report (`questions.php`)**
 - Lists questions for a round on the question management page
-- Columns: sortorder (with drag handle), questiontype, questionimages, questiontext, timing, score
-- Actions: preview, edit, delete (delete only for editable rounds)
+- Columns: sortorder (with drag handle in fully editable rounds), questiontype, questionimages, questiontext, timing, score
+- Actions: preview (always), edit (always), duplicate (fully editable rounds, or non-editable rounds when an editable round exists — adds `data-targetroundid` attribute for cross-round duplication), delete (fully editable rounds only)
+- Caches `get_editable_round_id()` result on the report instance to avoid repeated DB queries per row
 - Used in: `questions.php`
 
 **participants Report (`participants.php`)**
@@ -969,18 +990,22 @@ The plugin includes comprehensive PHPUnit test coverage:
 - Tests for round creation, question CRUD operations, versioning logic
 - Edge cases: no editable rounds, permission checks, sort order
 
-#### Web Service Tests (`tests/external/add_questions_test.php`)
-- Tests for batch question creation web service
-- Tests for single/multiple questions, permissions, error handling
-- Mixed success scenarios, parameter validation
+#### Web Service Tests (`tests/external/`)
+- `add_questions_test.php`: Tests for batch question creation (single/multiple, permissions, error handling, mixed success)
+- `delete_question_test.php`: Tests for question deletion (basic, permissions, sortorder fix)
+- `duplicate_question_test.php`: Tests for question duplication (same-round, cross-round with targetroundid, permissions)
+- `change_question_sortorder_test.php`: Tests for question reordering
+- `create_instance_test.php`: Tests for activity instance creation
 
-**Total: 32 tests passing**
+**Total: 38 tests passing**
 
 ### Test Data Generator
 
 The `mod_kahoodle_generator` (in `tests/generator/lib.php`) provides:
 - `create_instance($record)`: Create kahoodle activity instances
 - `create_question($record)`: Create questions with all parameters
+- `create_participant($record)`: Create participants for rounds
+- `create_response($record)`: Create participant responses
 
 ### Running Tests
 
@@ -994,6 +1019,7 @@ vendor/bin/phpunit mod/kahoodle/tests/questions_test.php
 # Run specific test file
 vendor/bin/phpunit mod/kahoodle/tests/questions_test.php
 vendor/bin/phpunit mod/kahoodle/tests/external/add_questions_test.php
+vendor/bin/phpunit mod/kahoodle/tests/external/duplicate_question_test.php
 
 # Run with filter
 vendor/bin/phpunit --filter questions_test
@@ -1007,14 +1033,17 @@ vendor/bin/phpunit --filter questions_test
 - Database schema with versioning system
 - Question format modes (plain text with image OR rich text editor)
 - Question management API with smart versioning
+- Question edit validation: warns when responses exist, question types can restrict changes (multichoice prevents changing option count or correct answer position)
+- Question duplication (same-round and cross-round to fully editable rounds)
 - Batch question creation web service
 - Question deletion web service
+- Question duplication web service
 - Entity classes for `round` and `round_question` with caching
 - Questions management page with Report Builder system report
 - Question add/edit modal form (dynamic form with conditional fields based on format)
 - AMD module for question UI interactions
 - Constants for defaults, types, stages, file areas, and field lists
-- Comprehensive test coverage (32 tests)
+- Comprehensive test coverage (38 tests)
 - Test data generators
 - Backup/restore support for all activity settings
 - Event logging for all major actions (10 events: view, question CRUD, round management, participants, responses)

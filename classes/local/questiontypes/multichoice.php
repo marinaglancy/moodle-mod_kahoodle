@@ -214,6 +214,35 @@ class multichoice extends base {
     }
 
     /**
+     * Validate that proposed edit changes are compatible with existing responses
+     *
+     * For multichoice: cannot change the number of answers or the position of the correct answer.
+     *
+     * @param round_question $roundquestion The current round question
+     * @param \stdClass $newdata The proposed new data
+     * @return string[] Array of error messages
+     */
+    public function validate_edit_changes(round_question $roundquestion, \stdClass $newdata): array {
+        $errors = [];
+
+        $currentoptions = $this->get_answers_options($roundquestion->get_data()->questionconfig);
+        $newoptions = $this->get_answers_options($newdata->questionconfig ?? '');
+
+        if (count($newoptions) !== count($currentoptions)) {
+            $errors[] = get_string('multichoice_cannotchangeoptioncount', 'mod_kahoodle');
+        }
+
+        // Check if the correct answer position changed.
+        $currentcorrect = array_keys(array_filter($currentoptions, fn($o) => $o['iscorrect']));
+        $newcorrect = array_keys(array_filter($newoptions, fn($o) => $o['iscorrect']));
+        if ($currentcorrect !== $newcorrect) {
+            $errors[] = get_string('multichoice_cannotchangecorrectanswer', 'mod_kahoodle');
+        }
+
+        return $errors;
+    }
+
+    /**
      * Returns an array with all configured answers options
      *
      * @param string|null $questionconfig

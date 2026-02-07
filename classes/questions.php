@@ -122,7 +122,7 @@ class questions {
         $lastround = self::get_last_round($kahoodleid);
 
         // Return the round ID only if it is editable.
-        if ($lastround->is_editable()) {
+        if ($lastround->is_fully_editable()) {
             return $lastround->get_id();
         }
 
@@ -158,7 +158,7 @@ class questions {
 
         // Get editable round ID, throw exception if there is no editable round.
         $round = self::get_last_round($kahoodleid);
-        if (!$round->is_editable()) {
+        if (!$round->is_fully_editable()) {
             throw new \moodle_exception('noeditableround', 'mod_kahoodle');
         }
         $roundquestionobj = round_question::new_for_round_and_type($round, $questiondata->questiontype ?? null);
@@ -278,7 +278,7 @@ class questions {
      *   - maxpoints: Maximum points override (optional)
      *   - minpoints: Minimum points override (optional)
      * @return void
-     * @throws \moodle_exception If no editable round exists or question not found
+     * @throws \moodle_exception If question not found or edit changes are invalid
      */
     public static function edit_question(round_question $roundquestion, \stdClass $questiondata): void {
         global $DB;
@@ -291,9 +291,12 @@ class questions {
         $round = $roundquestion->get_round();
         $roundquestion->get_question_type()->sanitize_data($roundquestion, $questiondata);
 
-        if (!$round->is_editable()) {
-            // TODO at the moment we only support editing questions in editable rounds.
-            throw new \moodle_exception('noeditableround', 'mod_kahoodle');
+        // Validate edit changes if this question has responses.
+        if (self::question_has_responses($questionid)) {
+            $editchangeerrors = $roundquestion->get_question_type()->validate_edit_changes($roundquestion, $questiondata);
+            if ($editchangeerrors) {
+                throw new \moodle_exception('errorgeneral', 'mod_kahoodle', '', implode(' ', $editchangeerrors));
+            }
         }
 
         $contentchanges = [];
@@ -422,8 +425,7 @@ class questions {
 
         // Get editable round ID.
         $round = $roundquestion->get_round();
-        if (!$round->is_editable()) {
-            // TODO at the moment we only support editing questions in editable rounds.
+        if (!$round->is_fully_editable()) {
             throw new \moodle_exception('noeditableround', 'mod_kahoodle');
         }
 
@@ -507,7 +509,7 @@ class questions {
 
         // Get editable round ID.
         $round = $roundquestion->get_round();
-        if (!$round->is_editable()) {
+        if (!$round->is_fully_editable()) {
             throw new \moodle_exception('noeditableround', 'mod_kahoodle');
         }
 
@@ -556,6 +558,120 @@ class questions {
             ],
         ]);
         $event->trigger();
+    }
+
+    /**
+     * Duplicate a question into a round
+     *
+     * Creates a new question with a copy of the current version's content and
+     * the same behavior settings. When duplicating within the same round, the duplicate
+     * is placed right after the original. When duplicating to a different round,
+     * it is appended at the end. Only works if the target round is fully editable.
+     *
+     * @param round_question $roundquestion The round question entity to duplicate
+     * @param round|null $targetround Target round (null = same round as the source question)
+     * @return round_question The newly created duplicate
+     * @throws \moodle_exception If target round is not fully editable
+     */
+    public static function duplicate_question(round_question $roundquestion, ?round $targetround = null): round_question {
+        global $DB;
+
+        $round = $targetround ?? $roundquestion->get_round();
+        if (!$round->is_fully_editable()) {
+            throw new \moodle_exception('noeditableround', 'mod_kahoodle');
+        }
+
+        $data = $roundquestion->get_data();
+        $time = time();
+
+        // Create a new question record.
+        $question = new \stdClass();
+        $question->kahoodleid = $data->kahoodleid;
+        $question->questiontype = $data->questiontype;
+        $question->timecreated = $time;
+        $questionid = $DB->insert_record('kahoodle_questions', $question);
+
+        // Create first version as a copy of the current version.
+        $version = new \stdClass();
+        $version->questionid = $questionid;
+        $version->version = 1;
+        foreach (constants::FIELDS_QUESTION_VERSION as $field) {
+            $version->$field = $data->$field;
+        }
+        $version->timecreated = $time;
+        $version->timemodified = $time;
+        $version->islast = 1;
+        $versionid = $DB->insert_record('kahoodle_question_versions', $version);
+
+        // Copy files from the original version.
+        $context = $round->get_context();
+        $fs = get_file_storage();
+        $files = $fs->get_area_files(
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_QUESTION_IMAGE,
+            $data->questionversionid,
+            'filename',
+            false
+        );
+        foreach ($files as $file) {
+            $fs->create_file_from_storedfile(
+                ['itemid' => $versionid],
+                $file
+            );
+        }
+
+        // Link the new question to the target round.
+        $issameround = ($round->get_id() === $roundquestion->get_round()->get_id());
+        $roundquestionrecord = new \stdClass();
+        $roundquestionrecord->roundid = $round->get_id();
+        $roundquestionrecord->questionversionid = $versionid;
+        if ($issameround) {
+            // Same round: use same sortorder so fix_round_sortorder places it right after the original.
+            $roundquestionrecord->sortorder = $data->sortorder;
+        } else {
+            // Different round: append at the end.
+            $maxsortorder = (int)$DB->get_field('kahoodle_round_questions', 'MAX(sortorder)', ['roundid' => $round->get_id()]);
+            $roundquestionrecord->sortorder = $maxsortorder + 1;
+        }
+        foreach (constants::FIELDS_ROUND_QUESTION as $field) {
+            $roundquestionrecord->$field = $data->$field;
+        }
+        $roundquestionrecord->timecreated = $time;
+        $roundquestionrecord->timemodified = $time;
+        $id = $DB->insert_record('kahoodle_round_questions', $roundquestionrecord);
+
+        // Renumber sortorders sequentially so the duplicate gets the next position.
+        self::fix_round_sortorder($round->get_id());
+
+        $event = \mod_kahoodle\event\question_created::create([
+            'objectid' => $id,
+            'context' => $round->get_context(),
+            'other' => [
+                'kahoodleid' => $data->kahoodleid,
+                'roundid' => $round->get_id(),
+            ],
+        ]);
+        $event->trigger();
+
+        return round_question::create_from_round_question_id($id);
+    }
+
+    /**
+     * Check if any version of a question has responses
+     *
+     * @param int $questionid The question ID
+     * @return bool True if responses exist for any version of this question
+     */
+    public static function question_has_responses(int $questionid): bool {
+        global $DB;
+
+        $sql = "SELECT COUNT(1)
+                  FROM {kahoodle_responses} r
+                  JOIN {kahoodle_round_questions} rq ON rq.id = r.roundquestionid
+                  JOIN {kahoodle_question_versions} qv ON qv.id = rq.questionversionid
+                 WHERE qv.questionid = :questionid";
+        return $DB->count_records_sql($sql, ['questionid' => $questionid]) > 0;
     }
 
     /**

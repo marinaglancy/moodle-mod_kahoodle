@@ -65,7 +65,8 @@ foreach (\mod_kahoodle\questions::get_question_types() as $questiontype) {
     ];
 }
 
-$PAGE->requires->js_call_amd('mod_kahoodle/questions', 'init', [$round->get_id(), $questiontypesjs]);
+$isfullyeditable = $round->is_fully_editable();
+$PAGE->requires->js_call_amd('mod_kahoodle/questions', 'init', [$round->get_id(), $questiontypesjs, $isfullyeditable]);
 
 echo $OUTPUT->header();
 
@@ -76,7 +77,7 @@ $roundoptions = [];
 foreach ($allrounds as $r) {
     $url = (new moodle_url('/mod/kahoodle/questions.php', ['roundid' => $r->get_id()]))->out(false);
     $name = $r->get_display_name();
-    if (!$r->is_editable()) {
+    if (!$r->is_fully_editable()) {
         $name .= ' (' . userdate($r->get_timestarted(), get_string('strftimedatetimeshort', 'langconfig')) . ')';
     }
     $roundoptions[$url] = $name;
@@ -93,7 +94,7 @@ echo html_writer::div(
 );
 
 // Display warning if round is not editable.
-if (!$round->is_editable()) {
+if (!$round->is_fully_editable()) {
     echo $OUTPUT->notification(
         get_string('questions_roundnoteditable', 'mod_kahoodle'),
         \core\output\notification::NOTIFY_WARNING
@@ -109,6 +110,7 @@ if (!$round->is_editable()) {
             'id' => $cm->id,
             'action' => 'newround',
             'sesskey' => sesskey(),
+            'returnto' => 'questions',
         ]);
         echo html_writer::div(
             html_writer::link($newroundurl, get_string('preparenewround', 'mod_kahoodle'), ['class' => 'btn btn-primary']),
@@ -142,7 +144,7 @@ echo html_writer::tag(
         'data-bs-toggle' => 'dropdown',
         'aria-haspopup' => 'true',
         'aria-expanded' => 'false',
-        'disabled' => !$round->is_editable() ? 'disabled' : null,
+        'disabled' => !$round->is_fully_editable() ? 'disabled' : null,
     ]
 );
 echo html_writer::tag('div', implode('', $dropdownitems), ['class' => 'dropdown-menu']);

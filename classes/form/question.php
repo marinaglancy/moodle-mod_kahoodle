@@ -71,6 +71,20 @@ class question extends dynamic_form {
         $round = $roundquestion->get_round();
         $questiontype = $roundquestion->get_data()->questiontype;
 
+        // Show warning if this question has responses.
+        if (
+            $roundquestion->get_id() &&
+                \mod_kahoodle\questions::question_has_responses($roundquestion->get_question_id())
+        ) {
+            $mform->addElement(
+                'html',
+                \html_writer::div(
+                    get_string('questionhasresponses', 'mod_kahoodle'),
+                    'alert alert-warning'
+                )
+            );
+        }
+
         // Hidden fields.
         $mform->addElement('hidden', 'roundquestionid', $roundquestion->get_id());
         $mform->setType('roundquestionid', PARAM_INT);
@@ -256,6 +270,22 @@ class question extends dynamic_form {
 
         $errors += $roundquestion->get_question_type()->question_form_validation($roundquestion, $data, $files);
 
+        // Validate edit changes against existing responses (applies in both editable and non-editable rounds).
+        if (
+            $roundquestion->get_id() && empty($errors) &&
+                \mod_kahoodle\questions::question_has_responses($roundquestion->get_question_id())
+        ) {
+            $editchangeerrors = $roundquestion->get_question_type()->validate_edit_changes(
+                $roundquestion,
+                (object)$data
+            );
+            if ($editchangeerrors) {
+                // Attach the first error to the questionconfig field if it exists, otherwise use a general error.
+                $errorfield = isset($data['questionconfig']) ? 'questionconfig' : 'questiontext';
+                $errors[$errorfield] = implode(' ', $editchangeerrors);
+            }
+        }
+
         return $errors;
     }
 
@@ -278,7 +308,7 @@ class question extends dynamic_form {
         $roundquestion = $this->get_round_question_data();
         if (!$roundquestion->get_id()) {
             // Can not add questions to the round that is not in preparation stage.
-            if (!$roundquestion->get_round()->is_editable()) {
+            if (!$roundquestion->get_round()->is_fully_editable()) {
                 throw new \moodle_exception('noeditableround', 'mod_kahoodle'); // TODO better exception message.
             }
         }

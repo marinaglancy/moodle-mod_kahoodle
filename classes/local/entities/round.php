@@ -131,13 +131,14 @@ class round {
     }
 
     /**
-     * Check if the round is editable
+     * Check if the round is fully editable
      *
-     * A round is editable if it's in preparation stage and hasn't been started yet.
+     * A round is fully editable if it's in preparation stage and hasn't been started yet.
+     * In a fully editable round, questions can be added, deleted, reordered, and duplicated.
      *
      * @return bool
      */
-    public function is_editable(): bool {
+    public function is_fully_editable(): bool {
         return $this->data->currentstage === constants::STAGE_PREPARATION;
     }
 

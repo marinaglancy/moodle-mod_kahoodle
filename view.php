@@ -91,11 +91,16 @@ if ($action === 'newround') {
     require_capability('mod/kahoodle:facilitate', $context);
 
     // Create a new round based on the last round's question configuration.
+    $newround = null;
     if ($round->get_current_stage_name() === \mod_kahoodle\constants::STAGE_ARCHIVED) {
-        $round->duplicate();
+        $newround = $round->duplicate();
     }
 
-    // Redirect to remove action from URL.
+    // Redirect back to the referring page.
+    $returnto = optional_param('returnto', '', PARAM_ALPHA);
+    if ($returnto === 'questions' && $newround) {
+        redirect(new moodle_url('/mod/kahoodle/questions.php', ['roundid' => $newround->get_id()]));
+    }
     redirect($round->get_url());
 }
 

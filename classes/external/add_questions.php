@@ -115,7 +115,7 @@ class add_questions extends external_api {
             try {
                 // Get the kahoodle instance to validate context.
                 $round = \mod_kahoodle\questions::get_last_round($questiondata['kahoodleid']);
-                if (!$round->is_editable()) {
+                if (!$round->is_fully_editable()) {
                     throw new \moodle_exception('noeditableround', 'mod_kahoodle');
                 }
                 $context = $round->get_context();

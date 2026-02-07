@@ -40,6 +40,9 @@ class questions extends system_report {
     /** @var round|null Cached round instance */
     protected ?round $round = null;
 
+    /** @var int|null|false Cached editable round ID (null = editable, false = not yet resolved) */
+    protected int|null|false $editableroundid = false;
+
     /**
      * Get the round entity for this report
      *
@@ -51,6 +54,20 @@ class questions extends system_report {
             $this->round = round::create_from_id($roundid);
         }
         return $this->round;
+    }
+
+    /**
+     * Get the editable round ID for this kahoodle (cached)
+     *
+     * @return int|null
+     */
+    protected function get_editable_round_id(): ?int {
+        if ($this->editableroundid === false) {
+            $this->editableroundid = \mod_kahoodle\questions::get_editable_round_id(
+                $this->get_round()->get_kahoodleid()
+            );
+        }
+        return $this->editableroundid;
     }
 
     /**
@@ -141,16 +158,24 @@ class questions extends system_report {
         ]);
 
         // Find the column round_question:sortorder and change the formatter on it.
+        $isfullyeditable = $this->get_round()->is_fully_editable();
         foreach ($this->get_columns() as $column) {
             if ($column->get_unique_identifier() === 'round_question:sortorder') {
-                $column->add_callback(static function ($value, \stdClass $row): string {
+                $column->add_callback(static function ($value, \stdClass $row) use ($isfullyeditable): string {
                     global $OUTPUT;
-                    return html_writer::span(
-                        $OUTPUT->render_from_template(
+                    $draghandle = '';
+                    if ($isfullyeditable) {
+                        $draghandle = $OUTPUT->render_from_template(
                             'core/drag_handle',
-                            ['movetitle' => get_string('movecontent', 'moodle', get_string('sortorderx', 'mod_kahoodle', $value))]
-                        ) .
-                        $value,
+                            ['movetitle' => get_string(
+                                'movecontent',
+                                'moodle',
+                                get_string('sortorderx', 'mod_kahoodle', $value)
+                            )]
+                        );
+                    }
+                    return html_writer::span(
+                        $draghandle . $value,
                         '',
                         ['data-sortorder' => $value, 'data-roundquestionid' => $row->id]
                     );
@@ -200,8 +225,28 @@ class questions extends system_report {
             new lang_string('editquestion', 'mod_kahoodle')
         ));
 
-        // Delete action.
-        if ($this->get_round()->is_editable()) {
+        // Duplicate action - available if this round is fully editable, or if there's an editable round to duplicate into.
+        $isfullyeditable = $this->get_round()->is_fully_editable();
+        $editableroundid = $isfullyeditable ? null : $this->get_editable_round_id();
+        if ($isfullyeditable || $editableroundid !== null) {
+            $attrs = [
+                'data-action' => 'mod_kahoodle-duplicate-question',
+                'data-roundquestionid' => ':id',
+            ];
+            if (!$isfullyeditable) {
+                $attrs['data-targetroundid'] = $editableroundid;
+            }
+            $this->add_action(new action(
+                new moodle_url('#'),
+                new pix_icon('t/copy', ''),
+                $attrs,
+                false,
+                new lang_string('duplicatequestion', 'mod_kahoodle')
+            ));
+        }
+
+        // Delete action (only for fully editable rounds).
+        if ($isfullyeditable) {
             $this->add_action(new action(
                 new moodle_url('#'),
                 new pix_icon('t/delete', ''),

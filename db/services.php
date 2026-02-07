@@ -63,6 +63,13 @@ $functions = [
         'type' => 'write',
         'ajax' => true,
     ],
+
+    'mod_kahoodle_duplicate_question' => [
+        'classname' => mod_kahoodle\external\duplicate_question::class,
+        'description' => 'Duplicate a question in Kahoodle',
+        'type' => 'write',
+        'ajax' => true,
+    ],
 ];
 
 $services = [

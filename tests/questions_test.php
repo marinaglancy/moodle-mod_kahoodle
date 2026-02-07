@@ -361,18 +361,18 @@ final class questions_test extends \advanced_testcase {
     }
 
     /**
-     * Test edit_question throws exception when no editable round
+     * Test edit_question works in a non-editable (started) round
      *
      * @return void
      */
-    public function test_edit_question_no_editable_round(): void {
+    public function test_edit_question_in_started_round(): void {
         global $DB;
         $this->resetAfterTest();
 
         $course = $this->getDataGenerator()->create_course();
         $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
         $roundquestion = $this->get_generator()
-            ->create_question(['kahoodleid' => $kahoodle->id]);
+            ->create_question(['kahoodleid' => $kahoodle->id, 'questiontext' => 'Original text']);
 
         // Mark round as started.
         $round = $DB->get_record('kahoodle_rounds', ['kahoodleid' => $kahoodle->id], '*', MUST_EXIST);
@@ -381,9 +381,17 @@ final class questions_test extends \advanced_testcase {
         $editdata = new \stdClass();
         $editdata->questiontext = 'Updated text';
 
-        $this->expectException(\moodle_exception::class);
-        $this->expectExceptionMessage('No editable round available');
+        // Function edit_question should work even in started rounds (updates version in place
+        // since no other round references this version).
         questions::edit_question($roundquestion, $editdata);
+
+        $version = $DB->get_record(
+            'kahoodle_question_versions',
+            ['questionid' => $roundquestion->get_data()->questionid],
+            '*',
+            MUST_EXIST
+        );
+        $this->assertEquals('Updated text', $version->questiontext);
     }
 
     /**
@@ -470,6 +478,89 @@ final class questions_test extends \advanced_testcase {
         // Link to new round should be deleted, but link to old round should remain.
         $this->assertEquals(0, $DB->count_records('kahoodle_round_questions', ['roundid' => $newroundid]));
         $this->assertEquals(1, $DB->count_records('kahoodle_round_questions', ['roundid' => $round->id]));
+    }
+
+    /**
+     * Test duplicate_question within the same round
+     *
+     * @return void
+     */
+    public function test_duplicate_question_same_round(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
+
+        // Create two questions.
+        $q1 = $this->get_generator()
+            ->create_question(['kahoodleid' => $kahoodle->id, 'questiontext' => 'Question 1']);
+        $q2 = $this->get_generator()
+            ->create_question(['kahoodleid' => $kahoodle->id, 'questiontext' => 'Question 2']);
+
+        // Duplicate q1.
+        $duplicate = questions::duplicate_question($q1);
+
+        // Should be a new question with its own ID.
+        $this->assertNotEquals($q1->get_question_id(), $duplicate->get_question_id());
+        $this->assertNotEquals($q1->get_id(), $duplicate->get_id());
+
+        // Verify text was copied.
+        $this->assertEquals('Question 1', $duplicate->get_data()->questiontext);
+
+        // Verify sortorder: q1=1, duplicate=2, q2=3.
+        $round = questions::get_last_round($kahoodle->id);
+        $rqs = $DB->get_records('kahoodle_round_questions', ['roundid' => $round->get_id()], 'sortorder ASC');
+        $sortorders = array_values(array_column($rqs, 'sortorder'));
+        $this->assertEquals(['1', '2', '3'], $sortorders);
+
+        // The duplicate should be right after q1, pushing q2 to sortorder 3.
+        $this->assertEquals(2, $DB->get_field('kahoodle_round_questions', 'sortorder', ['id' => $duplicate->get_id()]));
+        $this->assertEquals(3, $DB->get_field('kahoodle_round_questions', 'sortorder', ['id' => $q2->get_id()]));
+    }
+
+    /**
+     * Test duplicate_question to a different round
+     *
+     * @return void
+     */
+    public function test_duplicate_question_cross_round(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
+
+        // Create a question in the first round.
+        $q1 = $this->get_generator()
+            ->create_question(['kahoodleid' => $kahoodle->id, 'questiontext' => 'Original question']);
+
+        // Start the first round.
+        $round1 = questions::get_last_round($kahoodle->id);
+        $DB->set_field('kahoodle_rounds', 'currentstage', constants::STAGE_LOBBY, ['id' => $round1->get_id()]);
+
+        // Create a new editable round.
+        $newround = new \stdClass();
+        $newround->kahoodleid = $kahoodle->id;
+        $newround->name = 'Round 2';
+        $newround->currentstage = constants::STAGE_PREPARATION;
+        $newround->timecreated = time();
+        $newround->timemodified = time();
+        $newroundid = $DB->insert_record('kahoodle_rounds', $newround);
+        $targetround = \mod_kahoodle\local\entities\round::create_from_id($newroundid);
+
+        // Duplicate q1 into the target round.
+        $duplicate = questions::duplicate_question($q1, $targetround);
+
+        // Should be in the target round.
+        $this->assertEquals($newroundid, $duplicate->get_data()->roundid);
+        $this->assertEquals('Original question', $duplicate->get_data()->questiontext);
+
+        // Should be appended at sortorder 1 (only question in the new round).
+        $this->assertEquals(1, $duplicate->get_data()->sortorder);
+
+        // Original round should still have the original question.
+        $this->assertEquals(1, $DB->count_records('kahoodle_round_questions', ['roundid' => $round1->get_id()]));
     }
 
     /**

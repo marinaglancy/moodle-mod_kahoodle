@@ -195,6 +195,20 @@ abstract class base {
     ): array;
 
     /**
+     * Validate that proposed edit changes are compatible with existing responses
+     *
+     * Called when editing a question that already has responses. Returns an array of
+     * error messages if the changes are not allowed. By default, all changes are allowed.
+     *
+     * @param round_question $roundquestion The current round question
+     * @param \stdClass $newdata The proposed new data
+     * @return string[] Array of error messages (empty if changes are allowed)
+     */
+    public function validate_edit_changes(round_question $roundquestion, \stdClass $newdata): array {
+        return [];
+    }
+
+    /**
      * Validate a participant's answer
      *
      * @param round_question $roundquestion The question

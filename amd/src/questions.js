@@ -38,6 +38,7 @@ const SELECTORS = {
     ADD_QUESTION_BUTTON: '[data-action="mod_kahoodle-add-question"]',
     EDIT_QUESTION_BUTTON: '[data-action="mod_kahoodle-edit-question"]',
     DELETE_QUESTION_BUTTON: '[data-action="mod_kahoodle-delete-question"]',
+    DUPLICATE_QUESTION_BUTTON: '[data-action="mod_kahoodle-duplicate-question"]',
     PREVIEW_QUESTION_BUTTON: '[data-action="mod_kahoodle-preview-question"]',
     PREVIEW_OVERLAY: '.mod_kahoodle-overlay',
     PREVIEW_CONTROL_BACK: '[data-action="back"]',
@@ -69,8 +70,9 @@ let currentPreviewState = {
  *
  * @param {number} roundId The round ID
  * @param {Array} questionTypes Array of {type, name} objects for available question types
+ * @param {boolean} isFullyEditable Whether the round is fully editable (can add/delete/reorder)
  */
-export const init = (roundId, questionTypes) => {
+export const init = (roundId, questionTypes, isFullyEditable) => {
     // Use event delegation for all buttons.
     const questionsRegion = document.querySelector(SELECTORS.QUESTIONS_REGION);
     if (questionsRegion) {
@@ -99,6 +101,16 @@ export const init = (roundId, questionTypes) => {
                 return;
             }
 
+            const duplicateButton = e.target.closest(SELECTORS.DUPLICATE_QUESTION_BUTTON);
+            if (duplicateButton) {
+                e.preventDefault();
+                const roundQuestionId = parseInt(duplicateButton.dataset.roundquestionid, 10);
+                const targetRoundId = duplicateButton.dataset.targetroundid
+                    ? parseInt(duplicateButton.dataset.targetroundid, 10) : 0;
+                await duplicateQuestion(roundQuestionId, targetRoundId);
+                return;
+            }
+
             const previewButton = e.target.closest(SELECTORS.PREVIEW_QUESTION_BUTTON);
             if (previewButton) {
                 e.preventDefault();
@@ -114,12 +126,16 @@ export const init = (roundId, questionTypes) => {
             reportElement.addEventListener(DynamicTable.Events.tableContentRefreshed, () => {
                 // Clear the preview cache when report reloads.
                 previewCache = {};
-                // Re-initialize sorting after reload.
-                initSorting();
+                // Re-initialize sorting after reload (only if fully editable).
+                if (isFullyEditable) {
+                    initSorting();
+                }
             });
         }
 
-        initSorting();
+        if (isFullyEditable) {
+            initSorting();
+        }
     }
 };
 
@@ -240,6 +256,48 @@ const deleteQuestion = async(questionId) => {
             }
         }
     );
+};
+
+/**
+ * Duplicate a question
+ *
+ * @param {number} roundQuestionId The round question ID to duplicate
+ * @param {number} targetRoundId Target round ID (0 = same round)
+ */
+const duplicateQuestion = async(roundQuestionId, targetRoundId = 0) => {
+    if (targetRoundId) {
+        // Cross-round duplication: show confirmation and redirect after.
+        const confirmMessage = await getString('duplicatequestiontoround', 'mod_kahoodle');
+        const confirmTitle = await getString('duplicatequestion', 'mod_kahoodle');
+        Notification.confirm(
+            confirmTitle,
+            confirmMessage,
+            await getString('duplicatequestion', 'mod_kahoodle'),
+            await getString('cancel', 'core'),
+            async() => {
+                try {
+                    await fetchMany([{
+                        methodname: 'mod_kahoodle_duplicate_question',
+                        args: {roundquestionid: roundQuestionId, targetroundid: targetRoundId},
+                    }])[0];
+                    window.location.href = M.cfg.wwwroot + '/mod/kahoodle/questions.php?roundid=' + targetRoundId;
+                } catch (error) {
+                    Notification.exception(error);
+                }
+            }
+        );
+    } else {
+        // Same-round duplication: no confirmation needed.
+        try {
+            await fetchMany([{
+                methodname: 'mod_kahoodle_duplicate_question',
+                args: {roundquestionid: roundQuestionId},
+            }])[0];
+            reloadQuestionsTable();
+        } catch (error) {
+            Notification.exception(error);
+        }
+    }
 };
 
 /**
