@@ -58,14 +58,22 @@ class all_rounds_participants extends system_report {
     }
 
     /**
-     * Get the kahoodle record for this report
+     * Get the kahoodle record for this report (plus cmid for context checking)
      *
      * @return \stdClass
      */
     protected function get_kahoodle(): \stdClass {
         global $DB;
         if ($this->kahoodle === null) {
-            $this->kahoodle = $DB->get_record('kahoodle', ['id' => $this->get_kahoodleid()], '*', MUST_EXIST);
+            $this->kahoodle = $DB->get_record_sql(
+                'SELECT k.*, cm.id AS cmid
+                FROM {kahoodle} k
+                JOIN {course_modules} cm ON k.id = cm.instance
+                JOIN {modules} m ON m.id = cm.module AND m.name = :modname
+                WHERE k.id = :id',
+                ['id' => $this->get_kahoodleid(), 'modname' => 'kahoodle'],
+                MUST_EXIST
+            );
         }
         return $this->kahoodle;
     }
@@ -145,7 +153,12 @@ class all_rounds_participants extends system_report {
      * @return bool
      */
     protected function can_view(): bool {
-        return has_capability('mod/kahoodle:viewresults', $this->get_context());
+        $context = $this->get_context();
+        if ($context->contextlevel !== CONTEXT_MODULE || $context->instanceid !== $this->get_kahoodle()->cmid) {
+            // Context mismatch, deny access.
+            return false;
+        }
+        return has_capability('mod/kahoodle:viewresults', $context);
     }
 
     /**

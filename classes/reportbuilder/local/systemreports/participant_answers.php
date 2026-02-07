@@ -148,6 +148,10 @@ class participant_answers extends system_report {
      */
     protected function can_view(): bool {
         $context = $this->get_round()->get_context();
+        if ($this->get_context()->id !== $context->id) {
+            // Context mismatch, deny access.
+            return false;
+        }
         return has_capability('mod/kahoodle:viewresults', $context);
     }
 

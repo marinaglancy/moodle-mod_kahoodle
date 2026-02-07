@@ -21,6 +21,7 @@ namespace mod_kahoodle\reportbuilder\local\systemreports;
 use core_reportbuilder\local\report\column;
 use core_reportbuilder\system_report;
 use lang_string;
+use mod_kahoodle\local\entities\round;
 use mod_kahoodle\reportbuilder\local\entities\question;
 use mod_kahoodle\reportbuilder\local\entities\question_version;
 use mod_kahoodle\reportbuilder\local\entities\response;
@@ -39,6 +40,9 @@ class all_rounds_statistics extends system_report {
     /** @var int|null Cached kahoodle ID */
     protected ?int $kahoodleid = null;
 
+    /** @var round|null Cached last round record */
+    protected ?round $lastround = null;
+
     /**
      * Get the kahoodle ID for this report
      *
@@ -49,6 +53,18 @@ class all_rounds_statistics extends system_report {
             $this->kahoodleid = $this->get_parameter('kahoodleid', 0, PARAM_INT);
         }
         return $this->kahoodleid;
+    }
+
+    /**
+     * Get the last round for this kahoodle
+     *
+     * @return round
+     */
+    protected function get_last_round(): round {
+        if ($this->lastround === null) {
+            $this->lastround = \mod_kahoodle\questions::get_last_round($this->get_kahoodleid());
+        }
+        return $this->lastround;
     }
 
     /**
@@ -83,7 +99,7 @@ class all_rounds_statistics extends system_report {
         $this->add_entity($lastversionentity);
 
         // Get the last round for sortorder lookup.
-        $lastround = \mod_kahoodle\questions::get_last_round($this->get_kahoodleid());
+        $lastround = $this->get_last_round();
 
         // Set up last round question entity with LEFT JOIN for the last round only.
         $lastroundquestionentity = new round_question();
@@ -188,7 +204,12 @@ class all_rounds_statistics extends system_report {
      * @return bool
      */
     protected function can_view(): bool {
-        return has_capability('mod/kahoodle:viewresults', $this->get_context());
+        $context = $this->get_context();
+        if ($context->id !== $this->get_last_round()->get_context()->id) {
+            // Context mismatch, deny access.
+            return false;
+        }
+        return has_capability('mod/kahoodle:viewresults', $context);
     }
 
     /**
