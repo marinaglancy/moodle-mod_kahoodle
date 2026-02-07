@@ -1785,3 +1785,11 @@
 .mod_kahoodle-leaderboard-main[data-stage="revision"][data-substage="leaders"] .mod_kahoodle-podium-container {
     display: none;
 }
+
+/* ========================================
+   JOIN FORM - IDENTITY PICKER
+   ======================================== */
+.mod_kahoodle-identity-img {
+    vertical-align: middle;
+    background-color: #fff;
+}

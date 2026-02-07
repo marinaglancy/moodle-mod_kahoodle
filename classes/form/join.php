@@ -43,10 +43,48 @@ class join extends \moodleform {
     }
 
     /**
+     * Create an inline identity image element for use in form groups.
+     *
+     * @param string $url The image URL
+     * @return \HTML_QuickForm_element
+     */
+    protected function create_identity_img(string $url): \HTML_QuickForm_element {
+        $imgattrs = 'class="mod_kahoodle-identity-img rounded-circle mr-2" width="35" height="35"';
+        return $this->_form->createElement('html',
+            '<img src="' . s($url) . '" ' . $imgattrs . ' alt="">');
+    }
+
+    /**
+     * Add a small muted identity caption to the form.
+     *
+     * @param string $stringkey Language string key from mod_kahoodle
+     */
+    protected function add_identity_caption(string $stringkey): void {
+        $this->_form->addElement('html',
+            '<small class="text-muted d-block mb-2">' . get_string($stringkey, 'mod_kahoodle') . '</small>');
+    }
+
+    /**
+     * Create form elements showing the current user's profile picture and full name.
+     *
+     * @return \HTML_QuickForm_element[]
+     */
+    protected function create_realname_elements(): array {
+        global $USER, $PAGE;
+        $userpicture = new \user_picture($USER);
+        $userpicture->size = 35;
+        $profilepicurl = $userpicture->get_url($PAGE)->out(false);
+        return [
+            $this->create_identity_img($profilepicurl),
+            $this->_form->createElement('static', '', '', s(fullname($USER))),
+        ];
+    }
+
+    /**
      * Form definition
      */
     protected function definition() {
-        global $USER;
+        global $OUTPUT;
 
         $mform = $this->_form;
         $round = $this->get_round();
@@ -57,31 +95,88 @@ class join extends \moodleform {
         $mform->addElement('hidden', 'action', 'join');
         $mform->setType('action', PARAM_ALPHA);
 
-        $mform->addElement('html', '<p>' . get_string('landing_join_message', 'mod_kahoodle') . '</p>');
+        $mform->addElement('html', '<p>' . get_string('landing_participant_message', 'mod_kahoodle') . '</p>');
 
         $kahoodle = $round->get_kahoodle();
         $identitymode = (int)($kahoodle->identitymode ?? constants::DEFAULT_IDENTITY_MODE);
+        $maxlen = constants::DISPLAYNAME_MAXLENGTH;
 
-        if ($identitymode !== constants::IDENTITYMODE_REALNAME) {
-            $maxlen = constants::DISPLAYNAME_MAXLENGTH;
+        if ($identitymode === constants::IDENTITYMODE_OPTIONAL) {
+            $avatarurl = $OUTPUT->image_url('useavatar', 'mod_kahoodle')->out(false);
+
+            // Option 1: real name + profile picture.
+            $group1 = [
+                $mform->createElement('radio', 'identitychoice', '', '', 'realname'),
+                ...$this->create_realname_elements(),
+            ];
+            $mform->addGroup($group1, 'identity_realname_grp',
+                get_string('joinas', 'mod_kahoodle'), ' ', false);
+            $mform->setDefault('identitychoice', 'realname');
+
+            // Option 2: nickname + random avatar.
+            $group2 = [];
+            $group2[] = $mform->createElement('radio', 'identitychoice', '', '', 'alias');
+            $group2[] = $this->create_identity_img($avatarurl);
+            $group2[] = $mform->createElement('text', 'displayname', '', [
+                'maxlength' => $maxlen,
+                'size' => $maxlen,
+                'placeholder' => get_string('participantdisplayname_form', 'mod_kahoodle'),
+            ]);
+            $mform->addGroup($group2, 'identity_alias_grp', '', ' ', false);
+            $mform->setType('displayname', PARAM_TEXT);
+            $mform->disabledIf('displayname', 'identitychoice', 'eq', 'realname');
+            $this->add_identity_caption('identitycaption_alias');
+        } else if ($identitymode === constants::IDENTITYMODE_REALNAME) {
+            // REALNAME: show static "Join as" with profile picture and real name.
+            $mform->addGroup($this->create_realname_elements(), 'identity_realname_grp',
+                get_string('joinas', 'mod_kahoodle'), ' ', false);
+        } else {
+            // ALIAS or ANONYMOUS: always show display name field.
             $mform->addElement(
                 'text',
                 'displayname',
-                get_string('participantdisplayname_form', 'mod_kahoodle'),
-                ['maxlength' => $maxlen, 'size' => $maxlen]
+                get_string('joinas', 'mod_kahoodle'),
+                ['maxlength' => $maxlen, 'size' => $maxlen,
+                 'placeholder' => get_string('participantdisplayname_form', 'mod_kahoodle')],
             );
             $mform->setType('displayname', PARAM_TEXT);
             $mform->addRule('displayname', null, 'required', null, 'client');
             $mform->addRule('displayname', get_string('maximumchars', '', $maxlen), 'maxlength', $maxlen, 'client');
-
-            if ($identitymode === constants::IDENTITYMODE_OPTIONAL) {
-                $mform->setDefault('displayname', fullname($USER));
-            }
+            $captionkey = $identitymode === constants::IDENTITYMODE_ANONYMOUS
+                ? 'identitycaption_anonymous' : 'identitycaption_alias';
+            $this->add_identity_caption($captionkey);
         }
 
         $buttonlabel = has_capability('mod/kahoodle:facilitate', $context)
             ? get_string('join_as_participant', 'mod_kahoodle')
             : get_string('join', 'mod_kahoodle');
         $this->add_action_buttons(false, $buttonlabel);
+    }
+
+    /**
+     * Server-side validation
+     *
+     * @param array $data
+     * @param array $files
+     * @return array
+     */
+    public function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+        $round = $this->get_round();
+        $kahoodle = $round->get_kahoodle();
+        $identitymode = (int)($kahoodle->identitymode ?? constants::DEFAULT_IDENTITY_MODE);
+        $maxlen = constants::DISPLAYNAME_MAXLENGTH;
+
+        if ($identitymode === constants::IDENTITYMODE_OPTIONAL
+                && ($data['identitychoice'] ?? '') === 'alias') {
+            $displayname = trim($data['displayname'] ?? '');
+            if ($displayname === '') {
+                $errors['identity_alias_grp'] = get_string('required');
+            } else if (\core_text::strlen($displayname) > $maxlen) {
+                $errors['identity_alias_grp'] = get_string('maximumchars', '', $maxlen);
+            }
+        }
+
+        return $errors;
     }
 }
