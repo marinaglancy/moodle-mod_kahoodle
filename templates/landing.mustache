@@ -21,16 +21,16 @@
 
     Context variables required for this template:
     * showcontrolpreparation - bool - Show the control panel for preparation stage
+    * hasquestions - bool - Whether the activity has questions
     * startgamebuttondisabled - bool - Whether the start button should be disabled
     * starturl - string - URL for the start action
+    * managequestionsurl - string - URL for manage questions page
     * showfacilitatorcontrols - bool - Show facilitator controls when game is in progress
     * finishurl - string - URL for the finish action
     * showparticipantcontrols - bool - Show participant controls when user is playing
     * leaveurl - string - URL for leave action
     * showjoinoption - bool - Show join as participant option
     * joinurl - string - URL for join action
-    * showmanagequestions - bool - Show the manage questions section
-    * managequestionsurl - string - URL for manage questions page
     * showwaitingtostart - bool - Show waiting message for participants
     * showfinished - bool - Show finished section
     * resultsurl - string - URL for results page
@@ -38,9 +38,9 @@
     Example context (json):
     {
         "showcontrolpreparation": true,
+        "hasquestions": true,
         "startgamebuttondisabled": false,
         "starturl": "/mod/kahoodle/view.php?id=1&action=start&sesskey=abc123",
-        "showmanagequestions": true,
         "managequestionsurl": "/mod/kahoodle/questions.php?id=1"
     }
 }}
@@ -48,17 +48,26 @@
     {{#showcontrolpreparation}}
     <div class="card mb-3">
         <div class="card-body">
-            <p class="card-text">{{#str}}landing_preparation_message, mod_kahoodle{{/str}}</p>
+            {{#hasquestions}}
+            <p class="card-text">{{#str}}landing_preparation_hasquestions, mod_kahoodle{{/str}}</p>
+            {{/hasquestions}}
+            {{^hasquestions}}
+            <p class="card-text">{{#str}}landing_preparation_noquestions, mod_kahoodle{{/str}}</p>
+            {{/hasquestions}}
+            {{#managequestionsurl}}
+            <a href="{{managequestionsurl}}" class="btn btn-secondary me-2">
+                {{#str}}managequestions, mod_kahoodle{{/str}}
+            </a>
+            {{/managequestionsurl}}
             {{^startgamebuttondisabled}}
             <a href="{{starturl}}" class="btn btn-primary">
-                {{#str}}start, mod_kahoodle{{/str}}
+                {{#str}}allowjoining, mod_kahoodle{{/str}}
             </a>
             {{/startgamebuttondisabled}}
             {{#startgamebuttondisabled}}
             <button type="button" class="btn btn-primary" disabled>
-                {{#str}}start, mod_kahoodle{{/str}}
+                {{#str}}allowjoining, mod_kahoodle{{/str}}
             </button>
-            <p class="mt-2 text-muted"><small>{{#str}}start_noquestions, mod_kahoodle{{/str}}</small></p>
             {{/startgamebuttondisabled}}
         </div>
     </div>
@@ -110,17 +119,6 @@
         </div>
     </div>
     {{/showjoinoption}}
-
-    {{#showmanagequestions}}
-    <div class="card mb-3">
-        <div class="card-body">
-            <p class="card-text">{{#str}}landing_managequestions_message, mod_kahoodle{{/str}}</p>
-            <a href="{{managequestionsurl}}" class="btn btn-secondary">
-                {{#str}}managequestions, mod_kahoodle{{/str}}
-            </a>
-        </div>
-    </div>
-    {{/showmanagequestions}}
 
     {{#showwaitingtostart}}
     <div class="card mb-3">

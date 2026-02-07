@@ -77,22 +77,28 @@ class landing implements renderable, templatable {
         $data->showfacilitatorcontrols = false;
         $data->showparticipantcontrols = false;
         $data->showjoinoption = false;
-        $data->showmanagequestions = false;
         $data->showwaitingtostart = false;
         $data->showfinished = false;
 
-        $isinprogress = $this->is_round_in_progress($stage);
+        $isinprogress = $this->round->is_in_progress();
 
         // Determine which section to show based on stage and capabilities.
         if ($stage === constants::STAGE_PREPARATION) {
             // Round is in preparation stage.
             if ($isfacilitator) {
                 $data->showcontrolpreparation = true;
+                $data->hasquestions = $hasquestions;
                 $data->startgamebuttondisabled = !$hasquestions;
                 $data->starturl = (new moodle_url(
                     '/mod/kahoodle/view.php',
                     ['id' => $this->cm->id, 'action' => 'start', 'sesskey' => sesskey()]
                 ))->out(false);
+                if ($canmanagequestions) {
+                    $data->managequestionsurl = (new moodle_url(
+                        '/mod/kahoodle/questions.php',
+                        ['id' => $this->cm->id]
+                    ))->out(false);
+                }
             } else if ($canparticipate) {
                 $data->showwaitingtostart = true;
             }
@@ -146,25 +152,6 @@ class landing implements renderable, templatable {
             }
         }
 
-        // Show manage questions section if user can manage questions and game is not in progress.
-        if ($canmanagequestions && !$isinprogress) {
-            $data->showmanagequestions = true;
-            $data->managequestionsurl = (new moodle_url(
-                '/mod/kahoodle/questions.php',
-                ['id' => $this->cm->id]
-            ))->out(false);
-        }
-
         return $data;
-    }
-
-    /**
-     * Check if the round is in progress (between lobby and revision stages)
-     *
-     * @param string $stage The current stage
-     * @return bool
-     */
-    protected function is_round_in_progress(string $stage): bool {
-        return $stage != constants::STAGE_PREPARATION && $stage != constants::STAGE_ARCHIVED;
     }
 }
