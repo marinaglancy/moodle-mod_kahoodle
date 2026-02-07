@@ -100,7 +100,7 @@ class responses {
         }
 
         // Insert response record.
-        $responseid = $DB->insert_record('kahoodle_responses', (object)[
+        $response = (object)[
             'participantid' => $participantid,
             'roundquestionid' => $roundquestion->get_id(),
             'response' => $response,
@@ -108,29 +108,15 @@ class responses {
             'points' => $points,
             'responsetime' => $responsetime,
             'timecreated' => time(),
-        ]);
+        ];
+        $response->id = $DB->insert_record('kahoodle_responses', $response);
 
-        // Update participant's total score.
-        if ($points > 0) {
-            $DB->execute(
-                'UPDATE {kahoodle_participants} SET totalscore = totalscore + ? WHERE id = ?',
-                [$points, $participantid]
-            );
+        if ($round->get_kahoodle()->identitymode != constants::IDENTITYMODE_ANONYMOUS) {
+            // Trigger response submitted event only for non-anonymous modes,
+            // in anonymous mode we trigger in bulk after the question stage ends to preserve anonymity.
+            $event = \mod_kahoodle\event\response_submitted::create_for_participant($participant, $response);
+            $event->trigger();
         }
-
-        // Trigger response submitted event.
-        $event = \mod_kahoodle\event\response_submitted::create([
-            'objectid' => $responseid,
-            'context' => $round->get_context(),
-            'relateduserid' => $participant->get_user_id(),
-            'other' => [
-                'roundid' => $round->get_id(),
-                'questionnumber' => $stage->get_question_number(),
-                'iscorrect' => $iscorrect,
-                'points' => $points,
-            ],
-        ]);
-        $event->trigger();
 
         // Send updated stage data to participant via their channel.
         realtime_channels::notify_participant_stage_changed($participant);

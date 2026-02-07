@@ -16,6 +16,9 @@
 
 namespace mod_kahoodle\event;
 
+use mod_kahoodle\local\entities\participant;
+use stdClass;
+
 /**
  * Event response_submitted
  *
@@ -31,6 +34,28 @@ class response_submitted extends \core\event\base {
         $this->data['objecttable'] = 'kahoodle_responses';
         $this->data['crud'] = 'c';
         $this->data['edulevel'] = self::LEVEL_PARTICIPATING;
+    }
+
+    /**
+     * Create an instance
+     *
+     * @param participant $participant
+     * @param stdClass $response
+     * @return \core\event\base
+     */
+    public static function create_for_participant(participant $participant, stdClass $response): self {
+        $round = $participant->get_round();
+        return self::create([
+            'objectid' => $response->id,
+            'context' => $round->get_context(),
+            'relateduserid' => $participant->get_user_id(),
+            'other' => [
+                'roundid' => $round->get_id(),
+                'roundquestionid' => $response->roundquestionid,
+                'iscorrect' => $response->iscorrect,
+                'points' => $response->points,
+            ],
+        ]);
     }
 
     /**

@@ -99,7 +99,7 @@ class participant {
     }
 
     /**
-     * Create a participant from a partial database record.
+     * Create a participant from a partial database record (used in report builder formatters and events)
      *
      * @param stdClass $record Record containing id, roundid, kahoodleid, displayname, avatar, and optionally user_id
      * @param round|null $round Optional round instance, created from record data if not provided
@@ -133,7 +133,7 @@ class participant {
     }
 
     /**
-     * Get user id. If user is deleted, returns null.
+     * Get user id. If user is deleted or the game is anonymous, returns null.
      *
      * @return int|null
      */
@@ -237,5 +237,19 @@ class participant {
     public function get_final_rank(): ?int {
         $rank = $this->participantdata->finalrank;
         return $rank === null ? null : (int)$rank;
+    }
+
+    /**
+     * Update participant's total score to the given value
+     *
+     * @param int $totalscore
+     */
+    public function update_total_score(int $totalscore): void {
+        global $DB;
+        if ((int)$this->participantdata->totalscore === $totalscore) {
+            return;
+        }
+        $DB->set_field('kahoodle_participants', 'totalscore', $totalscore, ['id' => $this->get_id()]);
+        $this->participantdata->totalscore = $totalscore;
     }
 }

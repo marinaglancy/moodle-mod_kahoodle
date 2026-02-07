@@ -616,6 +616,12 @@ class round {
             $this->data->$key = $value;
         }
 
+        // After the question stage (summarise the responses).
+        // Executed after the rounds table is updated but before we trigger the event.
+        if ($oldstage->get_stage_name() === constants::STAGE_QUESTION) {
+            $this->summarise_question_responses($oldstage);
+        }
+
         // Trigger round updated event.
         $event = \mod_kahoodle\event\round_updated::create([
             'objectid' => $this->get_id(),
@@ -1005,5 +1011,73 @@ class round {
         }
 
         return self::create_from_object($record);
+    }
+
+    /**
+     * Recalculate and update total scores for all participants up to and including the current question
+     *
+     * Called when leaving the QUESTION stage. Computes actual totals from response data
+     * and updates each participant's stored total score.
+     *
+     * @param round_stage $questionstage The question stage that is being left
+     * @return void
+     */
+    public function summarise_question_responses(round_stage $questionstage): void {
+        global $DB;
+
+        if (!$questionstage->get_round_question() || $questionstage->get_stage_name() !== constants::STAGE_QUESTION) {
+            // No question associated with this stage, nothing to summarise.
+            return;
+        }
+
+        $isanonymous = $this->get_kahoodle()->identitymode == constants::IDENTITYMODE_ANONYMOUS;
+
+        // Find all questions that were asked up to and including the current question.
+        $questionids = [$questionstage->get_round_question()->get_id() => true];
+        foreach ($this->get_all_stages(false) as $stage) {
+            if ($q = $stage->get_round_question()) {
+                $questionids[$q->get_id()] = true;
+            }
+            if ($stage->get_stage_signature() == $questionstage->get_stage_signature()) {
+                break;
+            }
+        }
+
+        // Get actual scores from responses up to and including the current question.
+        // Same query pattern as get_question_rankings().
+        [$sql, $params] = $DB->get_in_or_equal(array_keys($questionids), SQL_PARAMS_NAMED, 'questionids');
+        $scores = $DB->get_records_sql_menu(
+            'SELECT p.id, SUM(r.points) AS totalscore
+            FROM {kahoodle_participants} p
+            JOIN {kahoodle_responses} r ON r.participantid = p.id
+            JOIN {kahoodle_round_questions} rq ON rq.id = r.roundquestionid
+            WHERE p.roundid = :roundid AND rq.id ' . $sql . '
+            GROUP BY p.id',
+            ['roundid' => $this->get_id()] + $params
+        );
+
+        if ($isanonymous) {
+            $responses = $DB->get_records_sql(
+                'SELECT r.participantid, r.id, r.iscorrect, r.points, r.roundquestionid
+                 FROM {kahoodle_responses} r
+                 WHERE r.roundquestionid = :roundquestionid',
+                ['roundquestionid' => $questionstage->get_round_question()->get_id()]
+            );
+        }
+
+        foreach ($this->get_all_participants() as $participant) {
+            if ($isanonymous && !empty($responses[$participant->get_id()])) {
+                // In anonymous mode trigger event that participant responded.
+                $event = \mod_kahoodle\event\response_submitted::create_for_participant(
+                    $participant,
+                    $responses[$participant->get_id()]
+                );
+                $event->trigger();
+            }
+
+            // Update participant total score.
+            $totalscore = (int)($scores[$participant->get_id()] ?? 0);
+            $participant->update_total_score($totalscore);
+        }
     }
 }

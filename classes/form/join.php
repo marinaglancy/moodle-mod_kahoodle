@@ -19,6 +19,10 @@ namespace mod_kahoodle\form;
 use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
 
+defined('MOODLE_INTERNAL') || die();
+
+require_once($CFG->libdir . '/formslib.php');
+
 /**
  * Form for joining a round as a participant
  *

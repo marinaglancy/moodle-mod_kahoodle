@@ -79,19 +79,15 @@ class participants {
         }
         if ($avatar !== null) {
             $DB->set_field('kahoodle_participants', 'avatar', $avatar, ['id' => $participant->id]);
+            $participant->avatar = $avatar;
         }
 
         $round->clear_participant_cache();
 
         // Trigger participant joined event.
-        $event = \mod_kahoodle\event\participant_joined::create([
-            'objectid' => $participant->id,
-            'context' => $round->get_context(),
-            'other' => [
-                'roundid' => $round->get_id(),
-                'kahoodleid' => $round->get_kahoodleid(),
-            ],
-        ]);
+        $event = \mod_kahoodle\event\participant_joined::create_from_participant(
+            participant::from_partial_record($participant, $round)
+        );
         $event->trigger();
 
         // If round is in lobby stage, notify facilitators with updated stage data.
@@ -106,6 +102,9 @@ class participants {
      * Removes the participant record for the current user in the given round.
      * Also deletes any responses the participant may have submitted.
      * If the round is in the lobby stage, notifies facilitators with the updated participant list.
+     *
+     * This method is only called when a person who can facilitate joins as a participant and then
+     * leaves in order to become a facilitator. The anonymous identity mode is not applicable here.
      *
      * @param round $round The round to leave
      */

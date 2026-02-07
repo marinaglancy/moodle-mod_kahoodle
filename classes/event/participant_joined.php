@@ -34,6 +34,25 @@ class participant_joined extends \core\event\base {
     }
 
     /**
+     * Create an instance
+     *
+     * @param \mod_kahoodle\local\entities\participant $participant
+     * @return self
+     */
+    public static function create_from_participant(\mod_kahoodle\local\entities\participant $participant): self {
+        $round = $participant->get_round();
+        return self::create([
+            'objectid' => $participant->get_id(),
+            'context' => $round->get_context(),
+            'relateduserid' => $participant->get_user_id(),
+            'other' => [
+                'roundid' => $round->get_id(),
+                'kahoodleid' => $round->get_kahoodle()->id,
+            ],
+        ]);
+    }
+
+    /**
      * Returns non-localised event description with id's for admin use only.
      *
      * @return string
