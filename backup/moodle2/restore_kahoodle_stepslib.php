@@ -140,6 +140,15 @@ class restore_kahoodle_activity_structure_step extends restore_activity_structur
 
         $data->kahoodleid = $this->get_new_parentid('kahoodle');
 
+        // When restoring without user data, reset round to preparation stage.
+        if (!$this->get_setting_value('userinfo')) {
+            $data->currentstage = \mod_kahoodle\constants::STAGE_PREPARATION;
+            $data->currentquestion = null;
+            $data->stagestarttime = null;
+            $data->timestarted = null;
+            $data->timecompleted = null;
+        }
+
         $newitemid = $DB->insert_record('kahoodle_rounds', $data);
         $this->set_mapping('kahoodle_round', $oldid, $newitemid);
     }

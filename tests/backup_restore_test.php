@@ -648,6 +648,64 @@ final class backup_restore_test extends advanced_testcase {
     }
 
     /**
+     * Test that restoring without user data resets the round stage to preparation.
+     */
+    public function test_backup_restore_without_userdata_resets_stage(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        /** @var \mod_kahoodle_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
+
+        $kahoodle = $generator->create_instance(['course' => $course->id]);
+
+        // Create questions.
+        $rq1 = $generator->create_question([
+            'kahoodleid' => $kahoodle->id,
+            'questiontext' => 'Archived Q1',
+            'questionconfig' => "A\n*B\nC",
+        ]);
+        $rq2 = $generator->create_question([
+            'kahoodleid' => $kahoodle->id,
+            'questiontext' => 'Archived Q2',
+            'questionconfig' => "*X\nY",
+        ]);
+
+        // Progress the round to archived.
+        $roundid = $rq1->get_round()->get_id();
+        $DB->set_field('kahoodle_rounds', 'currentstage', constants::STAGE_ARCHIVED, ['id' => $roundid]);
+        $DB->set_field('kahoodle_rounds', 'timestarted', time() - 7200, ['id' => $roundid]);
+        $DB->set_field('kahoodle_rounds', 'timecompleted', time() - 3600, ['id' => $roundid]);
+        $DB->set_field('kahoodle_rounds', 'currentquestion', 2, ['id' => $roundid]);
+        $DB->set_field('kahoodle_rounds', 'stagestarttime', time() - 3600, ['id' => $roundid]);
+
+        // Backup and restore without user data.
+        $newcourseid = $this->backup_and_restore($course, false);
+
+        $newkahoodle = $DB->get_record('kahoodle', ['course' => $newcourseid]);
+        $this->assertNotEmpty($newkahoodle);
+
+        // The restored round should be in preparation stage.
+        $newrounds = $DB->get_records('kahoodle_rounds', ['kahoodleid' => $newkahoodle->id]);
+        $this->assertCount(1, $newrounds);
+        $newround = reset($newrounds);
+        $this->assertEquals(constants::STAGE_PREPARATION, $newround->currentstage);
+        $this->assertNull($newround->currentquestion);
+        $this->assertNull($newround->stagestarttime);
+        $this->assertNull($newround->timestarted);
+        $this->assertNull($newround->timecompleted);
+
+        // Questions should still be restored.
+        $newquestions = $DB->count_records('kahoodle_questions', ['kahoodleid' => $newkahoodle->id]);
+        $this->assertEquals(2, $newquestions);
+
+        $newroundquestions = $DB->count_records('kahoodle_round_questions', ['roundid' => $newround->id]);
+        $this->assertEquals(2, $newroundquestions);
+    }
+
+    /**
      * Backs up a course and restores it.
      *
      * @param \stdClass $srccourse Course object to backup
