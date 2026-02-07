@@ -84,11 +84,13 @@ class participants {
 
         $round->clear_participant_cache();
 
-        // Trigger participant joined event.
-        $event = \mod_kahoodle\event\participant_joined::create_from_participant(
-            participant::from_partial_record($participant, $round)
-        );
-        $event->trigger();
+        if ($identitymode !== constants::IDENTITYMODE_ANONYMOUS) {
+            // Trigger participant joined event (not triggered in anonymous mode to preserve anonymity).
+            $event = \mod_kahoodle\event\participant_joined::create_from_participant(
+                participant::from_partial_record($participant, $round)
+            );
+            $event->trigger();
+        }
 
         // If round is in lobby stage, notify facilitators with updated stage data.
         if ($round->get_current_stage_name() === constants::STAGE_LOBBY) {
@@ -119,19 +121,23 @@ class participants {
         // Delete any responses from this participant.
         $DB->delete_records('kahoodle_responses', ['participantid' => $participant->get_id()]);
 
-        // Trigger participant left event before deletion.
-        $event = \mod_kahoodle\event\participant_left::create([
-            'objectid' => $participant->get_id(),
-            'context' => $round->get_context(),
-            'other' => [
-                'roundid' => $round->get_id(),
-                'kahoodleid' => $round->get_kahoodleid(),
-            ],
-        ]);
-        $event->trigger();
-
         // Delete the participant record.
         $DB->delete_records('kahoodle_participants', ['id' => $participant->get_id()]);
+
+        $identitymode = (int)$round->get_kahoodle()->identitymode;
+        if ($identitymode !== constants::IDENTITYMODE_ANONYMOUS) {
+            // Trigger participant left event before deletion.
+            $event = \mod_kahoodle\event\participant_left::create([
+                'objectid' => $participant->get_id(),
+                'context' => $round->get_context(),
+                'other' => [
+                    'roundid' => $round->get_id(),
+                    'kahoodleid' => $round->get_kahoodleid(),
+                ],
+            ]);
+            $event->trigger();
+        }
+
         $round->clear_participant_cache();
 
         // If round is in lobby stage, notify facilitators with updated stage data.
