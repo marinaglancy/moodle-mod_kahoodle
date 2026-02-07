@@ -57,6 +57,8 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   ├── form/                 # Dynamic forms
 │   │   ├── join.php          # Join round form (identity mode aware, normalises displayname in get_data)
 │   │   └── question.php      # Question add/edit modal form
+│   ├── privacy/
+│   │   └── provider.php      # Privacy API provider (metadata, export, delete for participants/responses)
 │   ├── local/
 │   │   ├── entities/         # Domain entity classes
 │   │   │   ├── participant.php # Participant entity (avatar, display name, scoring)
@@ -135,6 +137,7 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   └── results.mustache      # Results page template (all rounds)
 ├── tests/
 │   ├── behat/                # Behat acceptance tests
+│   │   └── basic_actions.feature  # CRUD, settings, duplication scenarios
 │   ├── external/             # Web service tests
 │   │   ├── add_questions_test.php
 │   │   ├── change_question_sortorder_test.php
@@ -144,7 +147,11 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   ├── generator/            # Test data generators
 │   │   ├── behat_mod_kahoodle_generator.php
 │   │   └── lib.php
+│   ├── privacy/
+│   │   └── provider_test.php # Privacy provider tests (metadata, contexts, export, delete)
 │   ├── api_test.php          # PHPUnit tests for api.php
+│   ├── backup_restore_test.php # Backup/restore tests (with/without userdata, files, mixed)
+│   ├── constants_test.php    # Tests that field list constants match DB schema
 │   └── questions_test.php    # PHPUnit tests for questions API
 ├── index.php                 # List all instances in a course
 ├── lib.php                   # Core module functions (includes inplace_editable callback)
@@ -990,14 +997,32 @@ The plugin includes comprehensive PHPUnit test coverage:
 - Tests for round creation, question CRUD operations, versioning logic
 - Edge cases: no editable rounds, permission checks, sort order
 
+#### Backup/Restore Tests (`tests/backup_restore_test.php`)
+- Tests backup/restore with user data (all rounds, participants, responses preserved)
+- Tests backup/restore without user data (only last round and its questions)
+- Tests backup with user data, restore without (all rounds but no participants)
+- Tests question image files are backed up and restored
+- Tests participant avatar files are backed up and restored
+- Tests single round backup without user data
+
+#### Constants Tests (`tests/constants_test.php`)
+- Verifies `FIELDS_QUESTION_VERSION` matches `kahoodle_question_versions` table columns
+- Verifies `FIELDS_ROUND_QUESTION` matches `kahoodle_round_questions` table columns
+
+#### Privacy Provider Tests (`tests/privacy/provider_test.php`)
+- Tests metadata declaration (tables and subsystems)
+- Tests context discovery for users with participation data
+- Tests user enumeration within contexts
+- Tests user data export (participations with responses)
+- Tests deletion for all users in context, single user, and multiple users
+- Tests multiple kahoodle instances return separate contexts
+
 #### Web Service Tests (`tests/external/`)
 - `add_questions_test.php`: Tests for batch question creation (single/multiple, permissions, error handling, mixed success)
 - `delete_question_test.php`: Tests for question deletion (basic, permissions, sortorder fix)
 - `duplicate_question_test.php`: Tests for question duplication (same-round, cross-round with targetroundid, permissions)
 - `change_question_sortorder_test.php`: Tests for question reordering
 - `create_instance_test.php`: Tests for activity instance creation
-
-**Total: 38 tests passing**
 
 ### Test Data Generator
 
@@ -1045,7 +1070,11 @@ vendor/bin/phpunit --filter questions_test
 - Constants for defaults, types, stages, file areas, and field lists
 - Comprehensive test coverage (38 tests)
 - Test data generators
-- Backup/restore support for all activity settings
+- Backup/restore with full support for questions, rounds, participants, responses, and files
+  - Without user data: backs up only the last round and its questions (latest versions)
+  - With user data: backs up all rounds, participants, responses, question images, and avatar files
+  - Backed up with user data but restored without: restores all rounds/questions but no participants
+- Privacy API provider (metadata, export, delete for participants and responses)
 - Event logging for all major actions (10 events: view, question CRUD, round management, participants, responses)
 - Landing page with stage-based content display (view.php)
   - Shows different UI based on round stage and user capabilities
