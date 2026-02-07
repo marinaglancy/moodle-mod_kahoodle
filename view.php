@@ -106,8 +106,8 @@ if ($round->is_in_progress() && $round->is_participant() === null && has_capabil
         new moodle_url('/mod/kahoodle/view.php'),
         ['round' => $round]
     );
-    if ($joinform->get_data()) {
-        \mod_kahoodle\local\game\participants::join_round($round);
+    if ($data = $joinform->get_data()) {
+        \mod_kahoodle\local\game\participants::join_round($round, $data->displayname ?? null);
         redirect($round->get_url());
     }
 }

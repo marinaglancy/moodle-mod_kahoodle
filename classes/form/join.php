@@ -16,6 +16,7 @@
 
 namespace mod_kahoodle\form;
 
+use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
 
 require_once($CFG->libdir . '/formslib.php');
@@ -29,13 +30,27 @@ require_once($CFG->libdir . '/formslib.php');
  */
 class join extends \moodleform {
     /**
+     * Get the round entity from custom data
+     *
+     * @return round
+     * @throws \coding_exception
+     */
+    public function get_round(): round {
+        if (!isset($this->_customdata['round']) || !($this->_customdata['round'] instanceof round)) {
+            throw new \coding_exception('The join form requires a round entity in custom data');
+        }
+        return $this->_customdata['round'];
+    }
+
+    /**
      * Form definition
      */
     protected function definition() {
+        global $USER;
+
         $mform = $this->_form;
-        /** @var round $round */
-        $round = $this->_customdata['round'];
-        $context = $round->guess_context();
+        $round = $this->get_round();
+        $context = $round->get_context();
 
         $mform->addElement('hidden', 'id', $round->get_cm()->id);
         $mform->setType('id', PARAM_INT);
@@ -43,6 +58,26 @@ class join extends \moodleform {
         $mform->setType('action', PARAM_ALPHA);
 
         $mform->addElement('html', '<p>' . get_string('landing_join_message', 'mod_kahoodle') . '</p>');
+
+        $kahoodle = $round->get_kahoodle();
+        $identitymode = (int)($kahoodle->identitymode ?? constants::DEFAULT_IDENTITY_MODE);
+
+        if ($identitymode !== constants::IDENTITYMODE_REALNAME) {
+            $maxlen = constants::DISPLAYNAME_MAXLENGTH;
+            $mform->addElement(
+                'text',
+                'displayname',
+                get_string('participantdisplayname_form', 'mod_kahoodle'),
+                ['maxlength' => $maxlen, 'size' => $maxlen]
+            );
+            $mform->setType('displayname', PARAM_TEXT);
+            $mform->addRule('displayname', null, 'required', null, 'client');
+            $mform->addRule('displayname', get_string('maximumchars', '', $maxlen), 'maxlength', $maxlen, 'client');
+
+            if ($identitymode === constants::IDENTITYMODE_OPTIONAL) {
+                $mform->setDefault('displayname', fullname($USER));
+            }
+        }
 
         $buttonlabel = has_capability('mod/kahoodle:facilitate', $context)
             ? get_string('join_as_participant', 'mod_kahoodle')

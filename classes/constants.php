@@ -122,6 +122,9 @@ class constants {
         'minpoints',
     ];
 
+    /** @var int Maximum length of participant display name */
+    public const DISPLAYNAME_MAXLENGTH = 20;
+
     /** @var int Maximum number of avatar candidates that can be requested */
     public const MAX_AVATAR_CANDIDATES = 40;
 

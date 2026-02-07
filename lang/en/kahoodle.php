@@ -126,6 +126,7 @@ $string['participant'] = 'Participant';
 $string['participant_controls'] = 'Participant controls';
 $string['participantanswers'] = 'Participant answers';
 $string['participantdisplayname'] = 'Display name';
+$string['participantdisplayname_form'] = 'Your name';
 $string['participants'] = 'Participants';
 $string['participantsjoined'] = '{$a} participants joined';
 $string['pause'] = 'Pause';

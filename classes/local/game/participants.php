@@ -35,9 +35,10 @@ class participants {
      * If the round is in the lobby stage, notifies facilitators with the updated participant list.
      *
      * @param round $round The round to join
+     * @param string|null $displayname The display name chosen by the participant
      * @throws \dml_exception If database operation fails
      */
-    public static function join_round(round $round): void {
+    public static function join_round(round $round, ?string $displayname = null): void {
         global $DB, $USER;
 
         // Check if user is already a participant.
@@ -45,8 +46,14 @@ class participants {
             return;
         }
 
-        // Get user's display name.
-        $displayname = fullname($USER);
+        // Determine display name based on identity mode.
+        $kahoodle = $round->get_kahoodle();
+        $identitymode = (int)($kahoodle->identitymode ?? constants::DEFAULT_IDENTITY_MODE);
+        if ($identitymode === constants::IDENTITYMODE_REALNAME || $displayname === null || trim($displayname) === '') {
+            $displayname = fullname($USER);
+        } else {
+            $displayname = substr(trim($displayname), 0, constants::DISPLAYNAME_MAXLENGTH);
+        }
 
         // Create participant record.
         $participant = (object)[
@@ -62,8 +69,7 @@ class participants {
         $participant->id = $DB->insert_record('kahoodle_participants', $participant);
 
         // Save avatar: use profile picture for real name mode, random avatar otherwise.
-        $kahoodle = $round->get_kahoodle();
-        if ($kahoodle->identitymode == constants::IDENTITYMODE_REALNAME) {
+        if ($identitymode === constants::IDENTITYMODE_REALNAME) {
             $avatar = self::save_profile_picture_to_avatar($round, (int)$participant->id);
         } else {
             $avatar = self::save_random_avatar($round, (int)$participant->id);
