@@ -107,8 +107,7 @@ if ($round->is_in_progress() && $round->is_participant() === null && has_capabil
         ['round' => $round]
     );
     if ($data = $joinform->get_data()) {
-        $displayname = ($data->identitychoice ?? '') === 'alias' ? ($data->displayname ?? null) : null;
-        \mod_kahoodle\local\game\participants::join_round($round, $displayname);
+        \mod_kahoodle\local\game\participants::join_round($round, $data->displayname);
         redirect($round->get_url());
     }
 }

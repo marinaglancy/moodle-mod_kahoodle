@@ -54,6 +54,7 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   ├── delete_question.php # Question deletion web service
 │   │   └── preview_questions.php # Question preview web service
 │   ├── form/                 # Dynamic forms
+│   │   ├── join.php          # Join round form (identity mode aware, normalises displayname in get_data)
 │   │   └── question.php      # Question add/edit modal form
 │   ├── local/
 │   │   ├── entities/         # Domain entity classes
@@ -162,7 +163,7 @@ All plugin constants are defined in `classes/constants.php`:
 - **Question Format**: `QUESTIONFORMAT_PLAIN` (0) for plain text with image, `QUESTIONFORMAT_RICHTEXT` (1) for rich text editor
 - **Text Limits**: `QUESTIONTEXT_MAXLENGTH` (300 characters for plain text mode)
 - **Round Stages**: `STAGE_PREPARATION`, `STAGE_LOBBY`, `STAGE_QUESTION_PREVIEW`, `STAGE_QUESTION`, `STAGE_QUESTION_RESULTS`, `STAGE_LEADERS`, `STAGE_REVISION`, `STAGE_ARCHIVED`
-- **Identity Mode**: `IDENTITYMODE_NORMAL` (0) shows real names, `IDENTITYMODE_ANONYMOUS` (1) shows Kahoot-style random display names
+- **Identity Mode**: `IDENTITYMODE_REALNAME` (0) real name, `IDENTITYMODE_OPTIONAL` (1) optional alias, `IDENTITYMODE_ALIAS` (2) required alias, `IDENTITYMODE_ANONYMOUS` (3) fully anonymous
 - **File Areas**: `FILEAREA_QUESTION_IMAGE` for question images, `FILEAREA_AVATAR` for participant avatars
 - **Field Lists**: `FIELDS_QUESTION_VERSION` and `FIELDS_ROUND_QUESTION` for consistent field handling across entities and API methods
 
@@ -715,7 +716,7 @@ Main activity configuration table.
 
 **Key Fields:**
 - `questionformat`: Question input format (0=plain text with image, 1=rich text editor)
-- `identitymode`: Identity mode (0=normal shows real names, 1=anonymous shows random display names)
+- `identitymode`: Identity mode (0=real name, 1=optional alias, 2=required alias, 3=fully anonymous)
 - `allowrepeat`: Allow users to participate in multiple rounds
 - `lobbyduration`: Default lobby duration (60s)
 - `questionpreviewduration`: Default preview time (5s)

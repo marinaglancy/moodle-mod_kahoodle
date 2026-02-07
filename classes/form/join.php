@@ -154,6 +154,34 @@ class join extends \moodleform {
     }
 
     /**
+     * Return submitted data if properly submitted, with displayname normalised by identity mode.
+     *
+     * For realname mode, displayname is always null. For optional mode, displayname is
+     * null when the user chose the realname radio. For alias/anonymous modes, the
+     * submitted displayname is returned as-is.
+     *
+     * @return \stdClass|null
+     */
+    public function get_data() {
+        $data = parent::get_data();
+        if ($data === null) {
+            return null;
+        }
+
+        $kahoodle = $this->get_round()->get_kahoodle();
+        $identitymode = (int)($kahoodle->identitymode ?? constants::DEFAULT_IDENTITY_MODE);
+
+        if ($identitymode === constants::IDENTITYMODE_REALNAME) {
+            $data->displayname = null;
+        } else if ($identitymode === constants::IDENTITYMODE_OPTIONAL
+                && ($data->identitychoice ?? '') !== 'alias') {
+            $data->displayname = null;
+        }
+
+        return $data;
+    }
+
+    /**
      * Server-side validation
      *
      * @param array $data
