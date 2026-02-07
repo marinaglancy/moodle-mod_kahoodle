@@ -521,6 +521,7 @@ Provides columns and filters for displaying round information.
 - Lists participants for a completed round
 - Main table: `kahoodle`, with joins to rounds then participants
 - Columns: participant:participant, user:fullnamewithpicturelink, rank, score, correctanswers, questionsanswered
+- In anonymous mode: user entity, user column, and user filter are excluded
 - Actions: View answers (links to participant details)
 - Sorted by score (descending)
 - Downloadable
@@ -551,6 +552,7 @@ Provides columns and filters for displaying round information.
 - Main table: `kahoodle`, with joins to rounds then participants
 - Uses round entity for round name column and filter
 - Columns: round:namelinked, participant:participant, user:fullnamewithpicturelink, rank, score, correctanswers, questionsanswered
+- In anonymous mode: user entity, user column, and user filter are excluded
 - Filters: round:name, displayname, user:userselect, rank, score
 - Actions: View answers (links to participant details)
 - Downloadable
@@ -790,13 +792,18 @@ Links questions to rounds with per-round overrides and statistics.
 User participation in rounds with customization.
 
 **Key Fields:**
-- `userid`: FK to core user table
+- `userid`: FK to core user table (nullable — NULL in anonymous mode)
+- `participantcode`: MD5 hash for anonymous participant identification within a session (nullable — NULL in non-anonymous modes)
 - `displayname`: Custom display name chosen by participant
 - `avatar`: Filename of stored avatar in `mod_kahoodle/avatar/{participantid}` file area (copied from user's profile picture on join, null if no picture)
 - `totalscore`: Total points earned in round
 - `finalrank`: Final leaderboard position
 
-**Unique Index:** `roundid, userid` - One participation per user per round (enforced at DB level)
+**Unique Indexes:**
+- `roundid, userid` - One participation per user per round in non-anonymous modes
+- `roundid, participantcode` - One participation per code per round in anonymous mode
+
+**Anonymous Mode:** In fully anonymous mode (`identitymode=3`), `userid` is NULL and `participantcode` is set to `md5($USER->id . sesskey() . $roundid)`. This is deterministic within a session (stable across page refreshes) but changes on re-login. The participant is looked up by `participantcode` instead of `userid`.
 
 #### 7. kahoodle_responses (User Answers)
 Individual participant responses to questions.
@@ -1049,7 +1056,8 @@ vendor/bin/phpunit --filter questions_test
   - Interactive multichoice answer buttons (2-column grid)
   - Result feedback (correct/incorrect/timeout with icons)
   - Final leaderboard for revision stage
-- Identity mode setting (normal vs anonymous game mode)
+- Identity mode setting (realname, optional alias, required alias, fully anonymous)
+- Fully anonymous mode: userid is NULL in participants table, participantcode used for session-scoped identification, user columns/filters hidden in reports, events suppressed
 - Participant avatar storage (profile picture saved on join for consistent display in reports)
 
 **In Progress:**
