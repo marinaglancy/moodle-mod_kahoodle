@@ -48,8 +48,11 @@ class participants {
 
         // Determine display name based on identity mode.
         $kahoodle = $round->get_kahoodle();
-        $identitymode = (int)($kahoodle->identitymode ?? constants::DEFAULT_IDENTITY_MODE);
-        if ($identitymode === constants::IDENTITYMODE_REALNAME || $displayname === null || trim($displayname) === '') {
+        $identitymode = (int)$kahoodle->identitymode;
+        $userealidentity = $identitymode === constants::IDENTITYMODE_REALNAME
+            || ($identitymode === constants::IDENTITYMODE_OPTIONAL
+                && ($displayname === null || trim($displayname) === ''));
+        if ($userealidentity) {
             $displayname = fullname($USER);
         } else {
             $displayname = substr(trim($displayname), 0, constants::DISPLAYNAME_MAXLENGTH);
@@ -69,9 +72,6 @@ class participants {
         $participant->id = $DB->insert_record('kahoodle_participants', $participant);
 
         // Save avatar: use profile picture for real name mode (or optional mode with real identity), random avatar otherwise.
-        $userealidentity = $identitymode === constants::IDENTITYMODE_REALNAME
-            || ($identitymode === constants::IDENTITYMODE_OPTIONAL
-                && ($displayname === null || trim($displayname) === ''));
         if ($userealidentity) {
             $avatar = self::save_profile_picture_to_avatar($round, (int)$participant->id);
         } else {
