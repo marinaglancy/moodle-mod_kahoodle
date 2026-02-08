@@ -118,13 +118,15 @@ class participant extends base {
             ->add_field("{$participantalias}.userid", 'user_id')
             ->set_is_sortable(true, ["{$participantalias}.displayname"])
             ->add_callback(static function (?string $value, stdClass $row): string {
+                global $CFG;
                 $participant = \mod_kahoodle\local\entities\participant::from_partial_record($row);
                 $avatarurl = $participant->get_avatar_url();
                 $displayname = $participant->get_display_name();
+                $class = (int)($CFG->branch) >= 500 ? 'me-2' : 'mr-2';
                 $img = \html_writer::img(
                     $avatarurl->out(false),
                     $displayname,
-                    ['class' => 'rounded-circle mr-2', 'width' => 35, 'height' => 35]
+                    ['class' => 'rounded-circle ' . $class, 'width' => 35, 'height' => 35]
                 );
                 return $img . $displayname;
             });

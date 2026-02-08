@@ -51,7 +51,9 @@ class join extends \moodleform {
      * @return \HTML_QuickForm_element
      */
     protected function create_identity_img(string $url): \HTML_QuickForm_element {
-        $imgattrs = 'class="mod_kahoodle-identity-img rounded-circle mr-2" width="35" height="35"';
+        global $CFG;
+        $class = (int)($CFG->branch) >= 500 ? 'me-2' : 'mr-2';
+        $imgattrs = 'class="mod_kahoodle-identity-img rounded-circle ' . $class . '" width="35" height="35"';
         return $this->_form->createElement(
             'html',
             '<img src="' . s($url) . '" ' . $imgattrs . ' alt="">'
