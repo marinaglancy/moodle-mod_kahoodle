@@ -46,7 +46,8 @@ class add_questions extends external_api {
                         'Question type. Currently only "multichoice" is supported. Default is "multichoice".',
                         VALUE_OPTIONAL,
                     ),
-                    'questiontext' => new external_value(PARAM_RAW, 'Question text'),
+                    'questiontext' => new external_value(PARAM_RAW, 'Question text. ' .
+                        'If rich text format is used, the main question must be in an <h3> tag.'),
                     'questionconfig' => new external_value(
                         PARAM_RAW,
                         "Type-specific configuration.\n\n" .

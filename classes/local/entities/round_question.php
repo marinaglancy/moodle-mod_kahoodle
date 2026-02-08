@@ -260,23 +260,29 @@ class round_question {
     public function display_question_text(): string {
         $data = $this->data;
         $text = $data->questiontext ?? '';
-        $context = $this->get_round()->get_context();
+        $context = $this->guess_context();
+        $options = ['context' => $context];
+        if (defined('BEHAT_SITE_RUNNING') && BEHAT_SITE_RUNNING) {
+            // In behat generators the filter cache is sometimes outdated.
+            $options['filter'] = false;
+        }
 
         if ($this->data->questionformat == constants::QUESTIONFORMAT_RICHTEXT) {
             // Rich text format.
-            [$text] = \core_external\util::format_text(
+            $text = file_rewrite_pluginfile_urls(
                 $text,
-                FORMAT_HTML,
-                $context,
+                'pluginfile.php',
+                $context->id,
                 'mod_kahoodle',
                 constants::FILEAREA_QUESTION_IMAGE,
                 $data->questionversionid
             );
+            $text = format_text($text, FORMAT_HTML, $options);
             return $text;
         }
 
         // Plain text format.
-        [$text] = \core_external\util::format_text($text, FORMAT_MOODLE, $context);
+        $text = '<h3>' . format_text($text, FORMAT_MOODLE, $options) . '</h3>';
         return $text;
     }
 
@@ -286,19 +292,24 @@ class round_question {
      * @return string
      */
     public function preview_question_text(): string {
-        global $PAGE;
         $value = $this->data->questiontext;
         if ($value === null || $value === '') {
             return '';
         }
+        $options = ['context' => $this->guess_context()];
+        if (defined('BEHAT_SITE_RUNNING') && BEHAT_SITE_RUNNING) {
+            // In behat generators the filter cache is sometimes outdated.
+            $options['filter'] = false;
+        }
 
         if ($this->data->questionformat != constants::QUESTIONFORMAT_RICHTEXT) {
             // Plain text, no need to rewrite URLs.
-            return  format_text($value, FORMAT_MOODLE);
+            return format_text($value, FORMAT_MOODLE, $options);
         }
 
+        // TODO only take contents within the <h3> tag.
         $value = strip_tags($value, '<b><strong><i><em><u>'); // Strip most tags for preview.
-        return format_text($value, FORMAT_HTML, ['context' => isset($context) ? $context : $PAGE->context]);
+        return format_text($value, FORMAT_HTML, $options);
     }
 
     /**

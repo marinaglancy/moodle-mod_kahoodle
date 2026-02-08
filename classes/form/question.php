@@ -240,6 +240,9 @@ class question extends dynamic_form {
         $round = $roundquestion->get_round();
         $kahoodle = $round->get_kahoodle();
 
+        // TODO if rich text format is used, validate that question text contains
+        // an <h3> tag and that its content is not empty (after stripping tags).
+
         // Helper to get effective value (submitted or default).
         $getvalue = function (string $field, string $defaultfield) use ($data, $kahoodle): int {
             return strlen("" . $data[$field]) ? (int)$data[$field] : (int)$kahoodle->$defaultfield;

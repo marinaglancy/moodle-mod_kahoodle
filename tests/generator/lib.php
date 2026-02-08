@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
 use mod_kahoodle\local\entities\round_question;
 /**
@@ -83,6 +84,7 @@ class mod_kahoodle_generator extends testing_module_generator {
      *     - questionresultsduration: Results duration override (default: null)
      *     - maxpoints: Maximum points override (default: null)
      *     - minpoints: Minimum points override (default: null)
+     *     - image: If truthy, creates a test image file for the question (default: false)
      * @return round_question The question entity
      */
     public function create_question($record): round_question {
@@ -102,8 +104,45 @@ class mod_kahoodle_generator extends testing_module_generator {
             $record->questionconfig = "Option 1\n*Option 2\nOption 3";
         }
 
+        // Extract image flag before passing to API (not a real question field).
+        $createimage = !empty($record->image);
+        unset($record->image);
+
         // Use the questions API to add the question.
-        return \mod_kahoodle\questions::add_question($record);
+        $rq = \mod_kahoodle\questions::add_question($record);
+
+        // Store a test image file for the question if requested.
+        if ($createimage) {
+            $this->create_question_image($rq);
+        }
+
+        return $rq;
+    }
+
+    /**
+     * Creates a test image file for a question in the questionimage file area.
+     *
+     * @param round_question $rq The round question entity
+     */
+    protected function create_question_image(round_question $rq): void {
+        $fs = get_file_storage();
+        $context = $rq->get_round()->get_context();
+        $filerecord = [
+            'contextid' => $context->id,
+            'component' => 'mod_kahoodle',
+            'filearea' => constants::FILEAREA_QUESTION_IMAGE,
+            'itemid' => $rq->get_data()->questionversionid,
+            'filepath' => '/',
+            'filename' => 'testimage.png',
+        ];
+        // Create a minimal 1x1 pixel PNG.
+        $image = imagecreate(1, 1);
+        imagecolorallocate($image, 255, 0, 0);
+        ob_start();
+        imagepng($image);
+        $content = ob_get_clean();
+        imagedestroy($image);
+        $fs->create_file_from_string($filerecord, $content);
     }
 
     /**
@@ -182,5 +221,48 @@ class mod_kahoodle_generator extends testing_module_generator {
         }
 
         return $DB->insert_record('kahoodle_responses', $record);
+    }
+
+    /**
+     * Creates a round for a Kahoodle instance for testing purposes.
+     *
+     * Unlike create_question() (which auto-creates a round), this method creates
+     * a round directly with explicit properties. Useful for multi-round scenarios
+     * and for creating rounds in specific stages.
+     *
+     * @param array|stdClass $record data for round being generated. Requires 'kahoodleid' key.
+     *     Optional fields:
+     *     - name: Round name (default: '')
+     *     - currentstage: Stage constant (default: 'preparation')
+     *     - currentquestion: Current question number (default: 0)
+     *     - timestarted: Timestamp (default: null)
+     *     - timecompleted: Timestamp (default: null)
+     *     - stagestarttime: Timestamp (default: null)
+     *     - timecreated: Timestamp (default: current time)
+     * @return int The round ID
+     */
+    public function create_round($record): int {
+        global $DB;
+
+        $record = (object)(array)$record;
+
+        if (empty($record->kahoodleid)) {
+            throw new coding_exception('kahoodleid must be specified when creating a round');
+        }
+
+        if (!isset($record->name)) {
+            $record->name = '';
+        }
+        if (!isset($record->currentstage)) {
+            $record->currentstage = constants::STAGE_PREPARATION;
+        }
+        if (!isset($record->currentquestion)) {
+            $record->currentquestion = 0;
+        }
+        if (!isset($record->timecreated)) {
+            $record->timecreated = time();
+        }
+
+        return $DB->insert_record('kahoodle_rounds', $record);
     }
 }

@@ -97,3 +97,50 @@ Feature: Managing questions in Kahoodle
     And "What color is the sky?" "table_row" should appear before "How many days in a week?" "table_row"
     And "How many days in a week?" "table_row" should appear before "What is the largest ocean?" "table_row"
     And "What is the largest ocean?" "table_row" should appear before "What is 2 + 2?" "table_row"
+
+  @javascript
+  Scenario: Duplicating a question in the current round
+    Given the following "mod_kahoodle > questions" exist:
+      | kahoodle  | questiontext               | questionconfig       |
+      | kahoodle1 | What is the capital of UK? | *London\nParis\nRome |
+      | kahoodle1 | What is 5 + 5?             | 8\n9\n*10            |
+    When I log in as "teacher1"
+    And I am on the "Test Kahoodle" "kahoodle activity" page
+    And I navigate to "Questions" in current page administration
+    And I click on "Actions" "link" in the "What is the capital of UK?" "table_row"
+    And I choose "Duplicate question" in the open action menu
+    Then the following should exist in the "Questions" table:
+      | Order | Question text              |
+      | 1     | What is the capital of UK? |
+      | 2     | What is the capital of UK? |
+      | 3     | What is 5 + 5?             |
+
+  @javascript
+  Scenario: Duplicating a question from an archived round into the preparation round
+    Given the following "mod_kahoodle > questions" exist:
+      | kahoodle  | questiontext               | questionconfig       |
+      | kahoodle1 | What is the capital of UK? | *London\nParis\nRome |
+      | kahoodle1 | What is 5 + 5?             | 8\n9\n*10            |
+    # Archive the round so it is no longer editable.
+    And the kahoodle "Test Kahoodle" round stage is "lobby"
+    And the kahoodle "Test Kahoodle" round stage is "archived"
+    # Create a new round in preparation stage.
+    And I log in as "teacher1"
+    And I am on the "Test Kahoodle" "kahoodle activity" page
+    And I follow "Prepare new round"
+    # Go to the archived round's question management page.
+    And I am on the "Test Kahoodle" "kahoodle activity" page
+    And I navigate to "Results" in current page administration
+    And I click on "Manage questions" "link" in the "Round 1" "mod_kahoodle > round result"
+    And I click on "Actions" "link" in the "What is 5 + 5?" "table_row"
+    And I choose "Duplicate question" in the open action menu
+    # Confirmation dialog appears.
+    Then I should see "duplicated into the last round" in the "Duplicate question" "dialogue"
+    When I click on "Duplicate question" "button" in the "Duplicate question" "dialogue"
+    # Redirected to the preparation round's question management page.
+    Then "Add question" "button" should exist
+    And the following should exist in the "Questions" table:
+      | Order | Question text              |
+      | 1     | What is the capital of UK? |
+      | 2     | What is 5 + 5?             |
+      | 3     | What is 5 + 5?             |

@@ -1,5 +1,7 @@
 # Kahoodle - Real-time Quiz Activity Module for Moodle
 
+> **Local overrides:** If `CLAUDE.local.md` exists in this directory, read it for environment-specific configuration (Docker paths, tool locations, local dev environment details).
+
 ## Overview
 
 Kahoodle is a Moodle activity module that enables real-time, interactive quiz sessions where all participants take a quiz simultaneously. It's designed for engaging, game-like quiz experiences similar to popular classroom quiz platforms.
@@ -10,8 +12,6 @@ The plugin location varies depending on the Moodle version:
 
 - **Moodle 4.5 and 5.0**: `mod/kahoodle/`
 - **Moodle 5.1 and above**: `public/mod/kahoodle/`
-
-**Current Development Environment**: Moodle 4.5.8+ (Build: 20260109)
 
 To identify the current Moodle version, check the `version.php` file in the Moodle root directory (same location as `config-dist.php`).
 
@@ -137,7 +137,14 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   └── results.mustache      # Results page template (all rounds)
 ├── tests/
 │   ├── behat/                # Behat acceptance tests
-│   │   └── basic_actions.feature  # CRUD, settings, duplication scenarios
+│   │   ├── behat_mod_kahoodle.php      # Custom behat step definitions
+│   │   ├── basic_actions.feature       # CRUD, settings, duplication scenarios
+│   │   ├── lobby.feature               # Lobby join form and identity modes
+│   │   ├── question_management.feature # Question add/edit/delete/reorder/duplicate
+│   │   ├── multiround_results.feature  # Multi-round results reports (participants, statistics, answers, all-rounds, question versioning)
+│   │   ├── results_reports.feature     # Single-round results reports
+│   │   ├── gameplay_participant.feature # Participant gameplay flow (all stages)
+│   │   └── gameplay_facilitator.feature # Facilitator game control (all stages)
 │   ├── external/             # Web service tests
 │   │   ├── add_questions_test.php
 │   │   ├── change_question_sortorder_test.php
@@ -145,13 +152,39 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   ├── delete_question_test.php
 │   │   └── duplicate_question_test.php
 │   ├── generator/            # Test data generators
-│   │   ├── behat_mod_kahoodle_generator.php
-│   │   └── lib.php
+│   │   ├── behat_mod_kahoodle_generator.php  # Behat generator (questions, participants, responses)
+│   │   └── lib.php                           # PHPUnit generator
+│   ├── local/
+│   │   ├── entities/
+│   │   │   ├── rank_test.php             # Rank entity display methods
+│   │   │   └── round_test.php            # Round entity tests
+│   │   ├── game/
+│   │   │   ├── participants_test.php     # Participant management tests
+│   │   │   ├── progress_test.php         # Game progress and stage transitions
+│   │   │   └── responses_test.php        # Response recording and scoring
+│   │   └── questiontypes/
+│   │       └── multichoice_test.php      # Multichoice question type tests
+│   ├── output/
+│   │   ├── facilitator_test.php          # Facilitator output class tests
+│   │   ├── landing_test.php              # Landing page output tests
+│   │   ├── participant_test.php          # Participant output class tests
+│   │   ├── results_test.php              # Results page output tests
+│   │   └── roundquestion_test.php        # Round question output tests
 │   ├── privacy/
 │   │   └── provider_test.php # Privacy provider tests (metadata, contexts, export, delete)
+│   ├── reportbuilder/local/systemreports/  # Report builder system report tests
+│   │   ├── helper.php                    # Shared test helper trait
+│   │   ├── all_rounds_participants_test.php
+│   │   ├── all_rounds_statistics_test.php
+│   │   ├── participant_answers_test.php
+│   │   ├── participants_test.php
+│   │   ├── questions_test.php
+│   │   └── statistics_test.php
 │   ├── api_test.php          # PHPUnit tests for api.php
 │   ├── backup_restore_test.php # Backup/restore tests (with/without userdata, files, mixed)
 │   ├── constants_test.php    # Tests that field list constants match DB schema
+│   ├── events_test.php       # Event triggering tests
+│   ├── lib_test.php          # lib.php callback tests
 │   └── questions_test.php    # PHPUnit tests for questions API
 ├── index.php                 # List all instances in a course
 ├── lib.php                   # Core module functions (includes inplace_editable callback)
@@ -1024,27 +1057,184 @@ The plugin includes comprehensive PHPUnit test coverage:
 - `change_question_sortorder_test.php`: Tests for question reordering
 - `create_instance_test.php`: Tests for activity instance creation
 
+#### Game Logic Tests (`tests/local/game/`)
+- `progress_test.php`: Game progress and stage transition tests
+- `responses_test.php`: Response recording, scoring, and points calculation
+- `participants_test.php`: Participant management (join, avatar, get)
+
+#### Entity Tests (`tests/local/entities/`)
+- `rank_test.php`: Rank entity display methods (revision data, question results, rank suffix)
+- `round_test.php`: Round entity tests
+
+#### Question Type Tests (`tests/local/questiontypes/`)
+- `multichoice_test.php`: Multichoice sanitization, validation, format_response, export_template_data
+
+#### Output Class Tests (`tests/output/`)
+- `facilitator_test.php`: Facilitator view template data for all stages
+- `participant_test.php`: Participant view template data for all stages
+- `landing_test.php`: Landing page output (preparation, in-progress, archived, join form)
+- `results_test.php`: Results page output (round ordering, status display)
+- `roundquestion_test.php`: Round question display output
+
+#### Report Builder Tests (`tests/reportbuilder/local/systemreports/`)
+- One test file per system report, each with the matching namespace
+- Shared helper trait (`helper.php`) provides `create_dataset()`, `create_second_round()`, and `setup_page()`
+- `questions_test.php`: Questions list report
+- `participants_test.php`: Round participants report (+ anonymous mode)
+- `participant_answers_test.php`: Participant answers report
+- `statistics_test.php`: Question statistics report
+- `all_rounds_participants_test.php`: All rounds participants report
+- `all_rounds_statistics_test.php`: All rounds statistics report
+
+#### Other Tests
+- `events_test.php`: Event triggering tests for all 10 event classes
+- `lib_test.php`: lib.php callback tests (supports, add/update/delete instance, pluginfile, inplace_editable)
+
 ### Test Data Generator
 
 The `mod_kahoodle_generator` (in `tests/generator/lib.php`) provides:
 - `create_instance($record)`: Create kahoodle activity instances
-- `create_question($record)`: Create questions with all parameters
-- `create_participant($record)`: Create participants for rounds
-- `create_response($record)`: Create participant responses
+- `create_round($record)`: Create rounds directly (requires `kahoodleid`, optional `currentstage`, `currentquestion`, etc.)
+- `create_question($record)`: Create questions with all parameters (auto-creates round if needed)
+- `create_participant($record)`: Create participants for rounds (requires `roundid` and `userid`)
+- `create_response($record)`: Create participant responses (requires `participantid` and `roundquestionid`)
 
-### Running Tests
+### Behat Acceptance Tests
+
+The plugin includes Behat acceptance tests for participant and facilitator workflows.
+
+#### Round Stage Signatures
+
+Stages are identified by signature strings used in the behat step and in `data-stage` attributes:
+
+| Stage | Signature | Description |
+|---|---|---|
+| Preparation | `preparation` | Questions being set up, game not started |
+| Lobby | `lobby` | Waiting for participants to join |
+| Question Preview | `preview-N` | Showing question N text before answering |
+| Question | `question-N` | Participants answering question N |
+| Question Results | `results-N` | Showing results for question N |
+| Leaders | `leaders-N` | Leaderboard after question N |
+| Revision | `revision` | Final leaderboard with podium |
+| Archived | `archived` | Game finished |
+
+**Important:** The stage signature format is `preview-N`, `question-N`, `results-N`, `leaders-N` (NOT `questionpreview-N`, `questionresults-N`). The `N` is 1-based question number.
+
+#### Custom Behat Steps (`tests/behat/behat_mod_kahoodle.php`)
+
+Three custom steps are available:
+
+1. **Advance round to a specific stage:**
+   ```gherkin
+   Given the kahoodle "Test Kahoodle" round stage is "lobby"
+   ```
+   Starts from preparation and advances through each stage until target is reached. Can be called multiple times — if the round is already past preparation, it continues from the current stage.
+
+2. **Reveal participant ranks during revision:**
+   ```gherkin
+   When the kahoodle "Test Kahoodle" rank "rank3" is revealed
+   ```
+   Calls `realtime_channels::notify_participants_rank_revealed()`. Valid values: `rank1`, `rank2`, `rank3`, `all`.
+
+3. **Join a user as participant:**
+   ```gherkin
+   When "student1" joins the kahoodle "Test Kahoodle"
+   ```
+   Calls `participants::join_round()` as the specified user. Triggers the realtime notification so the facilitator overlay updates. Uses real name identity mode by default.
+
+#### Behat Data Generator (`tests/generator/behat_mod_kahoodle_generator.php`)
+
+Three entities can be created in Behat scenarios:
+
+```gherkin
+# Questions (creates round automatically if needed)
+And the following "mod_kahoodle > questions" exist:
+  | kahoodle      | questiontext | questionconfig      |
+  | Test Kahoodle | Question 1   | Option A\n*Option B |
+
+# Participants (requires round to exist - advance stage first)
+And the following "mod_kahoodle > participants" exist:
+  | kahoodle      | user     | displayname |
+  | Test Kahoodle | student1 | Sam         |
+
+# Responses (requires participant to exist)
+And the following "mod_kahoodle > responses" exist:
+  | kahoodle      | user     | questiontext | response | iscorrect | points |
+  | Test Kahoodle | student1 | Question 1   | 2        | 1         | 900    |
+```
+
+**Key notes:**
+- `kahoodle` field uses the activity **name** (not idnumber)
+- `questionconfig` uses literal `\n` for newlines, `*` prefix for correct answer
+- Participants/responses resolve the round via `questions::get_last_round()`
+- Create the round first (e.g., via `the kahoodle round stage is "lobby"`) before creating participants
+- Response `questiontext` must match an existing question exactly
+
+#### Facilitator Overlay Behavior
+
+The facilitator overlay (`facilitator.js`) is important to understand for writing tests:
+
+- **Auto-opens on page load:** When a teacher visits the activity page and a game is in progress (any stage except preparation/archived), the overlay opens automatically. No need to click "Resume facilitating".
+- **Wait for overlay:** Always use `And I wait until ".mod_kahoodle-overlay" "css_element" exists` after navigating to the page.
+- **Next button:** `[data-action='next']` advances to the next stage via AJAX/realtime. The overlay content updates dynamically without page reload.
+- **Close button:** `[data-action='close']` closes the overlay, returning to the landing page. Only visible when NOT in revision stage.
+- **Finish activity button:** In revision stage, the next button is replaced by "Finish activity" (`[data-action='next']` with different text).
+- **Pause/Resume:** `[data-action='pause']` and `[data-action='resume']` toggle autoplay.
+- **Landing page buttons:** "End round for everyone" (`[data-action='finish-game']`) archives the game. "Resume facilitating" (`[data-action='resume-game']`) opens the overlay. "Allow participants to join" is a regular link that starts the game.
+
+#### Participant Overlay Behavior
+
+The participant overlay (`participant.js`) updates via realtime:
+
+- **Stage content elements:** Each stage renders a specific content div:
+  - Lobby: `.mod_kahoodle-participant-container`
+  - Preview: `.mod_kahoodle-participant-preview-content`
+  - Question: `.mod_kahoodle-participant-question-content`
+  - Results: `.mod_kahoodle-participant-result-content`
+  - Leaders: `.mod_kahoodle-participant-result-content` + `.mod_kahoodle-participant-rank`
+  - Revision: `.mod_kahoodle-participant-revision-content`
+- **Wait pattern:** After advancing stage via behat step, always wait for the content element:
+  ```gherkin
+  When the kahoodle "Test Kahoodle" round stage is "question-1"
+  And I wait until ".mod_kahoodle-participant-question-content" "css_element" exists
+  ```
+- **Answer options:** Multichoice options use `.mod_kahoodle-option1`, `.mod_kahoodle-option2`, etc.
+- **Visibility checks:** Use `I should see` / `I should not see` to check text visibility. Do NOT use `should exist` / `should not exist` for elements that are hidden via CSS `display: none` — they exist in the DOM but are not visible.
+
+#### Key Template CSS Selectors for Assertions
+
+**Facilitator templates:**
+- `.mod_kahoodle-overlay` — main overlay container
+- `.mod_kahoodle-game-title` — quiz title in lobby header
+- `.mod_kahoodle-participants-list` — participant list in lobby
+- `.mod_kahoodle-participant-name` — individual participant name
+- `.mod_kahoodle-qr-code` — QR code element in lobby
+- `.mod_kahoodle-question-counter` — "X of Y" counter
+- `.mod_kahoodle-question-text` — question text
+- `.mod_kahoodle-option-text` — answer option text
+- `.mod_kahoodle-option-correct` — correct answer in results
+- `.mod_kahoodle-correct-badge` — checkmark on correct answer
+- `.mod_kahoodle-leaderboard-title` — "Leaderboard" heading
+- `.mod_kahoodle-leaderboard-name` — participant name in leaderboard
+- `[data-stage='lobby']`, `[data-stage='preview']`, etc. — stage identifier
+
+**Participant templates:**
+- `.mod_kahoodle-participant-result-total-value` — total score display
+- `.mod_kahoodle-participant-result-score` — points earned for a question
+- `.mod_kahoodle-participant-rank` — rank message (hidden by default, shown in leaders/revision)
+
+#### Running Behat Tests
+
+See `CLAUDE.local.md` for environment-specific Docker commands. Feature files use the `@mod_kahoodle` tag.
+
+### Running PHPUnit Tests
 
 ```bash
-# Initialize PHPUnit environment (required after database schema changes)
-php admin/tool/phpunit/cli/init.php
-
 # Run all kahoodle tests (from Moodle root directory)
-vendor/bin/phpunit mod/kahoodle/tests/questions_test.php
+vendor/bin/phpunit --testsuite mod_kahoodle_testsuite
 
 # Run specific test file
 vendor/bin/phpunit mod/kahoodle/tests/questions_test.php
-vendor/bin/phpunit mod/kahoodle/tests/external/add_questions_test.php
-vendor/bin/phpunit mod/kahoodle/tests/external/duplicate_question_test.php
 
 # Run with filter
 vendor/bin/phpunit --filter questions_test
@@ -1068,7 +1258,7 @@ vendor/bin/phpunit --filter questions_test
 - Question add/edit modal form (dynamic form with conditional fields based on format)
 - AMD module for question UI interactions
 - Constants for defaults, types, stages, file areas, and field lists
-- Comprehensive test coverage (38 tests)
+- Comprehensive test coverage (179 PHPUnit tests)
 - Test data generators
 - Backup/restore with full support for questions, rounds, participants, responses, and files
   - Without user data: backs up only the last round and its questions (latest versions)
@@ -1123,6 +1313,4 @@ vendor/bin/phpunit --filter questions_test
 - Participant response submission and scoring
 
 **To Do:**
-- Participant answer submission integration with scoring
 - Additional question types
-- Behat acceptance tests

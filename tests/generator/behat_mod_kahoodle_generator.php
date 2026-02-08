@@ -36,6 +36,18 @@ class behat_mod_kahoodle_generator extends behat_generator_base {
                 'required' => ['kahoodle', 'questiontext'],
                 'switchids' => ['kahoodle' => 'kahoodleid'],
             ],
+            'participants' => [
+                'singular' => 'participant',
+                'datagenerator' => 'participant',
+                'required' => ['kahoodle', 'user'],
+                'switchids' => [],
+            ],
+            'responses' => [
+                'singular' => 'response',
+                'datagenerator' => 'response',
+                'required' => ['kahoodle', 'user', 'question'],
+                'switchids' => [],
+            ],
         ];
     }
 
@@ -64,6 +76,72 @@ class behat_mod_kahoodle_generator extends behat_generator_base {
             // Convert literal \n to actual newlines.
             $data['questionconfig'] = str_replace('\n', "\n", $data['questionconfig']);
         }
+        return $data;
+    }
+
+    /**
+     * Preprocess participant data.
+     *
+     * Resolves kahoodle activity name to round ID and username to user ID.
+     *
+     * @param array $data Raw data.
+     * @return array Processed data.
+     */
+    protected function preprocess_participant(array $data): array {
+        global $DB;
+
+        $cm = $this->get_cm_by_activity_name('kahoodle', $data['kahoodle']);
+        $round = \mod_kahoodle\questions::get_last_round($cm->instance);
+        $data['roundid'] = $round->get_id();
+
+        $data['userid'] = $DB->get_field('user', 'id', ['username' => $data['user']], MUST_EXIST);
+
+        unset($data['kahoodle'], $data['user']);
+        return $data;
+    }
+
+    /**
+     * Preprocess response data.
+     *
+     * Resolves kahoodle/user/question to participantid and roundquestionid.
+     * The 'question' field can be either the question text or a sort order number.
+     *
+     * @param array $data Raw data.
+     * @return array Processed data.
+     */
+    protected function preprocess_response(array $data): array {
+        global $DB;
+
+        $cm = $this->get_cm_by_activity_name('kahoodle', $data['kahoodle']);
+        $round = \mod_kahoodle\questions::get_last_round($cm->instance);
+
+        // Find participant by user and round.
+        $userid = $DB->get_field('user', 'id', ['username' => $data['user']], MUST_EXIST);
+        $data['participantid'] = $DB->get_field(
+            'kahoodle_participants',
+            'id',
+            ['roundid' => $round->get_id(), 'userid' => $userid],
+            MUST_EXIST
+        );
+
+        // Find round question by sort order (numeric) or question text.
+        $question = $data['question'];
+        $questions = \mod_kahoodle\local\entities\round_question::get_all_questions_for_round($round);
+        foreach ($questions as $rq) {
+            $rqdata = $rq->get_data();
+            if (is_numeric($question) && (int)$rqdata->sortorder === (int)$question) {
+                $data['roundquestionid'] = $rq->get_id();
+                break;
+            } else if (!is_numeric($question) && $rqdata->questiontext === $question) {
+                $data['roundquestionid'] = $rq->get_id();
+                break;
+            }
+        }
+        if (empty($data['roundquestionid'])) {
+            throw new \Exception("Question '{$question}' not found in round");
+        }
+
+        unset($data['kahoodle'], $data['user'], $data['question']);
         return $data;
     }
 
