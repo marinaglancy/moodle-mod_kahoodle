@@ -99,7 +99,8 @@ if (!empty($participantid) && $view === 'details') {
     if ($participant->get_user_id()) {
         $user = $participant->get_user_record();
         $profileurl = new moodle_url('/user/profile.php', ['id' => $user->id]);
-        $userpic = $OUTPUT->user_picture($user, ['size' => 24, 'link' => false, 'class' => 'mr-1']);
+        $class = (int)($CFG->branch) >= 500 ? 'me-1' : 'mr-1';
+        $userpic = $OUTPUT->user_picture($user, ['size' => 24, 'link' => false, 'class' => $class]);
         echo html_writer::div(
             html_writer::link($profileurl, $userpic . fullname($user)),
             'text-muted small'
@@ -108,10 +109,11 @@ if (!empty($participantid) && $view === 'details') {
     echo html_writer::end_div();
 
     // Total score.
+    $class = (int)($CFG->branch) >= 500 ? 'ms-auto' : 'ml-auto';
     echo html_writer::div(
         html_writer::tag('span', get_string('score', 'mod_kahoodle') . ': ', ['class' => 'text-muted']) .
         html_writer::tag('strong', number_format($participant->get_total_score())),
-        'ml-auto h5 mb-0'
+        $class . ' h5 mb-0'
     );
 
     echo html_writer::end_div();
