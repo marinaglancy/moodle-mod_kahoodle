@@ -90,7 +90,8 @@ if (!empty($participantid) && $view === 'details') {
 
     // Participant avatar and display name.
     $avatarurl = $participant->get_avatar_url();
-    echo html_writer::img($avatarurl->out(false), '', ['class' => 'rounded-circle mr-3', 'width' => 64, 'height' => 64]);
+    $class = (int)($CFG->branch) >= 500 ? 'me-3' : 'mr-3';
+    echo html_writer::img($avatarurl->out(false), '', ['class' => 'rounded-circle ' . $class, 'width' => 64, 'height' => 64]);
     echo html_writer::start_div('participant-info');
     echo html_writer::tag('h4', s($participant->get_display_name()), ['class' => 'mb-1']);
 
