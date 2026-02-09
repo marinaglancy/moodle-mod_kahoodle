@@ -123,11 +123,11 @@ $PAGE->set_url('/mod/kahoodle/view.php', ['id' => $cm->id]);
 $PAGE->set_title(format_string($moduleinstance->name));
 $PAGE->set_heading(format_string($course->fullname));
 
-// Load realtime JS when game is in progress.
-// Participant status takes precedence over facilitator capability to prevent conflicts.
-$participant = $round->is_participant();
-
 if ($round->is_in_progress()) {
+    // Load realtime JS when game is in progress.
+    // Participant status takes precedence over facilitator capability to prevent conflicts.
+    $participant = $round->is_participant();
+
     if ($participant) {
         // User is a participant - load participant JS only (even if they have facilitate capability).
         realtime_channels::subscribe_as_participant($participant);

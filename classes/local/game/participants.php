@@ -249,6 +249,11 @@ class participants {
         // No uploaded picture - download from the profile picture URL (gravatar/generated).
         $picture = \core_user::get_profile_picture($USER, $context, ['size' => 120]);
         $url = $picture->get_url($PAGE)->out(false);
+        $defaulturl = $PAGE->get_renderer('core')->image_url('u/f3')->out(false);
+        if ($url === $defaulturl || (new \core\files\curl_security_helper())->url_is_blocked($url)) {
+            // No picture or URL is blocked for security reasons - do not attempt to download.
+            return null;
+        }
         $response = download_file_content($url, null, null, true);
         if ($response->status == 200 && !empty($response->results)) {
             $mimetype = $response->headers['Content-Type'] ?? 'image/png';

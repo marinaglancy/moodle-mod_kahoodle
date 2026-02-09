@@ -4,7 +4,9 @@ Feature: Facilitator game control
   I can start, control, and finish a Kahoodle game
 
   Background:
-    Given the following "users" exist:
+    Given the following config values are set as admin:
+      | requesttimeout | 2 | realtimeplugin_phppoll |
+    And the following "users" exist:
       | username | firstname | lastname | email                |
       | teacher1 | Terry     | Teacher  | teacher1@example.com |
       | student1 | Sam       | Student  | student1@example.com |
@@ -45,6 +47,9 @@ Feature: Facilitator game control
     Then I should see "Sam Student" in the ".mod_kahoodle-participants-list" "css_element"
     When "student2" joins the kahoodle "Test Kahoodle"
     Then I should see "Alex Student" in the ".mod_kahoodle-participants-list" "css_element"
+    # Make sure all php polling requests are finished before the end of the test
+    When the kahoodle "Test Kahoodle" round stage is "archived"
+    And I wait until "The activity has finished." "text" exists
 
   Scenario: Teacher advances through question 1 stages using next button
     Given the kahoodle "Test Kahoodle" round stage is "lobby"
@@ -60,30 +65,37 @@ Feature: Facilitator game control
     And I am on the "Test Kahoodle" "kahoodle activity" page
     And I wait until ".mod_kahoodle-overlay" "css_element" exists
     # Lobby stage: see participants who joined.
-    Then I should see "Sam" in the ".mod_kahoodle-overlay" "css_element"
-    And I should see "Alex" in the ".mod_kahoodle-overlay" "css_element"
+    Then I should see "Sam" in the ".mod_kahoodle-overlay [data-stage='lobby']" "css_element"
+    And I should see "Alex" in the ".mod_kahoodle-overlay [data-stage='lobby']" "css_element"
     # Advance to question preview: shows question text but no image.
     When I click on "[data-action='next']" "css_element"
-    Then I should see "What is the capital of France?" in the ".mod_kahoodle-overlay" "css_element"
+    And I wait until ".mod_kahoodle-overlay [data-stage='preview']" "css_element" exists
+    Then I should see "What is the capital of France?" in the ".mod_kahoodle-overlay [data-stage='preview']" "css_element"
     And I should see "1 of 2" in the ".mod_kahoodle-overlay" "css_element"
     And ".mod_kahoodle-image-container" "css_element" should not exist
     # Advance to question: shows question text, image, and answer options.
     When I click on "[data-action='next']" "css_element"
-    Then I should see "What is the capital of France?" in the ".mod_kahoodle-overlay" "css_element"
+    And I wait until ".mod_kahoodle-overlay [data-stage='question']" "css_element" exists
+    Then I should see "What is the capital of France?" in the ".mod_kahoodle-overlay [data-stage='question']" "css_element"
     And ".mod_kahoodle-image-container img" "css_element" should exist
-    And I should see "London" in the ".mod_kahoodle-overlay" "css_element"
-    And I should see "Paris" in the ".mod_kahoodle-overlay" "css_element"
-    And I should see "Berlin" in the ".mod_kahoodle-overlay" "css_element"
+    And I should see "London" in the ".mod_kahoodle-overlay [data-stage='question']" "css_element"
+    And I should see "Paris" in the ".mod_kahoodle-overlay [data-stage='question']" "css_element"
+    And I should see "Berlin" in the ".mod_kahoodle-overlay [data-stage='question']" "css_element"
     # Advance to question results with correct answer marked.
     When I click on "[data-action='next']" "css_element"
-    Then I should see "Paris" in the ".mod_kahoodle-option-correct" "css_element"
+    And I wait until ".mod_kahoodle-overlay [data-stage='results']" "css_element" exists
+    Then I should see "Paris" in the ".mod_kahoodle-overlay [data-stage='results'] .mod_kahoodle-option-correct" "css_element"
     # Advance to leaders with leaderboard: Sam (900) ranked above Alex (0).
     When I click on "[data-action='next']" "css_element"
-    Then I should see "Leaderboard" in the ".mod_kahoodle-overlay" "css_element"
-    And I should see "Sam" in the ".mod_kahoodle-leaderboard-row:nth-child(1)" "css_element"
-    And I should see "900" in the ".mod_kahoodle-leaderboard-row:nth-child(1)" "css_element"
-    And I should see "Alex" in the ".mod_kahoodle-leaderboard-row:nth-child(2)" "css_element"
-    And I should see "0" in the ".mod_kahoodle-leaderboard-row:nth-child(2)" "css_element"
+    And I wait until ".mod_kahoodle-overlay [data-stage='leaders']" "css_element" exists
+    Then I should see "Leaderboard" in the ".mod_kahoodle-overlay [data-stage='leaders']" "css_element"
+    And I should see "Sam" in the ".mod_kahoodle-overlay [data-stage='leaders'] .mod_kahoodle-leaderboard-row:nth-child(1)" "css_element"
+    And I should see "900" in the ".mod_kahoodle-overlay [data-stage='leaders'] .mod_kahoodle-leaderboard-row:nth-child(1)" "css_element"
+    And I should see "Alex" in the ".mod_kahoodle-overlay [data-stage='leaders'] .mod_kahoodle-leaderboard-row:nth-child(2)" "css_element"
+    And I should see "0" in the ".mod_kahoodle-overlay [data-stage='leaders'] .mod_kahoodle-leaderboard-row:nth-child(2)" "css_element"
+    # Make sure all php polling requests are finished before the end of the test
+    When the kahoodle "Test Kahoodle" round stage is "archived"
+    And I wait until "The activity has finished." "text" exists
 
   Scenario: Teacher sees question 2 content after advancing with behat step
     Given the kahoodle "Test Kahoodle" round stage is "lobby"
@@ -100,9 +112,12 @@ Feature: Facilitator game control
     And the kahoodle "Test Kahoodle" round stage is "preview-2"
     When I log in as "teacher1"
     And I am on the "Test Kahoodle" "kahoodle activity" page
-    And I wait until ".mod_kahoodle-overlay" "css_element" exists
-    Then I should see "What is 2 + 2?" in the ".mod_kahoodle-overlay" "css_element"
+    And I wait until ".mod_kahoodle-overlay [data-stage='preview']" "css_element" exists
+    Then I should see "What is 2 + 2?" in the ".mod_kahoodle-overlay [data-stage='preview']" "css_element"
     And I should see "2 of 2" in the ".mod_kahoodle-overlay" "css_element"
+    # Make sure all php polling requests are finished before the end of the test
+    When the kahoodle "Test Kahoodle" round stage is "archived"
+    And I wait until "The activity has finished." "text" exists
 
   Scenario: Teacher sees revision stage with leaderboard and finish button
     Given the kahoodle "Test Kahoodle" round stage is "lobby"
@@ -117,11 +132,14 @@ Feature: Facilitator game control
     And the kahoodle "Test Kahoodle" round stage is "revision"
     When I log in as "teacher1"
     And I am on the "Test Kahoodle" "kahoodle activity" page
-    And I wait until ".mod_kahoodle-overlay" "css_element" exists
-    Then "[data-stage='revision']" "css_element" should exist
+    And I wait until ".mod_kahoodle-overlay [data-stage='revision']" "css_element" exists
     # TODO podium animation prevents checking leaderboard atm
     # And I should see "Sam" in the ".mod_kahoodle-overlay" "css_element"
+    And ".mod_kahoodle-overlay [data-stage='revision']" "css_element" should exist
     And I should see "Finish activity" in the ".mod_kahoodle-overlay" "css_element"
+    # Make sure all php polling requests are finished before the end of the test
+    When the kahoodle "Test Kahoodle" round stage is "archived"
+    And I wait until "The activity has finished." "text" exists
 
   Scenario: Teacher finishes game from landing page
     Given the kahoodle "Test Kahoodle" round stage is "lobby"
@@ -164,10 +182,10 @@ Feature: Facilitator game control
       | Fast Kahoodle | student1 | 1        | 1        | 1         | 900    |
     And I log in as "teacher1"
     And I am on the "Fast Kahoodle" "kahoodle activity" page
-    And I wait until ".mod_kahoodle-overlay" "css_element" exists
+    And I wait until ".mod_kahoodle-overlay [data-stage='lobby']" "css_element" exists
     # Advance to preview-1 and verify we are on the preview stage.
     When I click on "[data-action='next']" "css_element"
-    Then "[data-stage='preview']" "css_element" should exist
+    And I wait until ".mod_kahoodle-overlay [data-stage='preview']" "css_element" exists
     Then "[data-stage='question']" "css_element" should not exist
     # Wait for auto-advance (preview duration is 3s, wait 5s for buffer).
     When I wait "5" seconds
@@ -187,3 +205,6 @@ Feature: Facilitator game control
     And I wait "5" seconds
     Then "[data-stage='preview']" "css_element" should not exist
     Then "[data-stage='question']" "css_element" should exist
+    # Make sure all php polling requests are finished before the end of the test
+    When the kahoodle "Fast Kahoodle" round stage is "archived"
+    And I wait until "The activity has finished." "text" exists

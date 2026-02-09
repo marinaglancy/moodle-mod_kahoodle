@@ -2,10 +2,12 @@
 Feature: Kahoodle lobby and join form
   In order to participate in a Kahoodle activity
   As a student
-  I need to be able to join a game through the lobby
+  I need to be able to join a game through the lobby with any identity mode
 
   Background:
-    Given the following "users" exist:
+    Given the following config values are set as admin:
+      | requesttimeout | 2 | realtimeplugin_phppoll |
+    And the following "users" exist:
       | username | firstname | lastname | email                |
       | student1 | Sam       | Student  | student1@example.com |
       | teacher1 | Terry     | Teacher  | teacher1@example.com |
@@ -33,6 +35,9 @@ Feature: Kahoodle lobby and join form
     When I press "Join"
     Then I should see "You are joining as" in the ".mod_kahoodle-participant-container" "css_element"
     And I should see "Sam Student" in the ".mod_kahoodle-participant-container" "css_element"
+    # Make sure all php polling requests are finished before the end of the test
+    When the kahoodle "Test Kahoodle" round stage is "archived"
+    And I wait until "The activity has finished." "text" exists
 
   @javascript
   Scenario: Student joins a game with optional alias using real name
@@ -50,6 +55,9 @@ Feature: Kahoodle lobby and join form
     When I press "Join"
     Then I should see "You are joining as" in the ".mod_kahoodle-participant-container" "css_element"
     And I should see "Sam Student" in the ".mod_kahoodle-participant-container" "css_element"
+    # Make sure all php polling requests are finished before the end of the test
+    When the kahoodle "Test Kahoodle" round stage is "archived"
+    And I wait until "The activity has finished." "text" exists
 
   @javascript
   Scenario: Student joins a game with optional alias using a nickname
@@ -63,11 +71,16 @@ Feature: Kahoodle lobby and join form
     Then I should see "The game is on!" in the ".mod-kahoodle-landing" "css_element"
     # Student selects the alias option and enters a nickname.
     When I click on "input[name='identitychoice'][value='alias']" "css_element" in the ".mod-kahoodle-landing" "css_element"
+    And I press "Join"
+    And I should see "Required" in the ".mod-kahoodle-landing" "css_element"
     And I set the field "displayname" to "CoolPlayer"
     And I press "Join"
     Then I should see "You are joining as" in the ".mod_kahoodle-participant-container" "css_element"
     And I should see "CoolPlayer" in the ".mod_kahoodle-participant-container" "css_element"
     And I should not see "Sam Student" in the ".mod_kahoodle-participant-container" "css_element"
+    # Make sure all php polling requests are finished before the end of the test
+    When the kahoodle "Test Kahoodle" round stage is "archived"
+    And I wait until "The activity has finished." "text" exists
 
   @javascript
   Scenario: Student joins a game with required alias identity mode
@@ -86,6 +99,9 @@ Feature: Kahoodle lobby and join form
     Then I should see "You are joining as" in the ".mod_kahoodle-participant-container" "css_element"
     And I should see "SpeedyQuizzer" in the ".mod_kahoodle-participant-container" "css_element"
     And I should not see "Sam Student" in the ".mod_kahoodle-participant-container" "css_element"
+    # Make sure all php polling requests are finished before the end of the test
+    When the kahoodle "Test Kahoodle" round stage is "archived"
+    And I wait until "The activity has finished." "text" exists
 
   @javascript
   Scenario: Student joins a game with fully anonymous identity mode
@@ -104,3 +120,6 @@ Feature: Kahoodle lobby and join form
     Then I should see "You are joining as" in the ".mod_kahoodle-participant-container" "css_element"
     And I should see "MysteryPlayer" in the ".mod_kahoodle-participant-container" "css_element"
     And I should not see "Sam Student" in the ".mod_kahoodle-participant-container" "css_element"
+    # Make sure all php polling requests are finished before the end of the test
+    When the kahoodle "Test Kahoodle" round stage is "archived"
+    And I wait until "The activity has finished." "text" exists

@@ -4,7 +4,9 @@ Feature: Participant gameplay
   I can join a game and see question content as the game progresses
 
   Background:
-    Given the following "users" exist:
+    Given the following config values are set as admin:
+      | requesttimeout | 2 | realtimeplugin_phppoll |
+    And the following "users" exist:
       | username | firstname | lastname | email                |
       | student1 | Sam       | Student  | student1@example.com |
       | student2 | Alex      | Student  | student2@example.com |
@@ -54,6 +56,9 @@ Feature: Participant gameplay
     And I wait until ".mod_kahoodle-participant-preview-content" "css_element" exists
     Then I should see "Question 2" in the ".mod_kahoodle-participant-preview-content" "css_element"
     And I should see "900" in the ".mod_kahoodle-participant-result-total-value" "css_element"
+    # Make sure all php polling requests are finished before the end of the test
+    When the kahoodle "Test Kahoodle" round stage is "archived"
+    And I wait until "The activity has finished." "text" exists
 
   Scenario: Student selects correct answer and sees positive feedback
     When the kahoodle "Test Kahoodle" round stage is "question-1"
@@ -66,6 +71,9 @@ Feature: Participant gameplay
     And I wait until ".mod_kahoodle-participant-result-content" "css_element" exists
     Then I should see "Correct!" in the ".mod_kahoodle-participant-result-content" "css_element"
     And ".mod_kahoodle-participant-result-score" "css_element" should exist
+    # Make sure all php polling requests are finished before the end of the test
+    When the kahoodle "Test Kahoodle" round stage is "archived"
+    And I wait until "The activity has finished." "text" exists
 
   Scenario: Student selects wrong answer and sees negative feedback
     When the kahoodle "Test Kahoodle" round stage is "question-1"
@@ -77,6 +85,9 @@ Feature: Participant gameplay
     When the kahoodle "Test Kahoodle" round stage is "results-1"
     And I wait until ".mod_kahoodle-participant-result-content" "css_element" exists
     Then I should see "Incorrect" in the ".mod_kahoodle-participant-result-content" "css_element"
+    # Make sure all php polling requests are finished before the end of the test
+    When the kahoodle "Test Kahoodle" round stage is "archived"
+    And I wait until "The activity has finished." "text" exists
 
   Scenario: Student does not answer and sees time up message
     When the kahoodle "Test Kahoodle" round stage is "question-1"
@@ -85,6 +96,9 @@ Feature: Participant gameplay
     When the kahoodle "Test Kahoodle" round stage is "results-1"
     And I wait until ".mod_kahoodle-participant-result-content" "css_element" exists
     Then I should see "Time's up!" in the ".mod_kahoodle-participant-result-content" "css_element"
+    # Make sure all php polling requests are finished before the end of the test
+    When the kahoodle "Test Kahoodle" round stage is "archived"
+    And I wait until "The activity has finished." "text" exists
 
   Scenario: Student sees rank in leaders stage
     # Generate response for student1 with fewer points than student2 (950).
@@ -99,6 +113,9 @@ Feature: Participant gameplay
     # Student1 (800pts) is behind student2 (950pts).
     Then I should see "You are in 2nd place" in the ".mod_kahoodle-participant-rank" "css_element"
     And I should see "150 points behind Alex" in the ".mod_kahoodle-participant-rank" "css_element"
+    # Make sure all php polling requests are finished before the end of the test
+    When the kahoodle "Test Kahoodle" round stage is "archived"
+    And I wait until "The activity has finished." "text" exists
 
   Scenario: Student sees final rank on revision screen
     # Generate response for student1 so rankings are meaningful.
@@ -117,10 +134,14 @@ Feature: Participant gameplay
     # Reveal 2nd place - student1 is 2nd so should now see their final rank.
     When the kahoodle "Test Kahoodle" rank "rank2" is revealed
     Then I should see "You finished in 2nd place"
+    # Make sure all php polling requests are finished before the end of the test
+    When the kahoodle "Test Kahoodle" round stage is "archived"
+    And I wait until "The activity has finished." "text" exists
+    # TODO add test that the rank and points are displayed to participants after activity is finished.
 
   Scenario: Student is redirected when game is archived
     When the kahoodle "Test Kahoodle" round stage is "question-1"
     And I wait until ".mod_kahoodle-participant-question-content" "css_element" exists
     # Facilitator finishes the game while student is mid-question.
     And the kahoodle "Test Kahoodle" round stage is "archived"
-    Then I should see "The activity has finished."
+    And I wait until "The activity has finished." "text" exists
