@@ -250,11 +250,13 @@ final class participants_test extends \advanced_testcase {
     }
 
     /**
-     * Test save_profile_picture_to_avatar downloads gravatar/generated picture when no upload exists.
+     * Test save_profile_picture_to_avatar downloads gravatar when no upload exists.
      */
     public function test_save_profile_picture_without_uploaded_picture(): void {
+        global $CFG;
         $this->resetAfterTest();
 
+        $CFG->enablegravatar = true;
         $course = $this->getDataGenerator()->create_course();
         $kahoodle = $this->getDataGenerator()->create_module('kahoodle', [
             'course' => $course->id,
