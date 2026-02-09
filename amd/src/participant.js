@@ -55,7 +55,6 @@ const SELECTORS = {
 let participantState = {
     roundId: null,
     participantId: null,
-    contextId: null,
     overlayContainer: null,
     currentStageData: null,
 };
@@ -68,12 +67,10 @@ let participantState = {
  *
  * @param {number} roundId The round ID
  * @param {number} participantId The participant ID
- * @param {number} contextId The context ID
  */
-export const init = (roundId, participantId, contextId) => {
+export const init = (roundId, participantId) => {
     participantState.roundId = roundId;
     participantState.participantId = participantId;
-    participantState.contextId = contextId;
 
     // Subscribe to realtime events.
     PubSub.subscribe(RealTimeEvents.EVENT, handleRealtimeEvent);
@@ -110,8 +107,7 @@ const handleLandingPageClick = (e) => {
  */
 const handleAnswerEvent = async(response) => {
     try {
-        const channel = getParticipantChannel();
-        await RealTimeApi.sendToServer(channel, {
+        await sendToServer({
             action: 'answer',
             response: response,
             currentstage: participantState.currentStageData.stagesignature,
@@ -128,9 +124,7 @@ const handleAnswerEvent = async(response) => {
  */
 const fetchCurrentStage = async() => {
     try {
-        const channel = getParticipantChannel();
-        const rawResponse = await RealTimeApi.sendToServer(channel, {action: 'get_current'});
-        const response = parseRealtimeResponse(rawResponse);
+        const response = await sendToServer({action: 'get_participant_state'});
 
         if (response.error) {
             Notification.exception({message: response.error});
@@ -146,33 +140,20 @@ const fetchCurrentStage = async() => {
 };
 
 /**
- * Parse the response from the realtime API
+ * Send a request to the server via the realtime API
  *
- * The tool_realtime_request web service returns {response: JSON_STRING},
- * so we need to parse the inner JSON string.
- *
- * @param {Object} response The response from RealTimeApi.sendToServer
+ * @param {Object} payload Request data
  * @returns {Object} The parsed stage data
  */
-const parseRealtimeResponse = (response) => {
+const sendToServer = async(payload) => {
+    const response = await RealTimeApi.sendToServer('mod_kahoodle', {
+        roundid: participantState.roundId,
+        ...payload
+    });
     if (response && response.response) {
         return JSON.parse(response.response);
     }
     return response;
-};
-
-/**
- * Get the participant channel configuration
- *
- * @returns {Object} Channel configuration
- */
-const getParticipantChannel = () => {
-    return {
-        contextid: participantState.contextId,
-        component: 'mod_kahoodle',
-        area: 'participant',
-        itemid: participantState.participantId,
-    };
 };
 
 /**
@@ -455,18 +436,11 @@ const loadAvatarCandidates = async(onlynew) => {
     }
 
     try {
-        const channel = getParticipantChannel();
         const payload = {action: 'get_avatar_candidates'};
         if (onlynew) {
             payload.onlynew = true;
         }
-        const rawResponse = await RealTimeApi.sendToServer(channel, payload);
-        const response = parseRealtimeResponse(rawResponse);
-
-        if (response.error) {
-            window.console.error('Failed to load avatar candidates', response.error);
-            return;
-        }
+        const response = await sendToServer(payload);
 
         const grid = document.querySelector(SELECTORS.AVATAR_GRID);
         if (!grid) {
@@ -512,17 +486,10 @@ const loadAvatarCandidates = async(onlynew) => {
  */
 const selectAvatar = async(filename) => {
     try {
-        const channel = getParticipantChannel();
-        const rawResponse = await RealTimeApi.sendToServer(channel, {
+        const response = await sendToServer({
             action: 'change_avatar',
             filename: filename,
         });
-        const response = parseRealtimeResponse(rawResponse);
-
-        if (response.error) {
-            window.console.error('Failed to change avatar', response.error);
-            return;
-        }
 
         // Update the lobby avatar image with the new URL.
         if (response.avatarurl) {

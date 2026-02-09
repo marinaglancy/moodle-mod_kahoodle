@@ -135,7 +135,6 @@ if ($round->is_in_progress()) {
         $PAGE->requires->js_call_amd('mod_kahoodle/participant', 'init', [
             $round->get_id(),
             $participant->get_id(),
-            $context->id,
         ]);
     } else if ($round->is_facilitator()) {
         // User is not a participant but can facilitate - load facilitator JS.
@@ -143,7 +142,6 @@ if ($round->is_in_progress()) {
 
         $PAGE->requires->js_call_amd('mod_kahoodle/facilitator', 'init', [
             $round->get_id(),
-            $context->id,
         ]);
     }
 }

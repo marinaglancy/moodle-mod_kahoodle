@@ -217,30 +217,28 @@ function mod_kahoodle_inplace_editable(string $itemtype, int $itemid, string $ne
 /**
  * Callback for tool_realtime - handle events received from clients
  *
- * @param \tool_realtime\channel $channel The realtime channel
  * @param mixed $payload The event payload
  * @return array Response data
  */
-function mod_kahoodle_realtime_event_received(\tool_realtime\channel $channel, $payload): array {
+function mod_kahoodle_realtime_event_received($payload): array {
     global $PAGE, $DB;
-    $props = $channel->get_properties();
 
-    // Verify this is for our component and the game area.
-    if ($props['component'] !== 'mod_kahoodle') {
-        return ['error' => 'Invalid channel'];
+    $action = $payload['action'] ?? '';
+    $roundid = clean_param($payload['roundid'] ?? 0, PARAM_INT);
+    if (!$roundid) {
+        return ['error' => 'Missing round ID'];
+    }
+    // Get the round entity.
+    $round = \mod_kahoodle\local\entities\round::create_from_id($roundid);
+    $context = $round->get_context();
+    \core_external\external_api::validate_context($context);
+    if (!$round->is_in_progress()) {
+        return ['error' => 'Round is not in progress'];
     }
 
-    if ($props['area'] == 'facilitator') {
-        // Facilitator channel. If there are several facilitators, they share the same channel.
-        // Itemid is the round id.
+    if (in_array($action, ['advance', 'get_current', 'reveal_rank'])) {
+        // Facilitator actions.
 
-        $roundid = (int)$props['itemid'];
-        $action = $payload['action'] ?? '';
-
-        // Get the round entity.
-        $round = \mod_kahoodle\local\entities\round::create_from_id($roundid);
-        $context = $round->get_context();
-        \core_external\external_api::validate_context($context);
         require_capability('mod/kahoodle:facilitate', $context);
 
         switch ($action) {
@@ -262,47 +260,19 @@ function mod_kahoodle_realtime_event_received(\tool_realtime\channel $channel, $
                 $data = clean_param($payload['data'] ?? '', PARAM_ALPHANUMEXT);
                 \mod_kahoodle\local\game\realtime_channels::notify_participants_rank_revealed($round, $data);
                 return [];
-
-            default:
-                return ['error' => 'Unknown action'];
         }
     }
 
-    // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
-    if ($props['area'] == 'game') {
-        // Game channel, common notifications to all participants. Itemid is the round id.
-        // TODO implement when participant view is ready.
-        // Nobody can send events to this channel.
-        // Examples of common notifications: stage changed to previewing or asking a question.
-    }
+    if (in_array($action, ['get_participant_state', 'answer', 'get_avatar_candidates', 'change_avatar'])) {
+        // Participant-specific actions.
 
-    if ($props['area'] == 'participant') {
-        // Participant-specific channel. Itemid is the participant id.
-        // TODO: Participants can send events to this channel - changing avatar, answering a question.
-        // TODO: Examples of participant-specific notifications:
-        // stage changed to question results (showing result for this participant).
-
-        $participantid = (int)$props['itemid'];
-        $action = $payload['action'] ?? '';
-
-        // Get the participant and round.
-        $roundrecord = $DB->get_record_sql('SELECT r.*
-            FROM {kahoodle_rounds} r
-            JOIN {kahoodle_participants} p ON p.roundid = r.id
-            WHERE p.id = :participantid', ['participantid' => $participantid], MUST_EXIST);
-        $round = \mod_kahoodle\local\entities\round::create_from_object($roundrecord);
-        $context = $round->get_context();
-        \core_external\external_api::validate_context($context);
-        require_capability('mod/kahoodle:participate', $context);
-        if (!$round->is_in_progress()) {
-            return ['error' => 'Round is not in progress'];
-        }
-        if (!$participant = $round->get_participant_by_id($participantid)) {
+        $participant = $round->is_participant();
+        if (!$participant) {
             return ['error' => 'Participant not found'];
         }
 
         switch ($action) {
-            case 'get_current':
+            case 'get_participant_state':
                 // Get current stage data for participant view.
                 return (new \mod_kahoodle\output\participant($participant))->export_for_template(
                     $PAGE->get_renderer('mod_kahoodle')
@@ -330,11 +300,8 @@ function mod_kahoodle_realtime_event_received(\tool_realtime\channel $channel, $
                 // Notify facilitators so the lobby display refreshes with the new avatar.
                 \mod_kahoodle\local\game\realtime_channels::notify_facilitators_stage_changed($round);
                 return ['avatarurl' => $avatarurl];
-
-            default:
-                return ['error' => 'Unknown action'];
         }
     }
 
-    return ['error' => 'Invalid channel'];
+    return ['error' => 'Invalid action'];
 }

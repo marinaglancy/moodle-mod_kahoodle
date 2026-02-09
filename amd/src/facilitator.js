@@ -54,7 +54,6 @@ const SELECTORS = {
 // Current game state.
 let gameState = {
     roundId: null,
-    contextId: null,
     overlayContainer: null,
     currentStageData: null,
     autoplayEnabled: true,
@@ -70,11 +69,9 @@ let gameState = {
  * fetches the current stage and displays the game overlay.
  *
  * @param {number} roundId The round ID
- * @param {number} contextId The context ID
  */
-export const init = (roundId, contextId) => {
+export const init = (roundId) => {
     gameState.roundId = roundId;
-    gameState.contextId = contextId;
 
     // Subscribe to realtime events.
     PubSub.subscribe(RealTimeEvents.EVENT, handleRealtimeEvent);
@@ -126,14 +123,7 @@ const handleLandingPageClick = async(e) => {
  */
 const fetchCurrentStage = async() => {
     try {
-        const channel = getChannel();
-        const rawResponse = await RealTimeApi.sendToServer(channel, {action: 'get_current'});
-        const response = parseRealtimeResponse(rawResponse);
-
-        if (response.error) {
-            Notification.exception({message: response.error});
-            return;
-        }
+        const response = await sendToServer({action: 'get_current'});
 
         if (response.template && response.stagesignature) {
             await showStage(response);
@@ -144,33 +134,16 @@ const fetchCurrentStage = async() => {
 };
 
 /**
- * Parse the response from the realtime API
+ * Send a request to the server via the realtime API
  *
- * The tool_realtime_request web service returns {response: JSON_STRING},
- * so we need to parse the inner JSON string.
- *
- * @param {Object} response The response from RealTimeApi.sendToServer
- * @returns {Object} The parsed stage data
+ * @param {Object} payload Request data
+ * @returns {Promise<Object>} The parsed response data
  */
-const parseRealtimeResponse = (response) => {
-    if (response && response.response) {
-        return JSON.parse(response.response);
-    }
-    return response;
-};
-
-/**
- * Get the realtime channel configuration
- *
- * @returns {Object} Channel configuration
- */
-const getChannel = () => {
-    return {
-        contextid: gameState.contextId,
-        component: 'mod_kahoodle',
-        area: 'facilitator',
-        itemid: gameState.roundId,
-    };
+const sendToServer = (payload) => {
+    return RealTimeApi.sendToServer('mod_kahoodle', {
+        roundid: gameState.roundId,
+        ...payload
+    });
 };
 
 /**
@@ -464,18 +437,11 @@ const advanceToNextStage = async() => {
     stopAutoplayTimer();
 
     try {
-        const channel = getChannel();
-        const rawResponse = await RealTimeApi.sendToServer(channel, {
+        await sendToServer({
             action: 'advance',
             // Also send the current stage to avoid race conditions, double facilitation, and jumping over stages.
             currentstage: gameState.currentStageData.stagesignature,
         });
-        const response = parseRealtimeResponse(rawResponse);
-
-        if (response.error) {
-            Notification.exception({message: response.error});
-            return;
-        }
     } catch (error) {
         Notification.exception(error);
     }
@@ -668,7 +634,7 @@ const closeOverlay = () => {
     // Remove keyboard event listener.
     document.removeEventListener('keydown', handleKeyboard);
 
-    // Reset state (but keep roundId and contextId).
+    // Reset state (but keep roundId).
     gameState.currentStageData = null;
     gameState.autoplayEnabled = true;
     gameState.autoplayTimerId = null;
@@ -683,8 +649,7 @@ const closeOverlay = () => {
  */
 const handleRevealEvent = async(data) => {
     try {
-        const channel = getChannel();
-        await RealTimeApi.sendToServer(channel, {
+        await sendToServer({
             action: 'reveal_rank',
             data
         });
