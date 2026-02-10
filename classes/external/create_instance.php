@@ -72,6 +72,11 @@ class create_instance extends external_api {
                     'Tags',
                     VALUE_OPTIONAL
                 ),
+                'identitymode' => new external_value(
+                    PARAM_INT,
+                    'Identity mode (0 = real name, 1 = optional alias, 2 = required alias, 3 = fully anonymous)',
+                    VALUE_OPTIONAL
+                ),
                 'allowrepeat' => new external_value(
                     PARAM_INT,
                     'Allow repeat participation (1 = yes, 0 = no)',
@@ -132,6 +137,7 @@ class create_instance extends external_api {
         $params['introformat'] = $params['introformat'] ?? FORMAT_HTML;
         $params['introdraftitemid'] = $params['introdraftitemid'] ?? 0;
         $params['visible'] = $params['visible'] ?? 1;
+        $params['identitymode'] = $params['identitymode'] ?? constants::DEFAULT_IDENTITY_MODE;
         $params['allowrepeat'] = $params['allowrepeat'] ?? constants::DEFAULT_ALLOW_REPEAT;
         $params['lobbyduration'] = $params['lobbyduration'] ?? constants::DEFAULT_LOBBY_DURATION;
         $params['questionpreviewduration'] = $params['questionpreviewduration'] ?? constants::DEFAULT_QUESTION_PREVIEW_DURATION;
@@ -172,6 +178,7 @@ class create_instance extends external_api {
         ];
 
         // Set Kahoodle-specific fields.
+        $moduleinfo->identitymode = $params['identitymode'];
         $moduleinfo->allowrepeat = $params['allowrepeat'];
         $moduleinfo->lobbyduration = $params['lobbyduration'];
         $moduleinfo->questionpreviewduration = $params['questionpreviewduration'];

@@ -53,6 +53,7 @@ final class create_instance_test extends \advanced_testcase {
         // Verify the instance was created in database.
         $instance = $DB->get_record('kahoodle', ['id' => $result['instanceid']], '*', MUST_EXIST);
         $this->assertEquals('Test Kahoodle', $instance->name);
+        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_IDENTITY_MODE, $instance->identitymode);
         $this->assertEquals(\mod_kahoodle\constants::DEFAULT_ALLOW_REPEAT, $instance->allowrepeat);
         $this->assertEquals(\mod_kahoodle\constants::DEFAULT_LOBBY_DURATION, $instance->lobbyduration);
         $this->assertEquals(\mod_kahoodle\constants::DEFAULT_QUESTION_PREVIEW_DURATION, $instance->questionpreviewduration);
@@ -90,6 +91,7 @@ final class create_instance_test extends \advanced_testcase {
             'idnumber' => 'kahoodle-001',
             'lang' => 'en',
             'tags' => ['quiz', 'game'],
+            'identitymode' => 2,
             'allowrepeat' => 1,
             'lobbyduration' => 120,
             'questionpreviewduration' => 8,
@@ -108,6 +110,7 @@ final class create_instance_test extends \advanced_testcase {
         $this->assertEquals('Custom Kahoodle', $instance->name);
         $this->assertEquals('This is a test description', $instance->intro);
         $this->assertEquals(FORMAT_HTML, $instance->introformat);
+        $this->assertEquals(2, $instance->identitymode);
         $this->assertEquals(1, $instance->allowrepeat);
         $this->assertEquals(120, $instance->lobbyduration);
         $this->assertEquals(8, $instance->questionpreviewduration);
