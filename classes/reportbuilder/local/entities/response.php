@@ -104,14 +104,15 @@ class response extends base {
             ->add_field("{$responsealias}.id", 'responseid')
             ->set_is_sortable(true)
             ->add_callback(static function (?int $value, \stdClass $row): string {
-                // TODO in Moodle 5.0+ we can use $OUTPUT->notice_badge() instead.
+                global $PAGE;
+                /** @var \mod_kahoodle\output\renderer $renderer */
+                $renderer = $PAGE->get_renderer('mod_kahoodle');
                 if ($row->responseid === null) {
-                    return html_writer::span(get_string('noanswer', 'mod_kahoodle'), 'badge badge-warning');
+                    return $renderer->badge(get_string('noanswer', 'mod_kahoodle'), 'warning');
                 }
-                if ($value) {
-                    return html_writer::span(get_string('yes'), 'badge badge-success');
-                }
-                return html_writer::span(get_string('no'), 'badge badge-danger');
+                return $value ?
+                    $renderer->badge(get_string('yes'), 'success') :
+                    $renderer->badge(get_string('no'), 'danger');
             });
 
         // Score column.

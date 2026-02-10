@@ -60,8 +60,6 @@ class multichoice extends base {
             throw new \moodle_exception('multichoice_needonecorrectoption', 'mod_kahoodle');
         }
 
-        // TODO (later) if round is not editable, the numer of options and the correct option cannot be changed.
-
         $options = array_map(fn($o) => ($o['iscorrect'] ? '*' : '') . clean_param($o['text'], PARAM_TEXT), $options);
 
         $data->questionconfig = join("\n", $options);
