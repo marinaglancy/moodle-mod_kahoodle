@@ -155,6 +155,7 @@ class join extends \moodleform {
                 'displayname',
                 get_string('joinas', 'mod_kahoodle'),
                 ['maxlength' => $maxlen, 'size' => $maxlen,
+                 'autofocus' => 'autofocus',
                  'placeholder' => get_string('participantdisplayname_form', 'mod_kahoodle')],
             );
             $mform->setType('displayname', PARAM_TEXT);

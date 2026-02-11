@@ -1793,3 +1793,11 @@
     vertical-align: middle;
     background-color: #fff;
 }
+
+.mod-kahoodle-landing input[type="text"] {
+    height: calc(1.5em + 1rem + 2px);
+    padding: .5rem 1rem;
+    font-size: 1.171875rem;
+    line-height: 1.5;
+    border-radius: .6rem;
+}
