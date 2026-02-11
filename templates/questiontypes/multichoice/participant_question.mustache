@@ -98,7 +98,7 @@
 {{/ mod_kahoodle/participant/common/base }}
 
 {{#js}}
-require(['core/pubsub'], function(PubSub) {
+require(['core/pubsub', 'mod_kahoodle/events'], function(PubSub, KahoodleEvents) {
     document.querySelectorAll('.mod_kahoodle-option[data-option]').forEach(function(el) {
         el.addEventListener('click', function(e) {
             e.preventDefault();
@@ -112,7 +112,7 @@ require(['core/pubsub'], function(PubSub) {
             });
             this.classList.add('mod_kahoodle-option-selected');
             // Dispatch event for participant.js to catch.
-            PubSub.publish('mod_kahoodle:answer', String(this.dataset.option));
+            PubSub.publish(KahoodleEvents.ANSWER, String(this.dataset.option));
         });
     });
 });

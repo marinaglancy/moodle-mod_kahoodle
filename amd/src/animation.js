@@ -22,6 +22,7 @@
  */
 
 import * as PubSub from 'core/pubsub';
+import KahoodleEvents from 'mod_kahoodle/events';
 
 const SELECTORS = {
     MAINELEMENT: '.mod_kahoodle-leaderboard-main[data-stage="revision"]',
@@ -107,7 +108,7 @@ function initPodium(main) {
     .catch(() => null)
     .finally(() => {
         main.dataset.substage = 'leaders';
-        PubSub.publish('mod_kahoodle:reveal', 'all');
+        PubSub.publish(KahoodleEvents.REVEAL_RANK, 'all');
     });
 }
 
@@ -154,7 +155,7 @@ async function podiumAnimation(container) {
         await fadeIn(rank3Points);
         await sleep(ANIMATIONDELAY);
         await fadeIn(winnerRank3);
-        PubSub.publish('mod_kahoodle:reveal_rank', 'rank3');
+        PubSub.publish(KahoodleEvents.REVEAL_RANK, 'rank3');
         await sleep(ANIMATIONDELAY * 2);
     } else {
         fadeIn(winnerRank3);
@@ -168,7 +169,7 @@ async function podiumAnimation(container) {
         await fadeIn(rank2Points);
         await sleep(ANIMATIONDELAY);
         await fadeIn(winnerRank2);
-        PubSub.publish('mod_kahoodle:reveal_rank', 'rank2');
+        PubSub.publish(KahoodleEvents.REVEAL_RANK, 'rank2');
         await sleep(ANIMATIONDELAY * 2);
     } else {
         fadeIn(winnerRank2);
@@ -181,7 +182,7 @@ async function podiumAnimation(container) {
     await fadeIn(rank1Points);
     await sleep(ANIMATIONDELAY);
     await fadeIn(winnerRank1);
-    PubSub.publish('mod_kahoodle:reveal_rank', 'rank1');
+    PubSub.publish(KahoodleEvents.REVEAL_RANK, 'rank1');
 
     await sleep(ANIMATIONDELAY * 5);
 }

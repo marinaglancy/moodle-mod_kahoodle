@@ -139,6 +139,41 @@ Feature: Participant gameplay
     And I wait until "The activity has finished." "text" exists
     # TODO add test that the rank and points are displayed to participants after activity is finished.
 
+  Scenario: Student in 4th place sees rank when all ranks are revealed
+    # Create additional students so student1 can finish 4th.
+    Given the following "users" exist:
+      | username | firstname | lastname | email                |
+      | student3 | Charlie   | Student  | student3@example.com |
+      | student4 | Dana      | Student  | student4@example.com |
+    And the following "course enrolments" exist:
+      | user     | course | role    |
+      | student3 | C1     | student |
+      | student4 | C1     | student |
+    And the following "mod_kahoodle > participants" exist:
+      | kahoodle      | user     | displayname |
+      | Test Kahoodle | student3 | Charlie     |
+      | Test Kahoodle | student4 | Dana        |
+    # Give student3 and student4 higher scores so student1 finishes behind them.
+    # student2 already has 950pts from background. student3=900, student4=850, student1=700 -> 4th place.
+    And the following "mod_kahoodle > responses" exist:
+      | kahoodle      | user     | question | response | iscorrect | points |
+      | Test Kahoodle | student3 | 1        | 2        | 1         | 900    |
+      | Test Kahoodle | student4 | 1        | 2        | 1         | 850    |
+    When the kahoodle "Test Kahoodle" round stage is "question-1"
+    And I wait until ".mod_kahoodle-participant-question-content" "css_element" exists
+    And the following "mod_kahoodle > responses" exist:
+      | kahoodle      | user     | question | response | iscorrect | points |
+      | Test Kahoodle | student1 | 1        | 2        | 1         | 700    |
+    And the kahoodle "Test Kahoodle" round stage is "revision"
+    And I wait until ".mod_kahoodle-participant-revision-content" "css_element" exists
+    Then I should see "Drumroll" in the ".mod_kahoodle-participant-revision-content" "css_element"
+    # Reveal all ranks at once - student1 is 4th so should now see their final rank.
+    When the kahoodle "Test Kahoodle" rank "all" is revealed
+    Then I should see "You finished in 4th place"
+    # Make sure all php polling requests are finished before the end of the test
+    When the kahoodle "Test Kahoodle" round stage is "archived"
+    And I wait until "The activity has finished." "text" exists
+
   Scenario: Student is redirected when game is archived
     When the kahoodle "Test Kahoodle" round stage is "question-1"
     And I wait until ".mod_kahoodle-participant-question-content" "css_element" exists

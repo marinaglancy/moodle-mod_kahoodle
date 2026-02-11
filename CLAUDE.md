@@ -21,6 +21,8 @@ To identify the current Moodle version, check the `version.php` file in the Mood
 mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 ├── amd/
 │   └── src/
+│       ├── animation.js      # AMD module for facilitator podium animation
+│       ├── events.js         # PubSub event constants (ANSWER, REVEAL_RANK)
 │       ├── facilitator.js    # AMD module for facilitator game control
 │       ├── participant.js    # AMD module for participant interface
 │       └── questions.js      # AMD module for question management UI

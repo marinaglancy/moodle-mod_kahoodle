@@ -34,6 +34,7 @@ import * as RealTimeApi from 'tool_realtime/api';
 import Templates from 'core/templates';
 import Notification from 'core/notification';
 import {getString} from 'core/str';
+import KahoodleEvents from 'mod_kahoodle/events';
 
 const SELECTORS = {
     OVERLAY: '.mod_kahoodle-overlay',
@@ -80,7 +81,7 @@ export const init = (roundId, participantId) => {
     document.addEventListener('click', handleLandingPageClick);
 
     // Listen for answer events from question type templates.
-    PubSub.subscribe('mod_kahoodle:answer', handleAnswerEvent);
+    PubSub.subscribe(KahoodleEvents.ANSWER, handleAnswerEvent);
 
     // Fetch current stage and display the participant overlay.
     fetchCurrentStage();
