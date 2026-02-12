@@ -176,7 +176,7 @@ class round {
     }
 
     /** @var stdClass|null Cached Kahoodle activity record */
-    private ?stdClass $kahoodle = null;
+    protected ?stdClass $kahoodle = null;
 
     /**
      * Get the Kahoodle activity record
@@ -202,7 +202,7 @@ class round {
     }
 
     /** @var cm_info|null Cached course module */
-    private ?cm_info $cm = null;
+    protected ?cm_info $cm = null;
 
     /**
      * Get the course module
@@ -271,6 +271,15 @@ class round {
         return $this->questionscount;
     }
 
+    /**
+     * Load all questions for this round (will be later cached as part of get_all_stages())
+     *
+     * @return round_question[]
+     */
+    protected function load_all_questions(): array {
+        return round_question::get_all_questions_for_round($this);
+    }
+
     /** @var round_stage[]|null Cached stages */
     protected ?array $stagescache = null;
 
@@ -300,7 +309,7 @@ class round {
         }
 
         $stages = [];
-        $roundquestions = round_question::get_all_questions_for_round($this);
+        $roundquestions = $this->load_all_questions();
         $this->questionscount = count($roundquestions);
 
         // Live game starts with lobby.

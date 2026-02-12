@@ -16,6 +16,7 @@
 
 namespace mod_kahoodle\local\entities;
 
+use mod_kahoodle\constants;
 use moodle_url;
 use stdClass;
 
@@ -69,13 +70,26 @@ class participant {
         'mappings' => $mappings] =
                 (array)$userfields->get_sql('u', true, 'user_');
 
+        if ($round instanceof statistics) {
+            $roundquery = "r.kahoodleid = :kahoodleid AND (r.currentstage = :stagerevision OR r.currentstage = :stagearchived)";
+            $roundparams = [
+                'kahoodleid' => $round->get_kahoodle()->id,
+                'stagerevision' => constants::STAGE_REVISION,
+                'stagearchived' => constants::STAGE_ARCHIVED,
+            ];
+        } else {
+            $roundquery = "p.roundid = :roundid";
+            $roundparams = ['roundid' => $round->get_id()];
+        }
+
         $participants = $DB->get_records_sql(
             'SELECT p.* ' . $userfieldssql . '
             FROM {kahoodle_participants} p
+            JOIN {kahoodle_rounds} r ON r.id = p.roundid
             LEFT JOIN {user} u ON u.deleted = 0 AND u.id = p.userid ' . $userfieldsjoin . '
-            WHERE p.roundid = :roundid ' . $extraquery . '
+            WHERE ' . $roundquery . ' ' . $extraquery . '
             ORDER BY p.timecreated DESC',
-            ['roundid' => $round->get_id()] + $extraparams + $userfieldsparams
+            $roundparams + $extraparams + $userfieldsparams
         );
 
         $result = [];

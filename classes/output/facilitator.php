@@ -218,11 +218,10 @@ class facilitator implements \renderable, \templatable {
             ];
         }
 
-        // TODO use language string and different motivational messages.
         if ($isrevision) {
-            $statusmessage = "Thanks for participating!";
+            $statusmessage = get_string('status_revision_stage', 'kahoodle');
         } else {
-            $statusmessage = "Great job everyone! Get ready for the next question...";
+            $statusmessage = get_string('status_leaders_stage', 'kahoodle');
         }
 
         return [

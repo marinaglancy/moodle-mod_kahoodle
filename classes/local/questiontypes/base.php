@@ -177,26 +177,6 @@ abstract class base {
     abstract public function export_template_data(round_question $roundquestion, string $stage, bool $mockresults = false): array;
 
     /**
-     * Export question type specific data aggregated across all completed rounds
-     *
-     * Used for all-rounds playback. Each question type implements its own
-     * aggregation logic. For example, multichoice aggregates response counts
-     * per option, text might aggregate text responses for a tagcloud, etc.
-     *
-     * @param round_question $roundquestion A round question (from the last round) for question config
-     * @param string $stage One of constants::STAGE_QUESTION_PREVIEW, STAGE_QUESTION, STAGE_QUESTION_RESULTS
-     * @param int $questionid The kahoodle_questions.id
-     * @param int[] $completedroundids IDs of all completed rounds
-     * @return array
-     */
-    abstract public function export_template_data_all_rounds(
-        round_question $roundquestion,
-        string $stage,
-        int $questionid,
-        array $completedroundids
-    ): array;
-
-    /**
      * Export question type specific data for templates
      *
      * This method returns an array of data specific to this question type
