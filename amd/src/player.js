@@ -167,6 +167,10 @@ export const close = (state) => {
         state.overlayContainer = null;
     }
 
+    // Restore body scrolling.
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+
     if (state._handleKeyboard) {
         document.removeEventListener('keydown', state._handleKeyboard);
         state._handleKeyboard = null;
@@ -203,10 +207,15 @@ const createContainer = (state) => {
         top: 0;
         left: 0;
         width: 100%;
-        height: 100%;
+        height: 100vh;
+        height: 100dvh;
         z-index: 9999;
     `;
     document.body.appendChild(state.overlayContainer);
+
+    // Lock body scrolling while overlay is open.
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
 
     // Bind and store handlers for cleanup.
     state._handleControls = (e) => handleControls(state, e);

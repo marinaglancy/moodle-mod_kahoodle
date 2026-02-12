@@ -60,6 +60,9 @@ let participantState = {
     currentStageData: null,
 };
 
+// Wake lock sentinel for keeping screen on during gameplay.
+let wakeLockSentinel = null;
+
 /**
  * Initialize the participant module
  *
@@ -265,16 +268,28 @@ const createOverlayContainer = () => {
         top: 0;
         left: 0;
         width: 100%;
-        height: 100%;
+        height: 100vh;
+        height: 100dvh;
         z-index: 9999;
     `;
     document.body.appendChild(participantState.overlayContainer);
 
+    // Lock body scrolling while overlay is open.
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
     // Add event listeners for controls.
     participantState.overlayContainer.addEventListener('click', handleOverlayControls);
 
+    // Prevent touch scrolling from bleeding through to the body.
+    participantState.overlayContainer.addEventListener('touchmove', handleTouchMove, {passive: false});
+
     // Add keyboard navigation.
     document.addEventListener('keydown', handleKeyboard);
+
+    // Keep screen on during gameplay.
+    requestWakeLock();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 };
 
 /**
@@ -307,16 +322,90 @@ const handleKeyboard = (e) => {
 };
 
 /**
+ * Prevent touch scrolling from bleeding through to the page body.
+ *
+ * Allows scrolling within scrollable child elements (e.g. avatar picker grid)
+ * but prevents the body from scrolling behind the overlay.
+ *
+ * @param {TouchEvent} e The touch event
+ */
+const handleTouchMove = (e) => {
+    let target = e.target;
+    while (target && target !== participantState.overlayContainer) {
+        const style = window.getComputedStyle(target);
+        const overflowY = style.getPropertyValue('overflow-y');
+        if ((overflowY === 'auto' || overflowY === 'scroll') && target.scrollHeight > target.clientHeight) {
+            return;
+        }
+        target = target.parentElement;
+    }
+    e.preventDefault();
+};
+
+/**
+ * Request a screen wake lock to prevent the device screen from turning off.
+ *
+ * Silently does nothing if the API is unavailable or the request fails.
+ */
+const requestWakeLock = async() => {
+    if (!('wakeLock' in navigator)) {
+        return;
+    }
+    try {
+        wakeLockSentinel = await navigator.wakeLock.request('screen');
+        wakeLockSentinel.addEventListener('release', () => {
+            wakeLockSentinel = null;
+        });
+    } catch (e) {
+        wakeLockSentinel = null;
+    }
+};
+
+/**
+ * Release the screen wake lock if one is held.
+ */
+const releaseWakeLock = async() => {
+    if (wakeLockSentinel) {
+        try {
+            await wakeLockSentinel.release();
+        } catch (e) {
+            // Already released.
+        }
+        wakeLockSentinel = null;
+    }
+};
+
+/**
+ * Re-acquire wake lock when the page becomes visible again.
+ *
+ * The browser automatically releases wake locks when a tab is hidden.
+ */
+const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible' && participantState.overlayContainer) {
+        requestWakeLock();
+    }
+};
+
+/**
  * Close the overlay and clean up
  */
 const closeOverlay = () => {
     if (participantState.overlayContainer) {
+        participantState.overlayContainer.removeEventListener('touchmove', handleTouchMove);
         participantState.overlayContainer.remove();
         participantState.overlayContainer = null;
     }
 
+    // Restore body scrolling.
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+
     // Remove keyboard event listener.
     document.removeEventListener('keydown', handleKeyboard);
+
+    // Release wake lock and stop re-acquisition.
+    releaseWakeLock();
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
 
     // Reset state (but keep IDs).
     participantState.currentStageData = null;
@@ -373,7 +462,6 @@ export const initAvatarPicker = () => {
  * @param {Event} e The click event
  */
 const handleAvatarPickerClick = (e) => {
-    window.console.log('Avatar picker click', e);
     const editAvatarBtn = e.target.closest(SELECTORS.EDIT_AVATAR);
     if (editAvatarBtn) {
         e.preventDefault();
@@ -390,7 +478,6 @@ const handleAvatarPickerClick = (e) => {
 
     const showMoreBtn = e.target.closest(SELECTORS.SHOW_MORE);
     if (showMoreBtn) {
-        window.console.log('Show more avatar candidates');
         e.preventDefault();
         loadAvatarCandidates(true);
         return;
