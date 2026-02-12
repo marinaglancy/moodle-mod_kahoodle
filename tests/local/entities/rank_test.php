@@ -289,4 +289,282 @@ final class rank_test extends \advanced_testcase {
         // Prevquestionrank is null by default.
         $this->assertEquals(0, $rank->get_rank_movement_status());
     }
+
+    /**
+     * Data provider for test_get_rank_message_via_revision
+     *
+     * @return array
+     */
+    public static function revision_rank_message_provider(): array {
+        return [
+            'revision, no tie, 1st place' => [
+                'score' => 500,
+                'minrank' => 1,
+                'maxrank' => 1,
+                'tiewithnames' => [],
+                'expected' => 'You finished in 1st place!',
+            ],
+            'revision, no tie, 2nd place' => [
+                'score' => 400,
+                'minrank' => 2,
+                'maxrank' => 2,
+                'tiewithnames' => [],
+                'expected' => 'You finished in 2nd place!',
+            ],
+            'revision, no tie, 3rd place' => [
+                'score' => 300,
+                'minrank' => 3,
+                'maxrank' => 3,
+                'tiewithnames' => [],
+                'expected' => 'You finished in 3rd place!',
+            ],
+            'revision, no tie, 4th place' => [
+                'score' => 200,
+                'minrank' => 4,
+                'maxrank' => 4,
+                'tiewithnames' => [],
+                'expected' => 'You finished in 4th place!',
+            ],
+            'revision, no tie, 11th place' => [
+                'score' => 50,
+                'minrank' => 11,
+                'maxrank' => 11,
+                'tiewithnames' => [],
+                'expected' => 'You finished in 11th place!',
+            ],
+            'revision, no tie, 21st place' => [
+                'score' => 10,
+                'minrank' => 21,
+                'maxrank' => 21,
+                'tiewithnames' => [],
+                'expected' => 'You finished in 21st place!',
+            ],
+            'revision, tied with one person' => [
+                'score' => 500,
+                'minrank' => 1,
+                'maxrank' => 2,
+                'tiewithnames' => ['Bob'],
+                'expected' => 'You finished in 1-2nd place tied with Bob!',
+            ],
+            'revision, tied with two people' => [
+                'score' => 500,
+                'minrank' => 1,
+                'maxrank' => 3,
+                'tiewithnames' => ['Bob', 'Charlie'],
+                'expected' => 'You finished in 1-3rd place tied with Bob and Charlie!',
+            ],
+            'revision, rank range with tie' => [
+                'score' => 200,
+                'minrank' => 4,
+                'maxrank' => 6,
+                'tiewithnames' => ['Bob', 'Charlie'],
+                'expected' => 'You finished in 4-6th place tied with Bob and Charlie!',
+            ],
+        ];
+    }
+
+    /**
+     * Test get_rank_message via get_data_for_revision
+     *
+     * @dataProvider revision_rank_message_provider
+     * @param int $score
+     * @param int $minrank
+     * @param int $maxrank
+     * @param string[] $tiewithnames
+     * @param string $expected
+     * @return void
+     */
+    public function test_get_rank_message_via_revision(
+        int $score,
+        int $minrank,
+        int $maxrank,
+        array $tiewithnames,
+        string $expected
+    ): void {
+        $this->resetAfterTest();
+
+        $participant = $this->create_participant('Alice');
+        $tiewith = [];
+        foreach ($tiewithnames as $name) {
+            $tiewith[] = $this->create_another_participant($participant, $name);
+        }
+
+        $rank = new rank($participant, $score, $minrank, $maxrank, $tiewith, null, []);
+        $data = $rank->get_data_for_revision();
+
+        $this->assertArrayHasKey('rankstatus', $data);
+        $this->assertEquals($expected, $data['rankstatus']);
+    }
+
+    /**
+     * Data provider for test_get_rank_message_via_question_results
+     *
+     * @return array
+     */
+    public static function question_results_rank_message_provider(): array {
+        return [
+            'no tie, no behind, 1st place' => [
+                'score' => 500,
+                'minrank' => 1,
+                'maxrank' => 1,
+                'tiewithnames' => [],
+                'prevscore' => null,
+                'withprevscorenames' => [],
+                'expected' => 'You are in 1st place.',
+            ],
+            'no tie, no behind, 4th place' => [
+                'score' => 200,
+                'minrank' => 4,
+                'maxrank' => 4,
+                'tiewithnames' => [],
+                'prevscore' => null,
+                'withprevscorenames' => [],
+                'expected' => 'You are in 4th place.',
+            ],
+            'tied with one, no behind' => [
+                'score' => 500,
+                'minrank' => 1,
+                'maxrank' => 2,
+                'tiewithnames' => ['Bob'],
+                'prevscore' => null,
+                'withprevscorenames' => [],
+                'expected' => 'You are in 1-2nd place tied with Bob.',
+            ],
+            'tied with two, no behind' => [
+                'score' => 300,
+                'minrank' => 3,
+                'maxrank' => 5,
+                'tiewithnames' => ['Bob', 'Charlie'],
+                'prevscore' => null,
+                'withprevscorenames' => [],
+                'expected' => 'You are in 3-5th place tied with Bob and Charlie.',
+            ],
+            'no tie, behind one person' => [
+                'score' => 400,
+                'minrank' => 2,
+                'maxrank' => 2,
+                'tiewithnames' => [],
+                'prevscore' => 600,
+                'withprevscorenames' => ['Bob'],
+                'expected' => 'You are in 2nd place, 200 points behind Bob.',
+            ],
+            'no tie, behind two people' => [
+                'score' => 300,
+                'minrank' => 3,
+                'maxrank' => 3,
+                'tiewithnames' => [],
+                'prevscore' => 500,
+                'withprevscorenames' => ['Bob', 'Charlie'],
+                'expected' => 'You are in 3rd place, 200 points behind Bob and Charlie.',
+            ],
+            'tied with one, behind one' => [
+                'score' => 300,
+                'minrank' => 2,
+                'maxrank' => 3,
+                'tiewithnames' => ['Bob'],
+                'prevscore' => 500,
+                'withprevscorenames' => ['Diana'],
+                'expected' => 'You are in 2-3rd place tied with Bob, 200 points behind Diana.',
+            ],
+            'tied with two, behind one' => [
+                'score' => 300,
+                'minrank' => 2,
+                'maxrank' => 4,
+                'tiewithnames' => ['Bob', 'Charlie'],
+                'prevscore' => 500,
+                'withprevscorenames' => ['Diana'],
+                'expected' => 'You are in 2-4th place tied with Bob and Charlie, 200 points behind Diana.',
+            ],
+            'tied with one, behind two' => [
+                'score' => 300,
+                'minrank' => 3,
+                'maxrank' => 4,
+                'tiewithnames' => ['Bob'],
+                'prevscore' => 500,
+                'withprevscorenames' => ['Diana', 'Eve'],
+                'expected' => 'You are in 3-4th place tied with Bob, 200 points behind Diana and Eve.',
+            ],
+            // When tiewith > 2 AND withprevscore > 2, behind is suppressed.
+            'many tied, many behind - behind suppressed' => [
+                'score' => 200,
+                'minrank' => 4,
+                'maxrank' => 7,
+                'tiewithnames' => ['Bob', 'Charlie', 'Diana'],
+                'prevscore' => 500,
+                'withprevscorenames' => ['Eve', 'Frank', 'Grace'],
+                // 3 tiewith > 2 AND 3 withprevscore > 2 => withbehind=false.
+                // Falls to "inplace_tied" branch. 3 names uses "morethantwo" format.
+                'expected' => '/^You are in 4-7th place tied with .+ and 2 others\.$/',
+            ],
+            // When tiewith > 2 but withprevscore <= 2, behind is NOT suppressed.
+            'many tied, few behind - behind shown' => [
+                'score' => 200,
+                'minrank' => 4,
+                'maxrank' => 7,
+                'tiewithnames' => ['Bob', 'Charlie', 'Diana'],
+                'prevscore' => 500,
+                'withprevscorenames' => ['Eve', 'Frank'],
+                // 3 tiewith > 2 but 2 withprevscore not > 2 => withbehind=true.
+                // Falls to "inplace_tied_behind" branch. 3 tiewith names uses "morethantwo".
+                'expected' => '/^You are in 4-7th place tied with .+ and 2 others, 300 points behind Eve and Frank\.$/',
+            ],
+            // When tiewith <= 2 but withprevscore > 2, behind is NOT suppressed.
+            'few tied, many behind - behind shown' => [
+                'score' => 200,
+                'minrank' => 4,
+                'maxrank' => 5,
+                'tiewithnames' => ['Bob'],
+                'prevscore' => 500,
+                'withprevscorenames' => ['Eve', 'Frank', 'Grace'],
+                // 1 tiewith not > 2 => condition not met => withbehind=true.
+                // Falls to "inplace_tied_behind" branch. 3 behind uses "morethantwo".
+                'expected' => '/^You are in 4-5th place tied with Bob, 300 points behind .+ and 2 others\.$/',
+            ],
+        ];
+    }
+
+    /**
+     * Test get_rank_message via get_data_for_question_results
+     *
+     * @dataProvider question_results_rank_message_provider
+     * @param int $score
+     * @param int $minrank
+     * @param int $maxrank
+     * @param string[] $tiewithnames
+     * @param int|null $prevscore
+     * @param string[] $withprevscorenames
+     * @param string $expected Exact string or regex pattern (if starts with '/')
+     * @return void
+     */
+    public function test_get_rank_message_via_question_results(
+        int $score,
+        int $minrank,
+        int $maxrank,
+        array $tiewithnames,
+        ?int $prevscore,
+        array $withprevscorenames,
+        string $expected
+    ): void {
+        $this->resetAfterTest();
+
+        $participant = $this->create_participant('Alice');
+        $tiewith = [];
+        foreach ($tiewithnames as $name) {
+            $tiewith[] = $this->create_another_participant($participant, $name);
+        }
+        $withprevscore = [];
+        foreach ($withprevscorenames as $name) {
+            $withprevscore[] = $this->create_another_participant($participant, $name);
+        }
+
+        $rank = new rank($participant, $score, $minrank, $maxrank, $tiewith, $prevscore, $withprevscore);
+        $data = $rank->get_data_for_question_results();
+
+        $this->assertArrayHasKey('rankstatus', $data);
+        if (str_starts_with($expected, '/')) {
+            $this->assertMatchesRegularExpression($expected, $data['rankstatus']);
+        } else {
+            $this->assertEquals($expected, $data['rankstatus']);
+        }
+    }
 }

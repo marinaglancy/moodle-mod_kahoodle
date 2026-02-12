@@ -54,7 +54,8 @@ final class change_question_sortorder_test extends \advanced_testcase {
         }
 
         // Change the question sort order via web service.
-        change_question_sortorder::execute($questions[7], 2);
+        $result = change_question_sortorder::execute($questions[7], 2);
+        \core_external\external_api::clean_returnvalue(change_question_sortorder::execute_returns(), $result);
 
         $roundquestions = round_question::get_all_questions_for_round($round);
 
@@ -65,7 +66,8 @@ final class change_question_sortorder_test extends \advanced_testcase {
         }
 
         // Now move question down.
-        change_question_sortorder::execute($questions[1], 9);
+        $result = change_question_sortorder::execute($questions[1], 9);
+        \core_external\external_api::clean_returnvalue(change_question_sortorder::execute_returns(), $result);
 
         $roundquestions = round_question::get_all_questions_for_round($round);
 

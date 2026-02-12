@@ -52,6 +52,7 @@ final class delete_question_test extends \advanced_testcase {
 
         // Delete the question via web service.
         $result = delete_question::execute($questionid);
+        $result = \core_external\external_api::clean_returnvalue(delete_question::execute_returns(), $result);
 
         // Verify result structure.
         $this->assertIsArray($result);
@@ -117,7 +118,8 @@ final class delete_question_test extends \advanced_testcase {
         $this->assertEquals([1, 2, 3], array_values($sortorders));
 
         // Delete the middle question.
-        delete_question::execute($q2->get_question_id());
+        $result = delete_question::execute($q2->get_question_id());
+        \core_external\external_api::clean_returnvalue(delete_question::execute_returns(), $result);
 
         // Verify sortorder was fixed (should be 1, 2 now).
         $questions = $DB->get_records('kahoodle_round_questions', ['roundid' => $round->get_id()], 'sortorder ASC');

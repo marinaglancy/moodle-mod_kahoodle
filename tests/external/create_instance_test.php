@@ -43,6 +43,7 @@ final class create_instance_test extends \advanced_testcase {
             'section' => 0,
             'name' => 'Test Kahoodle',
         ]);
+        $result = \core_external\external_api::clean_returnvalue(create_instance::execute_returns(), $result);
 
         $this->assertIsArray($result);
         $this->assertArrayHasKey('coursemoduleid', $result);
@@ -100,6 +101,7 @@ final class create_instance_test extends \advanced_testcase {
             'maxpoints' => 2000,
             'minpoints' => 750,
         ]);
+        $result = \core_external\external_api::clean_returnvalue(create_instance::execute_returns(), $result);
 
         $this->assertIsArray($result);
         $this->assertArrayHasKey('coursemoduleid', $result);

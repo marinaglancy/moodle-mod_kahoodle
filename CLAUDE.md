@@ -1378,12 +1378,8 @@ vendor/bin/phpunit --filter questions_test
 - Not covered with automated tests:
     * Managing and displaying questions in rich text format
     * Fully anonymous mode workflow, reports and events
-    * When testing web services - validate that the output passes validation with the execute_returns() function
-    * add question web service - errors adding questions, WS returning warnings
-    * Tests for the question duplication web service;
-    * duplicating question with files
+    * ? add question web service - errors adding questions, WS returning warnings
     * changing avatars (behat)
-    * rank::get_rank_message in different situations
     * previewing questions when editing (behat)
     * facilitator joining as participant (behat)
     * editing questions with responses (behat)

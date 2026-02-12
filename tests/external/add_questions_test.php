@@ -55,6 +55,7 @@ final class add_questions_test extends \advanced_testcase {
         ];
 
         $result = add_questions::execute($questions);
+        $result = \core_external\external_api::clean_returnvalue(add_questions::execute_returns(), $result);
 
         // Verify the result structure.
         $this->assertIsArray($result);
@@ -106,6 +107,7 @@ final class add_questions_test extends \advanced_testcase {
         ];
 
         $result = add_questions::execute($questions);
+        $result = \core_external\external_api::clean_returnvalue(add_questions::execute_returns(), $result);
 
         // Verify all questions were created.
         $this->assertCount(3, $result['questionids']);
@@ -137,6 +139,7 @@ final class add_questions_test extends \advanced_testcase {
         ];
 
         $result = add_questions::execute($questions);
+        $result = \core_external\external_api::clean_returnvalue(add_questions::execute_returns(), $result);
 
         // Should have a warning about permission.
         $this->assertCount(0, $result['questionids']);
@@ -166,6 +169,7 @@ final class add_questions_test extends \advanced_testcase {
         ];
 
         $result = add_questions::execute($questions);
+        $result = \core_external\external_api::clean_returnvalue(add_questions::execute_returns(), $result);
 
         // Should have a warning, not an exception.
         $this->assertCount(0, $result['questionids']);
@@ -202,6 +206,7 @@ final class add_questions_test extends \advanced_testcase {
         ];
 
         $result = add_questions::execute($questions);
+        $result = \core_external\external_api::clean_returnvalue(add_questions::execute_returns(), $result);
 
         // Should have a warning.
         $this->assertCount(0, $result['questionids']);
@@ -242,6 +247,7 @@ final class add_questions_test extends \advanced_testcase {
         ];
 
         $result = add_questions::execute($questions);
+        $result = \core_external\external_api::clean_returnvalue(add_questions::execute_returns(), $result);
 
         // Should have 2 successes and 1 warning.
         $this->assertCount(2, $result['questionids']);
@@ -285,6 +291,7 @@ final class add_questions_test extends \advanced_testcase {
         ];
 
         $result = add_questions::execute($questions);
+        $result = \core_external\external_api::clean_returnvalue(add_questions::execute_returns(), $result);
 
         $this->assertCount(1, $result['questionids']);
         $this->assertCount(0, $result['warnings']);
@@ -336,6 +343,7 @@ final class add_questions_test extends \advanced_testcase {
         ];
 
         $result = add_questions::execute($questions);
+        $result = \core_external\external_api::clean_returnvalue(add_questions::execute_returns(), $result);
 
         $this->assertCount(1, $result['questionids']);
 

@@ -50,6 +50,7 @@ final class duplicate_question_test extends \advanced_testcase {
 
         // Duplicate the question via web service.
         $result = duplicate_question::execute($roundquestion->get_id());
+        $result = \core_external\external_api::clean_returnvalue(duplicate_question::execute_returns(), $result);
 
         // Verify result structure.
         $this->assertArrayHasKey('roundquestionid', $result);
@@ -95,6 +96,7 @@ final class duplicate_question_test extends \advanced_testcase {
 
         // Duplicate to the target round via web service.
         $result = duplicate_question::execute($roundquestion->get_id(), $targetroundid);
+        $result = \core_external\external_api::clean_returnvalue(duplicate_question::execute_returns(), $result);
 
         // Verify the duplicate is in the target round.
         $newrq = $DB->get_record('kahoodle_round_questions', ['id' => $result['roundquestionid']], '*', MUST_EXIST);
@@ -102,6 +104,74 @@ final class duplicate_question_test extends \advanced_testcase {
 
         // Original should still be in round 1.
         $this->assertEquals(1, $DB->count_records('kahoodle_round_questions', ['roundid' => $round1->get_id()]));
+    }
+
+    /**
+     * Test that files are duplicated along with the question
+     *
+     * @return void
+     */
+    public function test_duplicate_question_copies_files(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
+        $user = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+
+        $this->setUser($user);
+
+        /** @var \mod_kahoodle_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
+        $roundquestion = $generator->create_question(['kahoodleid' => $kahoodle->id, 'questiontext' => 'Question with image']);
+
+        // Attach a file to the question version.
+        $context = \context_module::instance($kahoodle->cmid);
+        $fs = get_file_storage();
+        $versionid = $roundquestion->get_data()->questionversionid;
+        $fs->create_file_from_string([
+            'contextid' => $context->id,
+            'component' => 'mod_kahoodle',
+            'filearea' => constants::FILEAREA_QUESTION_IMAGE,
+            'itemid' => $versionid,
+            'filepath' => '/',
+            'filename' => 'testimage.png',
+        ], 'fake image content');
+
+        // Verify original file exists.
+        $origfiles = $fs->get_area_files(
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_QUESTION_IMAGE,
+            $versionid,
+            'filename',
+            false
+        );
+        $this->assertCount(1, $origfiles);
+
+        // Duplicate the question via web service.
+        $result = duplicate_question::execute($roundquestion->get_id());
+        $result = \core_external\external_api::clean_returnvalue(duplicate_question::execute_returns(), $result);
+
+        // Get the new question version ID.
+        $newrq = $DB->get_record('kahoodle_round_questions', ['id' => $result['roundquestionid']], '*', MUST_EXIST);
+        $newversionid = $newrq->questionversionid;
+        $this->assertNotEquals($versionid, $newversionid);
+
+        // Verify the file was duplicated to the new version.
+        $newfiles = $fs->get_area_files(
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_QUESTION_IMAGE,
+            $newversionid,
+            'filename',
+            false
+        );
+        $this->assertCount(1, $newfiles);
+
+        $newfile = reset($newfiles);
+        $this->assertEquals('testimage.png', $newfile->get_filename());
+        $this->assertEquals('fake image content', $newfile->get_content());
     }
 
     /**

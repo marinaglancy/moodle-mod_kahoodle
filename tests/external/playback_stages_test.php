@@ -124,6 +124,7 @@ final class playback_stages_test extends \advanced_testcase {
         $this->setUser($teacher);
 
         $result = playback_stages::execute($round->get_id(), 0);
+        $result = \core_external\external_api::clean_returnvalue(playback_stages::execute_returns(), $result);
 
         // Verify basic structure.
         $this->assertArrayHasKey('quiztitle', $result);
@@ -180,6 +181,7 @@ final class playback_stages_test extends \advanced_testcase {
         $this->setUser($teacher);
 
         $result = playback_stages::execute(0, $kahoodle->id);
+        $result = \core_external\external_api::clean_returnvalue(playback_stages::execute_returns(), $result);
 
         // Verify basic structure.
         $this->assertArrayHasKey('quiztitle', $result);
@@ -345,6 +347,7 @@ final class playback_stages_test extends \advanced_testcase {
         $this->setUser($teacher);
 
         $result = playback_stages::execute(0, $kahoodle->id);
+        $result = \core_external\external_api::clean_returnvalue(playback_stages::execute_returns(), $result);
 
         // Find the results-1 stage.
         $resultsstage = null;
@@ -379,6 +382,7 @@ final class playback_stages_test extends \advanced_testcase {
         $this->setUser($teacher);
 
         $result = playback_stages::execute($round->get_id(), 0);
+        $result = \core_external\external_api::clean_returnvalue(playback_stages::execute_returns(), $result);
         $signatures = array_column($result['stages'], 'stagesignature');
 
         // Should have leaders stage after question 1 (but not after last question).
