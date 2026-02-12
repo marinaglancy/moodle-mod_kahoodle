@@ -169,7 +169,13 @@ abstract class base {
      * that will be JSON-encoded and passed to the template via JavaScript.
      * The JS will decode it and merge with the main template data.
      *
-     * @param round_question $roundquestion
+     * Note: the round question's round may be an instance of
+     * {@see \mod_kahoodle\local\entities\statistics} (a pseudo-round representing
+     * aggregated data across all completed rounds). Question types should handle
+     * this case when retrieving response data (e.g. aggregate responses across
+     * all rounds instead of a single round).
+     *
+     * @param round_question $roundquestion real round question or a stub
      * @param string $stage (one of constants::STAGE_QUESTION_PREVIEW, constants::STAGE_QUESTION, constants::STAGE_QUESTION_RESULTS)
      * @param bool $mockresults Whether to generate mock results data (used when a teacher edits the questions)
      * @return array

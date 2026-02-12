@@ -126,6 +126,7 @@ class playback {
      * @return string|null
      */
     protected function get_template_for_stage(round_stage $stage): ?string {
+        // TODO this repeats facilitator::get_template().
         $stagename = $stage->get_stage_name();
 
         if ($stage->is_question_stage()) {
@@ -149,6 +150,7 @@ class playback {
      * @return array Template data additions
      */
     protected function get_lobby_data(): array {
+        // TODO this basically repeats facilitator::get_lobby_data().
         $participants = $this->round->get_all_participants();
         $participantdata = [];
         foreach ($participants as $participant) {
@@ -247,6 +249,7 @@ class playback {
      * @return array Template data additions
      */
     protected function get_revision_data(): array {
+        // TODO a lot of code repetition with facilitator::get_leaderboard_data()
         $rankings = $this->round->get_rankings();
         $totalquestions = $this->round->get_questions_count();
         $prevrankings = $totalquestions > 1 ? $this->round->get_question_rankings($totalquestions - 1) : [];

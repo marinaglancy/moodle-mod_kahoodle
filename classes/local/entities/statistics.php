@@ -29,6 +29,8 @@ use mod_kahoodle\constants;
 class statistics extends round {
     /** @var round[] */
     protected array $allrounds;
+    /** @var int Last completed round ID (used for question ordering) */
+    protected int $lastroundid;
 
     /**
      * Constructor
@@ -45,8 +47,10 @@ class statistics extends round {
             throw new \moodle_exception('error_nostatistics', 'mod_kahoodle');
         }
         $lastround = reset($completedrounds);
-        // Emulate data as the last round data.
+        $this->lastroundid = $lastround->get_id();
+        // Emulate data as the last round data but with id=0 since this is not a real round.
         $this->data = (object)(array)$lastround->data;
+        $this->data->id = 0;
         $this->cm = $lastround->get_cm();
         $this->kahoodle = $lastround->get_kahoodle();
     }
@@ -54,8 +58,7 @@ class statistics extends round {
     /**
      * Get all stages for this round in order
      *
-     * For preview mode, returns only question stages (preview, question, results) for each question.
-     * For live game mode, includes lobby at the start, leaders after each question, and revision at the end.
+     * For all-round statistics we do not show the lobby stage and leaders after each question
      *
      * @param bool $ispreview Whether this is for preview mode (true) or live game (false)
      * @return round_stage[] Array of round_stage objects in order
@@ -99,7 +102,7 @@ class statistics extends round {
 
         $records = $DB->get_recordset_sql($sql, [
             'kahoodleid' => $this->get_kahoodleid(),
-            'lastroundid' => $this->get_id(),
+            'lastroundid' => $this->lastroundid,
         ]);
 
         $questions = [];
