@@ -55,6 +55,7 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   ├── create_instance.php # Activity instance creation web service
 │   │   ├── delete_question.php # Question deletion web service
 │   │   ├── duplicate_question.php # Question duplication web service (supports optional targetroundid for cross-round duplication)
+│   │   ├── playback_stages.php # Playback stages web service (returns all stages with template data)
 │   │   └── preview_questions.php # Question preview web service
 │   ├── form/                 # Dynamic forms
 │   │   ├── join.php          # Join round form (identity mode aware, normalises displayname in get_data)
@@ -67,7 +68,8 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   │   ├── rank.php      # Participant ranking entity (score, rank, ties)
 │   │   │   ├── round.php     # Round entity with caching for kahoodle/cm/context/guess_context
 │   │   │   ├── round_question.php # Round question entity (joins 3 tables)
-│   │   │   └── round_stage.php # Round stage entity (current stage in a round)
+│   │   │   ├── round_stage.php # Round stage entity (current stage in a round)
+│   │   │   └── statistics.php # Pseudo-round for all-rounds aggregated statistics
 │   │   ├── game/             # Game mechanics
 │   │   │   ├── participants.php # Participant management (join, avatar save, get)
 │   │   │   ├── progress.php  # Game progress and stage transitions
@@ -76,9 +78,10 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │       ├── base.php      # Abstract base class for question types
 │   │       └── multichoice.php # Multiple choice question type
 │   ├── output/               # Output classes for templates
-│   │   ├── facilitator.php   # Facilitator view template data preparation
+│   │   ├── facilitator.php   # Facilitator view template data (also provides static helpers for playback)
 │   │   ├── landing.php       # Landing page output (stage-based view)
 │   │   ├── participant.php   # Participant view template data preparation
+│   │   ├── playback.php      # Playback stages output (replaying completed rounds)
 │   │   ├── renderer.php      # Plugin renderer
 │   │   ├── results.php       # Results page output (all rounds with status)
 │   │   └── roundquestion.php # Round question display output
@@ -152,7 +155,8 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   ├── change_question_sortorder_test.php
 │   │   ├── create_instance_test.php
 │   │   ├── delete_question_test.php
-│   │   └── duplicate_question_test.php
+│   │   ├── duplicate_question_test.php
+│   │   └── playback_stages_test.php
 │   ├── generator/            # Test data generators
 │   │   ├── behat_mod_kahoodle_generator.php  # Behat generator (questions, participants, responses)
 │   │   └── lib.php                           # PHPUnit generator
@@ -307,6 +311,8 @@ Represents a game round with lazy-loaded cached access to related data.
 - `get_all_participants(): array` - Get all participants in the round (cached)
 - `get_participants_count(): int` - Get count of participants (uses cache or COUNT query)
 - `get_rankings(): array` - Get rankings for all participants (keyed by participant ID)
+- `get_question_rankings(int $questionnumber): array` - Get rankings up to a specific question number
+- `get_leaders(int $questionnumber = 0, int $maxnumber = 5): array` - Get top participants with rank movement info (0 = use current stage)
 - `update_final_ranks(): void` - Update finalrank and totalscore for all participants (called on revision stage)
 
 #### round_question Entity (`round_question.php`)
@@ -378,25 +384,42 @@ Represents the current stage in a round. A stage can be a non-question stage (lo
 - `is_question_stage(): bool` - Check if this is a question-related stage
 - `matches(string $stagename, int $questionnumber): bool` - Check if stage matches given parameters
 
+#### statistics Entity (`statistics.php`)
+
+Pseudo-round that represents aggregated data across all completed rounds for a kahoodle activity. Extends `round` with `id=0` (not a real round). Used for all-rounds statistics and playback.
+
+**Constructor:**
+- `__construct(int $kahoodleid)` - Creates from kahoodle ID, loads all completed rounds
+
+**Overridden Methods:**
+- `get_all_stages(bool $ispreview): array` - Returns stages without lobby and leaders (only question stages + revision)
+- `load_all_questions(): array` - Loads all questions across rounds, ordered by last round's sortorder
+- `get_question_rankings(int $questionnumber): array` - Returns total rankings based on all participants' total scores (only for last question number)
+
+**Key Details:**
+- `get_id()` returns 0 since this is not a real round
+- Uses `$lastroundid` internally for SQL queries that need the last round's data
+- Question types check `instanceof statistics` to aggregate response data across rounds
+
 ### Output Classes
 
 The plugin uses output classes in `classes/output/` for template data preparation. These classes implement `\renderable` and `\templatable` interfaces.
 
 #### facilitator Output Class (`output/facilitator.php`)
 
-Prepares template data for the facilitator view managing a kahoodle round. Used when rendering the facilitator interface during gameplay.
+Prepares template data for the facilitator view managing a kahoodle round. Also provides public static helper methods used by the `playback` output class for de-duplicated stage data building.
 
 **Constructor:**
 - `__construct(round $round)` - Takes the round entity
 
 **Key Methods:**
 - `export_for_template(\renderer_base $output): array` - Main export method
-- `get_template(): ?string` - Returns template name for current stage
-- `get_duration(): int` - Returns auto-advance duration for current stage
-- `get_common_data(): array` - Returns data common to all stages
-- `get_lobby_data(): array` - Returns lobby-specific template data
-- `get_question_data(): array` - Returns question stage template data
-- `get_leaderboard_data(): array` - Returns leaderboard template data (leaders/revision)
+
+**Public Static Methods** (shared with playback):
+- `get_template_for_stage(round_stage $stage): ?string` - Returns template name for a stage
+- `get_lobby_data(round $round): array` - Returns lobby-specific template data
+- `get_question_stage_data(round_stage $stage, \renderer_base $output): array` - Returns question stage template data
+- `get_leaderboard_data(array $leaderranks, bool $isrevision = false): array` - Formats rank objects into leaderboard template data
 
 **Returned Data Structure:**
 ```php
@@ -454,6 +477,18 @@ Prepares template data for the participant view playing a kahoodle round. Used w
 #### roundquestion Output Class (`output/roundquestion.php`)
 
 Prepares template data for displaying a single question. Used by both facilitator and participant output classes during question stages.
+
+#### playback Output Class (`output/playback.php`)
+
+Builds all playback stages with template-ready data for replaying completed rounds from statistics reports. Supports single-round mode (real `round`) and all-rounds mode (`statistics` pseudo-round).
+
+**Constructor:**
+- `__construct(round $round)` - Takes a round or statistics entity
+
+**Key Methods:**
+- `export_all_stages(\renderer_base $output): array` - Returns `{quiztitle, totalquestions, stages[]}`
+
+Each stage entry contains `{stagesignature, template, duration, templatedata}` where `templatedata` is JSON-encoded. Delegates to `facilitator` static methods for stage-specific data. Always sets `isplayback=true` and `skippodium=true` on revision.
 
 ### Question Types
 
@@ -660,6 +695,22 @@ Batch question creation web service defined in `classes/external/add_questions.p
 - Validates context and permissions for each question
 - Supports file uploads for question images
 - Returns partial success (some questions may succeed while others fail)
+
+#### mod_kahoodle_playback_stages
+
+Playback stages web service defined in `classes/external/playback_stages.php`.
+
+**Parameters:**
+- `roundid` (int, default 0): Round ID for single-round playback
+- `kahoodleid` (int, default 0): Kahoodle ID for all-rounds playback
+- Exactly one must be provided
+
+**Returns:**
+- `quiztitle`: Activity name
+- `totalquestions`: Number of questions
+- `stages`: Array of `{stagesignature, template, duration, templatedata}` where `templatedata` is JSON-encoded
+
+**Capability:** Requires `mod/kahoodle:viewresults` in the activity context.
 
 ### Round-Based Gameplay
 
@@ -1056,6 +1107,7 @@ The plugin includes comprehensive PHPUnit test coverage:
 - `add_questions_test.php`: Tests for batch question creation (single/multiple, permissions, error handling, mixed success)
 - `delete_question_test.php`: Tests for question deletion (basic, permissions, sortorder fix)
 - `duplicate_question_test.php`: Tests for question duplication (same-round, cross-round with targetroundid, permissions)
+- `playback_stages_test.php`: Tests for playback stages (single-round and all-rounds modes)
 - `change_question_sortorder_test.php`: Tests for question reordering
 - `create_instance_test.php`: Tests for activity instance creation
 
@@ -1260,7 +1312,7 @@ vendor/bin/phpunit --filter questions_test
 - Question add/edit modal form (dynamic form with conditional fields based on format)
 - AMD module for question UI interactions
 - Constants for defaults, types, stages, file areas, and field lists
-- Comprehensive test coverage (179 PHPUnit tests)
+- Comprehensive test coverage (186 PHPUnit tests)
 - Test data generators
 - Backup/restore with full support for questions, rounds, participants, responses, and files
   - Without user data: backs up only the last round and its questions (latest versions)
@@ -1309,6 +1361,12 @@ vendor/bin/phpunit --filter questions_test
 - Identity mode setting (realname, optional alias, required alias, fully anonymous)
 - Fully anonymous mode: userid is NULL in participants table, participantcode used for session-scoped identification, user columns/filters hidden in reports, events suppressed
 - Participant avatar storage (profile picture saved on join for consistent display in reports)
+- Playback feature for replaying completed rounds from statistics reports
+  - Single-round mode: lobby → question stages → leaderboards → revision (no podium)
+  - All-rounds mode: question stages with aggregated response counts → final leaderboard
+  - `statistics` pseudo-round entity aggregates data across all completed rounds
+  - `playback` output class delegates to `facilitator` static methods (de-duplicated)
+  - `playback_stages` web service returns all stages with template data
 
 **In Progress:**
 - Round gameplay mechanics

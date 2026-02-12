@@ -17,6 +17,7 @@
 namespace mod_kahoodle\output;
 
 use mod_kahoodle\constants;
+use mod_kahoodle\local\entities\rank;
 use mod_kahoodle\local\entities\round;
 use mod_kahoodle\local\entities\round_stage;
 
@@ -62,17 +63,17 @@ class facilitator implements \renderable, \templatable {
         // Add stage-specific templatedata.
         switch ($this->stage->get_stage_name()) {
             case constants::STAGE_LOBBY:
-                $data['templatedata'] += $this->get_lobby_data();
+                $data['templatedata'] += self::get_lobby_data($this->round);
                 break;
 
             case constants::STAGE_QUESTION_PREVIEW:
             case constants::STAGE_QUESTION:
             case constants::STAGE_QUESTION_RESULTS:
-                $data['templatedata'] += $this->get_question_data();
+                $data['templatedata'] += self::get_question_stage_data($this->stage, $this->output);
                 break;
 
             case constants::STAGE_LEADERS:
-                $data['templatedata'] += $this->get_leaderboard_data();
+                $data['templatedata'] += self::get_leaderboard_data($this->round->get_leaders());
                 break;
 
             case constants::STAGE_REVISION:
@@ -102,15 +103,16 @@ class facilitator implements \renderable, \templatable {
     }
 
     /**
-     * Get the template name for the current stage
+     * Get the template name for a stage
      *
+     * @param round_stage $stage
      * @return string|null
      */
-    protected function get_template(): ?string {
-        $stagename = $this->stage->get_stage_name();
+    public static function get_template_for_stage(round_stage $stage): ?string {
+        $stagename = $stage->get_stage_name();
 
-        if ($this->stage->is_question_stage()) {
-            $questiontype = $this->stage->get_round_question()->get_question_type();
+        if ($stage->is_question_stage()) {
+            $questiontype = $stage->get_round_question()->get_question_type();
             return $questiontype->get_template('facilitator', $stagename);
         }
 
@@ -135,7 +137,7 @@ class facilitator implements \renderable, \templatable {
 
         return [
             'stagesignature' => $this->stage->get_stage_signature(),
-            'template' => $this->get_template(),
+            'template' => self::get_template_for_stage($this->stage),
             'duration' => $this->stage->get_duration(),
             'templatedata' => [
                 'quiztitle' => $this->round->get_kahoodle_name(),
@@ -151,11 +153,12 @@ class facilitator implements \renderable, \templatable {
     /**
      * Get data for the lobby stage
      *
+     * @param round $round
      * @return array Template data additions
      */
-    protected function get_lobby_data(): array {
+    public static function get_lobby_data(round $round): array {
         // Get participants list.
-        $participants = $this->round->get_all_participants();
+        $participants = $round->get_all_participants();
         $participantcount = count($participants);
 
         $participantdata = [];
@@ -167,7 +170,7 @@ class facilitator implements \renderable, \templatable {
             ];
         }
 
-        $url = $this->round->get_url()->out(false);
+        $url = $round->get_url()->out(false);
         $qrcode = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" . urlencode($url);
         // TODO use core_qrcode class to generate QR code, save it in filestorage and serve from there.
 
@@ -182,29 +185,23 @@ class facilitator implements \renderable, \templatable {
     /**
      * Get data for question stages (preview, question, results)
      *
+     * @param round_stage $stage
+     * @param \renderer_base $output
      * @return array Template data additions
      */
-    protected function get_question_data(): array {
-        // Create output class with real results data.
-        $outputclass = new roundquestion($this->stage->get_round_question(), $this->stage->get_stage_name(), false);
-        $templatedata = $outputclass->export_for_template($this->output);
-
-        // Convert to array and return as additions.
-        // Note: Some fields like quiztitle, sortorder, totalquestions, cancontrol, isedit
-        // are already in common data, but roundquestion also provides them. This is the
-        // duplication that will be cleaned up later with template modifications.
-        return (array)$templatedata;
+    public static function get_question_stage_data(round_stage $stage, \renderer_base $output): array {
+        $outputclass = new roundquestion($stage->get_round_question(), $stage->get_stage_name(), false);
+        return (array)$outputclass->export_for_template($output);
     }
 
     /**
-     * Get leaderboard data for leaders or revision stage
+     * Format leader rank objects into template data for the leaderboard
      *
-     * @param bool $isrevision Whether this is for the revision stage (false - leaders stage after a question)
+     * @param rank[] $leaderranks Array of rank objects with prevquestionrank set
+     * @param bool $isrevision Whether this is for the revision stage
      * @return array Template data additions
      */
-    protected function get_leaderboard_data(bool $isrevision = false): array {
-
-        $leaderranks = $this->round->get_leaders();
+    public static function get_leaderboard_data(array $leaderranks, bool $isrevision = false): array {
         $leaders = [];
         foreach ($leaderranks as $rank) {
             $rankmoved = $rank->get_rank_movement_status();
@@ -236,7 +233,7 @@ class facilitator implements \renderable, \templatable {
      * @return array Template data additions
      */
     protected function get_revision_data(): array {
-        $templatedata = $this->get_leaderboard_data(true);
+        $templatedata = self::get_leaderboard_data($this->round->get_leaders(), true);
         $templatedata['isrevision'] = true;
 
         // TODO if there was more than 30 seconds since the beginning of the revision stage,

@@ -890,15 +890,19 @@ class round {
     /**
      * Get top participants (leaders) for this round
      *
-     * @param int $maxnumber
+     * @param int $questionnumber Question number to get rankings for (0 = use current stage)
+     * @param int $maxnumber Maximum number of leaders to return
      * @return rank[]
      */
-    public function get_leaders(int $maxnumber = 5): array {
-        $rankings = $this->get_rankings();
-        $rankingsprev = $this->get_prev_question_rankings();
+    public function get_leaders(int $questionnumber = 0, int $maxnumber = 5): array {
+        if ($questionnumber <= 0) {
+            $questionnumber = $this->get_last_answered_question_number();
+        }
+        $rankings = $this->get_question_rankings($questionnumber);
+        $prevrankings = $questionnumber > 1 ? $this->get_question_rankings($questionnumber - 1) : [];
         $leaders = count($rankings) > $maxnumber ? array_slice($rankings, 0, $maxnumber, true) : $rankings;
         foreach ($leaders as $participantid => $rank) {
-            $prevrank = $rankingsprev[$participantid] ?? null;
+            $prevrank = $prevrankings[$participantid] ?? null;
             $leaders[$participantid]->prevquestionrank = $prevrank;
         }
         return $leaders;
