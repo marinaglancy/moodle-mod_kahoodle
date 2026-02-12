@@ -180,6 +180,114 @@ Feature: Multi-round results
     When I click on "[data-action='close']" "css_element"
     Then ".mod_kahoodle-overlay" "css_element" should not exist
 
+  Scenario: All rounds statistics with questions deleted between rounds
+    # Create a separate activity with 4 questions.
+    Given the following "activities" exist:
+      | activity | name              | course | idnumber  |
+      | kahoodle | Four Q Kahoodle   | C1     | kahoodle2 |
+    And the following "mod_kahoodle > questions" exist:
+      | kahoodle        | questiontext | questionconfig  |
+      | Four Q Kahoodle | Question 1   | Option A\n*Option B |
+      | Four Q Kahoodle | Question 2   | *Yes\nNo            |
+      | Four Q Kahoodle | Question 3   | *Red\nBlue          |
+      | Four Q Kahoodle | Question 4   | Cat\n*Dog           |
+    # Round 1: student1 and student2 complete all 4 questions.
+    And the kahoodle "Four Q Kahoodle" round stage is "lobby"
+    And the following "mod_kahoodle > participants" exist:
+      | kahoodle        | user     | displayname | totalscore |
+      | Four Q Kahoodle | student1 | Sam         | 3000       |
+      | Four Q Kahoodle | student2 | Alex        | 2000       |
+    And the following "mod_kahoodle > responses" exist:
+      | kahoodle        | user     | question   | response | iscorrect | points |
+      | Four Q Kahoodle | student1 | 1          | 2        | 1         | 900    |
+      | Four Q Kahoodle | student1 | 2          | 1        | 1         | 800    |
+      | Four Q Kahoodle | student1 | 3          | 1        | 1         | 700    |
+      | Four Q Kahoodle | student1 | 4          | 2        | 1         | 600    |
+      | Four Q Kahoodle | student2 | 1          | 1        | 0         | 0      |
+      | Four Q Kahoodle | student2 | 2          | 1        | 1         | 700    |
+      | Four Q Kahoodle | student2 | 3          | 2        | 0         | 0      |
+      | Four Q Kahoodle | student2 | 4          | 2        | 1         | 1300   |
+    And the kahoodle "Four Q Kahoodle" round stage is "archived"
+    # Prepare new round and delete questions 1 and 3.
+    When I log in as "teacher1"
+    And I am on the "Four Q Kahoodle" "kahoodle activity" page
+    And I follow "Prepare new round"
+    And I navigate to "Questions" in current page administration
+    And I click on "Actions" "link" in the "Question 1" "table_row"
+    And I choose "Delete" in the open action menu
+    And I click on "Delete" "button" in the "Delete question" "dialogue"
+    And I click on "Actions" "link" in the "Question 3" "table_row"
+    And I choose "Delete" in the open action menu
+    And I click on "Delete" "button" in the "Delete question" "dialogue"
+    And I log out
+    # Round 2: student3 and student4 complete Q2 and Q4 only.
+    And the kahoodle "Four Q Kahoodle" round stage is "lobby"
+    And the following "mod_kahoodle > participants" exist:
+      | kahoodle        | user     | displayname | totalscore |
+      | Four Q Kahoodle | student3 | Bob         | 1500       |
+      | Four Q Kahoodle | student4 | Carol       | 1000       |
+    And the following "mod_kahoodle > responses" exist:
+      | kahoodle        | user     | question   | response | iscorrect | points |
+      | Four Q Kahoodle | student3 | Question 2 | 1        | 1         | 800    |
+      | Four Q Kahoodle | student3 | Question 4 | 2        | 1         | 700    |
+      | Four Q Kahoodle | student4 | Question 2 | 2        | 0         | 0      |
+      | Four Q Kahoodle | student4 | Question 4 | 2        | 1         | 1000   |
+    And the kahoodle "Four Q Kahoodle" round stage is "archived"
+    # View all rounds statistics.
+    When I log in as "teacher1"
+    And I am on the "Four Q Kahoodle" "kahoodle activity" page
+    And I follow "View results"
+    And I follow "All rounds: Statistics"
+    # Questions from last round appear first (with Order), then deleted ones (no Order).
+    Then the following should exist in the "All rounds statistics" table:
+      | Order | Question text | Total participants |
+      | 1     | Question 2    | 4                  |
+      | 2     | Question 4    | 4                  |
+      |       | Question 1    | 2                  |
+      |       | Question 3    | 2                  |
+    And "Question 2" "table_row" should appear before "Question 4" "table_row"
+    And "Question 4" "table_row" should appear before "Question 1" "table_row"
+    And "Question 1" "table_row" should appear before "Question 3" "table_row"
+    And I wait "100" seconds
+    # Play all: all 4 questions in the correct order.
+    When I click on "Play all" "link"
+    And I wait until ".mod_kahoodle-overlay" "css_element" exists
+    Then I should see "Question 2" in the ".mod_kahoodle-overlay [data-stage='preview']" "css_element"
+    And I should see "1 of 4" in the ".mod_kahoodle-overlay" "css_element"
+    When I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='question']" "css_element" exists
+    And I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='results']" "css_element" exists
+    And I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='preview']" "css_element" exists
+    Then I should see "Question 4" in the ".mod_kahoodle-overlay [data-stage='preview']" "css_element"
+    And I should see "2 of 4" in the ".mod_kahoodle-overlay" "css_element"
+    When I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='question']" "css_element" exists
+    And I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='results']" "css_element" exists
+    And I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='preview']" "css_element" exists
+    Then I should see "Question 1" in the ".mod_kahoodle-overlay [data-stage='preview']" "css_element"
+    And I should see "3 of 4" in the ".mod_kahoodle-overlay" "css_element"
+    When I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='question']" "css_element" exists
+    And I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='results']" "css_element" exists
+    And I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='preview']" "css_element" exists
+    Then I should see "Question 3" in the ".mod_kahoodle-overlay [data-stage='preview']" "css_element"
+    And I should see "4 of 4" in the ".mod_kahoodle-overlay" "css_element"
+    When I click on "[data-action='close']" "css_element"
+    Then ".mod_kahoodle-overlay" "css_element" should not exist
+    # Click Playback on Question 1 row - should start at "3 of 4".
+    When I press "Playback" action in the "Question 1" report row
+    And I wait until ".mod_kahoodle-overlay" "css_element" exists
+    Then I should see "Question 1" in the ".mod_kahoodle-overlay [data-stage='preview']" "css_element"
+    And I should see "3 of 4" in the ".mod_kahoodle-overlay" "css_element"
+    When I click on "[data-action='close']" "css_element"
+    Then ".mod_kahoodle-overlay" "css_element" should not exist
+
   Scenario: Modified question text appears in all rounds statistics but not per-round
     When I log in as "teacher1"
     And I am on the "Test Kahoodle" "kahoodle activity" page

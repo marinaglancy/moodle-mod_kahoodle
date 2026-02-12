@@ -51,7 +51,8 @@ export const init = () => {
             const roundId = parseInt(playbackButton.dataset.roundid || 0, 10);
             const kahoodleId = parseInt(playbackButton.dataset.kahoodleid || 0, 10);
             const questionNumber = parseInt(playbackButton.dataset.questionnumber || 0, 10);
-            await openPlayback(roundId, kahoodleId, questionNumber);
+            const questionId = parseInt(playbackButton.dataset.questionid || 0, 10);
+            await openPlayback(roundId, kahoodleId, questionNumber, questionId);
             return;
         }
 
@@ -71,8 +72,9 @@ export const init = () => {
  * @param {number} roundId Round ID (for single-round playback)
  * @param {number} kahoodleId Kahoodle ID (for all-rounds playback)
  * @param {number} questionNumber Question number to start at (0 = start from beginning)
+ * @param {number} questionId Question ID to start at (0 = not specified, used for all-rounds mode)
  */
-const openPlayback = async(roundId, kahoodleId, questionNumber) => {
+const openPlayback = async(roundId, kahoodleId, questionNumber, questionId = 0) => {
     try {
         const result = await fetchMany([{
             methodname: 'mod_kahoodle_playback_stages',
@@ -90,7 +92,7 @@ const openPlayback = async(roundId, kahoodleId, questionNumber) => {
         }));
 
         // Find start index.
-        playbackIndex = findStartIndex(playbackStages, questionNumber);
+        playbackIndex = findStartIndex(playbackStages, questionNumber, questionId);
 
         playbackState = Player.create({
             containerClass: 'mod_kahoodle-playback-container',
@@ -110,9 +112,21 @@ const openPlayback = async(roundId, kahoodleId, questionNumber) => {
  *
  * @param {Array} stages Array of stage objects
  * @param {number} questionNumber Question number to find (0 = start from beginning)
+ * @param {number} questionId Question ID to find (0 = not specified)
  * @returns {number} The index to start from
  */
-const findStartIndex = (stages, questionNumber) => {
+const findStartIndex = (stages, questionNumber, questionId = 0) => {
+    // Match by question ID (used for all-rounds mode where sortorder may be NULL).
+    if (questionId) {
+        const index = stages.findIndex(s =>
+            s.stagesignature.startsWith('preview-') &&
+            s.templatedata.questionid === questionId
+        );
+        if (index !== -1) {
+            return index;
+        }
+    }
+
     if (!questionNumber) {
         return 0;
     }

@@ -38,6 +38,9 @@ use mod_kahoodle\reportbuilder\local\entities\round_question;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class all_rounds_statistics extends system_report {
+    /** @var int Threshold for computed sortorder; values >= this represent questions not in the last round */
+    private const SORTORDER_NULL_THRESHOLD = 10000;
+
     /** @var int|null Cached kahoodle ID */
     protected ?int $kahoodleid = null;
 
@@ -187,7 +190,7 @@ class all_rounds_statistics extends system_report {
         $this->add_base_condition_simple("{$kahoodlealias}.id", $this->get_kahoodleid());
 
         // Add base fields for actions.
-        $this->add_base_fields("{$roundquestionalias}.sortorder");
+        $this->add_base_fields("{$roundquestionalias}.sortorder, {$questionalias}.id");
 
         // Add columns.
         $this->add_columns();
@@ -225,8 +228,39 @@ class all_rounds_statistics extends system_report {
      * @return void
      */
     protected function add_columns(): void {
+        // Custom sortorder column: questions in the last round use their sortorder,
+        // questions not in the last round use SORTORDER_NULL_THRESHOLD + question ID
+        // (ensures NULLs sort last with deterministic ordering, cross-database).
+        $roundquestionentity = $this->get_entity('round_question');
+        $roundquestionalias = $roundquestionentity->get_table_alias('kahoodle_round_questions');
+        $questionentity = $this->get_entity('question');
+        $questionalias = $questionentity->get_table_alias('kahoodle_questions');
+
+        $threshold = self::SORTORDER_NULL_THRESHOLD;
+        $this->add_column(
+            (new column(
+                'sortorder',
+                new lang_string('sortorder', 'mod_kahoodle'),
+                'round_question'
+            ))
+                ->add_joins($roundquestionentity->get_joins())
+                ->set_type(column::TYPE_INTEGER)
+                ->add_field(
+                    "CASE WHEN {$roundquestionalias}.sortorder IS NULL " .
+                    "THEN {$threshold} + {$questionalias}.id " .
+                    "ELSE {$roundquestionalias}.sortorder END",
+                    'sortorder'
+                )
+                ->set_is_sortable(true)
+                ->add_callback(static function (?int $value) use ($threshold): string {
+                    if ($value === null || $value >= $threshold) {
+                        return '';
+                    }
+                    return (string)$value;
+                })
+        );
+
         $this->add_columns_from_entities([
-            'round_question:sortorder',
             'question:questiontype',
             'question_version:questionimages',
             'question_version:questiontext',
@@ -321,7 +355,7 @@ class all_rounds_statistics extends system_report {
             [
                 'data-action' => 'mod_kahoodle-playback',
                 'data-kahoodleid' => $this->get_kahoodleid(),
-                'data-questionnumber' => ':sortorder',
+                'data-questionid' => ':id',
             ],
             false,
             new lang_string('playback', 'mod_kahoodle')

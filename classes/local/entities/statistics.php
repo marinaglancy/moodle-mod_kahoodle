@@ -98,7 +98,7 @@ class statistics extends round {
                   JOIN {kahoodle_question_versions} qv ON qv.questionid = q.id AND qv.islast = 1
              LEFT JOIN {kahoodle_round_questions} rq ON rq.questionversionid = qv.id AND rq.roundid = :lastroundid
                  WHERE q.kahoodleid = :kahoodleid
-              ORDER BY rq.sortorder ASC, q.id ASC";
+              ORDER BY CASE WHEN rq.sortorder IS NULL THEN 1 ELSE 0 END, rq.sortorder ASC, q.id ASC";
 
         $records = $DB->get_recordset_sql($sql, [
             'kahoodleid' => $this->get_kahoodleid(),

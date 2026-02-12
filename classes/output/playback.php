@@ -89,6 +89,7 @@ class playback {
                 case constants::STAGE_QUESTION:
                 case constants::STAGE_QUESTION_RESULTS:
                     $templatedata += facilitator::get_question_stage_data($stage, $output);
+                    $templatedata['questionid'] = $stage->get_round_question()->get_question_id();
                     break;
 
                 case constants::STAGE_LEADERS:
