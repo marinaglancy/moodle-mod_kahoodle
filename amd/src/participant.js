@@ -63,6 +63,9 @@ let participantState = {
 // Wake lock sentinel for keeping screen on during gameplay.
 let wakeLockSentinel = null;
 
+// Touch start Y position for swipe-up fullscreen gesture detection.
+let touchStartY = null;
+
 /**
  * Initialize the participant module
  *
@@ -284,6 +287,10 @@ const createOverlayContainer = () => {
     // Prevent touch scrolling from bleeding through to the body.
     participantState.overlayContainer.addEventListener('touchmove', handleTouchMove, {passive: false});
 
+    // Detect swipe-up gesture to enter fullscreen (hides mobile URL bar).
+    participantState.overlayContainer.addEventListener('touchstart', handleTouchStart, {passive: true});
+    participantState.overlayContainer.addEventListener('touchend', handleTouchEnd, {passive: true});
+
     // Add keyboard navigation.
     document.addEventListener('keydown', handleKeyboard);
 
@@ -322,6 +329,25 @@ const handleKeyboard = (e) => {
 };
 
 /**
+ * Check whether an element is inside a scrollable container within the overlay.
+ *
+ * @param {HTMLElement} element The element to check
+ * @returns {boolean} True if the element is inside a scrollable container
+ */
+const isInsideScrollable = (element) => {
+    let target = element;
+    while (target && target !== participantState.overlayContainer) {
+        const style = window.getComputedStyle(target);
+        const overflowY = style.getPropertyValue('overflow-y');
+        if ((overflowY === 'auto' || overflowY === 'scroll') && target.scrollHeight > target.clientHeight) {
+            return true;
+        }
+        target = target.parentElement;
+    }
+    return false;
+};
+
+/**
  * Prevent touch scrolling from bleeding through to the page body.
  *
  * Allows scrolling within scrollable child elements (e.g. avatar picker grid)
@@ -330,16 +356,63 @@ const handleKeyboard = (e) => {
  * @param {TouchEvent} e The touch event
  */
 const handleTouchMove = (e) => {
-    let target = e.target;
-    while (target && target !== participantState.overlayContainer) {
-        const style = window.getComputedStyle(target);
-        const overflowY = style.getPropertyValue('overflow-y');
-        if ((overflowY === 'auto' || overflowY === 'scroll') && target.scrollHeight > target.clientHeight) {
-            return;
-        }
-        target = target.parentElement;
+    if (!isInsideScrollable(e.target)) {
+        e.preventDefault();
     }
-    e.preventDefault();
+};
+
+/**
+ * Record touch start position for swipe-up fullscreen gesture detection.
+ *
+ * @param {TouchEvent} e The touch event
+ */
+const handleTouchStart = (e) => {
+    touchStartY = e.touches[0].clientY;
+};
+
+/**
+ * Detect swipe-up gesture and enter fullscreen mode.
+ *
+ * When the user swipes up on a non-scrollable part of the overlay,
+ * request fullscreen to hide the mobile browser URL bar.
+ *
+ * @param {TouchEvent} e The touch event
+ */
+const handleTouchEnd = (e) => {
+    if (touchStartY === null || document.fullscreenElement) {
+        touchStartY = null;
+        return;
+    }
+    const touchEndY = e.changedTouches[0].clientY;
+    const swipeDistance = touchStartY - touchEndY;
+    touchStartY = null;
+
+    // Swipe up outside scrollable children (e.g. avatar picker) — enter fullscreen.
+    if (swipeDistance > 50 && !isInsideScrollable(e.target)) {
+        enterFullscreen();
+    }
+};
+
+/**
+ * Request fullscreen mode on the overlay container.
+ *
+ * Silently does nothing if the API is unavailable or the request fails.
+ */
+const enterFullscreen = () => {
+    const el = document.documentElement;
+    const request = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (request) {
+        // Extend viewport into the system status bar area.
+        const viewport = document.querySelector('meta[name="viewport"]');
+        if (viewport && !viewport.content.includes('viewport-fit')) {
+            viewport.dataset.kahoodleOriginal = viewport.content;
+            viewport.content += ', viewport-fit=cover';
+        }
+
+        request.call(el).catch(() => {
+            // Fullscreen not available.
+        });
+    }
 };
 
 /**
@@ -390,8 +463,24 @@ const handleVisibilityChange = () => {
  * Close the overlay and clean up
  */
 const closeOverlay = () => {
+    // Exit fullscreen if active.
+    if (document.fullscreenElement) {
+        // Restore viewport meta tag.
+        const viewport = document.querySelector('meta[name="viewport"]');
+        if (viewport && viewport.dataset.kahoodleOriginal) {
+            viewport.content = viewport.dataset.kahoodleOriginal;
+            delete viewport.dataset.kahoodleOriginal;
+        }
+
+        document.exitFullscreen().catch(() => {
+            // Already exited.
+        });
+    }
+
     if (participantState.overlayContainer) {
         participantState.overlayContainer.removeEventListener('touchmove', handleTouchMove);
+        participantState.overlayContainer.removeEventListener('touchstart', handleTouchStart);
+        participantState.overlayContainer.removeEventListener('touchend', handleTouchEnd);
         participantState.overlayContainer.remove();
         participantState.overlayContainer = null;
     }
