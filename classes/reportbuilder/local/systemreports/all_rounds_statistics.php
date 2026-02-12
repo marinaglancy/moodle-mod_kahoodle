@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 namespace mod_kahoodle\reportbuilder\local\systemreports;
 
+use core_reportbuilder\local\report\action;
 use core_reportbuilder\local\report\column;
 use core_reportbuilder\system_report;
 use lang_string;
@@ -185,11 +186,17 @@ class all_rounds_statistics extends system_report {
         // Filter by kahoodleid.
         $this->add_base_condition_simple("{$kahoodlealias}.id", $this->get_kahoodleid());
 
+        // Add base fields for actions.
+        $this->add_base_fields("{$roundquestionalias}.sortorder");
+
         // Add columns.
         $this->add_columns();
 
         // Add filters.
         $this->add_filters();
+
+        // Add actions.
+        $this->add_actions();
 
         // Set initial sort order.
         $this->set_initial_sort_column('round_question:sortorder', SORT_ASC);
@@ -300,5 +307,24 @@ class all_rounds_statistics extends system_report {
             'question:questiontype',
             'question_version:questiontext',
         ]);
+    }
+
+    /**
+     * Adds the actions we want to display in the report
+     *
+     * @return void
+     */
+    protected function add_actions(): void {
+        $this->add_action(new action(
+            new \moodle_url('#'),
+            new \pix_icon('i/play', ''),
+            [
+                'data-action' => 'mod_kahoodle-playback',
+                'data-kahoodleid' => $this->get_kahoodleid(),
+                'data-questionnumber' => ':sortorder',
+            ],
+            false,
+            new lang_string('playback', 'mod_kahoodle')
+        ));
     }
 }

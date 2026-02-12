@@ -22,12 +22,15 @@
     Context variables required for this template:
     * cancontrol - Boolean indicating if user can control the quiz (teacher)
     * isedit - Boolean indicating if it is rendered for teachers when they edit the questions
+    * isplayback - Boolean indicating if it is rendered for playback from statistics reports
+    * isrevision - Boolean indicating if this is the final revision/leaderboard stage
 
 
     Example context (json):
     {
         "cancontrol": true,
-        "isedit": true
+        "isedit": true,
+        "isplayback": false
     }
 }}
 <footer class="mod_kahoodle-footer">
@@ -42,32 +45,51 @@
     {{! Teacher controls }}
     {{#cancontrol}}
     <div class="mod_kahoodle-controls">
+        {{! Back button: isedit OR isplayback }}
         {{#isedit}}
         <a href="#" class="mod_kahoodle-control-btn" data-action="back">
             {{#pix}}back, mod_kahoodle{{/pix}} {{#str}}back{{/str}}
         </a>
         {{/isedit}}
+        {{^isedit}}{{#isplayback}}
+        <a href="#" class="mod_kahoodle-control-btn" data-action="back">
+            {{#pix}}back, mod_kahoodle{{/pix}} {{#str}}back{{/str}}
+        </a>
+        {{/isplayback}}{{/isedit}}
+
+        {{! Pause/Resume: always }}
         <a href="#" class="mod_kahoodle-control-btn" data-action="pause">
             {{#pix}}pause, mod_kahoodle{{/pix}} {{#str}}pause, mod_kahoodle{{/str}}
         </a>
         <a href="#" class="mod_kahoodle-control-btn" data-action="resume">
             {{#pix}}resume, mod_kahoodle{{/pix}} {{#str}}resume, mod_kahoodle{{/str}}
         </a>
+
+        {{! Next: not in revision }}
         {{^isrevision}}
         <a href="#" class="mod_kahoodle-control-btn" data-action="next">
             {{#pix}}next, mod_kahoodle{{/pix}} {{#str}}next{{/str}}
         </a>
         {{/isrevision}}
-        {{^isrevision}}
+
+        {{! Close and Finish game }}
+        {{#isplayback}}
         <a href="#" class="mod_kahoodle-control-btn" data-action="close">
             {{#pix}}i/window_close, core{{/pix}} {{#str}}close, mod_kahoodle{{/str}}
         </a>
-        {{/isrevision}}
-        {{#isrevision}}
-        <a href="#" class="mod_kahoodle-control-btn" data-action="next">
-            {{#pix}}i/window_close, core{{/pix}} {{#str}}finishgame, mod_kahoodle{{/str}}
-        </a>
-        {{/isrevision}}
+        {{/isplayback}}
+        {{^isplayback}}
+            {{^isrevision}}
+            <a href="#" class="mod_kahoodle-control-btn" data-action="close">
+                {{#pix}}i/window_close, core{{/pix}} {{#str}}close, mod_kahoodle{{/str}}
+            </a>
+            {{/isrevision}}
+            {{#isrevision}}
+            <a href="#" class="mod_kahoodle-control-btn" data-action="next">
+                {{#pix}}i/window_close, core{{/pix}} {{#str}}finishgame, mod_kahoodle{{/str}}
+            </a>
+            {{/isrevision}}
+        {{/isplayback}}
     </div>
     {{/cancontrol}}
 

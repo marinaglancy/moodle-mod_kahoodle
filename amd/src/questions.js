@@ -28,10 +28,10 @@ import * as reportEvents from 'core_reportbuilder/local/events';
 import * as reportSelectors from 'core_reportbuilder/local/selectors';
 import Notification from 'core/notification';
 import {call as fetchMany} from 'core/ajax';
-import Templates from 'core/templates';
 import SortableList from 'core/sortable_list';
 import $ from 'jquery';
 import * as DynamicTable from 'core_table/dynamic';
+import * as Player from 'mod_kahoodle/player';
 
 const SELECTORS = {
     QUESTIONS_REGION: '[data-region="mod_kahoodle-questions"]',
@@ -40,30 +40,16 @@ const SELECTORS = {
     DELETE_QUESTION_BUTTON: '[data-action="mod_kahoodle-delete-question"]',
     DUPLICATE_QUESTION_BUTTON: '[data-action="mod_kahoodle-duplicate-question"]',
     PREVIEW_QUESTION_BUTTON: '[data-action="mod_kahoodle-preview-question"]',
-    PREVIEW_OVERLAY: '.mod_kahoodle-overlay',
-    PREVIEW_CONTROL_BACK: '[data-action="back"]',
-    PREVIEW_CONTROL_NEXT: '[data-action="next"]',
-    PREVIEW_CONTROL_CLOSE: '[data-action="close"]',
-    PREVIEW_CONTROL_PAUSE: '[data-action="pause"]',
-    PREVIEW_CONTROL_RESUME: '[data-action="resume"]',
-    PROGRESS_FILL: '.mod_kahoodle-progress-fill',
     SORTABLE_QUESTIONS_LIST: '[data-region="mod_kahoodle-questions"] tbody',
 };
 
 // Cache for preview questions data, keyed by roundId.
 let previewCache = {};
 
-// Current preview state.
-let currentPreviewState = {
-    roundId: null,
-    questionstages: [],
-    currentIndex: 0,
-    overlayContainer: null,
-    autoplayEnabled: true,
-    autoplayTimerId: null,
-    autoplayStartTime: null,
-    autoplayElapsed: 0,
-};
+// Preview state.
+let previewPlayerState = null;
+let previewStages = [];
+let previewIndex = 0;
 
 /**
  * Initialize the questions page
@@ -384,286 +370,32 @@ const openPreview = async(roundId, roundQuestionId) => {
             startIndex = 0;
         }
 
-        // Store current state.
-        currentPreviewState = {
-            roundId: roundId,
-            questionstages: questions,
-            currentIndex: startIndex,
-            overlayContainer: null,
-            autoplayEnabled: true,
-            autoplayTimerId: null,
-            autoplayStartTime: null,
-            autoplayElapsed: 0,
-        };
+        previewStages = questions;
+        previewIndex = startIndex;
 
-        // Create and show the overlay.
-        await showPreviewOverlay();
+        previewPlayerState = Player.create({
+            containerClass: 'mod_kahoodle-preview-container',
+            onNext: () => navigatePreview(1),
+            onBack: () => navigatePreview(-1),
+            onClose: () => closePreview(),
+        });
+
+        await showCurrentPreviewStage();
     } catch (error) {
         Notification.exception(error);
     }
 };
 
 /**
- * Show the preview overlay for the current question
+ * Show the current preview stage
  */
-const showPreviewOverlay = async() => {
-    const question = currentPreviewState.questionstages[currentPreviewState.currentIndex];
-    if (!question) {
+const showCurrentPreviewStage = async() => {
+    const question = previewStages[previewIndex];
+    if (!question || !previewPlayerState) {
         return;
     }
 
-    // Create or update the overlay container.
-    if (!currentPreviewState.overlayContainer) {
-        currentPreviewState.overlayContainer = document.createElement('div');
-        currentPreviewState.overlayContainer.className = 'mod_kahoodle-preview-container';
-        currentPreviewState.overlayContainer.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 9999;
-        `;
-        document.body.appendChild(currentPreviewState.overlayContainer);
-
-        // Add event listeners for controls.
-        currentPreviewState.overlayContainer.addEventListener('click', handlePreviewControls);
-
-        // Add keyboard navigation.
-        document.addEventListener('keydown', handlePreviewKeyboard);
-    }
-
-    // Render the template and execute embedded JS.
-    const {html, js} = await Templates.renderForPromise(question.template, question);
-    Templates.replaceNodeContents(currentPreviewState.overlayContainer, html, js);
-
-    // Reset elapsed time for the new question.
-    currentPreviewState.autoplayElapsed = 0;
-
-    // Start or update autoplay based on current state.
-    startAutoplay();
-};
-
-/**
- * Start or resume the autoplay countdown
- */
-const startAutoplay = () => {
-    // Stop any existing timer.
-    stopAutoplayTimer();
-
-    const question = currentPreviewState.questionstages[currentPreviewState.currentIndex];
-    if (!question || !question.duration) {
-        return;
-    }
-
-    const overlay = currentPreviewState.overlayContainer?.querySelector(SELECTORS.PREVIEW_OVERLAY);
-
-    // Update paused class based on current state.
-    if (overlay) {
-        if (currentPreviewState.autoplayEnabled) {
-            overlay.classList.remove('mod_kahoodle-progress-paused');
-        } else {
-            overlay.classList.add('mod_kahoodle-progress-paused');
-        }
-    }
-
-    // Update progress bar to current position.
-    updateProgressBar();
-
-    // Only start timer if autoplay is enabled.
-    if (!currentPreviewState.autoplayEnabled) {
-        return;
-    }
-
-    const durationMs = question.duration * 1000;
-    const remainingMs = durationMs - currentPreviewState.autoplayElapsed;
-
-    if (remainingMs <= 0) {
-        // Time is up, go to next question.
-        navigatePreview(1);
-        return;
-    }
-
-    currentPreviewState.autoplayStartTime = Date.now();
-
-    // Use requestAnimationFrame for smooth progress updates.
-    const updateLoop = () => {
-        if (!currentPreviewState.autoplayEnabled || !currentPreviewState.overlayContainer) {
-            return;
-        }
-
-        const elapsed = currentPreviewState.autoplayElapsed + (Date.now() - currentPreviewState.autoplayStartTime);
-        const progress = Math.min((elapsed / durationMs) * 100, 100);
-
-        const progressFill = currentPreviewState.overlayContainer.querySelector(SELECTORS.PROGRESS_FILL);
-        if (progressFill) {
-            progressFill.style.width = progress + '%';
-        }
-
-        if (elapsed >= durationMs) {
-            // Time is up, set to 100% and go to next question after a brief moment.
-            currentPreviewState.autoplayTimerId = setTimeout(() => {
-                navigatePreview(1);
-            }, 50);
-        } else {
-            currentPreviewState.autoplayTimerId = requestAnimationFrame(updateLoop);
-        }
-    };
-
-    currentPreviewState.autoplayTimerId = requestAnimationFrame(updateLoop);
-};
-
-/**
- * Stop the autoplay timer
- */
-const stopAutoplayTimer = () => {
-    if (currentPreviewState.autoplayTimerId) {
-        cancelAnimationFrame(currentPreviewState.autoplayTimerId);
-        clearTimeout(currentPreviewState.autoplayTimerId);
-        currentPreviewState.autoplayTimerId = null;
-    }
-};
-
-/**
- * Update the progress bar to reflect current elapsed time
- */
-const updateProgressBar = () => {
-    const question = currentPreviewState.questionstages[currentPreviewState.currentIndex];
-    if (!question || !question.duration || !currentPreviewState.overlayContainer) {
-        return;
-    }
-
-    const durationMs = question.duration * 1000;
-    const progress = Math.min((currentPreviewState.autoplayElapsed / durationMs) * 100, 100);
-
-    const progressFill = currentPreviewState.overlayContainer.querySelector(SELECTORS.PROGRESS_FILL);
-    if (progressFill) {
-        progressFill.style.width = progress + '%';
-    }
-};
-
-/**
- * Pause the autoplay countdown
- */
-const pauseAutoplay = () => {
-    if (!currentPreviewState.autoplayEnabled) {
-        return;
-    }
-
-    // Stop the timer first to prevent further updates.
-    stopAutoplayTimer();
-
-    // Calculate and store elapsed time.
-    if (currentPreviewState.autoplayStartTime) {
-        currentPreviewState.autoplayElapsed += Date.now() - currentPreviewState.autoplayStartTime;
-        currentPreviewState.autoplayStartTime = null;
-    }
-
-    currentPreviewState.autoplayEnabled = false;
-
-    // Update progress bar to exact position immediately.
-    updateProgressBar();
-
-    // Add paused class to overlay.
-    const overlay = currentPreviewState.overlayContainer?.querySelector(SELECTORS.PREVIEW_OVERLAY);
-    if (overlay) {
-        overlay.classList.add('mod_kahoodle-progress-paused');
-    }
-};
-
-/**
- * Resume the autoplay countdown
- */
-const resumeAutoplay = () => {
-    if (currentPreviewState.autoplayEnabled) {
-        return;
-    }
-
-    currentPreviewState.autoplayEnabled = true;
-
-    // Remove paused class from overlay.
-    const overlay = currentPreviewState.overlayContainer?.querySelector(SELECTORS.PREVIEW_OVERLAY);
-    if (overlay) {
-        overlay.classList.remove('mod_kahoodle-progress-paused');
-    }
-
-    // Restart the timer.
-    startAutoplay();
-};
-
-/**
- * Handle preview control button clicks
- *
- * @param {Event} e The click event
- */
-const handlePreviewControls = (e) => {
-    const backButton = e.target.closest(SELECTORS.PREVIEW_CONTROL_BACK);
-    if (backButton) {
-        e.preventDefault();
-        navigatePreview(-1);
-        return;
-    }
-
-    const nextButton = e.target.closest(SELECTORS.PREVIEW_CONTROL_NEXT);
-    if (nextButton) {
-        e.preventDefault();
-        navigatePreview(1);
-        return;
-    }
-
-    const closeButton = e.target.closest(SELECTORS.PREVIEW_CONTROL_CLOSE);
-    if (closeButton) {
-        e.preventDefault();
-        closePreview();
-        return;
-    }
-
-    const pauseButton = e.target.closest(SELECTORS.PREVIEW_CONTROL_PAUSE);
-    if (pauseButton) {
-        e.preventDefault();
-        pauseAutoplay();
-        return;
-    }
-
-    const resumeButton = e.target.closest(SELECTORS.PREVIEW_CONTROL_RESUME);
-    if (resumeButton) {
-        e.preventDefault();
-        resumeAutoplay();
-    }
-};
-
-/**
- * Handle keyboard navigation in preview
- *
- * @param {KeyboardEvent} e The keyboard event
- */
-const handlePreviewKeyboard = (e) => {
-    if (!currentPreviewState.overlayContainer) {
-        return;
-    }
-
-    switch (e.key) {
-        case 'ArrowLeft':
-            e.preventDefault();
-            navigatePreview(-1);
-            break;
-        case 'ArrowRight':
-            e.preventDefault();
-            navigatePreview(1);
-            break;
-        case 'Escape':
-            e.preventDefault();
-            closePreview();
-            break;
-        case ' ':
-            e.preventDefault();
-            if (currentPreviewState.autoplayEnabled) {
-                pauseAutoplay();
-            } else {
-                resumeAutoplay();
-            }
-            break;
-    }
+    await Player.showStage(previewPlayerState, question.template, question, question.duration);
 };
 
 /**
@@ -672,41 +404,26 @@ const handlePreviewKeyboard = (e) => {
  * @param {number} direction -1 for previous, 1 for next
  */
 const navigatePreview = async(direction) => {
-    const newIndex = currentPreviewState.currentIndex + direction;
+    const newIndex = previewIndex + direction;
 
     // Check bounds.
-    if (newIndex < 0 || newIndex >= currentPreviewState.questionstages.length) {
+    if (newIndex < 0 || newIndex >= previewStages.length) {
         return;
     }
 
-    currentPreviewState.currentIndex = newIndex;
-    await showPreviewOverlay();
+    previewIndex = newIndex;
+    await showCurrentPreviewStage();
 };
 
 /**
  * Close the preview overlay
  */
 const closePreview = () => {
-    // Stop autoplay timer.
-    stopAutoplayTimer();
-
-    if (currentPreviewState.overlayContainer) {
-        currentPreviewState.overlayContainer.remove();
-        currentPreviewState.overlayContainer = null;
+    if (previewPlayerState) {
+        Player.close(previewPlayerState);
+        previewPlayerState = null;
     }
 
-    // Remove keyboard event listener.
-    document.removeEventListener('keydown', handlePreviewKeyboard);
-
-    // Reset state.
-    currentPreviewState = {
-        roundId: null,
-        questionstages: [],
-        currentIndex: 0,
-        overlayContainer: null,
-        autoplayEnabled: true,
-        autoplayTimerId: null,
-        autoplayStartTime: null,
-        autoplayElapsed: 0,
-    };
+    previewStages = [];
+    previewIndex = 0;
 };

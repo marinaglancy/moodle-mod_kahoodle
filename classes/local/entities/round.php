@@ -853,7 +853,7 @@ class round {
      * @param int $questionnumber
      * @return rank[] Array of rank objects indexed by participant ID
      */
-    protected function get_question_rankings(int $questionnumber): array {
+    public function get_question_rankings(int $questionnumber): array {
         global $DB;
         if ($questionnumber < 1) {
             return [];

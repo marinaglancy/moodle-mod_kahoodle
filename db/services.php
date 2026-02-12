@@ -70,6 +70,13 @@ $functions = [
         'type' => 'write',
         'ajax' => true,
     ],
+
+    'mod_kahoodle_playback_stages' => [
+        'classname' => mod_kahoodle\external\playback_stages::class,
+        'description' => 'Get playback stages for replaying completed Kahoodle rounds',
+        'type' => 'read',
+        'ajax' => true,
+    ],
 ];
 
 $services = [

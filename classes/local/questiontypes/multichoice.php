@@ -162,6 +162,102 @@ class multichoice extends base {
     }
 
     /**
+     * Export template data aggregated across all completed rounds
+     *
+     * Aggregates response counts per option across all completed rounds.
+     *
+     * @param round_question $roundquestion A round question (from the last round) for question config
+     * @param string $stage One of constants::STAGE_QUESTION_PREVIEW, STAGE_QUESTION, STAGE_QUESTION_RESULTS
+     * @param int $questionid The kahoodle_questions.id
+     * @param int[] $completedroundids IDs of all completed rounds
+     * @return array
+     */
+    public function export_template_data_all_rounds(
+        round_question $roundquestion,
+        string $stage,
+        int $questionid,
+        array $completedroundids
+    ): array {
+        // For non-results stages, delegate to the regular export.
+        if ($stage !== constants::STAGE_QUESTION_RESULTS) {
+            return $this->export_template_data($roundquestion, $stage);
+        }
+
+        $answers = $this->get_answers_options($roundquestion->get_data()->questionconfig);
+        if (empty($answers)) {
+            return [
+                'options' => [],
+                'optioncount' => 0,
+                'manyoptions' => false,
+            ];
+        }
+
+        $answerscount = $this->get_aggregated_answers_count($questionid, $completedroundids, count($answers));
+        $maxanswerscount = max(1, ...$answerscount);
+        $letters = constants::MULTICHOICE_SYMBOLS;
+
+        $options = [];
+        foreach ($answers as $index => $answer) {
+            $heightpercent = (int)round(100.0 * $answerscount[$index] / $maxanswerscount);
+            $options[] = [
+                'optionnumber' => $index + 1,
+                'letter' => $letters[$index] ?? (string)($index + 1),
+                'text' => $answer['text'],
+                'iscorrect' => $answer['iscorrect'],
+                'count' => $answerscount[$index],
+                'heightpercent' => $heightpercent,
+                'isshort' => $heightpercent < 25,
+            ];
+        }
+
+        return [
+            'options' => $options,
+            'optioncount' => count($options),
+            'manyoptions' => count($options) > 4,
+        ];
+    }
+
+    /**
+     * Get aggregated response counts across all completed rounds
+     *
+     * @param int $questionid The kahoodle_questions.id
+     * @param int[] $completedroundids IDs of completed rounds
+     * @param int $optioncount Number of answer options
+     * @return int[] 0-based array of counts per option
+     */
+    protected function get_aggregated_answers_count(int $questionid, array $completedroundids, int $optioncount): array {
+        global $DB;
+
+        $answerscount = array_fill(0, $optioncount, 0);
+
+        if (empty($completedroundids)) {
+            return $answerscount;
+        }
+
+        [$insql, $inparams] = $DB->get_in_or_equal($completedroundids, SQL_PARAMS_NAMED);
+
+        $sql = "SELECT resp.response, COUNT(*) as cnt
+                  FROM {kahoodle_responses} resp
+                  JOIN {kahoodle_round_questions} rq ON rq.id = resp.roundquestionid
+                  JOIN {kahoodle_question_versions} qv ON qv.id = rq.questionversionid
+                 WHERE qv.questionid = :questionid
+                   AND rq.roundid {$insql}
+              GROUP BY resp.response";
+
+        $params = ['questionid' => $questionid] + $inparams;
+        $records = $DB->get_records_sql($sql, $params);
+
+        foreach ($records as $record) {
+            $index = (int)$record->response - 1;
+            if (isset($answerscount[$index])) {
+                $answerscount[$index] = (int)$record->cnt;
+            }
+        }
+
+        return $answerscount;
+    }
+
+    /**
      * Export question type specific data for templates
      *
      * This method returns an array of data specific to this question type

@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 namespace mod_kahoodle\reportbuilder\local\systemreports;
 
+use core_reportbuilder\local\report\action;
 use core_reportbuilder\local\report\column;
 use core_reportbuilder\system_report;
 use lang_string;
@@ -127,13 +128,16 @@ class statistics extends system_report {
         $this->add_base_condition_simple("{$roundquestionalias}.roundid", $this->get_round()->get_id());
 
         // Add base fields for potential actions.
-        $this->add_base_fields("{$roundquestionalias}.id");
+        $this->add_base_fields("{$roundquestionalias}.id, {$roundquestionalias}.sortorder");
 
         // Add columns.
         $this->add_columns();
 
         // Add filters.
         $this->add_filters();
+
+        // Add actions.
+        $this->add_actions();
 
         // Set initial sort order by question order.
         $this->set_initial_sort_column('round_question:sortorder', SORT_ASC);
@@ -230,5 +234,24 @@ class statistics extends system_report {
             'question:questiontype',
             'question_version:questiontext',
         ]);
+    }
+
+    /**
+     * Adds the actions we want to display in the report
+     *
+     * @return void
+     */
+    protected function add_actions(): void {
+        $this->add_action(new action(
+            new \moodle_url('#'),
+            new \pix_icon('i/play', ''),
+            [
+                'data-action' => 'mod_kahoodle-playback',
+                'data-roundid' => $this->get_round()->get_id(),
+                'data-questionnumber' => ':sortorder',
+            ],
+            false,
+            new lang_string('playback', 'mod_kahoodle')
+        ));
     }
 }

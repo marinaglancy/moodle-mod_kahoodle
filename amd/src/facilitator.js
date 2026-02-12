@@ -35,33 +35,25 @@ import Templates from 'core/templates';
 import Notification from 'core/notification';
 import {getString} from 'core/str';
 import KahoodleEvents from 'mod_kahoodle/events';
+import * as Player from 'mod_kahoodle/player';
 
 const SELECTORS = {
-    OVERLAY: '.mod_kahoodle-overlay',
-    CONTROL_NEXT: '[data-action="next"]',
-    CONTROL_CLOSE: '[data-action="close"]',
-    CONTROL_PAUSE: '[data-action="pause"]',
-    CONTROL_RESUME: '[data-action="resume"]',
-    PROGRESS_FILL: '.mod_kahoodle-progress-fill',
     // Landing page buttons.
     LANDING_RESUME: '[data-action="resume-game"]',
     LANDING_FINISH: '[data-action="finish-game"]',
     // Lobby-specific selectors for partial updates.
     LOBBY_PARTICIPANTS_LIST: '.mod_kahoodle-participants-list',
     LOBBY_COUNT_NUMBER: '.mod_kahoodle-count-number',
-    COUNTDOWN_TIME: '.mod_kahoodle-countdown-time',
 };
 
 // Current game state.
 let gameState = {
     roundId: null,
-    overlayContainer: null,
     currentStageData: null,
-    autoplayEnabled: true,
-    autoplayTimerId: null,
-    autoplayStartTime: null,
-    autoplayElapsed: 0,
 };
+
+// Player state (from player.js).
+let playerState = null;
 
 /**
  * Initialize the game controller
@@ -171,7 +163,9 @@ const handleRealtimeEvent = (eventData) => {
  */
 const handleConnectionLost = () => {
     // Pause autoplay when connection is lost.
-    pauseAutoplay();
+    if (playerState) {
+        Player.pause(playerState);
+    }
     Notification.addNotification({
         message: 'Connection lost. Please refresh the page.',
         type: 'error',
@@ -257,12 +251,13 @@ const syncParticipantsList = (currentList, newList) => {
  * @returns {Promise<boolean>} True if partial update was performed, false otherwise
  */
 const updateLobbyPartial = async(template, templatedata) => {
-    if (!gameState.overlayContainer) {
+    const container = playerState ? Player.getContainer(playerState) : null;
+    if (!container) {
         return false;
     }
 
-    const currentParticipantsList = gameState.overlayContainer.querySelector(SELECTORS.LOBBY_PARTICIPANTS_LIST);
-    const currentCountNumber = gameState.overlayContainer.querySelector(SELECTORS.LOBBY_COUNT_NUMBER);
+    const currentParticipantsList = container.querySelector(SELECTORS.LOBBY_PARTICIPANTS_LIST);
+    const currentCountNumber = container.querySelector(SELECTORS.LOBBY_COUNT_NUMBER);
 
     if (!currentParticipantsList || !currentCountNumber) {
         return false;
@@ -314,6 +309,16 @@ const showStage = async(stageData) => {
         // Process template data (decode typedata, add type booleans).
         const templatedata = processTemplateData(stageData.templatedata);
 
+        // Create player if needed.
+        if (!playerState) {
+            playerState = Player.create({
+                containerClass: 'mod_kahoodle-game-container',
+                onNext: () => advanceToNextStage(),
+                onBack: null,
+                onClose: () => closeOverlay(),
+            });
+        }
+
         // For lobby stage without stage change, only update dynamic parts to avoid flickering.
         if (!stageChanged && stageData.stagesignature === 'lobby') {
             if (await updateLobbyPartial(stageData.template, templatedata)) {
@@ -321,22 +326,14 @@ const showStage = async(stageData) => {
             }
         }
 
-        // Create or update the overlay container.
-        if (!gameState.overlayContainer) {
-            createOverlayContainer();
-        }
-
-        // Render the template and execute embedded JS.
-        const {html, js} = await Templates.renderForPromise(stageData.template, templatedata);
-        Templates.replaceNodeContents(gameState.overlayContainer, html, js);
-
         if (stageChanged) {
-            // Reset elapsed time for the new stage.
-            gameState.autoplayElapsed = 0;
-            gameState.autoplayEnabled = true;
-
-            // Start autoplay.
-            startAutoplay();
+            // New stage: render template and start autoplay via player.
+            await Player.showStage(playerState, stageData.template, templatedata, stageData.duration);
+        } else {
+            // Same stage re-render (e.g. reconnect): render without resetting autoplay.
+            const container = Player.getContainer(playerState);
+            const {html, js} = await Templates.renderForPromise(stageData.template, templatedata);
+            Templates.replaceNodeContents(container, html, js);
         }
     } catch (error) {
         Notification.exception(error);
@@ -344,98 +341,13 @@ const showStage = async(stageData) => {
 };
 
 /**
- * Create the overlay container element
- */
-const createOverlayContainer = () => {
-    gameState.overlayContainer = document.createElement('div');
-    gameState.overlayContainer.className = 'mod_kahoodle-game-container';
-    gameState.overlayContainer.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 9999;
-    `;
-    document.body.appendChild(gameState.overlayContainer);
-
-    // Add event listeners for controls.
-    gameState.overlayContainer.addEventListener('click', handleOverlayControls);
-
-    // Add keyboard navigation.
-    document.addEventListener('keydown', handleKeyboard);
-};
-
-/**
- * Handle control button clicks in the overlay
- *
- * @param {Event} e The click event
- */
-const handleOverlayControls = (e) => {
-    const nextButton = e.target.closest(SELECTORS.CONTROL_NEXT);
-    if (nextButton) {
-        e.preventDefault();
-        advanceToNextStage();
-        return;
-    }
-
-    const closeButton = e.target.closest(SELECTORS.CONTROL_CLOSE);
-    if (closeButton) {
-        e.preventDefault();
-        closeOverlay();
-        return;
-    }
-
-    const pauseButton = e.target.closest(SELECTORS.CONTROL_PAUSE);
-    if (pauseButton) {
-        e.preventDefault();
-        pauseAutoplay();
-        return;
-    }
-
-    const resumeButton = e.target.closest(SELECTORS.CONTROL_RESUME);
-    if (resumeButton) {
-        e.preventDefault();
-        resumeAutoplay();
-    }
-};
-
-/**
- * Handle keyboard events
- *
- * @param {KeyboardEvent} e The keyboard event
- */
-const handleKeyboard = (e) => {
-    if (!gameState.overlayContainer) {
-        return;
-    }
-
-    switch (e.key) {
-        case 'ArrowRight':
-            e.preventDefault();
-            advanceToNextStage();
-            break;
-        case 'Escape':
-            e.preventDefault();
-            closeOverlay();
-            break;
-        case ' ':
-            e.preventDefault();
-            if (gameState.autoplayEnabled) {
-                pauseAutoplay();
-            } else {
-                resumeAutoplay();
-            }
-            break;
-    }
-};
-
-/**
  * Advance to the next stage by sending the advance action to the server
  */
 const advanceToNextStage = async() => {
-    // Stop current autoplay.
-    stopAutoplayTimer();
+    // Stop current autoplay to prevent double-advance.
+    if (playerState) {
+        Player.stopAutoplay(playerState);
+    }
 
     try {
         await sendToServer({
@@ -449,198 +361,16 @@ const advanceToNextStage = async() => {
 };
 
 /**
- * Start the autoplay countdown
- */
-const startAutoplay = () => {
-    // Stop any existing timer.
-    stopAutoplayTimer();
-
-    const stageData = gameState.currentStageData;
-    if (!stageData || !stageData.duration) {
-        return;
-    }
-
-    const overlay = gameState.overlayContainer?.querySelector(SELECTORS.OVERLAY);
-
-    // Update paused class based on current state.
-    if (overlay) {
-        if (gameState.autoplayEnabled) {
-            overlay.classList.remove('mod_kahoodle-progress-paused');
-        } else {
-            overlay.classList.add('mod_kahoodle-progress-paused');
-        }
-    }
-
-    // Update progress bar to current position.
-    updateProgressBar();
-
-    // Only start timer if autoplay is enabled.
-    if (!gameState.autoplayEnabled) {
-        return;
-    }
-
-    const durationMs = stageData.duration * 1000;
-    const remainingMs = durationMs - gameState.autoplayElapsed;
-
-    if (remainingMs <= 0) {
-        // Time is up, go to next stage.
-        advanceToNextStage();
-        return;
-    }
-
-    gameState.autoplayStartTime = Date.now();
-
-    // Use requestAnimationFrame for smooth progress updates.
-    const updateLoop = () => {
-        if (!gameState.autoplayEnabled || !gameState.overlayContainer) {
-            return;
-        }
-
-        const elapsed = gameState.autoplayElapsed + (Date.now() - gameState.autoplayStartTime);
-        const remaining = durationMs - elapsed;
-        const progress = Math.min((elapsed / durationMs) * 100, 100);
-
-        const progressFill = gameState.overlayContainer.querySelector(SELECTORS.PROGRESS_FILL);
-        if (progressFill) {
-            progressFill.style.width = progress + '%';
-        }
-
-        const countdownTime = gameState.overlayContainer.querySelector(SELECTORS.COUNTDOWN_TIME);
-        if (countdownTime) {
-            countdownTime.textContent = formatCountdown(remaining);
-        }
-
-        if (elapsed >= durationMs) {
-            // Time is up, advance to next stage after a brief moment.
-            gameState.autoplayTimerId = setTimeout(() => {
-                advanceToNextStage();
-            }, 50);
-        } else {
-            gameState.autoplayTimerId = requestAnimationFrame(updateLoop);
-        }
-    };
-
-    gameState.autoplayTimerId = requestAnimationFrame(updateLoop);
-};
-
-/**
- * Stop the autoplay timer
- */
-const stopAutoplayTimer = () => {
-    if (gameState.autoplayTimerId) {
-        cancelAnimationFrame(gameState.autoplayTimerId);
-        clearTimeout(gameState.autoplayTimerId);
-        gameState.autoplayTimerId = null;
-    }
-};
-
-/**
- * Format milliseconds as M:SS countdown string
- *
- * @param {number} ms Milliseconds remaining
- * @returns {string} Formatted time string (e.g., "4:30")
- */
-const formatCountdown = (ms) => {
-    const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-};
-
-/**
- * Update the progress bar and countdown time to reflect current elapsed time
- */
-const updateProgressBar = () => {
-    const stageData = gameState.currentStageData;
-    if (!stageData || !stageData.duration || !gameState.overlayContainer) {
-        return;
-    }
-
-    const durationMs = stageData.duration * 1000;
-    const remainingMs = durationMs - gameState.autoplayElapsed;
-    const progress = Math.min((gameState.autoplayElapsed / durationMs) * 100, 100);
-
-    const progressFill = gameState.overlayContainer.querySelector(SELECTORS.PROGRESS_FILL);
-    if (progressFill) {
-        progressFill.style.width = progress + '%';
-    }
-
-    const countdownTime = gameState.overlayContainer.querySelector(SELECTORS.COUNTDOWN_TIME);
-    if (countdownTime) {
-        countdownTime.textContent = formatCountdown(remainingMs);
-    }
-};
-
-/**
- * Pause the autoplay countdown
- */
-const pauseAutoplay = () => {
-    if (!gameState.autoplayEnabled) {
-        return;
-    }
-
-    // Stop the timer first.
-    stopAutoplayTimer();
-
-    // Calculate and store elapsed time.
-    if (gameState.autoplayStartTime) {
-        gameState.autoplayElapsed += Date.now() - gameState.autoplayStartTime;
-        gameState.autoplayStartTime = null;
-    }
-
-    gameState.autoplayEnabled = false;
-
-    // Update progress bar to exact position.
-    updateProgressBar();
-
-    // Add paused class to overlay.
-    const overlay = gameState.overlayContainer?.querySelector(SELECTORS.OVERLAY);
-    if (overlay) {
-        overlay.classList.add('mod_kahoodle-progress-paused');
-    }
-};
-
-/**
- * Resume the autoplay countdown
- */
-const resumeAutoplay = () => {
-    if (gameState.autoplayEnabled) {
-        return;
-    }
-
-    gameState.autoplayEnabled = true;
-
-    // Remove paused class from overlay.
-    const overlay = gameState.overlayContainer?.querySelector(SELECTORS.OVERLAY);
-    if (overlay) {
-        overlay.classList.remove('mod_kahoodle-progress-paused');
-    }
-
-    // Restart the timer.
-    startAutoplay();
-};
-
-/**
  * Close the overlay and clean up
  */
 const closeOverlay = () => {
-    // Stop autoplay timer.
-    stopAutoplayTimer();
-
-    if (gameState.overlayContainer) {
-        gameState.overlayContainer.remove();
-        gameState.overlayContainer = null;
+    if (playerState) {
+        Player.close(playerState);
+        playerState = null;
     }
-
-    // Remove keyboard event listener.
-    document.removeEventListener('keydown', handleKeyboard);
 
     // Reset state (but keep roundId).
     gameState.currentStageData = null;
-    gameState.autoplayEnabled = true;
-    gameState.autoplayTimerId = null;
-    gameState.autoplayStartTime = null;
-    gameState.autoplayElapsed = 0;
 };
 
 /**

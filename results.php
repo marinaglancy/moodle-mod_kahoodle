@@ -165,6 +165,17 @@ if (!empty($participantid) && $view === 'details') {
         'text-muted mb-3'
     );
 
+    // Play all button.
+    $PAGE->requires->js_call_amd('mod_kahoodle/playback', 'init');
+    echo html_writer::div(
+        html_writer::link('#', get_string('playbackall', 'mod_kahoodle'), [
+            'class' => 'btn btn-primary mb-3',
+            'data-action' => 'mod_kahoodle-playback-all',
+            'data-roundid' => $round->get_id(),
+        ]),
+        'mb-3'
+    );
+
     $report = \core_reportbuilder\system_report_factory::create(
         \mod_kahoodle\reportbuilder\local\systemreports\statistics::class,
         $PAGE->context,
@@ -210,6 +221,17 @@ if (!empty($participantid) && $view === 'details') {
 
     // Heading.
     echo $OUTPUT->heading(get_string('allroundsstatistics', 'mod_kahoodle'), 3);
+
+    // Play all button.
+    $PAGE->requires->js_call_amd('mod_kahoodle/playback', 'init');
+    echo html_writer::div(
+        html_writer::link('#', get_string('playbackall', 'mod_kahoodle'), [
+            'class' => 'btn btn-primary mb-3',
+            'data-action' => 'mod_kahoodle-playback-all',
+            'data-kahoodleid' => $PAGE->activityrecord->id,
+        ]),
+        'mb-3'
+    );
 
     $report = \core_reportbuilder\system_report_factory::create(
         \mod_kahoodle\reportbuilder\local\systemreports\all_rounds_statistics::class,
