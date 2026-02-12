@@ -66,6 +66,9 @@ let wakeLockSentinel = null;
 // Touch start Y position for swipe-up fullscreen gesture detection.
 let touchStartY = null;
 
+// Whether closeOverlay was triggered by a popstate (back button) event.
+let closingFromPopstate = false;
+
 /**
  * Initialize the participant module
  *
@@ -297,6 +300,10 @@ const createOverlayContainer = () => {
     // Keep screen on during gameplay.
     requestWakeLock();
     document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Push history state so the back button closes the overlay instead of navigating away.
+    history.pushState({kahoodleOverlay: true}, '');
+    window.addEventListener('popstate', handlePopstate);
 };
 
 /**
@@ -460,6 +467,19 @@ const handleVisibilityChange = () => {
 };
 
 /**
+ * Handle browser back button / back gesture.
+ *
+ * Closes the overlay instead of navigating to the previous page.
+ */
+const handlePopstate = () => {
+    if (participantState.overlayContainer) {
+        closingFromPopstate = true;
+        closeOverlay();
+        closingFromPopstate = false;
+    }
+};
+
+/**
  * Close the overlay and clean up
  */
 const closeOverlay = () => {
@@ -495,6 +515,13 @@ const closeOverlay = () => {
     // Release wake lock and stop re-acquisition.
     releaseWakeLock();
     document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+    // Clean up history state.
+    window.removeEventListener('popstate', handlePopstate);
+    if (!closingFromPopstate) {
+        // Programmatic close — remove the history entry we pushed.
+        history.back();
+    }
 
     // Reset state (but keep IDs).
     participantState.currentStageData = null;
