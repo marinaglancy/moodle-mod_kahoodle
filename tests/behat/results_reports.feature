@@ -110,6 +110,68 @@ Feature: Results and reports
       | 1     | Multiple choice | Question 1    | Option B | Yes      | 900   | 5.0 seconds   |
     And I should not see "Question 2"
 
+  Scenario: Teacher plays back all stages from statistics report
+    When I log in as "teacher1"
+    And I am on the "Test Kahoodle" "kahoodle activity" page
+    And I follow "View results"
+    And I click on "View statistics" "link" in the "Round 1" "mod_kahoodle > round result"
+    And I click on "Play all" "link"
+    And I wait until ".mod_kahoodle-overlay" "css_element" exists
+    # Play all starts at the lobby stage with participants.
+    Then "[data-stage='lobby']" "css_element" should exist
+    And I should see "Sam" in the ".mod_kahoodle-overlay [data-stage='lobby']" "css_element"
+    And I should see "Alex" in the ".mod_kahoodle-overlay [data-stage='lobby']" "css_element"
+    # Advance to question 1 preview.
+    When I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='preview']" "css_element" exists
+    Then I should see "Question 1" in the ".mod_kahoodle-overlay [data-stage='preview']" "css_element"
+    And I should see "1 of 2" in the ".mod_kahoodle-overlay" "css_element"
+    # Advance to question 1 with answer options.
+    When I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='question']" "css_element" exists
+    Then I should see "Option A" in the ".mod_kahoodle-overlay [data-stage='question']" "css_element"
+    And I should see "Option B" in the ".mod_kahoodle-overlay [data-stage='question']" "css_element"
+    # Advance to question 1 results with correct answer marked.
+    When I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='results']" "css_element" exists
+    Then I should see "Option B" in the ".mod_kahoodle-overlay [data-stage='results'] .mod_kahoodle-option-correct" "css_element"
+    # Advance to leaderboard after question 1.
+    When I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='leaders']" "css_element" exists
+    Then I should see "Leaderboard" in the ".mod_kahoodle-overlay [data-stage='leaders']" "css_element"
+    And I should see "Sam" in the ".mod_kahoodle-overlay [data-stage='leaders'] .mod_kahoodle-leaderboard-row:nth-child(1)" "css_element"
+    And I should see "Alex" in the ".mod_kahoodle-overlay [data-stage='leaders'] .mod_kahoodle-leaderboard-row:nth-child(2)" "css_element"
+    # Advance through question 2 stages (preview, question, results) to revision.
+    When I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='preview']" "css_element" exists
+    Then I should see "2 of 2" in the ".mod_kahoodle-overlay" "css_element"
+    When I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='question']" "css_element" exists
+    And I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='results']" "css_element" exists
+    And I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='revision']" "css_element" exists
+    Then I should see "Sam" in the ".mod_kahoodle-overlay [data-stage='revision']" "css_element"
+    # Close the playback overlay.
+    When I click on "[data-action='close']" "css_element"
+    Then ".mod_kahoodle-overlay" "css_element" should not exist
+
+  Scenario: Teacher starts playback from specific question in statistics report
+    When I log in as "teacher1"
+    And I am on the "Test Kahoodle" "kahoodle activity" page
+    And I follow "View results"
+    And I click on "View statistics" "link" in the "Round 1" "mod_kahoodle > round result"
+    # Click the Playback action on the Question 2 row.
+    And I press "Playback" action in the "Question 2" report row
+    And I wait until ".mod_kahoodle-overlay" "css_element" exists
+    # Playback should start at question 2 preview, showing "2 of 2".
+    Then "[data-stage='preview']" "css_element" should exist
+    And I should see "Question 2" in the ".mod_kahoodle-overlay [data-stage='preview']" "css_element"
+    And I should see "2 of 2" in the ".mod_kahoodle-overlay" "css_element"
+    # Close the overlay.
+    When I click on "[data-action='close']" "css_element"
+    Then ".mod_kahoodle-overlay" "css_element" should not exist
+
   Scenario: Teacher views questions management page from results
     When I log in as "teacher1"
     And I am on the "Test Kahoodle" "kahoodle activity" page

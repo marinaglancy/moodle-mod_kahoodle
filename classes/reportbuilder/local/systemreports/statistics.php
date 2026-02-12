@@ -244,7 +244,7 @@ class statistics extends system_report {
     protected function add_actions(): void {
         $this->add_action(new action(
             new \moodle_url('#'),
-            new \pix_icon('i/play', ''),
+            new \pix_icon('t/play', ''),
             [
                 'data-action' => 'mod_kahoodle-playback',
                 'data-roundid' => $this->get_round()->get_id(),

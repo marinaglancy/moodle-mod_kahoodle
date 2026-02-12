@@ -128,6 +128,58 @@ Feature: Multi-round results
       | 1     | Multiple choice | Question 1    | 4                  | 4               | 2                 | 437.5         |
       | 2     | Multiple choice | Question 2    | 4                  | 3               | 3                 | 486.5         |
 
+  Scenario: Teacher plays back all stages from all rounds statistics
+    When I log in as "teacher1"
+    And I am on the "Test Kahoodle" "kahoodle activity" page
+    And I follow "View results"
+    And I follow "All rounds: Statistics"
+    And I click on "Play all" "link"
+    And I wait until ".mod_kahoodle-overlay" "css_element" exists
+    # All-rounds playback has no lobby. Starts at question 1 preview.
+    Then "[data-stage='preview']" "css_element" should exist
+    And I should see "Question 1" in the ".mod_kahoodle-overlay [data-stage='preview']" "css_element"
+    And I should see "1 of 2" in the ".mod_kahoodle-overlay" "css_element"
+    # Advance to question 1 with answer options.
+    When I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='question']" "css_element" exists
+    Then I should see "Option A" in the ".mod_kahoodle-overlay [data-stage='question']" "css_element"
+    And I should see "Option B" in the ".mod_kahoodle-overlay [data-stage='question']" "css_element"
+    # Advance to question 1 results with correct answer marked.
+    When I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='results']" "css_element" exists
+    Then I should see "Option B" in the ".mod_kahoodle-overlay [data-stage='results'] .mod_kahoodle-option-correct" "css_element"
+    # Advance to question 2 preview (no leaderboard between questions in all-rounds mode).
+    When I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='preview']" "css_element" exists
+    Then I should see "2 of 2" in the ".mod_kahoodle-overlay" "css_element"
+    # Advance through question 2 stages to revision.
+    When I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='question']" "css_element" exists
+    And I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='results']" "css_element" exists
+    And I click on "[data-action='next']" "css_element"
+    And I wait until "[data-stage='revision']" "css_element" exists
+    Then I should see "Sam" in the ".mod_kahoodle-overlay [data-stage='revision']" "css_element"
+    # Close the playback overlay.
+    When I click on "[data-action='close']" "css_element"
+    Then ".mod_kahoodle-overlay" "css_element" should not exist
+
+  Scenario: Teacher starts playback from specific question in all rounds statistics
+    When I log in as "teacher1"
+    And I am on the "Test Kahoodle" "kahoodle activity" page
+    And I follow "View results"
+    And I follow "All rounds: Statistics"
+    # Click the Playback action on the Question 2 row.
+    And I press "Playback" action in the "Question 2" report row
+    And I wait until ".mod_kahoodle-overlay" "css_element" exists
+    # Playback should start at question 2 preview, showing "2 of 2".
+    Then "[data-stage='preview']" "css_element" should exist
+    And I should see "Question 2" in the ".mod_kahoodle-overlay [data-stage='preview']" "css_element"
+    And I should see "2 of 2" in the ".mod_kahoodle-overlay" "css_element"
+    # Close the overlay.
+    When I click on "[data-action='close']" "css_element"
+    Then ".mod_kahoodle-overlay" "css_element" should not exist
+
   Scenario: Modified question text appears in all rounds statistics but not per-round
     When I log in as "teacher1"
     And I am on the "Test Kahoodle" "kahoodle activity" page
