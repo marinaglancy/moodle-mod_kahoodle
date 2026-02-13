@@ -70,7 +70,7 @@ class playback_stages extends external_api {
             $round = round::create_from_id($roundid);
         } else {
             // All-rounds mode.
-            $round = new \mod_kahoodle\local\entities\statistics($kahoodleid);
+            $round = \mod_kahoodle\local\entities\statistics::create_from_kahoodle_id($kahoodleid);
         }
 
         $context = $round->get_context();

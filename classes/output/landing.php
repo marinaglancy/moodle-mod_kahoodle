@@ -18,6 +18,7 @@ namespace mod_kahoodle\output;
 
 use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
+use mod_kahoodle\local\entities\statistics;
 use moodle_url;
 use renderable;
 use stdClass;
@@ -31,7 +32,9 @@ use templatable;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class landing implements renderable, templatable {
-    /** @var round The round entity */
+    /** @var statistics All game rounds */
+    protected statistics $statistics;
+    /** @var round Last round */
     protected round $round;
     /** @var stdClass The kahoodle activity record */
     protected stdClass $kahoodle;
@@ -45,10 +48,12 @@ class landing implements renderable, templatable {
     /**
      * Constructor
      *
-     * @param round $round The round entity
+     * @param statistics $statistics game rounds
      * @param \moodleform|null $joinform The join form
      */
-    public function __construct(round $round, ?\moodleform $joinform = null) {
+    public function __construct(statistics $statistics, ?\moodleform $joinform = null) {
+        $this->statistics = $statistics;
+        $this->round = $round = $statistics->get_last_round();
         $this->round = $round;
         $this->kahoodle = $round->get_kahoodle();
         $this->cm = $round->get_cm();

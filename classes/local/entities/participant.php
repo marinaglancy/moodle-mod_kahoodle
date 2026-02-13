@@ -107,7 +107,9 @@ class participant {
                 // User deleted, remove userid from participant record too.
                 $participant->userid = null;
             }
-            $result[$participant->id] = new self($round, $participant, $user);
+            $thisround = ($round instanceof statistics) ?
+                ($round->get_all_rounds()[(int)$participant->roundid] ?? $round) : $round;
+            $result[$participant->id] = new self($thisround, $participant, $user);
         }
         return $result;
     }

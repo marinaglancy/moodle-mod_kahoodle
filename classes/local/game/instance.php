@@ -17,7 +17,10 @@
 namespace mod_kahoodle\local\game;
 
 use mod_kahoodle\constants;
+use mod_kahoodle\local\entities\participant;
 use mod_kahoodle\local\entities\round;
+use mod_kahoodle\local\entities\statistics;
+use moodle_exception;
 
 /**
  * API class for Kahoodle instance management
@@ -165,6 +168,8 @@ class instance {
         ?\cm_info $cm = null
     ): array {
         global $DB;
+
+        $kahoodleid = $kahoodle ? $kahoodle->id : $kahoodleid;
 
         // Get all rounds for this kahoodle, ordered by creation time (newest first).
         // In the same query we validate that kahoodle itself exists.

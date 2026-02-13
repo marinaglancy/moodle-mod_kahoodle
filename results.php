@@ -22,6 +22,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_kahoodle\local\entities\statistics;
+
 require(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 
@@ -40,20 +42,20 @@ $PAGE->set_url('/mod/kahoodle/results.php', array_filter([
 
 if ($participantid && $view === 'details') {
     // Get round from participant.
-    $roundid = (int)$DB->get_field('kahoodle_participants', 'roundid', ['id' => $participantid], MUST_EXIST);
-    $round = \mod_kahoodle\local\entities\round::create_from_id($roundid);
-    $cm = $round->get_cm();
+    $statistics = statistics::create_for_participant_id($participantid, $roundid);
+    $round = $statistics->get_all_rounds()[$roundid];
 } else if ($roundid && ($view === 'participants' || $view === 'statistics')) {
-    $round = \mod_kahoodle\local\entities\round::create_from_id($roundid);
-    $cm = $round->get_cm();
+    $statistics = statistics::create_for_round_id($roundid);
+    $round = $statistics->get_all_rounds()[$roundid];
 } else if ($id) {
-    [$course, $cm] = get_course_and_cm_from_cmid($id, 'kahoodle');
+    $statistics = statistics::create_from_cm_id($id);
 } else if ($view === 'allparticipants' || $view === 'allstatistics') {
     throw new \moodle_exception('missingparam', '', '', 'id');
 } else {
     throw new \moodle_exception('missingparam', '', '', 'id/roundid/participantid');
 }
-require_login(isset($course) ? $course : $cm->course, true, $cm);
+$cm = $statistics->get_cm();
+require_login($cm->course, true, $cm);
 require_capability('mod/kahoodle:viewresults', $PAGE->context);
 
 $PAGE->set_title(get_string('results', 'mod_kahoodle'));
@@ -245,7 +247,7 @@ if (!empty($participantid) && $view === 'details') {
     echo $report->output();
 } else {
     // Show the default rounds list.
-    $resultspage = new \mod_kahoodle\output\results($PAGE->activityrecord, $cm);
+    $resultspage = new \mod_kahoodle\output\results($statistics);
     echo $OUTPUT->render($resultspage);
 }
 

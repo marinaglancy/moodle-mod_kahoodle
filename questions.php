@@ -22,6 +22,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_kahoodle\local\entities\statistics;
+
 require(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 
@@ -32,29 +34,19 @@ $view = optional_param('view', '', PARAM_ALPHANUMEXT);
 $PAGE->set_url('/mod/kahoodle/questions.php', array_filter(['id' => $id, 'roundid' => $roundid]));
 
 if ($roundid) {
-    $round = \mod_kahoodle\local\entities\round::create_from_id($roundid);
-    $cm = $round->get_cm();
+    $statistics = statistics::create_for_round_id($roundid);
+    $round = $statistics->get_all_rounds()[$roundid];
 } else if ($id) {
-    [$course, $cm] = get_course_and_cm_from_cmid($id, 'kahoodle');
+    $statistics = statistics::create_from_cm_id($id);
+    $round = $statistics->get_last_round();
 }
-require_login(isset($course) ? $course : $cm->course, true, $cm);
+$cm = $statistics->get_cm();
+require_login($cm->course, true, $cm);
 require_capability('mod/kahoodle:manage_questions', $PAGE->context);
 
 $PAGE->set_title(get_string('questions', 'mod_kahoodle'));
 $PAGE->set_heading(format_string($PAGE->course->fullname));
 $PAGE->activityheader->disable();
-
-// Get all rounds for building navigation tabs.
-$allrounds = \mod_kahoodle\local\game\instance::get_all_rounds($cm->instance);
-
-if (!isset($round)) {
-    // Default to the first round (which is the editable one or most recent).
-    $round = reset($allrounds);
-}
-
-// Check if this is the last round (for showing "Prepare new round" button).
-$lastround = reset($allrounds);
-$islastround = ($round->get_id() === $lastround->get_id());
 
 // Build question types for JavaScript.
 $questiontypesjs = [];
@@ -74,7 +66,7 @@ echo html_writer::start_div('', ['data-region' => 'mod_kahoodle-questions']);
 
 // Build round navigation selector.
 $roundoptions = [];
-foreach ($allrounds as $r) {
+foreach ($statistics->get_all_rounds() as $r) {
     $url = (new moodle_url('/mod/kahoodle/questions.php', ['roundid' => $r->get_id()]))->out(false);
     $name = $r->get_display_name();
     if (!$r->is_fully_editable()) {
@@ -99,6 +91,9 @@ if (!$round->is_fully_editable()) {
         get_string('questions_roundnoteditable', 'mod_kahoodle'),
         \core\output\notification::NOTIFY_WARNING
     );
+
+    // Check if this is the last round (for showing "Prepare new round" button).
+    $islastround = ($round->get_id() === $statistics->get_last_round()->get_id());
 
     // Show "Prepare new round" button if this is the last round, it's archived, and user can facilitate.
     if (

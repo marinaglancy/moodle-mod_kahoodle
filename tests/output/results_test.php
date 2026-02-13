@@ -17,6 +17,9 @@
 namespace mod_kahoodle\output;
 
 use mod_kahoodle\constants;
+use mod_kahoodle\local\entities\round;
+use mod_kahoodle\local\entities\statistics;
+use mod_kahoodle\local\game\progress;
 
 /**
  * Tests for the results output class
@@ -31,8 +34,8 @@ final class results_test extends \advanced_testcase {
     /**
      * Helper to create a kahoodle with a course, teacher, and questions.
      *
-     * @return array{kahoodle: \stdClass, cm: \cm_info, kahoodlerecord: \stdClass,
-     *     teacher: \stdClass, student: \stdClass, roundid: int, course: \stdClass}
+     * @return array{statistics: statistics, kahoodle: \stdClass, cm: \cm_info,
+     *     teacher: \stdClass, student: \stdClass}
      */
     protected function setup_kahoodle(): array {
         $course = $this->getDataGenerator()->create_course();
@@ -58,24 +61,14 @@ final class results_test extends \advanced_testcase {
             'questionconfig' => "*6\n7\n8",
         ]);
 
-        // Get cm_info object.
-        [, $cm] = get_course_and_cm_from_instance($kahoodle->id, 'kahoodle');
-        global $DB;
-        $kahoodlerecord = $DB->get_record('kahoodle', ['id' => $kahoodle->id]);
-
         // Get the round that was auto-created.
-        $rounds = \mod_kahoodle\local\game\instance::get_all_rounds($kahoodle->id);
-        $round = reset($rounds);
-        $roundid = $round->get_id();
+        $statistics = statistics::create_from_kahoodle_id(0, $kahoodle);
 
         return [
-            'kahoodle' => $kahoodle,
-            'cm' => $cm,
-            'kahoodlerecord' => $kahoodlerecord,
+            'statistics' => $statistics,
+            'cm' => $statistics->get_cm(),
             'teacher' => $teacher,
             'student' => $student,
-            'roundid' => $roundid,
-            'course' => $course,
         ];
     }
 
@@ -95,25 +88,22 @@ final class results_test extends \advanced_testcase {
     /**
      * Move a round to a specific stage.
      *
-     * @param int $roundid
-     * @param string $stage
-     * @param int $currentquestion
+     * @param round $round
+     * @param string $stagesignature desired stage
+     * @return round
      */
-    protected function set_round_stage(int $roundid, string $stage, int $currentquestion = 0): void {
-        global $DB;
-        $updatedata = [
-            'id' => $roundid,
-            'currentstage' => $stage,
-            'currentquestion' => $currentquestion,
-            'stagestarttime' => time(),
-        ];
-        if ($stage !== constants::STAGE_PREPARATION) {
-            $updatedata['timestarted'] = time() - 3600;
+    protected function set_round_stage(round $round, string $stagesignature): round {
+        if ($round->get_current_stage_name() === constants::STAGE_PREPARATION) {
+            progress::start_game($round);
         }
-        if ($stage === constants::STAGE_ARCHIVED) {
-            $updatedata['timecompleted'] = time();
+
+        while ($round->get_current_stage()->get_stage_signature() !== $stagesignature) {
+            if ($round->get_current_stage()->get_stage_signature() === constants::STAGE_ARCHIVED) {
+                throw new \coding_exception('Stage not reached');
+            }
+            progress::advance_to_next_stage($round, $round->get_current_stage()->get_stage_signature());
         }
-        $DB->update_record('kahoodle_rounds', (object)$updatedata);
+        return $round;
     }
 
     /**
@@ -121,13 +111,13 @@ final class results_test extends \advanced_testcase {
      */
     public function test_preparation_round(): void {
         $this->resetAfterTest();
-        $data = $this->setup_kahoodle();
-        $output = $this->setup_page($data['cm']);
+        ['statistics' => $statistics, 'cm' => $cm, 'teacher' => $teacher] = $this->setup_kahoodle();
+        $output = $this->setup_page($cm);
 
-        $this->setUser($data['teacher']);
+        $this->setUser($teacher);
 
         // Round is in preparation by default.
-        $resultsoutput = new results($data['kahoodlerecord'], $data['cm']);
+        $resultsoutput = new results($statistics);
         $result = $resultsoutput->export_for_template($output);
 
         $this->assertNotEmpty($result->rounds);
@@ -140,26 +130,27 @@ final class results_test extends \advanced_testcase {
      */
     public function test_completed_round(): void {
         $this->resetAfterTest();
-        $data = $this->setup_kahoodle();
-        $output = $this->setup_page($data['cm']);
+        ['statistics' => $statistics, 'cm' => $cm, 'teacher' => $teacher, 'student' => $student] = $this->setup_kahoodle();
+        $output = $this->setup_page($cm);
 
-        $this->setUser($data['teacher']);
+        $this->setUser($teacher);
 
         /** @var \mod_kahoodle_generator $generator */
         $generator = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
 
         // Add a participant to the round.
+        $round = $statistics->get_last_round();
         $generator->create_participant([
-            'roundid' => $data['roundid'],
-            'userid' => $data['student']->id,
+            'roundid' => $round->get_id(),
+            'userid' => $student->id,
             'displayname' => 'Player One',
             'totalscore' => 500,
         ]);
 
         // Set round to archived.
-        $this->set_round_stage($data['roundid'], constants::STAGE_ARCHIVED);
+        $this->set_round_stage($round, constants::STAGE_ARCHIVED);
 
-        $resultsoutput = new results($data['kahoodlerecord'], $data['cm']);
+        $resultsoutput = new results($statistics);
         $result = $resultsoutput->export_for_template($output);
 
         $this->assertNotEmpty($result->rounds);
@@ -178,14 +169,14 @@ final class results_test extends \advanced_testcase {
      */
     public function test_inprogress_round(): void {
         $this->resetAfterTest();
-        $data = $this->setup_kahoodle();
-        $output = $this->setup_page($data['cm']);
+        ['statistics' => $statistics, 'cm' => $cm, 'teacher' => $teacher] = $this->setup_kahoodle();
+        $output = $this->setup_page($cm);
 
-        $this->setUser($data['teacher']);
+        $this->setUser($teacher);
 
-        $this->set_round_stage($data['roundid'], constants::STAGE_LOBBY);
+        $this->set_round_stage($statistics->get_last_round(), constants::STAGE_LOBBY);
 
-        $resultsoutput = new results($data['kahoodlerecord'], $data['cm']);
+        $resultsoutput = new results($statistics);
         $result = $resultsoutput->export_for_template($output);
 
         $this->assertNotEmpty($result->rounds);
@@ -199,27 +190,28 @@ final class results_test extends \advanced_testcase {
      */
     public function test_allrounds_buttons_multiple(): void {
         $this->resetAfterTest();
-        $data = $this->setup_kahoodle();
-        $output = $this->setup_page($data['cm']);
+        ['statistics' => $statistics, 'cm' => $cm, 'teacher' => $teacher] = $this->setup_kahoodle();
+        $output = $this->setup_page($cm);
 
-        $this->setUser($data['teacher']);
+        $this->setUser($teacher);
 
         /** @var \mod_kahoodle_generator $generator */
         $generator = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
 
         // Set first round to archived.
-        $this->set_round_stage($data['roundid'], constants::STAGE_ARCHIVED);
+        $this->set_round_stage($statistics->get_last_round(), constants::STAGE_ARCHIVED);
 
         // Create a second archived round.
         $generator->create_round([
-            'kahoodleid' => $data['kahoodle']->id,
+            'kahoodleid' => $statistics->get_kahoodleid(),
             'currentstage' => constants::STAGE_ARCHIVED,
             'timestarted' => time() - 7200,
             'timecompleted' => time() - 3600,
             'stagestarttime' => time() - 3600,
         ]);
 
-        $resultsoutput = new results($data['kahoodlerecord'], $data['cm']);
+        $statistics = statistics::create_from_kahoodle_id(0, $statistics->get_kahoodle(), $cm);
+        $resultsoutput = new results($statistics);
         $result = $resultsoutput->export_for_template($output);
 
         $this->assertTrue($result->showallroundsbuttons);
@@ -232,15 +224,15 @@ final class results_test extends \advanced_testcase {
      */
     public function test_allrounds_buttons_single(): void {
         $this->resetAfterTest();
-        $data = $this->setup_kahoodle();
-        $output = $this->setup_page($data['cm']);
+        ['statistics' => $statistics, 'cm' => $cm, 'teacher' => $teacher, 'student' => $student] = $this->setup_kahoodle();
+        $output = $this->setup_page($cm);
 
-        $this->setUser($data['teacher']);
+        $this->setUser($teacher);
 
         // Set the round to archived (only one round).
-        $this->set_round_stage($data['roundid'], constants::STAGE_ARCHIVED);
+        $this->set_round_stage($statistics->get_last_round(), constants::STAGE_ARCHIVED);
 
-        $resultsoutput = new results($data['kahoodlerecord'], $data['cm']);
+        $resultsoutput = new results($statistics);
         $result = $resultsoutput->export_for_template($output);
 
         $this->assertFalse($result->showallroundsbuttons);

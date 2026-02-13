@@ -22,6 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_kahoodle\local\entities\statistics;
 use mod_kahoodle\local\game\realtime_channels;
 
 require(__DIR__ . '/../../config.php');
@@ -34,19 +35,17 @@ $id = optional_param('id', 0, PARAM_INT);
 $k = optional_param('k', 0, PARAM_INT);
 
 if ($id) {
-    $cm = get_coursemodule_from_id('kahoodle', $id, 0, false, MUST_EXIST);
-    $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
-    $moduleinstance = $DB->get_record('kahoodle', ['id' => $cm->instance], '*', MUST_EXIST);
+    [$course, $cm] = get_course_and_cm_from_cmid($id, 'kahoodle');
 } else {
-    $moduleinstance = $DB->get_record('kahoodle', ['id' => $k], '*', MUST_EXIST);
-    $course = $DB->get_record('course', ['id' => $moduleinstance->course], '*', MUST_EXIST);
-    $cm = get_coursemodule_from_instance('kahoodle', $moduleinstance->id, $course->id, false, MUST_EXIST);
+    [$course, $cm] = get_course_and_cm_from_instance($k, 'kahoodle');
 }
 
 require_login($course, true, $cm);
 
 $context = context_module::instance($cm->id);
-$round = \mod_kahoodle\local\game\questions::get_last_round($moduleinstance->id);
+$moduleinstance = $PAGE->activityrecord;
+$statistics = statistics::create_from_kahoodle_id(0, $moduleinstance, $cm);
+$round = $statistics->get_last_round();
 
 // Handle actions.
 $action = optional_param('action', '', PARAM_ALPHA);
@@ -106,7 +105,7 @@ if ($action === 'newround') {
 
 // Create join form if the user can participate and the round is in progress.
 $joinform = null;
-if ($round->is_in_progress() && $round->is_participant() === null && has_capability('mod/kahoodle:participate', $context)) {
+if ($statistics->can_i_join_last_round()) {
     $joinform = new \mod_kahoodle\form\join(
         new moodle_url('/mod/kahoodle/view.php'),
         ['round' => $round]
@@ -146,7 +145,7 @@ if ($round->is_in_progress()) {
     }
 }
 
-$landing = new \mod_kahoodle\output\landing($round, $joinform);
+$landing = new \mod_kahoodle\output\landing($statistics, $joinform);
 
 echo $OUTPUT->header();
 

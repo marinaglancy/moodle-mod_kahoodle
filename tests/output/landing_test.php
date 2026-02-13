@@ -16,8 +16,11 @@
 
 namespace mod_kahoodle\output;
 
+use core\exception\coding_exception;
 use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
+use mod_kahoodle\local\entities\statistics;
+use mod_kahoodle\local\game\progress;
 
 /**
  * Tests for the landing output class
@@ -33,8 +36,7 @@ final class landing_test extends \advanced_testcase {
      * Helper to create a kahoodle with a course, teacher, and student.
      *
      * @param bool $withquestions Whether to create questions.
-     * @return array{kahoodle: \stdClass, cm: \stdClass, teacher: \stdClass, student: \stdClass,
-     *     round: round, roundid: int, course: \stdClass}
+     * @return array{statistics: statistics, cm: \cm_info, teacher: \stdClass, student: \stdClass}
      */
     protected function setup_kahoodle(bool $withquestions = true): array {
         $course = $this->getDataGenerator()->create_course();
@@ -47,7 +49,6 @@ final class landing_test extends \advanced_testcase {
         $generator = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
 
         $kahoodle = $generator->create_instance(['course' => $course->id]);
-        $cm = get_coursemodule_from_instance('kahoodle', $kahoodle->id);
 
         if ($withquestions) {
             $generator->create_question([
@@ -63,28 +64,23 @@ final class landing_test extends \advanced_testcase {
         }
 
         // Get the round that was auto-created.
-        $rounds = \mod_kahoodle\local\game\instance::get_all_rounds($kahoodle->id);
-        $round = reset($rounds);
-        $roundid = $round->get_id();
+        $statistics = statistics::create_from_kahoodle_id(0, $kahoodle);
 
         return [
-            'kahoodle' => $kahoodle,
-            'cm' => $cm,
+            'statistics' => $statistics,
+            'cm' => $statistics->get_cm(),
             'teacher' => $teacher,
             'student' => $student,
-            'round' => $round,
-            'roundid' => $roundid,
-            'course' => $course,
         ];
     }
 
     /**
      * Set up $PAGE and get the renderer.
      *
-     * @param \stdClass $cm
+     * @param \cm_info $cm
      * @return \renderer_base
      */
-    protected function setup_page(\stdClass $cm): \renderer_base {
+    protected function setup_page(\cm_info $cm): \renderer_base {
         global $PAGE;
         $PAGE->set_url('/mod/kahoodle/view.php', ['id' => $cm->id]);
         $PAGE->set_context(\context_module::instance($cm->id));
@@ -94,21 +90,22 @@ final class landing_test extends \advanced_testcase {
     /**
      * Move a round to a specific stage.
      *
-     * @param int $roundid
-     * @param string $stage
-     * @param int $currentquestion
+     * @param round $round
+     * @param string $stagesignature desired stage
      * @return round
      */
-    protected function set_round_stage(int $roundid, string $stage, int $currentquestion = 0): round {
-        global $DB;
-        $DB->update_record('kahoodle_rounds', (object)[
-            'id' => $roundid,
-            'currentstage' => $stage,
-            'currentquestion' => $currentquestion,
-            'stagestarttime' => time(),
-            'timestarted' => time(),
-        ]);
-        return round::create_from_id($roundid);
+    protected function set_round_stage(round $round, string $stagesignature): round {
+        if ($round->get_current_stage_name() === constants::STAGE_PREPARATION) {
+            progress::start_game($round);
+        }
+
+        while ($round->get_current_stage()->get_stage_signature() !== $stagesignature) {
+            if ($round->get_current_stage()->get_stage_signature() === constants::STAGE_ARCHIVED) {
+                throw new coding_exception('Stage not reached');
+            }
+            progress::advance_to_next_stage($round, $round->get_current_stage()->get_stage_signature());
+        }
+        return $round;
     }
 
     /**
@@ -116,14 +113,13 @@ final class landing_test extends \advanced_testcase {
      */
     public function test_preparation_facilitator(): void {
         $this->resetAfterTest();
-        $data = $this->setup_kahoodle();
-        $output = $this->setup_page($data['cm']);
+        ['cm' => $cm, 'teacher' => $teacher, 'statistics' => $statistics] = $this->setup_kahoodle();
+        $output = $this->setup_page($cm);
 
-        $this->setUser($data['teacher']);
+        $this->setUser($teacher);
 
         // Round is in preparation by default.
-        $round = round::create_from_id($data['roundid']);
-        $landingoutput = new landing($round);
+        $landingoutput = new landing($statistics);
         $result = $landingoutput->export_for_template($output);
 
         $this->assertTrue($result->showcontrolpreparation);
@@ -136,13 +132,12 @@ final class landing_test extends \advanced_testcase {
      */
     public function test_preparation_no_questions(): void {
         $this->resetAfterTest();
-        $data = $this->setup_kahoodle(false);
-        $output = $this->setup_page($data['cm']);
+        ['cm' => $cm, 'teacher' => $teacher, 'statistics' => $statistics] = $this->setup_kahoodle(false);
+        $output = $this->setup_page($cm);
 
-        $this->setUser($data['teacher']);
+        $this->setUser($teacher);
 
-        $round = round::create_from_id($data['roundid']);
-        $landingoutput = new landing($round);
+        $landingoutput = new landing($statistics);
         $result = $landingoutput->export_for_template($output);
 
         $this->assertTrue($result->showcontrolpreparation);
@@ -154,13 +149,12 @@ final class landing_test extends \advanced_testcase {
      */
     public function test_preparation_student(): void {
         $this->resetAfterTest();
-        $data = $this->setup_kahoodle();
-        $output = $this->setup_page($data['cm']);
+        ['cm' => $cm, 'student' => $student, 'statistics' => $statistics] = $this->setup_kahoodle();
+        $output = $this->setup_page($cm);
 
-        $this->setUser($data['student']);
+        $this->setUser($student);
 
-        $round = round::create_from_id($data['roundid']);
-        $landingoutput = new landing($round);
+        $landingoutput = new landing($statistics);
         $result = $landingoutput->export_for_template($output);
 
         $this->assertTrue($result->showwaitingtostart);
@@ -172,13 +166,13 @@ final class landing_test extends \advanced_testcase {
      */
     public function test_inprogress_facilitator(): void {
         $this->resetAfterTest();
-        $data = $this->setup_kahoodle();
-        $output = $this->setup_page($data['cm']);
+        ['cm' => $cm, 'teacher' => $teacher, 'statistics' => $statistics] = $this->setup_kahoodle();
+        $output = $this->setup_page($cm);
 
-        $this->setUser($data['teacher']);
+        $this->setUser($teacher);
 
-        $round = $this->set_round_stage($data['roundid'], constants::STAGE_LOBBY);
-        $landingoutput = new landing($round);
+        $this->set_round_stage($statistics->get_last_round(), constants::STAGE_LOBBY);
+        $landingoutput = new landing($statistics);
         $result = $landingoutput->export_for_template($output);
 
         $this->assertTrue($result->showfacilitatorcontrols);
@@ -189,19 +183,19 @@ final class landing_test extends \advanced_testcase {
      */
     public function test_inprogress_join_form(): void {
         $this->resetAfterTest();
-        $data = $this->setup_kahoodle();
-        $output = $this->setup_page($data['cm']);
+        ['cm' => $cm, 'student' => $student, 'statistics' => $statistics] = $this->setup_kahoodle();
+        $output = $this->setup_page($cm);
 
-        $this->setUser($data['student']);
+        $this->setUser($student);
 
-        $round = $this->set_round_stage($data['roundid'], constants::STAGE_LOBBY);
+        $round = $this->set_round_stage($statistics->get_last_round(), constants::STAGE_LOBBY);
 
         $joinform = new \mod_kahoodle\form\join(
             new \moodle_url('/mod/kahoodle/view.php'),
             ['round' => $round]
         );
 
-        $landingoutput = new landing($round, $joinform);
+        $landingoutput = new landing($statistics, $joinform);
         $result = $landingoutput->export_for_template($output);
 
         $this->assertTrue($result->showjoinoption);
@@ -213,13 +207,13 @@ final class landing_test extends \advanced_testcase {
      */
     public function test_archived(): void {
         $this->resetAfterTest();
-        $data = $this->setup_kahoodle();
-        $output = $this->setup_page($data['cm']);
+        ['cm' => $cm, 'teacher' => $teacher, 'statistics' => $statistics] = $this->setup_kahoodle();
+        $output = $this->setup_page($cm);
 
-        $this->setUser($data['teacher']);
+        $this->setUser($teacher);
 
-        $round = $this->set_round_stage($data['roundid'], constants::STAGE_ARCHIVED);
-        $landingoutput = new landing($round);
+        $this->set_round_stage($statistics->get_last_round(), constants::STAGE_ARCHIVED);
+        $landingoutput = new landing($statistics);
         $result = $landingoutput->export_for_template($output);
 
         $this->assertTrue($result->showfinished);

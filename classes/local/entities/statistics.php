@@ -29,30 +29,144 @@ use mod_kahoodle\constants;
 class statistics extends round {
     /** @var round[] */
     protected array $allrounds;
-    /** @var int Last completed round ID (used for question ordering) */
-    protected int $lastroundid;
 
     /**
      * Constructor
      *
-     * @param int $kahoodleid
-     * @throws \moodle_exception
+     * @param int $kahoodleid The Kahoodle activity ID
+     * @param \stdClass|null $kahoodle Optional Kahoodle activity record, if known
+     * @param \cm_info|null $cm Optional course module, if known
+     * @return self
      */
-    public function __construct(int $kahoodleid) {
-        $this->allrounds = instance::get_all_rounds($kahoodleid);
-        $completedrounds = array_filter($this->allrounds, function (round $round) {
+    public static function create_from_kahoodle_id(int $kahoodleid, ?\stdClass $kahoodle = null, ?\cm_info $cm = null): self {
+        $allrounds = instance::get_all_rounds($kahoodleid, 0, $kahoodle, $cm);
+
+        $completedrounds = array_filter($allrounds, function (round $round) {
             return in_array($round->get_current_stage_name(), [constants::STAGE_ARCHIVED, constants::STAGE_REVISION]);
         });
-        if (empty($completedrounds)) {
-            throw new \moodle_exception('error_nostatistics', 'mod_kahoodle');
-        }
-        $lastround = reset($completedrounds);
-        $this->lastroundid = $lastround->get_id();
+        $lastround = reset($completedrounds) ?: reset($allrounds);
         // Emulate data as the last round data but with id=0 since this is not a real round.
-        $this->data = (object)(array)$lastround->data;
-        $this->data->id = 0;
-        $this->cm = $lastround->get_cm();
-        $this->kahoodle = $lastround->get_kahoodle();
+        $data = (object)(array)$lastround->data;
+        $data->id = 0;
+        $obj = new static($data);
+        $obj->cm = $lastround->get_cm();
+        $obj->kahoodle = $lastround->get_kahoodle();
+        $obj->allrounds = $allrounds;
+        return $obj;
+    }
+
+    /**
+     * Create statistics instance from course module ID
+     *
+     * @param int $cmid The course module ID
+     * @return self
+     */
+    public static function create_from_cm_id(int $cmid) {
+        [$course, $cm] = get_course_and_cm_from_cmid($cmid, 'kahoodle');
+        return self::create_from_kahoodle_id($cm->instance, null, $cm);
+    }
+
+    /**
+     * Create statistics instance from a participant ID
+     *
+     * @param int $participantid The participant ID
+     * @param int $roundid Returns the round ID that the participant belongs to
+     * @return self
+     */
+    public static function create_for_participant_id(int $participantid, int &$roundid) {
+        global $DB;
+        $record = $DB->get_record_sql(
+            "SELECT k.*, p.roundid
+            FROM {kahoodle_participants} p
+            JOIN {kahoodle_rounds} r ON p.roundid = r.id
+            JOIN {kahoodle} k ON r.kahoodleid = k.id
+            WHERE p.id = ?",
+            [$participantid],
+            MUST_EXIST
+        );
+        $roundid = $record->roundid;
+        unset($record->roundid);
+        return self::create_from_kahoodle_id(0, $record);
+    }
+
+    /**
+     * Create statistics instance from a round ID
+     *
+     * @param int $roundid The round ID
+     * @return self
+     */
+    public static function create_for_round_id(int $roundid) {
+        global $DB;
+        $record = $DB->get_record_sql(
+            "SELECT k.*
+            FROM {kahoodle_rounds} r
+            JOIN {kahoodle} k ON r.kahoodleid = k.id
+            WHERE r.id = ?",
+            [$roundid],
+            MUST_EXIST
+        );
+        return self::create_from_kahoodle_id(0, $record);
+    }
+
+    /**
+     * All rounds
+     *
+     * @return round[] Array of round entities indexed by their IDs, ordered by non-archived first, then by timecreated DESC
+     */
+    public function get_all_rounds(): array {
+        return $this->allrounds;
+    }
+
+    /**
+     * Get the most recent round
+     *
+     * @return round
+     */
+    public function get_last_round(): round {
+        return reset($this->allrounds);
+    }
+
+    /**
+     * Check if the current user can join the last round
+     *
+     * @return bool
+     */
+    public function can_i_join_last_round(): bool {
+        $round = $this->get_last_round();
+        if (
+            $round->is_in_progress()
+                && $round->is_participant() === null
+                && has_capability('mod/kahoodle:participate', $this->get_context())
+        ) {
+            // The last round is in progress and the current user has capability but is not yet a participant.
+            if ($this->kahoodle->allowrepeat || $this->kahoodle->identitymode === constants::IDENTITYMODE_ANONYMOUS) {
+                return true;
+            }
+            // Otherwise user can only join if they have not participated before.
+            $pastparticipations = $this->get_my_past_participations();
+            return empty($pastparticipations);
+        }
+        return false;
+    }
+
+    /** @var participant[]|null */
+    protected ?array $pastparticipations = null;
+
+    /**
+     * Get the current user's participations in previous rounds
+     *
+     * @return participant[]
+     */
+    public function get_my_past_participations() {
+        global $USER;
+        if ($this->pastparticipations === null) {
+            $this->pastparticipations = participant::load_round_participants(
+                $this,
+                ' AND p.userid = :userid',
+                ['userid' => $USER->id]
+            );
+        }
+        return $this->pastparticipations;
     }
 
     /**
@@ -82,6 +196,11 @@ class statistics extends round {
     protected function load_all_questions(): array {
         global $DB;
 
+        $completedrounds = array_filter($this->allrounds, function (round $round) {
+            return in_array($round->get_current_stage_name(), [constants::STAGE_ARCHIVED, constants::STAGE_REVISION]);
+        });
+        $lastround = reset($completedrounds) ?: reset($this->allrounds);
+
         // Get all questions for this kahoodle with their latest version.
         $fields = array_merge(
             ["null AS id", "null AS roundid", "qv.id AS questionversionid"],
@@ -102,7 +221,7 @@ class statistics extends round {
 
         $records = $DB->get_recordset_sql($sql, [
             'kahoodleid' => $this->get_kahoodleid(),
-            'lastroundid' => $this->lastroundid,
+            'lastroundid' => $lastround?->get_id() ?: 0,
         ]);
 
         $questions = [];

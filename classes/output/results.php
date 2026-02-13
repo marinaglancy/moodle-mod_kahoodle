@@ -16,9 +16,8 @@
 
 namespace mod_kahoodle\output;
 
-use mod_kahoodle\local\game\instance;
+use mod_kahoodle\local\entities\statistics;
 use mod_kahoodle\constants;
-use mod_kahoodle\local\game\questions;
 use moodle_url;
 use renderable;
 use stdClass;
@@ -32,20 +31,15 @@ use templatable;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class results implements renderable, templatable {
-    /** @var stdClass The kahoodle activity record */
-    protected stdClass $kahoodle;
-    /** @var \cm_info The course module */
-    protected \cm_info $cm;
-
     /**
      * Constructor
      *
-     * @param stdClass $kahoodle The kahoodle activity record
-     * @param \cm_info $cm The course module
+     * @param statistics $statistics
      */
-    public function __construct(stdClass $kahoodle, \cm_info $cm) {
-        $this->kahoodle = $kahoodle;
-        $this->cm = $cm;
+    public function __construct(
+        /** @var statitistics $statistics */
+        protected statistics $statistics
+    ) {
     }
 
     /**
@@ -57,14 +51,14 @@ class results implements renderable, templatable {
     public function export_for_template(\renderer_base $output): stdClass {
         global $DB;
 
-        $context = \context_module::instance($this->cm->id);
+        $context = $this->statistics->get_context();
         $canmanagequestions = has_capability('mod/kahoodle:manage_questions', $context);
 
         $data = new stdClass();
         $data->rounds = [];
 
         // Get all rounds for this kahoodle, ordered by: preparation first, then by timecreated DESC.
-        $rounds = instance::get_all_rounds($this->kahoodle->id, 0, $this->kahoodle, $this->cm);
+        $rounds = $this->statistics->get_all_rounds();
 
         foreach ($rounds as $round) {
             $rounddata = new stdClass();
@@ -152,13 +146,14 @@ class results implements renderable, templatable {
         // Show "all rounds" buttons if there are more than 1 completed round.
         $data->showallroundsbuttons = ($completedroundscount > 1);
         if ($data->showallroundsbuttons) {
+            $cmid = $this->statistics->get_cm()->id;
             $data->allparticipantsurl = (new moodle_url(
                 '/mod/kahoodle/results.php',
-                ['id' => $this->cm->id, 'view' => 'allparticipants']
+                ['id' => $cmid, 'view' => 'allparticipants']
             ))->out(false);
             $data->allstatisticsurl = (new moodle_url(
                 '/mod/kahoodle/results.php',
-                ['id' => $this->cm->id, 'view' => 'allstatistics']
+                ['id' => $cmid, 'view' => 'allstatistics']
             ))->out(false);
         }
 
