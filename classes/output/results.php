@@ -18,7 +18,7 @@ namespace mod_kahoodle\output;
 
 use mod_kahoodle\api;
 use mod_kahoodle\constants;
-use mod_kahoodle\questions;
+use mod_kahoodle\local\game\questions;
 use moodle_url;
 use renderable;
 use stdClass;

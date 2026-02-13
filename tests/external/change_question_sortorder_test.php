@@ -17,7 +17,7 @@
 namespace mod_kahoodle\external;
 
 use mod_kahoodle\local\entities\round_question;
-use mod_kahoodle\questions;
+use mod_kahoodle\local\game\questions;
 
 /**
  * Tests for Kahoodle

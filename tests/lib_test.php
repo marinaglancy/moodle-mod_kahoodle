@@ -84,7 +84,7 @@ final class lib_test extends \advanced_testcase {
             'questionconfig' => "*X\nY\nZ",
         ]);
 
-        $round = \mod_kahoodle\questions::get_last_round($kahoodle->id);
+        $round = \mod_kahoodle\local\game\questions::get_last_round($kahoodle->id);
 
         // Create participants.
         $p1 = $generator->create_participant([
@@ -167,7 +167,7 @@ final class lib_test extends \advanced_testcase {
             'questionconfig' => "A\n*B\nC",
         ]);
 
-        $round = \mod_kahoodle\questions::get_last_round($kahoodle->id);
+        $round = \mod_kahoodle\local\game\questions::get_last_round($kahoodle->id);
 
         // Call the inplace editable function.
         $result = mod_kahoodle_inplace_editable('roundname', $round->get_id(), 'New Name');

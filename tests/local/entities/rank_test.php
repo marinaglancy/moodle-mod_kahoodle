@@ -17,7 +17,7 @@
 namespace mod_kahoodle\local\entities;
 
 use mod_kahoodle\constants;
-use mod_kahoodle\questions;
+use mod_kahoodle\local\game\questions;
 
 /**
  * Tests for rank entity display methods

@@ -14,14 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace mod_kahoodle;
+namespace mod_kahoodle\local\game;
 
+use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round_question;
 
 /**
  * Tests for Kahoodle questions class
  *
- * @covers     \mod_kahoodle\questions
+ * @covers     \mod_kahoodle\local\game\questions
  * @package    mod_kahoodle
  * @category   test
  * @copyright  Marina Glancy

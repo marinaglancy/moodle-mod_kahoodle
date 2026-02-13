@@ -115,7 +115,7 @@ class add_questions extends external_api {
         foreach ($params['questions'] as $index => $questiondata) {
             try {
                 // Get the kahoodle instance to validate context.
-                $round = \mod_kahoodle\questions::get_last_round($questiondata['kahoodleid']);
+                $round = \mod_kahoodle\local\game\questions::get_last_round($questiondata['kahoodleid']);
                 if (!$round->is_fully_editable()) {
                     throw new \moodle_exception('noeditableround', 'mod_kahoodle');
                 }
@@ -128,7 +128,7 @@ class add_questions extends external_api {
                 require_capability('mod/kahoodle:manage_questions', $context);
 
                 // Add the question (this will also handle file uploads).
-                $roundquestion = \mod_kahoodle\questions::add_question((object)$questiondata);
+                $roundquestion = \mod_kahoodle\local\game\questions::add_question((object)$questiondata);
 
                 $questionids[] = [
                     'index' => $index,

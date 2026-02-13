@@ -58,7 +58,7 @@ $islastround = ($round->get_id() === $lastround->get_id());
 
 // Build question types for JavaScript.
 $questiontypesjs = [];
-foreach (\mod_kahoodle\questions::get_question_types() as $questiontype) {
+foreach (\mod_kahoodle\local\game\questions::get_question_types() as $questiontype) {
     $questiontypesjs[] = [
         'type' => $questiontype->get_type(),
         'name' => $questiontype->get_display_name(),
@@ -121,7 +121,7 @@ if (!$round->is_fully_editable()) {
 
 // Add question dropdown button.
 $dropdownitems = [];
-foreach (\mod_kahoodle\questions::get_question_types() as $questiontype) {
+foreach (\mod_kahoodle\local\game\questions::get_question_types() as $questiontype) {
     $dropdownitems[] = html_writer::link(
         '#',
         $questiontype->get_display_name(),

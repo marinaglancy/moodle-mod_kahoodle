@@ -91,7 +91,7 @@ class behat_mod_kahoodle_generator extends behat_generator_base {
         global $DB;
 
         $cm = $this->get_cm_by_activity_name('kahoodle', $data['kahoodle']);
-        $round = \mod_kahoodle\questions::get_last_round($cm->instance);
+        $round = \mod_kahoodle\local\game\questions::get_last_round($cm->instance);
         $data['roundid'] = $round->get_id();
 
         $data['userid'] = $DB->get_field('user', 'id', ['username' => $data['user']], MUST_EXIST);
@@ -113,7 +113,7 @@ class behat_mod_kahoodle_generator extends behat_generator_base {
         global $DB;
 
         $cm = $this->get_cm_by_activity_name('kahoodle', $data['kahoodle']);
-        $round = \mod_kahoodle\questions::get_last_round($cm->instance);
+        $round = \mod_kahoodle\local\game\questions::get_last_round($cm->instance);
 
         // Find participant by user and round.
         $userid = $DB->get_field('user', 'id', ['username' => $data['user']], MUST_EXIST);

@@ -14,9 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace mod_kahoodle;
+namespace mod_kahoodle\local\game;
 
 use core\exception\moodle_exception;
+use mod_kahoodle\api;
+use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
 use mod_kahoodle\local\entities\round_question;
 

@@ -112,7 +112,7 @@ final class delete_question_test extends \advanced_testcase {
         $q3 = $generator->create_question(['kahoodleid' => $kahoodle->id, 'questiontext' => 'Question 3']);
 
         // Verify initial sortorder.
-        $round = \mod_kahoodle\questions::get_last_round($kahoodle->id);
+        $round = \mod_kahoodle\local\game\questions::get_last_round($kahoodle->id);
         $questions = $DB->get_records('kahoodle_round_questions', ['roundid' => $round->get_id()], 'sortorder ASC');
         $sortorders = array_column($questions, 'sortorder');
         $this->assertEquals([1, 2, 3], array_values($sortorders));

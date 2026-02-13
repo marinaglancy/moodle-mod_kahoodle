@@ -17,7 +17,7 @@
 namespace mod_kahoodle\external;
 
 use mod_kahoodle\constants;
-use mod_kahoodle\questions;
+use mod_kahoodle\local\game\questions;
 
 /**
  * Tests for duplicate_question web service

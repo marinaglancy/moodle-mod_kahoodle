@@ -17,7 +17,7 @@
 namespace mod_kahoodle\local\game;
 
 use mod_kahoodle\constants;
-use mod_kahoodle\questions;
+use mod_kahoodle\local\game\questions;
 use mod_kahoodle\local\entities\round;
 
 /**

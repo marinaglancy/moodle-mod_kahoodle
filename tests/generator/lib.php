@@ -109,7 +109,7 @@ class mod_kahoodle_generator extends testing_module_generator {
         unset($record->image);
 
         // Use the questions API to add the question.
-        $rq = \mod_kahoodle\questions::add_question($record);
+        $rq = \mod_kahoodle\local\game\questions::add_question($record);
 
         // Store a test image file for the question if requested.
         if ($createimage) {

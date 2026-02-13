@@ -19,7 +19,7 @@ namespace mod_kahoodle\local\game;
 use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\participant;
 use mod_kahoodle\local\entities\round;
-use mod_kahoodle\questions;
+use mod_kahoodle\local\game\questions;
 
 /**
  * Tests for participant game management

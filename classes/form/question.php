@@ -74,7 +74,7 @@ class question extends dynamic_form {
         // Show warning if this question has responses.
         if (
             $roundquestion->get_id() &&
-                \mod_kahoodle\questions::question_has_responses($roundquestion->get_question_id())
+                \mod_kahoodle\local\game\questions::question_has_responses($roundquestion->get_question_id())
         ) {
             $mform->addElement(
                 'html',
@@ -276,7 +276,7 @@ class question extends dynamic_form {
         // Validate edit changes against existing responses (applies in both editable and non-editable rounds).
         if (
             $roundquestion->get_id() && empty($errors) &&
-                \mod_kahoodle\questions::question_has_responses($roundquestion->get_question_id())
+                \mod_kahoodle\local\game\questions::question_has_responses($roundquestion->get_question_id())
         ) {
             $editchangeerrors = $roundquestion->get_question_type()->validate_edit_changes(
                 $roundquestion,
@@ -363,11 +363,11 @@ class question extends dynamic_form {
         if (!$roundquestion->get_id()) {
             // Add mode.
             $questiondata->questiontype = $data->questiontype;
-            $roundquestion = \mod_kahoodle\questions::add_question($questiondata);
+            $roundquestion = \mod_kahoodle\local\game\questions::add_question($questiondata);
             return ['questionid' => $roundquestion->get_question_id(), 'action' => 'add'];
         } else {
             // Edit mode.
-            \mod_kahoodle\questions::edit_question($roundquestion, $questiondata);
+            \mod_kahoodle\local\game\questions::edit_question($roundquestion, $questiondata);
             return ['questionid' => $roundquestion->get_question_id(), 'action' => 'edit'];
         }
     }

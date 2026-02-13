@@ -23,7 +23,7 @@ use core_reportbuilder\local\filters\text;
 use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
 use lang_string;
-use mod_kahoodle\questions;
+use mod_kahoodle\local\game\questions;
 
 /**
  * Question entity for report builder (kahoodle_questions table)

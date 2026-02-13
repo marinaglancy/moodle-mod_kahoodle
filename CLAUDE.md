@@ -35,7 +35,6 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 ├── classes/
 │   ├── api.php               # General API functions
 │   ├── constants.php         # Plugin constants (defaults, stages, file areas, field lists)
-│   ├── questions.php         # Question management API
 │   ├── courseformat/         # Course format integration
 │   │   └── overview.php
 │   ├── event/                # Event observers and definitions
@@ -73,6 +72,7 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   ├── game/             # Game mechanics
 │   │   │   ├── participants.php # Participant management (join, avatar save, get)
 │   │   │   ├── progress.php  # Game progress and stage transitions
+│   │   │   ├── questions.php # Question management API
 │   │   │   └── realtime_channels.php # Realtime channel management
 │   │   └── questiontypes/    # Question type implementations
 │   │       ├── base.php      # Abstract base class for question types
@@ -167,6 +167,7 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   ├── game/
 │   │   │   ├── participants_test.php     # Participant management tests
 │   │   │   ├── progress_test.php         # Game progress and stage transitions
+│   │   │   ├── questions_test.php        # Question management API tests
 │   │   │   └── responses_test.php        # Response recording and scoring
 │   │   └── questiontypes/
 │   │       └── multichoice_test.php      # Multichoice question type tests
@@ -190,8 +191,7 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   ├── backup_restore_test.php # Backup/restore tests (with/without userdata, files, mixed)
 │   ├── constants_test.php    # Tests that field list constants match DB schema
 │   ├── events_test.php       # Event triggering tests
-│   ├── lib_test.php          # lib.php callback tests
-│   └── questions_test.php    # PHPUnit tests for questions API
+│   └── lib_test.php          # lib.php callback tests
 ├── index.php                 # List all instances in a course
 ├── lib.php                   # Core module functions (includes inplace_editable callback)
 ├── mod_form.php              # Activity settings form
@@ -227,7 +227,7 @@ Each Kahoodle activity instance consists of:
 
 ### Questions API
 
-The `\mod_kahoodle\questions` class provides the core question management functionality:
+The `\mod_kahoodle\local\game\questions` class provides the core question management functionality:
 
 #### Available Methods
 
@@ -1078,7 +1078,7 @@ This plugin follows Moodle's GNU GPL v3 or later license.
 
 The plugin includes comprehensive PHPUnit test coverage:
 
-#### Questions API Tests (`tests/questions_test.php`)
+#### Questions API Tests (`tests/local/game/questions_test.php`)
 - Tests covering all question management methods
 - Tests for round creation, question CRUD operations, versioning logic
 - Edge cases: no editable rounds, permission checks, sort order

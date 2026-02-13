@@ -59,7 +59,7 @@ final class playback_stages_test extends \advanced_testcase {
         ]);
 
         // Get the round.
-        $round = \mod_kahoodle\questions::get_last_round($kahoodle->id);
+        $round = \mod_kahoodle\local\game\questions::get_last_round($kahoodle->id);
 
         // Create participants.
         $p1 = $generator->create_participant([
@@ -278,7 +278,7 @@ final class playback_stages_test extends \advanced_testcase {
         ]);
 
         // Round 1: 3 participants, various answers.
-        $round1 = \mod_kahoodle\questions::get_last_round($kahoodle->id);
+        $round1 = \mod_kahoodle\local\game\questions::get_last_round($kahoodle->id);
         $round1questions = \mod_kahoodle\local\entities\round_question::get_all_questions_for_round($round1);
         $round1q1 = reset($round1questions);
 

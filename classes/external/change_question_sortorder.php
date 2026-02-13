@@ -21,7 +21,7 @@ use core_external\external_single_structure;
 use core_external\external_api;
 use core_external\external_value;
 use mod_kahoodle\local\entities\round_question;
-use mod_kahoodle\questions;
+use mod_kahoodle\local\game\questions;
 
 /**
  * Implementation of web service mod_kahoodle_change_question_sortorder

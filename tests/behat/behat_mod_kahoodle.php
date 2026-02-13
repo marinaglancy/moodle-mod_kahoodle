@@ -22,7 +22,7 @@ use mod_kahoodle\constants;
 use mod_kahoodle\local\game\participants;
 use mod_kahoodle\local\game\progress;
 use mod_kahoodle\local\game\realtime_channels;
-use mod_kahoodle\questions;
+use mod_kahoodle\local\game\questions;
 
 /**
  * Behat step definitions for mod_kahoodle.

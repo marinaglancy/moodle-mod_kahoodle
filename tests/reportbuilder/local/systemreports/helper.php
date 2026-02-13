@@ -76,7 +76,7 @@ trait helper {
             'questionconfig' => "*X\nY\nZ",
         ]);
 
-        $round = \mod_kahoodle\questions::get_last_round($kahoodle->id);
+        $round = \mod_kahoodle\local\game\questions::get_last_round($kahoodle->id);
 
         // Create participants.
         $p1 = $generator->create_participant([

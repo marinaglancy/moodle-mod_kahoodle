@@ -85,7 +85,7 @@ final class participants_test extends \advanced_testcase {
             'questionconfig' => "A\n*B\nC",
         ]);
 
-        $round = \mod_kahoodle\questions::get_last_round($kahoodle->id);
+        $round = \mod_kahoodle\local\game\questions::get_last_round($kahoodle->id);
 
         // Create anonymous participants directly (userid is null, participantcode is set).
         $p1 = $DB->insert_record('kahoodle_participants', (object) [

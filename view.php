@@ -46,7 +46,7 @@ if ($id) {
 require_login($course, true, $cm);
 
 $context = context_module::instance($cm->id);
-$round = \mod_kahoodle\questions::get_last_round($moduleinstance->id);
+$round = \mod_kahoodle\local\game\questions::get_last_round($moduleinstance->id);
 
 // Handle actions.
 $action = optional_param('action', '', PARAM_ALPHA);

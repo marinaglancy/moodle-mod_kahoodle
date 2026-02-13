@@ -194,7 +194,7 @@ final class add_questions_test extends \advanced_testcase {
         $this->setUser($user);
 
         // Create and start a round.
-        $roundid = \mod_kahoodle\questions::get_editable_round_id($kahoodle->id);
+        $roundid = \mod_kahoodle\local\game\questions::get_editable_round_id($kahoodle->id);
         $DB->set_field('kahoodle_rounds', 'currentstage', constants::STAGE_LOBBY, ['id' => $roundid]);
 
         $questions = [

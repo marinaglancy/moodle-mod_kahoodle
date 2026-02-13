@@ -91,7 +91,7 @@ class round_question {
         global $DB;
         if (!$round) {
             $question = $DB->get_record('kahoodle_questions', ['id' => $id], 'id, kahoodleid', MUST_EXIST);
-            $round = \mod_kahoodle\questions::get_last_round($question->kahoodleid);
+            $round = \mod_kahoodle\local\game\questions::get_last_round($question->kahoodleid);
         }
         $record = $DB->get_record_sql(self::get_fields_sql() .
             ' WHERE q.id = ? AND rq.roundid = ?', [$id, $round->get_id()], MUST_EXIST);
@@ -152,8 +152,8 @@ class round_question {
     public static function new_for_round_and_type(round $round, ?string $questiontype = null): self {
         global $DB;
         $type = $questiontype !== null ?
-            \mod_kahoodle\questions::get_question_type_instance_or_default($questiontype) :
-            \mod_kahoodle\questions::get_default_question_type();
+            \mod_kahoodle\local\game\questions::get_question_type_instance_or_default($questiontype) :
+            \mod_kahoodle\local\game\questions::get_default_question_type();
 
         $record = (object)[
             'id' => 0,
@@ -201,7 +201,7 @@ class round_question {
      */
     public function get_question_type(): \mod_kahoodle\local\questiontypes\base {
         if ($this->type === null) {
-            $this->type = \mod_kahoodle\questions::get_question_type_instance_or_default("" . $this->data->questiontype);
+            $this->type = \mod_kahoodle\local\game\questions::get_question_type_instance_or_default("" . $this->data->questiontype);
         }
         return $this->type;
     }

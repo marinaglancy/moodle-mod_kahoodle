@@ -21,6 +21,7 @@ use mod_kahoodle\local\entities\round;
 use mod_kahoodle\local\entities\round_question;
 use mod_kahoodle\local\game\participants;
 use mod_kahoodle\local\game\progress;
+use mod_kahoodle\local\game\questions;
 use mod_kahoodle\local\game\responses;
 
 /**

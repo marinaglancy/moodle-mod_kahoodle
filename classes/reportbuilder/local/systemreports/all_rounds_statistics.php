@@ -66,7 +66,7 @@ class all_rounds_statistics extends system_report {
      */
     protected function get_last_round(): round {
         if ($this->lastround === null) {
-            $this->lastround = \mod_kahoodle\questions::get_last_round($this->get_kahoodleid());
+            $this->lastround = \mod_kahoodle\local\game\questions::get_last_round($this->get_kahoodleid());
         }
         return $this->lastround;
     }

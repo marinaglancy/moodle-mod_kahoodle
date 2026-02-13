@@ -22,7 +22,7 @@ use core_external\external_api;
 use core_external\external_value;
 use mod_kahoodle\local\entities\round;
 use mod_kahoodle\local\entities\round_question;
-use mod_kahoodle\questions;
+use mod_kahoodle\local\game\questions;
 
 /**
  * Implementation of web service mod_kahoodle_duplicate_question

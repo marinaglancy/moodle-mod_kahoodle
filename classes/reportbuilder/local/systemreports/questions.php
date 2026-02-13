@@ -63,7 +63,7 @@ class questions extends system_report {
      */
     protected function get_editable_round_id(): ?int {
         if ($this->editableroundid === false) {
-            $this->editableroundid = \mod_kahoodle\questions::get_editable_round_id(
+            $this->editableroundid = \mod_kahoodle\local\game\questions::get_editable_round_id(
                 $this->get_round()->get_kahoodleid()
             );
         }
