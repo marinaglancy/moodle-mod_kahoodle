@@ -33,7 +33,6 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │       ├── restore_kahoodle_activity_task.class.php
 │       └── restore_kahoodle_stepslib.php
 ├── classes/
-│   ├── api.php               # General API functions
 │   ├── constants.php         # Plugin constants (defaults, stages, file areas, field lists)
 │   ├── courseformat/         # Course format integration
 │   │   └── overview.php
@@ -70,6 +69,7 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   │   ├── round_stage.php # Round stage entity (current stage in a round)
 │   │   │   └── statistics.php # Pseudo-round for all-rounds aggregated statistics
 │   │   ├── game/             # Game mechanics
+│   │   │   ├── instance.php  # Kahoodle instance management (CRUD, get_all_rounds)
 │   │   │   ├── participants.php # Participant management (join, avatar save, get)
 │   │   │   ├── progress.php  # Game progress and stage transitions
 │   │   │   ├── questions.php # Question management API
@@ -167,6 +167,7 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   ├── game/
 │   │   │   ├── participants_test.php     # Participant management tests
 │   │   │   ├── progress_test.php         # Game progress and stage transitions
+│   │   │   ├── instance_test.php         # Instance management tests (CRUD, backup/restore)
 │   │   │   ├── questions_test.php        # Question management API tests
 │   │   │   └── responses_test.php        # Response recording and scoring
 │   │   └── questiontypes/
@@ -187,7 +188,6 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   ├── participants_test.php
 │   │   ├── questions_test.php
 │   │   └── statistics_test.php
-│   ├── api_test.php          # PHPUnit tests for api.php
 │   ├── backup_restore_test.php # Backup/restore tests (with/without userdata, files, mixed)
 │   ├── constants_test.php    # Tests that field list constants match DB schema
 │   ├── events_test.php       # Event triggering tests

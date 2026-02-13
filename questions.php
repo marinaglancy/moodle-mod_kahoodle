@@ -45,7 +45,7 @@ $PAGE->set_heading(format_string($PAGE->course->fullname));
 $PAGE->activityheader->disable();
 
 // Get all rounds for building navigation tabs.
-$allrounds = \mod_kahoodle\api::get_all_rounds($cm->instance);
+$allrounds = \mod_kahoodle\local\game\instance::get_all_rounds($cm->instance);
 
 if (!isset($round)) {
     // Default to the first round (which is the editable one or most recent).

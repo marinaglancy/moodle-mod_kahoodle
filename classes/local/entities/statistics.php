@@ -16,7 +16,7 @@
 
 namespace mod_kahoodle\local\entities;
 
-use mod_kahoodle\api;
+use mod_kahoodle\local\game\instance;
 use mod_kahoodle\constants;
 
 /**
@@ -39,7 +39,7 @@ class statistics extends round {
      * @throws \moodle_exception
      */
     public function __construct(int $kahoodleid) {
-        $this->allrounds = api::get_all_rounds($kahoodleid);
+        $this->allrounds = instance::get_all_rounds($kahoodleid);
         $completedrounds = array_filter($this->allrounds, function (round $round) {
             return in_array($round->get_current_stage_name(), [constants::STAGE_ARCHIVED, constants::STAGE_REVISION]);
         });

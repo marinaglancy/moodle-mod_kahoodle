@@ -14,8 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace mod_kahoodle;
+namespace mod_kahoodle\local\game;
 
+use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
 
 /**
@@ -25,7 +26,7 @@ use mod_kahoodle\local\entities\round;
  * @copyright  Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class api {
+class instance {
     /**
      * Create a new Kahoodle instance
      *

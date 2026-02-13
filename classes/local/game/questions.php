@@ -17,7 +17,7 @@
 namespace mod_kahoodle\local\game;
 
 use core\exception\moodle_exception;
-use mod_kahoodle\api;
+use mod_kahoodle\local\game\instance;
 use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
 use mod_kahoodle\local\entities\round_question;
@@ -107,7 +107,7 @@ class questions {
      * @return round Round entity
      */
     public static function get_last_round(int $kahoodleid): round {
-        $rounds = api::get_all_rounds($kahoodleid, 1);
+        $rounds = instance::get_all_rounds($kahoodleid, 1);
         return reset($rounds);
     }
 

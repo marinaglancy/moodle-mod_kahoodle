@@ -64,7 +64,7 @@ final class facilitator_test extends \advanced_testcase {
         ]);
 
         // Get the round that was auto-created.
-        $rounds = \mod_kahoodle\api::get_all_rounds($kahoodle->id);
+        $rounds = \mod_kahoodle\local\game\instance::get_all_rounds($kahoodle->id);
         $round = reset($rounds);
         $roundid = $round->get_id();
 

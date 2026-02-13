@@ -14,7 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace mod_kahoodle;
+namespace mod_kahoodle\local\game;
+
+use mod_kahoodle\constants;
 
 /**
  * Tests for Kahoodle
@@ -24,7 +26,7 @@ namespace mod_kahoodle;
  * @copyright  Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-final class api_test extends \advanced_testcase {
+final class instance_test extends \advanced_testcase {
     /**
      * Test create and delete module
      *
@@ -53,13 +55,13 @@ final class api_test extends \advanced_testcase {
 
         // Verify default values for plugin-specific fields.
         $record = $DB->get_record('kahoodle', ['id' => $mod->id], '*', MUST_EXIST);
-        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_ALLOW_REPEAT, $record->allowrepeat);
-        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_LOBBY_DURATION, $record->lobbyduration);
-        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_QUESTION_PREVIEW_DURATION, $record->questionpreviewduration);
-        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_QUESTION_DURATION, $record->questionduration);
-        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_QUESTION_RESULTS_DURATION, $record->questionresultsduration);
-        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_MAX_POINTS, $record->maxpoints);
-        $this->assertEquals(\mod_kahoodle\constants::DEFAULT_MIN_POINTS, $record->minpoints);
+        $this->assertEquals(constants::DEFAULT_ALLOW_REPEAT, $record->allowrepeat);
+        $this->assertEquals(constants::DEFAULT_LOBBY_DURATION, $record->lobbyduration);
+        $this->assertEquals(constants::DEFAULT_QUESTION_PREVIEW_DURATION, $record->questionpreviewduration);
+        $this->assertEquals(constants::DEFAULT_QUESTION_DURATION, $record->questionduration);
+        $this->assertEquals(constants::DEFAULT_QUESTION_RESULTS_DURATION, $record->questionresultsduration);
+        $this->assertEquals(constants::DEFAULT_MAX_POINTS, $record->maxpoints);
+        $this->assertEquals(constants::DEFAULT_MIN_POINTS, $record->minpoints);
 
         // Delete module.
         course_delete_module($cm->id);

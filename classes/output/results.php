@@ -16,7 +16,7 @@
 
 namespace mod_kahoodle\output;
 
-use mod_kahoodle\api;
+use mod_kahoodle\local\game\instance;
 use mod_kahoodle\constants;
 use mod_kahoodle\local\game\questions;
 use moodle_url;
@@ -64,7 +64,7 @@ class results implements renderable, templatable {
         $data->rounds = [];
 
         // Get all rounds for this kahoodle, ordered by: preparation first, then by timecreated DESC.
-        $rounds = api::get_all_rounds($this->kahoodle->id, 0, $this->kahoodle, $this->cm);
+        $rounds = instance::get_all_rounds($this->kahoodle->id, 0, $this->kahoodle, $this->cm);
 
         foreach ($rounds as $round) {
             $rounddata = new stdClass();

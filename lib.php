@@ -56,7 +56,7 @@ function kahoodle_supports($feature) {
  * @return int new instance id
  */
 function kahoodle_add_instance($moduleinstance, $form = null) {
-    return \mod_kahoodle\api::create_instance($moduleinstance, $moduleinstance->coursemodule);
+    return \mod_kahoodle\local\game\instance::create_instance($moduleinstance, $moduleinstance->coursemodule);
 }
 
 /**
@@ -71,7 +71,7 @@ function kahoodle_add_instance($moduleinstance, $form = null) {
  */
 function kahoodle_update_instance($moduleinstance, $form = null) {
     $moduleinstance->id = $moduleinstance->instance;
-    return \mod_kahoodle\api::update_instance($moduleinstance, $moduleinstance->coursemodule);
+    return \mod_kahoodle\local\game\instance::update_instance($moduleinstance, $moduleinstance->coursemodule);
 }
 
 /**
@@ -81,7 +81,7 @@ function kahoodle_update_instance($moduleinstance, $form = null) {
  * @return bool True if successful, false otherwise
  */
 function kahoodle_delete_instance($id) {
-    return \mod_kahoodle\api::delete_instance($id);
+    return \mod_kahoodle\local\game\instance::delete_instance($id);
 }
 
 /**
