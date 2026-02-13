@@ -143,6 +143,7 @@ $string['playbackall'] = 'Play all';
 $string['pluginadministration'] = 'Kahoodle administration';
 $string['pluginname'] = 'Kahoodle';
 $string['preparenewround'] = 'Prepare new round';
+$string['preparenewround_help'] = 'If you plan to repeat the activity, click "Prepare new round". This will change the message for the students from "The activity has finished" to "The activity has not started yet". You will also be able to modify the questions for the next round without affecting the previous rounds.';
 $string['previewquestion'] = 'Preview question';
 $string['privacy:metadata:core_files'] = 'Avatar images stored for participants.';
 $string['privacy:metadata:kahoodle_participants'] = 'Records of users who participated in Kahoodle rounds.';

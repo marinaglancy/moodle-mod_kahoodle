@@ -35,6 +35,7 @@
     * showwaitingtostart - bool - Show waiting message for participants
     * showfinished - bool - Show finished section
     * resultsurl - string - URL for results page
+    * newroundhelpicon - object - Help icon data for prepare new round button
 
     Example context (json):
     {
@@ -149,6 +150,7 @@
             <a href="{{newroundurl}}" class="btn btn-secondary">
                 {{#str}}preparenewround, mod_kahoodle{{/str}}
             </a>
+            {{#newroundhelpicon}}{{> core/help_icon }}{{/newroundhelpicon}}
             {{/newroundurl}}
         </div>
     </div>

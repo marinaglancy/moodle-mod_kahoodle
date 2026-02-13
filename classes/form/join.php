@@ -63,9 +63,17 @@ class join extends \moodleform {
     /**
      * Add a small muted identity caption to the form.
      *
-     * @param string $stringkey Language string key from mod_kahoodle
+     * @param int $identitymode Identity mode constant
      */
-    protected function add_identity_caption(string $stringkey): void {
+    protected function add_identity_caption(int $identitymode): void {
+        if ($identitymode === constants::IDENTITYMODE_REALNAME) {
+            return;
+        }
+
+        $stringkey = match ($identitymode) {
+            constants::IDENTITYMODE_ANONYMOUS => 'identitycaption_anonymous',
+            default => 'identitycaption_alias',
+        };
         $this->_form->addElement(
             'html',
             '<small class="text-muted d-block mb-2">' . get_string($stringkey, 'mod_kahoodle') . '</small>'
@@ -138,7 +146,6 @@ class join extends \moodleform {
             $mform->addGroup($group2, 'identity_alias_grp', '', ' ', false);
             $mform->setType('displayname', PARAM_TEXT);
             $mform->disabledIf('displayname', 'identitychoice', 'eq', 'realname');
-            $this->add_identity_caption('identitycaption_alias');
         } else if ($identitymode === constants::IDENTITYMODE_REALNAME) {
             // REALNAME: show static "Join as" with profile picture and real name.
             $mform->addGroup(
@@ -161,10 +168,9 @@ class join extends \moodleform {
             $mform->setType('displayname', PARAM_TEXT);
             $mform->addRule('displayname', null, 'required', null, 'client');
             $mform->addRule('displayname', get_string('maximumchars', '', $maxlen), 'maxlength', $maxlen, 'client');
-            $captionkey = $identitymode === constants::IDENTITYMODE_ANONYMOUS
-                ? 'identitycaption_anonymous' : 'identitycaption_alias';
-            $this->add_identity_caption($captionkey);
         }
+
+        $this->add_identity_caption($identitymode);
 
         $buttonlabel = has_capability('mod/kahoodle:facilitate', $context)
             ? get_string('join_as_participant', 'mod_kahoodle')

@@ -154,6 +154,8 @@ class landing implements renderable, templatable {
                     '/mod/kahoodle/view.php',
                     ['id' => $this->cm->id, 'action' => 'newround', 'sesskey' => sesskey()]
                 ))->out(false);
+                $helpicon = new \help_icon('preparenewround', 'mod_kahoodle');
+                $data->newroundhelpicon = $helpicon->export_for_template($output);
             }
         }
 
