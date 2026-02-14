@@ -203,6 +203,120 @@ final class landing_test extends \advanced_testcase {
     }
 
     /**
+     * Helper to create a kahoodle with a completed round where the student participated.
+     *
+     * Creates a kahoodle with allowrepeat=0, completes a round with the student as a participant,
+     * then creates a new round via duplication.
+     *
+     * @return array{statistics: statistics, cm: \cm_info, teacher: \stdClass, student: \stdClass}
+     */
+    protected function setup_kahoodle_with_past_participation(): array {
+        global $DB;
+
+        $course = $this->getDataGenerator()->create_course();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+
+        $this->setUser($teacher);
+
+        /** @var \mod_kahoodle_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
+
+        $kahoodle = $generator->create_instance(['course' => $course->id, 'allowrepeat' => 0]);
+
+        $generator->create_question([
+            'kahoodleid' => $kahoodle->id,
+            'questiontext' => 'What is 2+2?',
+            'questionconfig' => "3\n*4\n5",
+        ]);
+
+        // Get the auto-created round.
+        $stats = statistics::create_from_kahoodle_id(0, $kahoodle);
+        $round = $stats->get_last_round();
+
+        // Start the round and add student as participant with a response.
+        $this->set_round_stage($round, constants::STAGE_LOBBY);
+        $participantid = $generator->create_participant([
+            'roundid' => $round->get_id(),
+            'userid' => $student->id,
+        ]);
+        $roundquestionid = $DB->get_field('kahoodle_round_questions', 'id', ['roundid' => $round->get_id()]);
+        $generator->create_response([
+            'participantid' => $participantid,
+            'roundquestionid' => $roundquestionid,
+            'points' => 750,
+            'iscorrect' => 1,
+        ]);
+
+        // Archive the round (update_final_ranks recalculates totalscore from responses).
+        $this->set_round_stage($round, constants::STAGE_ARCHIVED);
+
+        // Create a new round via duplication.
+        $round->duplicate();
+
+        // Reload statistics to pick up the new round.
+        $statistics = statistics::create_from_kahoodle_id(0, $kahoodle);
+
+        return [
+            'statistics' => $statistics,
+            'cm' => $statistics->get_cm(),
+            'teacher' => $teacher,
+            'student' => $student,
+        ];
+    }
+
+    /**
+     * Test landing page for a student who participated before when new round is in preparation (allowrepeat=0).
+     */
+    public function test_preparation_past_participant_no_repeat(): void {
+        $this->resetAfterTest();
+        ['cm' => $cm, 'student' => $student, 'statistics' => $statistics] = $this->setup_kahoodle_with_past_participation();
+        $output = $this->setup_page($cm);
+
+        $this->setUser($student);
+
+        // The new (last) round is in preparation stage.
+        $this->assertEquals(constants::STAGE_PREPARATION, $statistics->get_last_round()->get_current_stage_name());
+
+        $landingoutput = new landing($statistics);
+        $result = $landingoutput->export_for_template($output);
+
+        // Student should see "finished" message instead of "waiting to start".
+        $this->assertTrue($result->showfinished);
+        $this->assertFalse($result->showwaitingtostart);
+        // Student should see their past score.
+        $this->assertTrue($result->haspastparticipations);
+        $this->assertCount(1, $result->pastparticipations);
+        $this->assertStringContainsString('750', $result->pastparticipations[0]->scoretext);
+    }
+
+    /**
+     * Test landing page for a student who participated before when new round is in progress (allowrepeat=0).
+     */
+    public function test_inprogress_past_participant_no_repeat(): void {
+        $this->resetAfterTest();
+        ['cm' => $cm, 'student' => $student, 'statistics' => $statistics] = $this->setup_kahoodle_with_past_participation();
+        $output = $this->setup_page($cm);
+
+        // Start the new round.
+        $this->set_round_stage($statistics->get_last_round(), constants::STAGE_LOBBY);
+
+        $this->setUser($student);
+
+        // Reload statistics as the student.
+        $landingoutput = new landing($statistics);
+        $result = $landingoutput->export_for_template($output);
+
+        // Student should see "finished" message instead of join form.
+        $this->assertTrue($result->showfinished);
+        $this->assertFalse($result->showjoinoption);
+        // Student should see their past score.
+        $this->assertTrue($result->haspastparticipations);
+        $this->assertCount(1, $result->pastparticipations);
+        $this->assertStringContainsString('750', $result->pastparticipations[0]->scoretext);
+    }
+
+    /**
      * Test landing page for a facilitator when round is archived.
      */
     public function test_archived(): void {

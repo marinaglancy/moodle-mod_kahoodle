@@ -91,6 +91,12 @@ class landing implements renderable, templatable {
 
         $isinprogress = $this->round->is_in_progress();
 
+        // Check if user has past participations and cannot rejoin (allowrepeat=0).
+        $pastparticipations = $canparticipate ? $this->statistics->get_my_past_participations() : [];
+        $haspastparticipation = !empty($pastparticipations);
+        $cannotrejoin = $haspastparticipation && !$this->kahoodle->allowrepeat
+            && $this->kahoodle->identitymode !== constants::IDENTITYMODE_ANONYMOUS;
+
         // Show section headers when the user has both capabilities and may see multiple sections.
         $canfacilitate = has_capability('mod/kahoodle:facilitate', $this->context);
         $data->showsectionheaders = $canfacilitate && $canparticipate;
@@ -112,8 +118,14 @@ class landing implements renderable, templatable {
                         ['id' => $this->cm->id]
                     ))->out(false);
                 }
-            } else if ($canparticipate) {
-                $data->showwaitingtostart = true;
+            }
+            if ($canparticipate && !$isfacilitator) {
+                if ($cannotrejoin) {
+                    // User participated before and cannot rejoin - show finished.
+                    $data->showfinished = true;
+                } else {
+                    $data->showwaitingtostart = true;
+                }
             }
         } else if ($isinprogress) {
             // Round is in progress (lobby through revision).
@@ -138,7 +150,10 @@ class landing implements renderable, templatable {
                         ['id' => $this->cm->id, 'action' => 'finish', 'sesskey' => sesskey()]
                     ))->out(false);
                 }
-                if ($canparticipate && $this->joinform) {
+                if ($canparticipate && $cannotrejoin) {
+                    // User participated before and cannot rejoin - show finished.
+                    $data->showfinished = true;
+                } else if ($canparticipate && $this->joinform) {
                     // Show join option (for users with participate capability who haven't joined yet).
                     // This includes users with both capabilities.
                     $data->showjoinoption = true;
@@ -161,6 +176,25 @@ class landing implements renderable, templatable {
                 ))->out(false);
                 $helpicon = new \help_icon('preparenewround', 'mod_kahoodle');
                 $data->newroundhelpicon = $helpicon->export_for_template($output);
+            }
+        }
+
+        // Add past participation score data when available.
+        if ($haspastparticipation) {
+            $data->haspastparticipations = true;
+            $data->pastparticipations = [];
+            foreach ($pastparticipations as $participation) {
+                $timestarted = $participation->get_round()->get_timestarted();
+                $data->pastparticipations[] = (object)[
+                    'scoretext' => get_string('landing_past_score', 'mod_kahoodle', (object)[
+                        'score' => $participation->get_total_score(),
+                        'date' => $timestarted ? userdate($timestarted) : '',
+                    ]),
+                ];
+            }
+            // Show intro sentence when user can join a new round alongside past scores.
+            if ($data->showjoinoption) {
+                $data->pastscoreopener = get_string('landing_past_scores_joinintro', 'mod_kahoodle');
             }
         }
 

@@ -34,6 +34,9 @@
     * joinformhtml - string - Rendered join form HTML
     * showwaitingtostart - bool - Show waiting message for participants
     * showfinished - bool - Show finished section
+    * haspastparticipations - bool - Whether the user has past participations
+    * pastscoreopener - string - Intro sentence shown when join form and past scores are both visible
+    * pastparticipations - array - List of past participation objects, each with scoretext
     * resultsurl - string - URL for results page
     * newroundhelpicon - object - Help icon data for prepare new round button
 
@@ -155,4 +158,17 @@
         </div>
     </div>
     {{/showfinished}}
+
+    {{#haspastparticipations}}
+    <div class="card mb-3">
+        <div class="card-body">
+            {{#pastscoreopener}}
+            <p class="card-text">{{pastscoreopener}}</p>
+            {{/pastscoreopener}}
+            {{#pastparticipations}}
+            <p class="card-text">{{scoretext}}</p>
+            {{/pastparticipations}}
+        </div>
+    </div>
+    {{/haspastparticipations}}
 </div>

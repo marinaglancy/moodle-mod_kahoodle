@@ -64,13 +64,13 @@ class behat_mod_kahoodle extends behat_base {
         $kahoodle = $DB->get_record('kahoodle', ['name' => $activityname], '*', MUST_EXIST);
         $round = questions::get_last_round($kahoodle->id);
 
-        if ($round->get_current_stage()->get_stage_signature() === $stage) {
-            // Already at the target stage, nothing to do.
-            return;
+        if ($round->get_current_stage_name() === constants::STAGE_PREPARATION) {
+            if ($stage === constants::STAGE_PREPARATION) {
+                return;
+            }
+            // Start the game (preparation -> first stage).
+            progress::start_game($round);
         }
-
-        // Start the game (preparation -> first stage).
-        progress::start_game($round);
 
         // Advance stages until we reach the target.
         while ($round->get_current_stage()->get_stage_signature() !== $stage) {
@@ -129,5 +129,19 @@ class behat_mod_kahoodle extends behat_base {
         participants::join_round($round);
 
         $USER = $originaluser;
+    }
+
+    /**
+     * Creates a new round for the given kahoodle activity by duplicating the last round.
+     *
+     * @Given /^a new round is prepared for the kahoodle "(?P<activityname_string>(?:[^"]|\\")*)"$/
+     * @param string $activityname The kahoodle activity name
+     */
+    public function a_new_round_is_prepared(string $activityname): void {
+        global $DB;
+
+        $kahoodle = $DB->get_record('kahoodle', ['name' => $activityname], '*', MUST_EXIST);
+        $round = questions::get_last_round($kahoodle->id);
+        $round->duplicate();
     }
 }
