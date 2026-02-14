@@ -144,4 +144,51 @@ class behat_mod_kahoodle extends behat_base {
         $round = questions::get_last_round($kahoodle->id);
         $round->duplicate();
     }
+
+    /**
+     * Uploads the specified number of unique images to the kahoodle avatar pool.
+     *
+     * Creates 2x2 PNG images with distinct colours and stores them in the
+     * mod_kahoodle/allavatars file area at system context.
+     *
+     * @Given /^"(?P<count_int>\d+)" images are uploaded to the kahoodle avatar pool$/
+     * @param int $count Number of images to upload
+     */
+    public function images_uploaded_to_avatar_pool(int $count): void {
+        $fs = get_file_storage();
+        $syscontext = \context_system::instance();
+        for ($i = 1; $i <= $count; $i++) {
+            $image = imagecreatetruecolor(2, 2);
+            $color = imagecolorallocate($image, $i % 256, ($i * 7) % 256, ($i * 13) % 256);
+            imagefill($image, 0, 0, $color);
+            ob_start();
+            imagepng($image);
+            $content = ob_get_clean();
+            imagedestroy($image);
+            $fs->create_file_from_string([
+                'contextid' => $syscontext->id,
+                'component' => 'mod_kahoodle',
+                'filearea' => 'allavatars',
+                'itemid' => 0,
+                'filepath' => '/',
+                'filename' => "avatar_{$i}.png",
+            ], $content);
+        }
+    }
+
+    /**
+     * Flushes the logstore buffer so events triggered in the behat process are written to the database.
+     *
+     * @Given the logstore buffer is flushed
+     */
+    public function the_logstore_buffer_is_flushed(): void {
+        $manager = get_log_manager();
+        if (method_exists($manager, 'get_readers')) {
+            foreach ($manager->get_readers() as $reader) {
+                if (method_exists($reader, 'flush')) {
+                    $reader->flush();
+                }
+            }
+        }
+    }
 }

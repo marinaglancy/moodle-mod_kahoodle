@@ -116,6 +116,95 @@ Feature: Managing questions in Kahoodle
       | 3     | What is 5 + 5?             |
 
   @javascript
+  Scenario: Editing a question in a started round without responses
+    Given the following "mod_kahoodle > questions" exist:
+      | kahoodle  | questiontext                   | questionconfig       |
+      | kahoodle1 | What is the capital of France? | London\n*Paris\nRome |
+    And the kahoodle "Test Kahoodle" round stage is "lobby"
+    When I log in as "teacher1"
+    And I am on the "Test Kahoodle" "kahoodle activity" page
+    And I wait until ".mod_kahoodle-overlay" "css_element" exists
+    And I click on "[data-action='close']" "css_element"
+    And I navigate to "Questions" in current page administration
+    And I click on "Actions" "link" in the "What is the capital of France?" "table_row"
+    And I choose "Edit question" in the open action menu
+    # No warning about responses since none exist yet.
+    Then I should not see "This question already has responses from participants"
+    When I set the field "Answer options" to multiline:
+      """
+      London
+      *Paris
+      Rome
+      Madrid
+      """
+    And I click on "Save changes" "button" in the "Edit question" "dialogue"
+    Then I should see "What is the capital of France?"
+    # Verify the change was saved by reopening the edit form.
+    When I click on "Actions" "link" in the "What is the capital of France?" "table_row"
+    And I choose "Edit question" in the open action menu
+    Then I should see "Madrid" in the "Edit question" "dialogue"
+
+  @javascript
+  Scenario: Editing a question with existing responses shows warnings and restrictions
+    Given the following "users" exist:
+      | username | firstname | lastname | email                |
+      | student1 | Sam       | Student  | student1@example.com |
+    And the following "course enrolments" exist:
+      | user     | course | role    |
+      | student1 | C1     | student |
+    And the following "mod_kahoodle > questions" exist:
+      | kahoodle  | questiontext                   | questionconfig       |
+      | kahoodle1 | What is the capital of France? | London\n*Paris\nRome |
+    And the kahoodle "Test Kahoodle" round stage is "lobby"
+    And the following "mod_kahoodle > participants" exist:
+      | kahoodle      | user     | displayname |
+      | Test Kahoodle | student1 | Sam         |
+    And the following "mod_kahoodle > responses" exist:
+      | kahoodle      | user     | question | response | iscorrect | points |
+      | Test Kahoodle | student1 | 1        | 2        | 1         | 900    |
+    And the kahoodle "Test Kahoodle" round stage is "archived"
+    When I log in as "teacher1"
+    And I am on the "Test Kahoodle" "kahoodle activity" page
+    And I navigate to "Questions" in current page administration
+    And I click on "Actions" "link" in the "What is the capital of France?" "table_row"
+    And I choose "Edit question" in the open action menu
+    # Warning about existing responses is shown.
+    Then I should see "This question already has responses from participants"
+    # Attempt 1: Try to add a new answer option.
+    When I set the field "Answer options" to multiline:
+      """
+      London
+      *Paris
+      Rome
+      Madrid
+      """
+    And I click on "Save changes" "button" in the "Edit question" "dialogue"
+    Then I should see "The number of answer options cannot be changed"
+    # Attempt 2: Try to change the correct answer position.
+    When I set the field "Answer options" to multiline:
+      """
+      *London
+      Paris
+      Rome
+      """
+    And I click on "Save changes" "button" in the "Edit question" "dialogue"
+    Then I should see "The position of the correct answer cannot be changed"
+    # Attempt 3: Change only the option text (allowed change).
+    When I set the field "Answer options" to multiline:
+      """
+      Berlin
+      *Paris
+      Rome
+      """
+    And I click on "Save changes" "button" in the "Edit question" "dialogue"
+    Then I should see "What is the capital of France?"
+    # Verify the change was saved by reopening the edit form.
+    When I click on "Actions" "link" in the "What is the capital of France?" "table_row"
+    And I choose "Edit question" in the open action menu
+    Then I should see "Berlin" in the "Edit question" "dialogue"
+    And I should not see "London" in the "Edit question" "dialogue"
+
+  @javascript
   Scenario: Duplicating a question from an archived round into the preparation round
     Given the following "mod_kahoodle > questions" exist:
       | kahoodle  | questiontext               | questionconfig       |

@@ -108,12 +108,23 @@ class mod_kahoodle_generator extends testing_module_generator {
         $createimage = !empty($record->image);
         unset($record->image);
 
+        // Save kahoodleid before add_question() since sanitize_data() strips non-version fields.
+        $kahoodleid = $record->kahoodleid;
+
         // Use the questions API to add the question.
         $rq = \mod_kahoodle\local\game\questions::add_question($record);
 
         // Store a test image file for the question if requested.
         if ($createimage) {
             $this->create_question_image($rq);
+            // For rich text questions, embed the image reference in the question text.
+            $kahoodle = $DB->get_record('kahoodle', ['id' => $kahoodleid]);
+            if ((int)$kahoodle->questionformat === constants::QUESTIONFORMAT_RICHTEXT) {
+                $qvid = $rq->get_data()->questionversionid;
+                $text = $rq->get_data()->questiontext .
+                    '<p><img src="@@PLUGINFILE@@/testimage.png" alt="Test image" width="200"/></p>';
+                $DB->set_field('kahoodle_question_versions', 'questiontext', $text, ['id' => $qvid]);
+            }
         }
 
         return $rq;
@@ -163,8 +174,8 @@ class mod_kahoodle_generator extends testing_module_generator {
         if (empty($record->roundid)) {
             throw new coding_exception('roundid must be specified when creating a participant');
         }
-        if (empty($record->userid)) {
-            throw new coding_exception('userid must be specified when creating a participant');
+        if (empty($record->userid) && empty($record->participantcode)) {
+            throw new coding_exception('Either userid or participantcode must be specified when creating a participant');
         }
 
         if (!isset($record->displayname)) {

@@ -1,0 +1,102 @@
+@mod @mod_kahoodle @javascript
+Feature: Managing rich text questions in Kahoodle
+  In order to create engaging quizzes with formatted text and images
+  As a teacher
+  I need to be able to add, edit, and duplicate rich text questions in Kahoodle
+
+  Background:
+    Given the following "users" exist:
+      | username | firstname | lastname | email                |
+      | teacher1 | Terry     | Teacher  | teacher1@example.com |
+    And the following "courses" exist:
+      | fullname | shortname | category |
+      | Course 1 | C1        | 0        |
+    And the following "course enrolments" exist:
+      | user     | course | role           |
+      | teacher1 | C1     | editingteacher |
+    And the following "activities" exist:
+      | activity | name          | course | idnumber  | questionformat | questionpreviewduration | questionduration | questionresultsduration |
+      | kahoodle | Test Kahoodle | C1     | kahoodle1 | 1              | 120                     | 120              | 120                     |
+
+  Scenario: Adding a rich text question without separate image field
+    When I log in as "teacher1"
+    And I am on the "Test Kahoodle" "kahoodle activity" page
+    And I navigate to "Questions" in current page administration
+    And I click on "Add question" "button"
+    And I click on "Multiple choice" "link"
+    # Rich text mode uses an editor; no separate "Question image" filemanager.
+    Then I should not see "Question image" in the "Add question: Multiple choice" "dialogue"
+    When I set the field "Question text" in the "Add question: Multiple choice" "dialogue" to "What is the <b>capital</b> of France?"
+    And I set the field "Answer options" to multiline:
+      """
+      London
+      *Paris
+      Berlin
+      """
+    And I click on "Save changes" "button" in the "Add question: Multiple choice" "dialogue"
+    Then I should see "What is the capital of France?"
+
+  Scenario: Editing a rich text question
+    Given the following "mod_kahoodle > questions" exist:
+      | kahoodle      | questiontext                   | questionconfig         |
+      | Test Kahoodle | What is the capital of France? | London\n*Paris\nBerlin |
+    When I log in as "teacher1"
+    And I am on the "Test Kahoodle" "kahoodle activity" page
+    And I navigate to "Questions" in current page administration
+    Then I should see "What is the capital of France?"
+    When I click on "Actions" "link" in the "What is the capital of France?" "table_row"
+    And I choose "Edit question" in the open action menu
+    And I set the field "Question text" in the "Edit question" "dialogue" to "What is the <i>largest</i> ocean?"
+    And I set the field "Answer options" to multiline:
+      """
+      Atlantic
+      *Pacific
+      Indian
+      """
+    And I click on "Save changes" "button" in the "Edit question" "dialogue"
+    Then I should see "What is the largest ocean?"
+    And I should not see "What is the capital of France?"
+
+  Scenario: Duplicating a rich text question
+    Given the following "mod_kahoodle > questions" exist:
+      | kahoodle      | questiontext                   | questionconfig         |
+      | Test Kahoodle | What is the capital of France? | London\n*Paris\nBerlin |
+      | Test Kahoodle | What is 5 + 5?                 | 8\n9\n*10              |
+    When I log in as "teacher1"
+    And I am on the "Test Kahoodle" "kahoodle activity" page
+    And I navigate to "Questions" in current page administration
+    And I click on "Actions" "link" in the "What is the capital of France?" "table_row"
+    And I choose "Duplicate question" in the open action menu
+    Then the following should exist in the "Questions" table:
+      | Order | Question text                  |
+      | 1     | What is the capital of France? |
+      | 2     | What is the capital of France? |
+      | 3     | What is 5 + 5?                 |
+
+  Scenario: Rich text image is displayed on question stage but not on preview or results
+    Given the following "mod_kahoodle > questions" exist:
+      | kahoodle      | questiontext                   | questionconfig         | image |
+      | Test Kahoodle | What is the capital of France? | London\n*Paris\nBerlin | 1     |
+    When I log in as "teacher1"
+    And I am on the "Test Kahoodle" "kahoodle activity" page
+    And I navigate to "Questions" in current page administration
+    And I click on "Actions" "link" in the "What is the capital of France?" "table_row"
+    And I choose "Preview question" in the open action menu
+    And I wait until ".mod_kahoodle-overlay [data-stage='preview']" "css_element" exists
+    # Preview stage shows compact text without embedded images.
+    Then I should see "What is the capital of France?" in the ".mod_kahoodle-overlay [data-stage='preview']" "css_element"
+    And ".mod_kahoodle-question img" "css_element" should not exist
+    # Advance to question stage: image is shown embedded in the rich text.
+    When I click on "[data-action='next']" "css_element"
+    And I wait until ".mod_kahoodle-overlay [data-stage='question']" "css_element" exists
+    Then I should see "What is the capital of France?" in the ".mod_kahoodle-overlay [data-stage='question']" "css_element"
+    And ".mod_kahoodle-question img" "css_element" should exist
+    # No separate image container in rich text mode (images are inline in the text).
+    And ".mod_kahoodle-image-container" "css_element" should not exist
+    And I should see "London" in the ".mod_kahoodle-overlay [data-stage='question']" "css_element"
+    And I should see "Paris" in the ".mod_kahoodle-overlay [data-stage='question']" "css_element"
+    # Advance to results stage: compact text, no embedded images.
+    When I click on "[data-action='next']" "css_element"
+    And I wait until ".mod_kahoodle-overlay [data-stage='results']" "css_element" exists
+    Then ".mod_kahoodle-question img" "css_element" should not exist
+    And I should see "Paris" in the ".mod_kahoodle-overlay [data-stage='results'] .mod_kahoodle-option-correct" "css_element"

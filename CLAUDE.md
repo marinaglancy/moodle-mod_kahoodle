@@ -1376,11 +1376,9 @@ vendor/bin/phpunit --filter questions_test
 - Additional question types
 - Viewing the answer distribution chart in the results
 - Not covered with automated tests:
-    * Managing and displaying questions in rich text format
-    * Fully anonymous mode workflow, reports and events
+    * (*) Managing and displaying questions in rich text format
+    * (*) Fully anonymous mode workflow, reports and events
     * ? add question web service - errors adding questions, WS returning warnings
-    * changing avatars (behat)
-    * previewing questions when editing (behat)
-    * facilitator joining as participant (behat)
-    * editing questions with responses (behat)
+    * (*)changing avatars (behat)
+    * (*)facilitator joining as participant (behat)
     * adding and editing questions with images (behat)

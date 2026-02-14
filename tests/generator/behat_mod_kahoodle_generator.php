@@ -83,6 +83,7 @@ class behat_mod_kahoodle_generator extends behat_generator_base {
      * Preprocess participant data.
      *
      * Resolves kahoodle activity name to round ID and username to user ID.
+     * For anonymous mode, stores participantcode instead of userid.
      *
      * @param array $data Raw data.
      * @return array Processed data.
@@ -91,10 +92,17 @@ class behat_mod_kahoodle_generator extends behat_generator_base {
         global $DB;
 
         $cm = $this->get_cm_by_activity_name('kahoodle', $data['kahoodle']);
+        $kahoodle = $DB->get_record('kahoodle', ['id' => $cm->instance], '*', MUST_EXIST);
         $round = \mod_kahoodle\local\game\questions::get_last_round($cm->instance);
         $data['roundid'] = $round->get_id();
 
-        $data['userid'] = $DB->get_field('user', 'id', ['username' => $data['user']], MUST_EXIST);
+        $userid = $DB->get_field('user', 'id', ['username' => $data['user']], MUST_EXIST);
+        if ((int)$kahoodle->identitymode === \mod_kahoodle\constants::IDENTITYMODE_ANONYMOUS) {
+            // Anonymous mode: store participantcode instead of userid.
+            $data['participantcode'] = md5('test_' . $userid . '_' . $data['roundid']);
+        } else {
+            $data['userid'] = $userid;
+        }
 
         unset($data['kahoodle'], $data['user']);
         return $data;
@@ -113,16 +121,28 @@ class behat_mod_kahoodle_generator extends behat_generator_base {
         global $DB;
 
         $cm = $this->get_cm_by_activity_name('kahoodle', $data['kahoodle']);
+        $kahoodle = $DB->get_record('kahoodle', ['id' => $cm->instance], '*', MUST_EXIST);
         $round = \mod_kahoodle\local\game\questions::get_last_round($cm->instance);
 
         // Find participant by user and round.
         $userid = $DB->get_field('user', 'id', ['username' => $data['user']], MUST_EXIST);
-        $data['participantid'] = $DB->get_field(
-            'kahoodle_participants',
-            'id',
-            ['roundid' => $round->get_id(), 'userid' => $userid],
-            MUST_EXIST
-        );
+        if ((int)$kahoodle->identitymode === \mod_kahoodle\constants::IDENTITYMODE_ANONYMOUS) {
+            // Anonymous mode: look up by participantcode.
+            $participantcode = md5('test_' . $userid . '_' . $round->get_id());
+            $data['participantid'] = $DB->get_field(
+                'kahoodle_participants',
+                'id',
+                ['roundid' => $round->get_id(), 'participantcode' => $participantcode],
+                MUST_EXIST
+            );
+        } else {
+            $data['participantid'] = $DB->get_field(
+                'kahoodle_participants',
+                'id',
+                ['roundid' => $round->get_id(), 'userid' => $userid],
+                MUST_EXIST
+            );
+        }
 
         // Find round question by sort order (numeric) or question text.
         $question = $data['question'];
