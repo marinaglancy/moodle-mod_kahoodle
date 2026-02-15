@@ -473,7 +473,7 @@ final class multichoice_test extends \advanced_testcase {
     }
 
     /**
-     * Test base sanitize_data unsets points when max < min
+     * Test base sanitize_data throws on maxpoints less than minpoints
      */
     public function test_base_sanitize_validates_points(): void {
         $this->resetAfterTest();
@@ -485,13 +485,12 @@ final class multichoice_test extends \advanced_testcase {
             'maxpoints' => 100,
             'minpoints' => 500,
         ];
+        $this->expectException(\moodle_exception::class);
         $mc->sanitize_data($rq, $data);
-        $this->assertObjectNotHasProperty('maxpoints', $data);
-        $this->assertObjectNotHasProperty('minpoints', $data);
     }
 
     /**
-     * Test base sanitize_data handles negative durations
+     * Test base sanitize_data throws on negative durations
      */
     public function test_base_sanitize_negative_durations(): void {
         $this->resetAfterTest();
@@ -500,14 +499,25 @@ final class multichoice_test extends \advanced_testcase {
         $mc = new multichoice();
         $data = (object)[
             'questionconfig' => "A\n*B\nC",
-            'questionpreviewduration' => -5,
-            'questionresultsduration' => -3,
             'questionduration' => -10,
         ];
+        $this->expectException(\moodle_exception::class);
         $mc->sanitize_data($rq, $data);
-        $this->assertEquals(0, $data->questionpreviewduration);
-        $this->assertEquals(0, $data->questionresultsduration);
-        // Questionduration <= 0 gets unset entirely.
+    }
+
+    /**
+     * Test base sanitize_data unsets questionduration of zero (use default)
+     */
+    public function test_base_sanitize_zero_duration_unsets(): void {
+        $this->resetAfterTest();
+        $rq = $this->create_question_with_config("A\n*B\nC");
+
+        $mc = new multichoice();
+        $data = (object)[
+            'questionconfig' => "A\n*B\nC",
+            'questionduration' => 0,
+        ];
+        $mc->sanitize_data($rq, $data);
         $this->assertObjectNotHasProperty('questionduration', $data);
     }
 

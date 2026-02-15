@@ -749,7 +749,8 @@ final class backup_restore_test extends advanced_testcase {
         $this->assertFalse($result);
 
         // Test course-level log rules.
-        $courserules = \restore_kahoodle_activity_task::define_restore_log_rules_for_course();
+        // Suppress PHP deprecation from core restore_log_rule constructor when inforead is null.
+        $courserules = @\restore_kahoodle_activity_task::define_restore_log_rules_for_course();
         $this->assertCount(1, $courserules);
 
         // Test 'view all' rule.

@@ -659,6 +659,45 @@ class questions {
     }
 
     /**
+     * Validate question data and return any errors found.
+     *
+     * This is the single source of truth for validation of numeric question fields
+     * (durations, points). Called by both the form validation and sanitize_data().
+     *
+     * @param \stdClass $data The question data (fields may be null for "use default")
+     * @param round_question $roundquestion The round question entity
+     * @return array Error strings keyed by field name. Empty if valid.
+     */
+    public static function validate_question_data(\stdClass $data, round_question $roundquestion): array {
+        $errors = [];
+        $kahoodle = $roundquestion->get_round()->get_kahoodle();
+
+        // All numeric override fields must be non-negative if set.
+        foreach (constants::FIELDS_ROUND_QUESTION as $field) {
+            if (isset($data->$field) && $data->$field !== null && (int)$data->$field < 0) {
+                $errors[$field] = get_string('error_nonnegative', 'mod_kahoodle');
+            }
+        }
+
+        // Maxpoints must be >= minpoints (considering defaults).
+        if (!isset($errors['maxpoints']) && !isset($errors['minpoints'])) {
+            $maxpoints = isset($data->maxpoints) && $data->maxpoints !== null
+                ? (int)$data->maxpoints : (int)$kahoodle->maxpoints;
+            $minpoints = isset($data->minpoints) && $data->minpoints !== null
+                ? (int)$data->minpoints : (int)$kahoodle->minpoints;
+            if ($maxpoints < $minpoints) {
+                // Attribute the error to the field the caller actually set, or maxpoints by default.
+                $maxset = (string)($data->maxpoints ?? '') !== '';
+                $minset = (string)($data->minpoints ?? '') !== '';
+                $errorfield = (!$maxset && $minset) ? 'minpoints' : 'maxpoints';
+                $errors[$errorfield] = get_string('error_maxpoints_less_than_minpoints', 'mod_kahoodle');
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
      * Check if any version of a question has responses
      *
      * @param int $questionid The question ID

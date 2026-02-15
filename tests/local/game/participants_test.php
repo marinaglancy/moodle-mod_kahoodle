@@ -392,13 +392,25 @@ final class participants_test extends \advanced_testcase {
 
         // Verify candidate files exist before cleanup.
         $candidates = $fs->get_directory_files(
-            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid, '/candidates/', false, false
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_AVATAR,
+            $pid,
+            '/candidates/',
+            false,
+            false
         );
         $this->assertCount(8, $candidates);
 
         // Verify actual avatar file exists at root.
         $rootfiles = $fs->get_directory_files(
-            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid, '/', false, false
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_AVATAR,
+            $pid,
+            '/',
+            false,
+            false
         );
         $this->assertNotEmpty($rootfiles);
 
@@ -407,13 +419,25 @@ final class participants_test extends \advanced_testcase {
 
         // Candidate files should be deleted.
         $candidates = $fs->get_directory_files(
-            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid, '/candidates/', false, false
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_AVATAR,
+            $pid,
+            '/candidates/',
+            false,
+            false
         );
         $this->assertEmpty($candidates);
 
         // Actual avatar file at root should still exist.
         $rootfiles = $fs->get_directory_files(
-            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid, '/', false, false
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_AVATAR,
+            $pid,
+            '/',
+            false,
+            false
         );
         $this->assertNotEmpty($rootfiles);
     }
@@ -456,10 +480,22 @@ final class participants_test extends \advanced_testcase {
 
         // Verify both have candidates.
         $this->assertNotEmpty($fs->get_directory_files(
-            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid1, '/candidates/', false, false
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_AVATAR,
+            $pid1,
+            '/candidates/',
+            false,
+            false
         ));
         $this->assertNotEmpty($fs->get_directory_files(
-            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid2, '/candidates/', false, false
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_AVATAR,
+            $pid2,
+            '/candidates/',
+            false,
+            false
         ));
 
         // Run cleanup.
@@ -467,10 +503,22 @@ final class participants_test extends \advanced_testcase {
 
         // Both should have candidates removed.
         $this->assertEmpty($fs->get_directory_files(
-            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid1, '/candidates/', false, false
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_AVATAR,
+            $pid1,
+            '/candidates/',
+            false,
+            false
         ));
         $this->assertEmpty($fs->get_directory_files(
-            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid2, '/candidates/', false, false
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_AVATAR,
+            $pid2,
+            '/candidates/',
+            false,
+            false
         ));
     }
 }

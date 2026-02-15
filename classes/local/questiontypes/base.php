@@ -19,6 +19,7 @@ namespace mod_kahoodle\local\questiontypes;
 use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\participant;
 use mod_kahoodle\local\entities\round_question;
+use mod_kahoodle\local\game\questions;
 
 /**
  * Class base
@@ -91,41 +92,20 @@ abstract class base {
             }
         }
 
-        // Get defaults from kahoodle activity.
-        $kahoodle = $roundquestion->get_round()->get_kahoodle();
-
-        // Validate maxpoints >= minpoints (considering defaults). If invalid, unset both.
-        $maxpoints = isset($data->maxpoints) && $data->maxpoints !== null
-            ? (int)$data->maxpoints : (int)$kahoodle->maxpoints;
-        $minpoints = isset($data->minpoints) && $data->minpoints !== null
-            ? (int)$data->minpoints : (int)$kahoodle->minpoints;
-        if ($maxpoints < $minpoints) {
-            unset($data->maxpoints, $data->minpoints);
+        // Validate numeric fields — throw on first error.
+        $validationerrors = questions::validate_question_data($data, $roundquestion);
+        if (!empty($validationerrors)) {
+            $firstfield = array_key_first($validationerrors);
+            throw new \moodle_exception('errorgeneral', 'mod_kahoodle', '', $firstfield . ': ' . $validationerrors[$firstfield]);
         }
 
-        // Ensure questionresultsduration and questionpreviewduration are non-negative.
-        if (
-            isset($data->questionresultsduration) && $data->questionresultsduration !== null
-                && (int)$data->questionresultsduration < 0
-        ) {
-            $data->questionresultsduration = 0;
-        }
-        if (
-            isset($data->questionpreviewduration) && $data->questionpreviewduration !== null
-                && (int)$data->questionpreviewduration < 0
-        ) {
-            $data->questionpreviewduration = 0;
-        }
-
-        // Ensure questionduration is positive (unset if zero or negative).
-        if (
-            isset($data->questionduration) && $data->questionduration !== null
-                && (int)$data->questionduration <= 0
-        ) {
+        // Sanitize questionduration: 0 means "use default".
+        if (isset($data->questionduration) && $data->questionduration !== null && (int)$data->questionduration === 0) {
             unset($data->questionduration);
         }
 
         // Clean questiontext if set. Use format based on kahoodle's questionformat setting.
+        $kahoodle = $roundquestion->get_round()->get_kahoodle();
         if (isset($data->questiontext) && $data->questiontext !== null) {
             $format = ($kahoodle->questionformat == constants::QUESTIONFORMAT_RICHTEXT) ? FORMAT_HTML : FORMAT_MOODLE;
             $data->questiontext = clean_text($data->questiontext, $format);

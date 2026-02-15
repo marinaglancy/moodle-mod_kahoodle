@@ -237,19 +237,12 @@ class question extends dynamic_form {
         $errors = parent::validation($data, $files);
 
         $roundquestion = $this->get_round_question_data();
-        $round = $roundquestion->get_round();
-        $kahoodle = $round->get_kahoodle();
 
         // TODO if rich text format is used, validate that question text contains
         // an <h3> tag and that its content is not empty (after stripping tags).
 
-        // Helper to get effective value (submitted or default).
-        $getvalue = function (string $field, string $defaultfield) use ($data, $kahoodle): int {
-            return strlen("" . $data[$field]) ? (int)$data[$field] : (int)$kahoodle->$defaultfield;
-        };
-
-        // Validate non-negative values.
-        $numericfields = [
+        // Map field names to form group names for error display.
+        $fieldtogroup = [
             'maxpoints' => 'maxpointsgroup',
             'minpoints' => 'minpointsgroup',
             'questionpreviewduration' => 'questionpreviewdurationgroup',
@@ -257,20 +250,19 @@ class question extends dynamic_form {
             'questionresultsduration' => 'questionresultsdurationgroup',
         ];
 
-        foreach ($numericfields as $field => $groupname) {
-            if (strlen("" . $data[$field]) && (int)$data[$field] < 0) {
-                $errors[$groupname] = get_string('error_nonnegative', 'mod_kahoodle');
-            }
+        // Build stdClass with null for empty strings, matching sanitize_data expectations.
+        $dataobj = new \stdClass();
+        foreach ($fieldtogroup as $field => $group) {
+            $dataobj->$field = strlen("" . ($data[$field] ?? '')) ? $data[$field] : null;
         }
 
-        // Validate maxpoints >= minpoints (considering defaults).
-        $maxpoints = $getvalue('maxpoints', 'maxpoints');
-        $minpoints = $getvalue('minpoints', 'minpoints');
-
-        if ($maxpoints < $minpoints) {
-            $errors['maxpointsgroup'] = get_string('error_maxpoints_less_than_minpoints', 'mod_kahoodle');
+        // Centralized numeric validation (single source of truth).
+        $validationerrors = \mod_kahoodle\local\game\questions::validate_question_data($dataobj, $roundquestion);
+        foreach ($validationerrors as $field => $errorstring) {
+            $errors[$fieldtogroup[$field]] = $errorstring;
         }
 
+        // Type-specific validation (e.g. multichoice answer options).
         $errors += $roundquestion->get_question_type()->question_form_validation($roundquestion, $data, $files);
 
         return $errors;

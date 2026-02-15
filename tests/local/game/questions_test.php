@@ -587,4 +587,124 @@ final class questions_test extends \advanced_testcase {
         $this->expectExceptionMessage('No editable round available');
         questions::delete_question(round_question::create_from_round_question_id($id));
     }
+
+    /**
+     * Test validate_question_data returns empty array for valid data
+     */
+    public function test_validate_question_data_valid(): void {
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
+        $rq = $this->get_generator()->create_question(['kahoodleid' => $kahoodle->id]);
+
+        $data = (object) [
+            'maxpoints' => 1000,
+            'minpoints' => 500,
+            'questionduration' => 30,
+            'questionpreviewduration' => 5,
+            'questionresultsduration' => 10,
+        ];
+        $errors = questions::validate_question_data($data, $rq);
+        $this->assertEmpty($errors);
+    }
+
+    /**
+     * Test validate_question_data returns empty for null fields (use defaults)
+     */
+    public function test_validate_question_data_null_fields(): void {
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
+        $rq = $this->get_generator()->create_question(['kahoodleid' => $kahoodle->id]);
+
+        $data = (object) [
+            'maxpoints' => null,
+            'minpoints' => null,
+            'questionduration' => null,
+        ];
+        $errors = questions::validate_question_data($data, $rq);
+        $this->assertEmpty($errors);
+    }
+
+    /**
+     * Test validate_question_data detects negative field
+     */
+    public function test_validate_question_data_negative(): void {
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
+        $rq = $this->get_generator()->create_question(['kahoodleid' => $kahoodle->id]);
+
+        $data = (object) ['questionduration' => -10];
+        $errors = questions::validate_question_data($data, $rq);
+        $this->assertArrayHasKey('questionduration', $errors);
+        $this->assertEquals(get_string('error_nonnegative', 'mod_kahoodle'), $errors['questionduration']);
+    }
+
+    /**
+     * Test validate_question_data detects maxpoints less than minpoints
+     */
+    public function test_validate_question_data_max_less_than_min(): void {
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
+        $rq = $this->get_generator()->create_question(['kahoodleid' => $kahoodle->id]);
+
+        $data = (object) ['maxpoints' => 100, 'minpoints' => 500];
+        $errors = questions::validate_question_data($data, $rq);
+        $this->assertArrayHasKey('maxpoints', $errors);
+        $this->assertEquals(get_string('error_maxpoints_less_than_minpoints', 'mod_kahoodle'), $errors['maxpoints']);
+    }
+
+    /**
+     * Test validate_question_data uses defaults for maxpoints/minpoints comparison
+     */
+    public function test_validate_question_data_uses_defaults(): void {
+        $this->resetAfterTest();
+
+        // Create kahoodle with maxpoints=1000, minpoints=500 (defaults).
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', [
+            'course' => $course->id,
+            'maxpoints' => 1000,
+            'minpoints' => 500,
+        ]);
+        $rq = $this->get_generator()->create_question(['kahoodleid' => $kahoodle->id]);
+
+        // Setting only maxpoints=100 should fail because default minpoints=500. Error on maxpoints.
+        $data = (object) ['maxpoints' => 100];
+        $errors = questions::validate_question_data($data, $rq);
+        $this->assertArrayHasKey('maxpoints', $errors);
+
+        // Setting only minpoints=2000 should fail because default maxpoints=1000. Error on minpoints.
+        $data = (object) ['minpoints' => 2000];
+        $errors = questions::validate_question_data($data, $rq);
+        $this->assertArrayHasKey('minpoints', $errors);
+        $this->assertArrayNotHasKey('maxpoints', $errors);
+
+        // Setting only maxpoints=600 should succeed because default minpoints=500.
+        $data = (object) ['maxpoints' => 600];
+        $errors = questions::validate_question_data($data, $rq);
+        $this->assertEmpty($errors);
+    }
+
+    /**
+     * Test validate_question_data allows zero values (not an error)
+     */
+    public function test_validate_question_data_zero_is_valid(): void {
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
+        $rq = $this->get_generator()->create_question(['kahoodleid' => $kahoodle->id]);
+
+        // Zero is non-negative, so it should be valid.
+        $data = (object) ['questionduration' => 0, 'questionpreviewduration' => 0];
+        $errors = questions::validate_question_data($data, $rq);
+        $this->assertEmpty($errors);
+    }
 }
