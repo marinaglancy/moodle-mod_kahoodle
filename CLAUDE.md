@@ -1312,7 +1312,7 @@ vendor/bin/phpunit --filter questions_test
 - Question add/edit modal form (dynamic form with conditional fields based on format)
 - AMD module for question UI interactions
 - Constants for defaults, types, stages, file areas, and field lists
-- Comprehensive test coverage (186 PHPUnit tests)
+- Comprehensive test coverage (215 PHPUnit tests)
 - Test data generators
 - Backup/restore with full support for questions, rounds, participants, responses, and files
   - Without user data: backs up only the last round and its questions (latest versions)
@@ -1378,5 +1378,3 @@ vendor/bin/phpunit --filter questions_test
     * ? add question web service - errors adding questions, WS returning warnings
     * ? adding and editing questions with images (behat)
     * backup and restore with logs
-    * unittest for get_avatar_candidates() - when there are no candidates at all, no candidates left, when max is reached
-    * unittest for cleanup_avatar_candidates

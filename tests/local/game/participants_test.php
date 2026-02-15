@@ -288,4 +288,189 @@ final class participants_test extends \advanced_testcase {
         $this->assertNotFalse($file);
         $this->assertEquals($fakecontent, $file->get_content());
     }
+
+    /**
+     * Helper to create a kahoodle with alias mode and a participant in the lobby stage.
+     *
+     * @param int $avatarcount Number of avatars to create in the pool
+     * @return array{participant: participant, round: round}
+     */
+    protected function create_lobby_participant(int $avatarcount): array {
+        $this->create_allavatars($avatarcount);
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', [
+            'course' => $course->id,
+            'identitymode' => constants::IDENTITYMODE_ALIAS,
+        ]);
+        $round = questions::get_last_round($kahoodle->id);
+
+        // Set round to lobby stage.
+        $this->set_round_stage($round, constants::STAGE_LOBBY);
+        $round = round::create_from_id($round->get_id());
+
+        /** @var \mod_kahoodle_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
+        $user = $this->getDataGenerator()->create_user();
+        $pid = $generator->create_participant(['roundid' => $round->get_id(), 'userid' => $user->id]);
+
+        // Save a random avatar (the generator doesn't do this automatically).
+        participants::save_random_avatar($round, $pid);
+
+        $allparticipants = participant::load_round_participants($round);
+        $participant = $allparticipants[$pid];
+
+        return ['participant' => $participant, 'round' => $round];
+    }
+
+    /**
+     * Test get_avatar_candidates returns empty when no candidates are left in the pool.
+     */
+    public function test_get_avatar_candidates_no_candidates_left(): void {
+        $this->resetAfterTest();
+
+        // Create exactly 10 avatars (minimum for can_change_avatar).
+        ['participant' => $participant] = $this->create_lobby_participant(10);
+
+        // First call gets 8 candidates (1 avatar is already used as the participant's avatar).
+        $result1 = participants::get_avatar_candidates($participant, false);
+        $this->assertCount(8, $result1['candidates']);
+        $this->assertTrue($result1['hasmore']);
+
+        // Second call with onlynew gets the remaining 1 (10 total - 1 current avatar - 8 candidates).
+        $result2 = participants::get_avatar_candidates($participant, true);
+        $this->assertCount(1, $result2['candidates']);
+        $this->assertFalse($result2['hasmore']);
+
+        // Third call with onlynew - no more candidates available.
+        $result3 = participants::get_avatar_candidates($participant, true);
+        $this->assertEmpty($result3['candidates']);
+        $this->assertFalse($result3['hasmore']);
+    }
+
+    /**
+     * Test get_avatar_candidates returns empty when max candidate limit is reached.
+     */
+    public function test_get_avatar_candidates_max_reached(): void {
+        $this->resetAfterTest();
+
+        // Create more avatars than MAX_AVATAR_CANDIDATES (40) to ensure pool isn't the bottleneck.
+        ['participant' => $participant] = $this->create_lobby_participant(48);
+
+        // Fill up to MAX_AVATAR_CANDIDATES (40) by requesting 5 batches of 8.
+        for ($i = 0; $i < 5; $i++) {
+            $result = participants::get_avatar_candidates($participant, true);
+            $this->assertCount(8, $result['candidates']);
+        }
+
+        // Next call should return empty - max limit reached despite pool having more.
+        $result = participants::get_avatar_candidates($participant, true);
+        $this->assertEmpty($result['candidates']);
+        $this->assertFalse($result['hasmore']);
+
+        // Calling without onlynew should return all 40 existing candidates.
+        $result = participants::get_avatar_candidates($participant, false);
+        $this->assertCount(40, $result['candidates']);
+        $this->assertFalse($result['hasmore']);
+    }
+
+    /**
+     * Test cleanup_avatar_candidates removes candidate files but keeps actual avatars.
+     */
+    public function test_cleanup_avatar_candidates(): void {
+        $this->resetAfterTest();
+
+        ['participant' => $participant, 'round' => $round] = $this->create_lobby_participant(20);
+
+        // Generate some candidates for the participant.
+        $result = participants::get_avatar_candidates($participant, false);
+        $this->assertCount(8, $result['candidates']);
+
+        $fs = get_file_storage();
+        $context = $round->get_context();
+        $pid = $participant->get_id();
+
+        // Verify candidate files exist before cleanup.
+        $candidates = $fs->get_directory_files(
+            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid, '/candidates/', false, false
+        );
+        $this->assertCount(8, $candidates);
+
+        // Verify actual avatar file exists at root.
+        $rootfiles = $fs->get_directory_files(
+            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid, '/', false, false
+        );
+        $this->assertNotEmpty($rootfiles);
+
+        // Run cleanup.
+        participants::cleanup_avatar_candidates($round);
+
+        // Candidate files should be deleted.
+        $candidates = $fs->get_directory_files(
+            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid, '/candidates/', false, false
+        );
+        $this->assertEmpty($candidates);
+
+        // Actual avatar file at root should still exist.
+        $rootfiles = $fs->get_directory_files(
+            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid, '/', false, false
+        );
+        $this->assertNotEmpty($rootfiles);
+    }
+
+    /**
+     * Test cleanup_avatar_candidates with multiple participants.
+     */
+    public function test_cleanup_avatar_candidates_multiple_participants(): void {
+        $this->resetAfterTest();
+
+        $this->create_allavatars(20);
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', [
+            'course' => $course->id,
+            'identitymode' => constants::IDENTITYMODE_ALIAS,
+        ]);
+        $round = questions::get_last_round($kahoodle->id);
+
+        $this->set_round_stage($round, constants::STAGE_LOBBY);
+        $round = round::create_from_id($round->get_id());
+
+        /** @var \mod_kahoodle_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
+
+        // Create two participants.
+        $user1 = $this->getDataGenerator()->create_user();
+        $user2 = $this->getDataGenerator()->create_user();
+        $pid1 = $generator->create_participant(['roundid' => $round->get_id(), 'userid' => $user1->id]);
+        $pid2 = $generator->create_participant(['roundid' => $round->get_id(), 'userid' => $user2->id]);
+
+        $allparticipants = participant::load_round_participants($round);
+
+        // Generate candidates for both participants.
+        participants::get_avatar_candidates($allparticipants[$pid1], false);
+        participants::get_avatar_candidates($allparticipants[$pid2], false);
+
+        $fs = get_file_storage();
+        $context = $round->get_context();
+
+        // Verify both have candidates.
+        $this->assertNotEmpty($fs->get_directory_files(
+            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid1, '/candidates/', false, false
+        ));
+        $this->assertNotEmpty($fs->get_directory_files(
+            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid2, '/candidates/', false, false
+        ));
+
+        // Run cleanup.
+        participants::cleanup_avatar_candidates($round);
+
+        // Both should have candidates removed.
+        $this->assertEmpty($fs->get_directory_files(
+            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid1, '/candidates/', false, false
+        ));
+        $this->assertEmpty($fs->get_directory_files(
+            $context->id, 'mod_kahoodle', constants::FILEAREA_AVATAR, $pid2, '/candidates/', false, false
+        ));
+    }
 }
