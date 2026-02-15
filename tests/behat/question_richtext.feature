@@ -26,7 +26,7 @@ Feature: Managing rich text questions in Kahoodle
     And I click on "Multiple choice" "link"
     # Rich text mode uses an editor; no separate "Question image" filemanager.
     Then I should not see "Question image" in the "Add question: Multiple choice" "dialogue"
-    When I set the field "Question text" in the "Add question: Multiple choice" "dialogue" to "What is the <b>capital</b> of France?"
+    When I set the field "Question text" in the "Add question: Multiple choice" "dialogue" to "<h3>What is the <b>capital</b> of France?</h3>"
     And I set the field "Answer options" to multiline:
       """
       London
@@ -36,17 +36,37 @@ Feature: Managing rich text questions in Kahoodle
     And I click on "Save changes" "button" in the "Add question: Multiple choice" "dialogue"
     Then I should see "What is the capital of France?"
 
+  Scenario: Rich text question without h3 tag shows validation error
+    When I log in as "teacher1"
+    And I am on the "Test Kahoodle" "kahoodle activity" page
+    And I navigate to "Questions" in current page administration
+    And I click on "Add question" "button"
+    And I click on "Multiple choice" "link"
+    # Question text without an h3 tag should be rejected.
+    When I set the field "Question text" in the "Add question: Multiple choice" "dialogue" to "<p>No heading here</p>"
+    And I set the field "Answer options" to multiline:
+      """
+      Option A
+      *Option B
+      """
+    And I click on "Save changes" "button" in the "Add question: Multiple choice" "dialogue"
+    Then I should see "Question text must contain a heading"
+    # Fix the question by adding an h3 tag.
+    When I set the field "Question text" in the "Add question: Multiple choice" "dialogue" to "<h3>Now with heading</h3>"
+    And I click on "Save changes" "button" in the "Add question: Multiple choice" "dialogue"
+    Then I should see "Now with heading"
+
   Scenario: Editing a rich text question
     Given the following "mod_kahoodle > questions" exist:
-      | kahoodle      | questiontext                   | questionconfig         |
-      | Test Kahoodle | What is the capital of France? | London\n*Paris\nBerlin |
+      | kahoodle      | questiontext                                  | questionconfig         |
+      | Test Kahoodle | <h3>What is the capital of France?</h3> | London\n*Paris\nBerlin |
     When I log in as "teacher1"
     And I am on the "Test Kahoodle" "kahoodle activity" page
     And I navigate to "Questions" in current page administration
     Then I should see "What is the capital of France?"
     When I click on "Actions" "link" in the "What is the capital of France?" "table_row"
     And I choose "Edit question" in the open action menu
-    And I set the field "Question text" in the "Edit question" "dialogue" to "What is the <i>largest</i> ocean?"
+    And I set the field "Question text" in the "Edit question" "dialogue" to "<h3>What is the <i>largest</i> ocean?</h3>"
     And I set the field "Answer options" to multiline:
       """
       Atlantic
@@ -59,9 +79,9 @@ Feature: Managing rich text questions in Kahoodle
 
   Scenario: Duplicating a rich text question
     Given the following "mod_kahoodle > questions" exist:
-      | kahoodle      | questiontext                   | questionconfig         |
-      | Test Kahoodle | What is the capital of France? | London\n*Paris\nBerlin |
-      | Test Kahoodle | What is 5 + 5?                 | 8\n9\n*10              |
+      | kahoodle      | questiontext                                  | questionconfig         |
+      | Test Kahoodle | <h3>What is the capital of France?</h3> | London\n*Paris\nBerlin |
+      | Test Kahoodle | <h3>What is 5 + 5?</h3>                       | 8\n9\n*10              |
     When I log in as "teacher1"
     And I am on the "Test Kahoodle" "kahoodle activity" page
     And I navigate to "Questions" in current page administration
@@ -75,8 +95,8 @@ Feature: Managing rich text questions in Kahoodle
 
   Scenario: Rich text image is displayed on question stage but not on preview or results
     Given the following "mod_kahoodle > questions" exist:
-      | kahoodle      | questiontext                   | questionconfig         | image |
-      | Test Kahoodle | What is the capital of France? | London\n*Paris\nBerlin | 1     |
+      | kahoodle      | questiontext                                                                                                         | questionconfig         | attachimage |
+      | Test Kahoodle | <h3>What is the capital of France?</h3><p><img src="@@PLUGINFILE@@/testimage.png" alt="Test image" width="200"/></p> | London\n*Paris\nBerlin | 1           |
     When I log in as "teacher1"
     And I am on the "Test Kahoodle" "kahoodle activity" page
     And I navigate to "Questions" in current page administration

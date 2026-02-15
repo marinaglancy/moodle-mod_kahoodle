@@ -707,4 +707,76 @@ final class questions_test extends \advanced_testcase {
         $errors = questions::validate_question_data($data, $rq);
         $this->assertEmpty($errors);
     }
+
+    /**
+     * Test validate_question_data validates rich text questiontext requires h3 tag
+     */
+    public function test_validate_question_data_richtext_h3_required(): void {
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', [
+            'course' => $course->id,
+            'questionformat' => constants::QUESTIONFORMAT_RICHTEXT,
+        ]);
+        $rq = $this->get_generator()->create_question(['kahoodleid' => $kahoodle->id]);
+
+        // No h3 tag — error.
+        $data = (object) ['questiontext' => '<p>Some question without heading</p>'];
+        $errors = questions::validate_question_data($data, $rq);
+        $this->assertArrayHasKey('questiontext', $errors);
+
+        // Empty h3 tag — error.
+        $data = (object) ['questiontext' => '<h3></h3><p>Details here</p>'];
+        $errors = questions::validate_question_data($data, $rq);
+        $this->assertArrayHasKey('questiontext', $errors);
+
+        // H3 with only whitespace/tags — error.
+        $data = (object) ['questiontext' => '<h3> <br> </h3>'];
+        $errors = questions::validate_question_data($data, $rq);
+        $this->assertArrayHasKey('questiontext', $errors);
+
+        // Valid h3 with content — no error.
+        $data = (object) ['questiontext' => '<h3>What is 2+2?</h3><p>Choose the correct answer.</p>'];
+        $errors = questions::validate_question_data($data, $rq);
+        $this->assertArrayNotHasKey('questiontext', $errors);
+
+        // H3 with attributes — still valid.
+        $data = (object) ['questiontext' => '<h3 class="foo">Question?</h3>'];
+        $errors = questions::validate_question_data($data, $rq);
+        $this->assertArrayNotHasKey('questiontext', $errors);
+    }
+
+    /**
+     * Test validate_question_data validates plain text questiontext with PARAM_TEXT
+     */
+    public function test_validate_question_data_plaintext_clean(): void {
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', [
+            'course' => $course->id,
+            'questionformat' => constants::QUESTIONFORMAT_PLAIN,
+        ]);
+        $rq = $this->get_generator()->create_question(['kahoodleid' => $kahoodle->id]);
+
+        // Plain text — valid.
+        $data = (object) ['questiontext' => 'What is 2+2?'];
+        $errors = questions::validate_question_data($data, $rq);
+        $this->assertArrayNotHasKey('questiontext', $errors);
+
+        // HTML tags — invalid for plain text.
+        $data = (object) ['questiontext' => '<script>alert("xss")</script>'];
+        $errors = questions::validate_question_data($data, $rq);
+        $this->assertArrayHasKey('questiontext', $errors);
+
+        // Null or empty questiontext — skipped, no error.
+        $data = (object) ['questiontext' => null];
+        $errors = questions::validate_question_data($data, $rq);
+        $this->assertArrayNotHasKey('questiontext', $errors);
+
+        $data = (object) ['questiontext' => ''];
+        $errors = questions::validate_question_data($data, $rq);
+        $this->assertArrayNotHasKey('questiontext', $errors);
+    }
 }

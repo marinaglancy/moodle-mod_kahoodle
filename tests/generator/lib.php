@@ -84,7 +84,7 @@ class mod_kahoodle_generator extends testing_module_generator {
      *     - questionresultsduration: Results duration override (default: null)
      *     - maxpoints: Maximum points override (default: null)
      *     - minpoints: Minimum points override (default: null)
-     *     - image: If truthy, creates a test image file for the question (default: false)
+     *     - attachimage: If truthy, creates a test image file (testimage.png) in the question file area (default: false)
      * @param round|null $round
      * @return round_question The question entity
      */
@@ -99,33 +99,27 @@ class mod_kahoodle_generator extends testing_module_generator {
         }
 
         if (!isset($record->questiontext)) {
-            $record->questiontext = 'Sample question ' . $counter++;
+            $kahoodle = $DB->get_record('kahoodle', ['id' => $record->kahoodleid]);
+            $text = 'Sample question ' . $counter++;
+            if ((int)($kahoodle->questionformat ?? 0) === constants::QUESTIONFORMAT_RICHTEXT) {
+                $text = '<h3>' . $text . '</h3>';
+            }
+            $record->questiontext = $text;
         }
         if (($record->questiontype ?? 'multichoice') === 'multichoice' && empty($record->questionconfig)) {
             $record->questionconfig = "Option 1\n*Option 2\nOption 3";
         }
 
-        // Extract image flag before passing to API (not a real question field).
-        $createimage = !empty($record->image);
-        unset($record->image);
-
-        // Save kahoodleid before add_question() since sanitize_data() strips non-version fields.
-        $kahoodleid = $record->kahoodleid;
+        // Extract attachimage flag before passing to API (not a real question field).
+        $attachimage = !empty($record->attachimage);
+        unset($record->attachimage);
 
         // Use the questions API to add the question.
         $rq = \mod_kahoodle\local\game\questions::add_question($record, $round);
 
-        // Store a test image file for the question if requested.
-        if ($createimage) {
+        // Attach a test image file to the question file area if requested.
+        if ($attachimage) {
             $this->create_question_image($rq);
-            // For rich text questions, embed the image reference in the question text.
-            $kahoodle = $DB->get_record('kahoodle', ['id' => $kahoodleid]);
-            if ((int)$kahoodle->questionformat === constants::QUESTIONFORMAT_RICHTEXT) {
-                $qvid = $rq->get_data()->questionversionid;
-                $text = $rq->get_data()->questiontext .
-                    '<p><img src="@@PLUGINFILE@@/testimage.png" alt="Test image" width="200"/></p>';
-                $DB->set_field('kahoodle_question_versions', 'questiontext', $text, ['id' => $qvid]);
-            }
         }
 
         return $rq;

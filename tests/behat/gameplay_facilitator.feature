@@ -23,9 +23,9 @@ Feature: Facilitator game control
       | activity | name          | course | idnumber  |
       | kahoodle | Test Kahoodle | C1     | kahoodle1 |
     And the following "mod_kahoodle > questions" exist:
-      | kahoodle      | questiontext                   | questionconfig         | image |
-      | Test Kahoodle | What is the capital of France? | London\n*Paris\nBerlin | 1     |
-      | Test Kahoodle | What is 2 + 2?                 | 3\n*4\n5               |       |
+      | kahoodle      | questiontext                   | questionconfig         | attachimage |
+      | Test Kahoodle | What is the capital of France? | London\n*Paris\nBerlin | 1           |
+      | Test Kahoodle | What is 2 + 2?                 | 3\n*4\n5               |             |
 
   Scenario: Teacher sees preparation controls on landing page
     When I log in as "teacher1"

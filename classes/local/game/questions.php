@@ -679,6 +679,25 @@ class questions {
             }
         }
 
+        // Validate questiontext if set.
+        if (isset($data->questiontext) && $data->questiontext !== null && $data->questiontext !== '') {
+            $questionformat = $kahoodle->questionformat ?? constants::QUESTIONFORMAT_PLAIN;
+            if ($questionformat == constants::QUESTIONFORMAT_RICHTEXT) {
+                // Rich text: must contain an <h3> tag with non-empty content.
+                if (
+                    !preg_match('/<h3[^>]*>(.*?)<\/h3>/si', $data->questiontext, $matches)
+                    || trim(strip_tags($matches[1])) === ''
+                ) {
+                    $errors['questiontext'] = get_string('error_questiontext_h3_required', 'mod_kahoodle');
+                }
+            } else {
+                // Plain text: must equal its clean_param version.
+                if ($data->questiontext !== clean_param($data->questiontext, PARAM_TEXT)) {
+                    $errors['questiontext'] = get_string('error_questiontext_invalidchars', 'mod_kahoodle');
+                }
+            }
+        }
+
         // Maxpoints must be >= minpoints (considering defaults).
         if (!isset($errors['maxpoints']) && !isset($errors['minpoints'])) {
             $maxpoints = isset($data->maxpoints) && $data->maxpoints !== null

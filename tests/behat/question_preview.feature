@@ -18,10 +18,10 @@ Feature: Previewing questions in Kahoodle
       | activity | name          | course | idnumber  | questionpreviewduration | questionduration | questionresultsduration |
       | kahoodle | Test Kahoodle | C1     | kahoodle1 | 120                     | 120              | 120                     |
     And the following "mod_kahoodle > questions" exist:
-      | kahoodle      | questiontext                   | questionconfig         | image |
-      | Test Kahoodle | What is the capital of France? | London\n*Paris\nBerlin | 1     |
-      | Test Kahoodle | What is 2 + 2?                 | 3\n*4\n5               |       |
-      | Test Kahoodle | What color is the sky?         | Red\nGreen\n*Blue      |       |
+      | kahoodle      | questiontext                   | questionconfig         | attachimage |
+      | Test Kahoodle | What is the capital of France? | London\n*Paris\nBerlin | 1           |
+      | Test Kahoodle | What is 2 + 2?                 | 3\n*4\n5               |             |
+      | Test Kahoodle | What color is the sky?         | Red\nGreen\n*Blue      |             |
 
   Scenario: Preview a question and navigate through all stages
     When I log in as "teacher1"

@@ -238,28 +238,35 @@ class question extends dynamic_form {
 
         $roundquestion = $this->get_round_question_data();
 
-        // TODO if rich text format is used, validate that question text contains
-        // an <h3> tag and that its content is not empty (after stripping tags).
+        $kahoodle = $roundquestion->get_round()->get_kahoodle();
 
-        // Map field names to form group names for error display.
-        $fieldtogroup = [
+        // Map field names to form element names for error display.
+        $fieldtoformelement = [
             'maxpoints' => 'maxpointsgroup',
             'minpoints' => 'minpointsgroup',
             'questionpreviewduration' => 'questionpreviewdurationgroup',
             'questionduration' => 'questiondurationgroup',
             'questionresultsduration' => 'questionresultsdurationgroup',
+            'questiontext' => ($kahoodle->questionformat == constants::QUESTIONFORMAT_RICHTEXT)
+                ? 'questiontext_editor' : 'questiontext',
         ];
 
         // Build stdClass with null for empty strings, matching sanitize_data expectations.
         $dataobj = new \stdClass();
-        foreach ($fieldtogroup as $field => $group) {
-            $dataobj->$field = strlen("" . ($data[$field] ?? '')) ? $data[$field] : null;
+        foreach ($fieldtoformelement as $field => $formelement) {
+            if ($field === 'questiontext') {
+                // Editor returns array with 'text' key; textarea returns string.
+                $value = is_array($data[$formelement] ?? null) ? ($data[$formelement]['text'] ?? '') : ($data[$formelement] ?? '');
+                $dataobj->$field = ($value !== '') ? $value : null;
+            } else {
+                $dataobj->$field = strlen("" . ($data[$field] ?? '')) ? $data[$field] : null;
+            }
         }
 
-        // Centralized numeric validation (single source of truth).
+        // Centralized validation (single source of truth).
         $validationerrors = \mod_kahoodle\local\game\questions::validate_question_data($dataobj, $roundquestion);
         foreach ($validationerrors as $field => $errorstring) {
-            $errors[$fieldtogroup[$field]] = $errorstring;
+            $errors[$fieldtoformelement[$field]] = $errorstring;
         }
 
         // Type-specific validation (e.g. multichoice answer options).
