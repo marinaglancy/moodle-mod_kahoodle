@@ -159,8 +159,9 @@ function kahoodle_pluginfile($course, $cm, $context, $filearea, $args, $forcedow
         return;
     }
 
-    // TODO check capabilities to view the file: for question image - facilitate, manage questions or view results
-    // for avatar - anyone who can see the participant list (facilitate, manage questions, view results, participate).
+    // TODO implement permission checks:
+    // - question image - capability to facilitate, manage questions or view results
+    // - avatar - it is either own avatar or capability to facilitate or view results
 
     // The item ID is the question version ID (for question images) or participant ID (for avatars).
     $itemid = array_shift($args);

@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * TODO describe file settings
+ * Settings for the mod_kahoodle
  *
  * @package    mod_kahoodle
  * @copyright  Marina Glancy

@@ -32,6 +32,7 @@ use restore_dbops;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers     \backup_kahoodle_activity_structure_step
  * @covers     \restore_kahoodle_activity_structure_step
+ * @covers     \restore_kahoodle_activity_task
  */
 final class backup_restore_test extends advanced_testcase {
     /**
@@ -703,6 +704,60 @@ final class backup_restore_test extends advanced_testcase {
 
         $newroundquestions = $DB->count_records('kahoodle_round_questions', ['roundid' => $newround->id]);
         $this->assertEquals(2, $newroundquestions);
+    }
+
+    /**
+     * Test that restore log rules correctly remap IDs in legacy log URLs.
+     */
+    public function test_restore_log_rules(): void {
+        global $CFG;
+        require_once($CFG->dirroot . '/mod/kahoodle/backup/moodle2/restore_kahoodle_activity_task.class.php');
+
+        // Test activity-level log rules.
+        $rules = \restore_kahoodle_activity_task::define_restore_log_rules();
+        $this->assertCount(3, $rules);
+
+        $fixedvalues = ['course_module' => 100, 'kahoodle' => 200];
+
+        // Test 'add' rule.
+        $rules[0]->set_fixed_values($fixedvalues);
+        $log = (object) ['module' => 'kahoodle', 'action' => 'add', 'url' => 'view.php?id=42', 'info' => '99'];
+        $result = $rules[0]->process($log);
+        $this->assertNotFalse($result);
+        $this->assertEquals('view.php?id=100', $result->url);
+        $this->assertEquals('200', $result->info);
+
+        // Test 'update' rule.
+        $rules[1]->set_fixed_values($fixedvalues);
+        $log = (object) ['module' => 'kahoodle', 'action' => 'update', 'url' => 'view.php?id=55', 'info' => '77'];
+        $result = $rules[1]->process($log);
+        $this->assertNotFalse($result);
+        $this->assertEquals('view.php?id=100', $result->url);
+        $this->assertEquals('200', $result->info);
+
+        // Test 'view' rule.
+        $rules[2]->set_fixed_values($fixedvalues);
+        $log = (object) ['module' => 'kahoodle', 'action' => 'view', 'url' => 'view.php?id=10', 'info' => '5'];
+        $result = $rules[2]->process($log);
+        $this->assertNotFalse($result);
+        $this->assertEquals('view.php?id=100', $result->url);
+        $this->assertEquals('200', $result->info);
+
+        // Test that a non-matching URL returns false.
+        $log = (object) ['module' => 'kahoodle', 'action' => 'add', 'url' => 'edit.php?id=42', 'info' => '99'];
+        $result = $rules[0]->process($log);
+        $this->assertFalse($result);
+
+        // Test course-level log rules.
+        $courserules = \restore_kahoodle_activity_task::define_restore_log_rules_for_course();
+        $this->assertCount(1, $courserules);
+
+        // Test 'view all' rule.
+        $courserules[0]->set_fixed_values(['course' => 300]);
+        $log = (object) ['module' => 'kahoodle', 'action' => 'view all', 'url' => 'index.php?id=50', 'info' => ''];
+        $result = $courserules[0]->process($log);
+        $this->assertNotFalse($result);
+        $this->assertEquals('index.php?id=300', $result->url);
     }
 
     /**
