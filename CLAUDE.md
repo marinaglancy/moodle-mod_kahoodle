@@ -1376,9 +1376,10 @@ vendor/bin/phpunit --filter questions_test
 - Additional question types
 - Viewing the answer distribution chart in the results
 - Not covered with automated tests:
-    * (*) Managing and displaying questions in rich text format
-    * (*) Fully anonymous mode workflow, reports and events
     * ? add question web service - errors adding questions, WS returning warnings
-    * (*)changing avatars (behat)
-    * (*)facilitator joining as participant (behat)
-    * adding and editing questions with images (behat)
+    * ? adding and editing questions with images (behat)
+    * backup and restore with logs
+    * edit question validation - entering negative values, entering maxvalue less than minvalue
+    * unittest for get_avatar_candidates() - when there are no candidates at all, no candidates left, when max is reached
+    * unittest for cleanup_avatar_candidates
+    * bug: two similar methos in question type - question_form_validation and validate_edit_changes

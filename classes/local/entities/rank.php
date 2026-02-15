@@ -106,6 +106,7 @@ class rank {
 
         // Completion criteria set but not met.
         if ($hascompletion && !$completed) {
+            // TODO placeholder.
             $pointsneeded = $pointstocomplete - $this->score;
             return $basedata + [
                 'rankimage' => $imagedir . 'fail.png',

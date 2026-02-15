@@ -191,7 +191,7 @@ class participant {
             return moodle_url::make_pluginfile_url(
                 $context->id,
                 'mod_kahoodle',
-                \mod_kahoodle\constants::FILEAREA_AVATAR,
+                constants::FILEAREA_AVATAR,
                 $this->get_id(),
                 '/',
                 $avatar
@@ -211,29 +211,13 @@ class participant {
      */
     public function can_change_avatar(): bool {
         $kahoodle = $this->round->get_kahoodle();
-        if ((int)$kahoodle->identitymode === \mod_kahoodle\constants::IDENTITYMODE_REALNAME) {
+        if ((int)$kahoodle->identitymode === constants::IDENTITYMODE_REALNAME) {
             return false;
         }
-        if ($this->round->get_current_stage_name() !== \mod_kahoodle\constants::STAGE_LOBBY) {
+        if ($this->round->get_current_stage_name() !== constants::STAGE_LOBBY) {
             return false;
         }
-        return $this->round->get_allavatars_count() >= \mod_kahoodle\constants::MIN_AVATARS_FOR_CHANGE;
-    }
-
-    /**
-     * Get the user's profile picture URL (from Moodle core, not the stored avatar).
-     *
-     * @param int $size Picture size. Recommended values: 16, 35, 64, 100, 120.
-     * @return moodle_url
-     */
-    public function get_profile_picture_url(int $size = 35): moodle_url {
-        global $PAGE;
-        $picture = \core_user::get_profile_picture(
-            $this->userdata,
-            $this->round->get_context(),
-            ['size' => $size]
-        );
-        return $picture->get_url($PAGE);
+        return $this->round->get_allavatars_count() >= constants::MIN_AVATARS_FOR_CHANGE;
     }
 
     /**

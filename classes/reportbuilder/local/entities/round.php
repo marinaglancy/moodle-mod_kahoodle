@@ -96,10 +96,7 @@ class round extends base {
             ->add_field("{$roundalias}.id")
             ->set_is_sortable(true)
             ->add_callback(static function (?string $value, \stdClass $row): string {
-                if ($value === null || $value === '') {
-                    return get_string('roundname', 'mod_kahoodle', $row->id);
-                }
-                return s($value);
+                return empty($row->id) ? '' : format_string($value ?? '', true);
             });
 
         // Round name with link to participants.
@@ -114,14 +111,11 @@ class round extends base {
             ->add_field("{$roundalias}.id")
             ->set_is_sortable(true, ["{$roundalias}.name"])
             ->add_callback(static function (?string $value, \stdClass $row): string {
-                $name = ($value === null || $value === '')
-                    ? get_string('roundname', 'mod_kahoodle', $row->id)
-                    : s($value);
                 $url = new moodle_url('/mod/kahoodle/results.php', [
                     'roundid' => $row->id,
                     'view' => 'participants',
                 ]);
-                return html_writer::link($url, $name);
+                return empty($row->id) ? '' : html_writer::link($url, format_string($value ?? '', true));
             });
 
         return $columns;
@@ -148,25 +142,5 @@ class round extends base {
             ->add_joins($this->get_joins());
 
         return $filters;
-    }
-
-    /**
-     * Return syntax for joining on the rounds table from participants.
-     *
-     * @return string
-     */
-    public function get_round_join_from_participants(): string {
-        $roundalias = $this->get_table_alias('kahoodle_rounds');
-        return "JOIN {kahoodle_rounds} {$roundalias} ON {$roundalias}.id = kp.roundid";
-    }
-
-    /**
-     * Return syntax for joining on the rounds table from round_questions.
-     *
-     * @return string
-     */
-    public function get_round_join_from_round_questions(): string {
-        $roundalias = $this->get_table_alias('kahoodle_rounds');
-        return "JOIN {kahoodle_rounds} {$roundalias} ON {$roundalias}.id = krq.roundid";
     }
 }

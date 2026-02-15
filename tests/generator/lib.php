@@ -85,9 +85,10 @@ class mod_kahoodle_generator extends testing_module_generator {
      *     - maxpoints: Maximum points override (default: null)
      *     - minpoints: Minimum points override (default: null)
      *     - image: If truthy, creates a test image file for the question (default: false)
+     * @param round|null $round
      * @return round_question The question entity
      */
-    public function create_question($record): round_question {
+    public function create_question($record, ?round $round = null): round_question {
         global $DB;
         static $counter = 1;
 
@@ -112,7 +113,7 @@ class mod_kahoodle_generator extends testing_module_generator {
         $kahoodleid = $record->kahoodleid;
 
         // Use the questions API to add the question.
-        $rq = \mod_kahoodle\local\game\questions::add_question($record);
+        $rq = \mod_kahoodle\local\game\questions::add_question($record, $round);
 
         // Store a test image file for the question if requested.
         if ($createimage) {

@@ -184,7 +184,7 @@ class provider implements
             );
 
             $participation = [
-                'round' => $record->roundname,
+                'round' => $record->roundname, // TODO we do not export round name to participants, but instead date/time.
                 'displayname' => $record->displayname,
                 'totalscore' => $record->totalscore,
                 'finalrank' => $record->finalrank,

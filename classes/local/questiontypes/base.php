@@ -210,9 +210,7 @@ abstract class base {
      * @param \stdClass $newdata The proposed new data
      * @return string[] Array of error messages (empty if changes are allowed)
      */
-    public function validate_edit_changes(round_question $roundquestion, \stdClass $newdata): array {
-        return [];
-    }
+    abstract public function validate_edit_changes(round_question $roundquestion, \stdClass $newdata): array;
 
     /**
      * Validate a participant's answer

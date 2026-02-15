@@ -312,7 +312,7 @@ class question extends dynamic_form {
         if (!$roundquestion->get_id()) {
             // Can not add questions to the round that is not in preparation stage.
             if (!$roundquestion->get_round()->is_fully_editable()) {
-                throw new \moodle_exception('noeditableround', 'mod_kahoodle'); // TODO better exception message.
+                throw new \moodle_exception('noeditableround', 'mod_kahoodle');
             }
         }
     }
@@ -363,7 +363,7 @@ class question extends dynamic_form {
         if (!$roundquestion->get_id()) {
             // Add mode.
             $questiondata->questiontype = $data->questiontype;
-            $roundquestion = \mod_kahoodle\local\game\questions::add_question($questiondata);
+            $roundquestion = \mod_kahoodle\local\game\questions::add_question($questiondata, $round);
             return ['questionid' => $roundquestion->get_question_id(), 'action' => 'add'];
         } else {
             // Edit mode.

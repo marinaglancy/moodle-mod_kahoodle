@@ -131,7 +131,7 @@ final class questions_test extends \advanced_testcase {
         $questiondata->maxpoints = 1500;
         $questiondata->minpoints = 750;
 
-        $questionid = questions::add_question($questiondata)->get_question_id();
+        $questionid = questions::add_question($questiondata, null)->get_question_id();
 
         // Verify question was created.
         $question = $DB->get_record('kahoodle_questions', ['id' => $questionid], '*', MUST_EXIST);
@@ -182,7 +182,7 @@ final class questions_test extends \advanced_testcase {
 
         $this->expectException(\moodle_exception::class);
         $this->expectExceptionMessage('No editable round available');
-        questions::add_question($questiondata);
+        questions::add_question($questiondata, null);
     }
 
     /**

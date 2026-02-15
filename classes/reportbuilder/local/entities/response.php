@@ -141,11 +141,8 @@ class response extends base {
             ->add_field("{$responsealias}.id", 'responseid')
             ->set_is_sortable(true)
             ->add_callback(static function (?float $value, \stdClass $row): string {
-                if ($row->responseid === null) {
-                    return '-';
-                }
-                if ($value === null) {
-                    return '-';
+                if ($row->responseid === null || $value === null) {
+                    return '';
                 }
                 return get_string('numseconds', 'moodle', number_format($value, 1));
             });

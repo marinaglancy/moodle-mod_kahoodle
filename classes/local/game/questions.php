@@ -139,7 +139,7 @@ class questions {
      * Accepts both question content and behavior data.
      *
      * @param \stdClass $questiondata Question data including:
-     *   - kahoodleid: Kahoodle activity ID (required)
+     *   - kahoodleid: Kahoodle activity ID (required if $round is not passed)
      *   - questiontype: Question type (required)
      *   - questiontext: Question text (required)
      *   - questiontextformat: Text format (optional, default FORMAT_HTML)
@@ -150,19 +150,19 @@ class questions {
      *   - maxpoints: Maximum points override (optional)
      *   - minpoints: Minimum points override (optional)
      *   - imagedraftitemid: Draft item ID for question images (optional)
+     * @param round|null $round round, if known
      * @return round_question The question entity
      * @throws \moodle_exception If no editable round exists
      */
-    public static function add_question(\stdClass $questiondata): round_question {
+    public static function add_question(\stdClass $questiondata, ?round $round): round_question {
         global $DB;
 
-        $kahoodleid = $questiondata->kahoodleid;
-
         // Get editable round ID, throw exception if there is no editable round.
-        $round = self::get_last_round($kahoodleid);
+        $round = $round ?? self::get_last_round($questiondata->kahoodleid);
         if (!$round->is_fully_editable()) {
             throw new \moodle_exception('noeditableround', 'mod_kahoodle');
         }
+        $kahoodleid = $round->get_kahoodleid();
         $roundquestionobj = round_question::new_for_round_and_type($round, $questiondata->questiontype ?? null);
         $defaultdata = $roundquestionobj->get_data();
         $roundquestionobj->get_question_type()->sanitize_data($roundquestionobj, $questiondata);
@@ -249,6 +249,8 @@ class questions {
         $roundquestion->timemodified = $time;
 
         $id = $DB->insert_record('kahoodle_round_questions', $roundquestion);
+
+        $round->clear_questions_cache();
 
         $event = \mod_kahoodle\event\question_created::create([
             'objectid' => $id,
@@ -402,6 +404,8 @@ class questions {
             }
         }
 
+        $round->clear_questions_cache();
+
         $event = \mod_kahoodle\event\question_updated::create([
             'objectid' => $roundquestion->get_question_id(),
             'context' => $round->get_context(),
@@ -481,6 +485,10 @@ class questions {
             ['id' => $roundquestion->get_id()]
         );
 
+        // Just in case validate that sortorders are sequential.
+        self::fix_round_sortorder($round->get_id());
+        $round->clear_questions_cache();
+
         $event = \mod_kahoodle\event\question_updated::create([
             'objectid' => $roundquestion->get_question_id(),
             'context' => $round->get_context(),
@@ -491,9 +499,6 @@ class questions {
             ],
         ]);
         $event->trigger();
-
-        // Just in case validate that sortorders are sequential.
-        self::fix_round_sortorder($round->get_id());
     }
 
     /**
@@ -550,6 +555,7 @@ class questions {
             }
         }
 
+        $round->clear_questions_cache();
         $event = \mod_kahoodle\event\question_removed::create([
             'objectid' => $roundquestion->get_question_id(),
             'context' => $round->get_context(),
@@ -646,6 +652,7 @@ class questions {
         // Renumber sortorders sequentially so the duplicate gets the next position.
         self::fix_round_sortorder($round->get_id());
 
+        $round->clear_questions_cache();
         $event = \mod_kahoodle\event\question_created::create([
             'objectid' => $id,
             'context' => $round->get_context(),

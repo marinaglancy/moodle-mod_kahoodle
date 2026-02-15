@@ -116,9 +116,7 @@ class add_questions extends external_api {
             try {
                 // Get the kahoodle instance to validate context.
                 $round = \mod_kahoodle\local\game\questions::get_last_round($questiondata['kahoodleid']);
-                if (!$round->is_fully_editable()) {
-                    throw new \moodle_exception('noeditableround', 'mod_kahoodle');
-                }
+
                 $context = $round->get_context();
 
                 // Validate context.
@@ -128,24 +126,17 @@ class add_questions extends external_api {
                 require_capability('mod/kahoodle:manage_questions', $context);
 
                 // Add the question (this will also handle file uploads).
-                $roundquestion = \mod_kahoodle\local\game\questions::add_question((object)$questiondata);
+                $roundquestion = \mod_kahoodle\local\game\questions::add_question((object)$questiondata, $round);
 
                 $questionids[] = [
                     'index' => $index,
                     'questionid' => $roundquestion->get_question_id(),
                 ];
-            } catch (\moodle_exception $e) {
+            } catch (\Throwable $e) {
                 $warnings[] = [
                     'item' => 'question',
                     'itemid' => $index,
-                    'warningcode' => $e->errorcode ?? 'error',
-                    'message' => $e->getMessage(),
-                ];
-            } catch (\Exception $e) {
-                $warnings[] = [
-                    'item' => 'question',
-                    'itemid' => $index,
-                    'warningcode' => 'exception',
+                    'warningcode' => ($e instanceof \moodle_exception) ? ($e->errorcode ?? 'error') : 'exception',
                     'message' => $e->getMessage(),
                 ];
             }
