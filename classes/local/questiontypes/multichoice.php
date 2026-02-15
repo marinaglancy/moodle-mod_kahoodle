@@ -61,6 +61,22 @@ class multichoice extends base {
             throw new \moodle_exception('multichoice_needonecorrectoption', 'mod_kahoodle');
         }
 
+        // If editing an existing question with responses, validate compatible changes.
+        if (
+            $roundquestion->get_id() &&
+                \mod_kahoodle\local\game\questions::question_has_responses($roundquestion->get_question_id())
+        ) {
+            $currentoptions = $this->get_answers_options($roundquestion->get_data()->questionconfig);
+            if (count($options) !== count($currentoptions)) {
+                throw new \moodle_exception('multichoice_cannotchangeoptioncount', 'mod_kahoodle');
+            }
+            $currentcorrect = array_keys(array_filter($currentoptions, fn($o) => $o['iscorrect']));
+            $newcorrect = array_keys(array_filter($options, fn($o) => $o['iscorrect']));
+            if ($currentcorrect !== $newcorrect) {
+                throw new \moodle_exception('multichoice_cannotchangecorrectanswer', 'mod_kahoodle');
+            }
+        }
+
         $options = array_map(fn($o) => ($o['iscorrect'] ? '*' : '') . clean_param($o['text'], PARAM_TEXT), $options);
 
         $data->questionconfig = join("\n", $options);
@@ -210,35 +226,6 @@ class multichoice extends base {
             'optioncount' => count($options),
             'manyoptions' => count($options) > 4,
         ];
-    }
-
-    /**
-     * Validate that proposed edit changes are compatible with existing responses
-     *
-     * For multichoice: cannot change the number of answers or the position of the correct answer.
-     *
-     * @param round_question $roundquestion The current round question
-     * @param \stdClass $newdata The proposed new data
-     * @return string[] Array of error messages
-     */
-    public function validate_edit_changes(round_question $roundquestion, \stdClass $newdata): array {
-        $errors = [];
-
-        $currentoptions = $this->get_answers_options($roundquestion->get_data()->questionconfig);
-        $newoptions = $this->get_answers_options($newdata->questionconfig ?? '');
-
-        if (count($newoptions) !== count($currentoptions)) {
-            $errors[] = get_string('multichoice_cannotchangeoptioncount', 'mod_kahoodle');
-        }
-
-        // Check if the correct answer position changed.
-        $currentcorrect = array_keys(array_filter($currentoptions, fn($o) => $o['iscorrect']));
-        $newcorrect = array_keys(array_filter($newoptions, fn($o) => $o['iscorrect']));
-        if ($currentcorrect !== $newcorrect) {
-            $errors[] = get_string('multichoice_cannotchangecorrectanswer', 'mod_kahoodle');
-        }
-
-        return $errors;
     }
 
     /**

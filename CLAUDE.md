@@ -258,7 +258,7 @@ The `\mod_kahoodle\local\game\questions` class provides the core question manage
    - Creates new version if current version is used in started rounds
    - Otherwise updates existing version in-place
    - Works in any round (not just fully editable ones)
-   - Validates changes against existing responses via question type's `validate_edit_changes()`
+   - Validates changes against existing responses via question type's `sanitize_question_config_data()`
 
 6. **`delete_question(round_question $roundquestion): void`**
    - Removes question from fully editable round
@@ -507,7 +507,7 @@ Abstract class that all question types must extend:
 **Provided Methods:**
 - `get_type(): string` - Returns the type identifier (class name, e.g., 'multichoice')
 - `sanitize_data(round_question $roundquestion, \stdClass $data): void` - Common sanitization (validates fields, formats, durations, points) then calls `sanitize_question_config_data()`
-- `validate_edit_changes(round_question $roundquestion, \stdClass $newdata): array` - Validate proposed edit changes against existing responses. Returns error messages if changes are not allowed. Default implementation allows all changes; override in subclasses to add restrictions.
+
 
 #### Multichoice Type (`multichoice.php`)
 
@@ -1382,4 +1382,3 @@ vendor/bin/phpunit --filter questions_test
     * edit question validation - entering negative values, entering maxvalue less than minvalue
     * unittest for get_avatar_candidates() - when there are no candidates at all, no candidates left, when max is reached
     * unittest for cleanup_avatar_candidates
-    * bug: two similar methos in question type - question_form_validation and validate_edit_changes

@@ -295,14 +295,6 @@ class questions {
         $round = $roundquestion->get_round();
         $roundquestion->get_question_type()->sanitize_data($roundquestion, $questiondata);
 
-        // Validate edit changes if this question has responses.
-        if (self::question_has_responses($questionid)) {
-            $editchangeerrors = $roundquestion->get_question_type()->validate_edit_changes($roundquestion, $questiondata);
-            if ($editchangeerrors) {
-                throw new \moodle_exception('errorgeneral', 'mod_kahoodle', '', implode(' ', $editchangeerrors));
-            }
-        }
-
         $contentchanges = [];
         $content = [];
         foreach (constants::FIELDS_QUESTION_VERSION as $field) {

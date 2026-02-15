@@ -273,22 +273,6 @@ class question extends dynamic_form {
 
         $errors += $roundquestion->get_question_type()->question_form_validation($roundquestion, $data, $files);
 
-        // Validate edit changes against existing responses (applies in both editable and non-editable rounds).
-        if (
-            $roundquestion->get_id() && empty($errors) &&
-                \mod_kahoodle\local\game\questions::question_has_responses($roundquestion->get_question_id())
-        ) {
-            $editchangeerrors = $roundquestion->get_question_type()->validate_edit_changes(
-                $roundquestion,
-                (object)$data
-            );
-            if ($editchangeerrors) {
-                // Attach the first error to the questionconfig field if it exists, otherwise use a general error.
-                $errorfield = isset($data['questionconfig']) ? 'questionconfig' : 'questiontext';
-                $errors[$errorfield] = implode(' ', $editchangeerrors);
-            }
-        }
-
         return $errors;
     }
 

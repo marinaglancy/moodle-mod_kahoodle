@@ -355,43 +355,77 @@ final class multichoice_test extends \advanced_testcase {
     }
 
     /**
-     * Test validate_edit_changes with compatible changes
+     * Create a question with a response so that edit restrictions apply
+     *
+     * @param string $config Question config string
+     * @return round_question
      */
-    public function test_validate_edit_changes_compatible(): void {
+    protected function create_question_with_response(string $config): round_question {
+        $rq = $this->create_question_with_config($config);
+        $user = $this->getDataGenerator()->create_user();
+        $round = $rq->get_round();
+        $participantid = $this->get_generator()->create_participant([
+            'roundid' => $round->get_id(),
+            'userid' => $user->id,
+        ]);
+        $this->get_generator()->create_response([
+            'participantid' => $participantid,
+            'roundquestionid' => $rq->get_id(),
+        ]);
+        return $rq;
+    }
+
+    /**
+     * Test sanitize allows compatible changes when question has responses
+     */
+    public function test_sanitize_with_responses_compatible(): void {
         $this->resetAfterTest();
-        $rq = $this->create_question_with_config("Apple\n*Banana\nCherry");
+        $rq = $this->create_question_with_response("Apple\n*Banana\nCherry");
 
         $mc = new multichoice();
         // Same option count, same correct position - just text changed.
-        $newdata = (object)['questionconfig' => "Red\n*Blue\nGreen"];
-        $errors = $mc->validate_edit_changes($rq, $newdata);
-        $this->assertEmpty($errors);
+        $data = (object)['questionconfig' => "Red\n*Blue\nGreen"];
+        $mc->sanitize_question_config_data($rq, $data);
+        $this->assertStringContainsString('*Blue', $data->questionconfig);
     }
 
     /**
-     * Test validate_edit_changes with changed option count
+     * Test sanitize rejects changed option count when question has responses
      */
-    public function test_validate_edit_changes_option_count_changed(): void {
+    public function test_sanitize_with_responses_option_count_changed(): void {
+        $this->resetAfterTest();
+        $rq = $this->create_question_with_response("A\n*B\nC");
+
+        $mc = new multichoice();
+        $data = (object)['questionconfig' => "A\n*B"];
+        $this->expectException(\moodle_exception::class);
+        $mc->sanitize_question_config_data($rq, $data);
+    }
+
+    /**
+     * Test sanitize rejects changed correct position when question has responses
+     */
+    public function test_sanitize_with_responses_correct_position_changed(): void {
+        $this->resetAfterTest();
+        $rq = $this->create_question_with_response("A\n*B\nC");
+
+        $mc = new multichoice();
+        $data = (object)['questionconfig' => "*A\nB\nC"];
+        $this->expectException(\moodle_exception::class);
+        $mc->sanitize_question_config_data($rq, $data);
+    }
+
+    /**
+     * Test sanitize allows option count change when question has no responses
+     */
+    public function test_sanitize_without_responses_option_count_changed(): void {
         $this->resetAfterTest();
         $rq = $this->create_question_with_config("A\n*B\nC");
 
         $mc = new multichoice();
-        $newdata = (object)['questionconfig' => "A\n*B"];
-        $errors = $mc->validate_edit_changes($rq, $newdata);
-        $this->assertNotEmpty($errors);
-    }
-
-    /**
-     * Test validate_edit_changes with changed correct position
-     */
-    public function test_validate_edit_changes_correct_position_changed(): void {
-        $this->resetAfterTest();
-        $rq = $this->create_question_with_config("A\n*B\nC");
-
-        $mc = new multichoice();
-        $newdata = (object)['questionconfig' => "*A\nB\nC"];
-        $errors = $mc->validate_edit_changes($rq, $newdata);
-        $this->assertNotEmpty($errors);
+        $data = (object)['questionconfig' => "A\n*B"];
+        $mc->sanitize_question_config_data($rq, $data);
+        $this->assertStringContainsString('*B', $data->questionconfig);
     }
 
     /**
