@@ -233,3 +233,33 @@ Feature: Managing questions in Kahoodle
       | 1     | What is the capital of UK? |
       | 2     | What is 5 + 5?             |
       | 3     | What is 5 + 5?             |
+
+  @javascript
+  Scenario: Question form validates negative values and maxpoints less than minpoints
+    When I log in as "teacher1"
+    And I am on the "Test Kahoodle" "kahoodle activity" page
+    And I navigate to "Questions" in current page administration
+    And I click on "Add question" "button"
+    And I click on "Multiple choice" "link"
+    And I set the field "Question text" in the "Add question: Multiple choice" "dialogue" to "Test question"
+    And I set the field "Answer options" to multiline:
+      """
+      Option A
+      *Option B
+      Option C
+      """
+    And I expand all fieldsets
+    # Test negative duration (non-negative validation).
+    And I set the field "questionduration" to "-10"
+    And I click on "Save changes" "button" in the "Add question: Multiple choice" "dialogue"
+    Then I should see "Value must be zero or positive"
+    # Fix duration, test maxpoints less than minpoints.
+    When I set the field "questionduration" to ""
+    And I set the field "maxpoints" to "100"
+    And I set the field "minpoints" to "500"
+    And I click on "Save changes" "button" in the "Add question: Multiple choice" "dialogue"
+    Then I should see "Maximum points must be greater than or equal to minimum points"
+    # Fix the issue and verify submission succeeds.
+    When I set the field "maxpoints" to "1000"
+    And I click on "Save changes" "button" in the "Add question: Multiple choice" "dialogue"
+    Then I should see "Test question"

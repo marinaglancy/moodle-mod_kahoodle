@@ -1374,11 +1374,9 @@ vendor/bin/phpunit --filter questions_test
 
 **To Do:**
 - Additional question types
-- Viewing the answer distribution chart in the results
 - Not covered with automated tests:
     * ? add question web service - errors adding questions, WS returning warnings
     * ? adding and editing questions with images (behat)
     * backup and restore with logs
-    * edit question validation - entering negative values, entering maxvalue less than minvalue
     * unittest for get_avatar_candidates() - when there are no candidates at all, no candidates left, when max is reached
     * unittest for cleanup_avatar_candidates
