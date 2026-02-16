@@ -208,7 +208,7 @@ class questions extends system_report {
      */
     protected function add_actions(): void {
         // Preview action.
-        $this->add_action(new action(
+        $this->add_action((new action(
             new moodle_url('#'),
             new pix_icon('t/preview', ''),
             [
@@ -218,7 +218,7 @@ class questions extends system_report {
             ],
             false,
             new lang_string('previewquestion', 'mod_kahoodle')
-        ));
+        ))->add_callback(fn() => component_class_callback('\\tool_kahoodleplus\\main', 'is_available', [])));
 
         // Edit action.
         $this->add_action(new action(

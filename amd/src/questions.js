@@ -31,7 +31,6 @@ import {call as fetchMany} from 'core/ajax';
 import SortableList from 'core/sortable_list';
 import $ from 'jquery';
 import * as DynamicTable from 'core_table/dynamic';
-import * as Player from 'mod_kahoodle/player';
 
 const SELECTORS = {
     QUESTIONS_REGION: '[data-region="mod_kahoodle-questions"]',
@@ -39,17 +38,8 @@ const SELECTORS = {
     EDIT_QUESTION_BUTTON: '[data-action="mod_kahoodle-edit-question"]',
     DELETE_QUESTION_BUTTON: '[data-action="mod_kahoodle-delete-question"]',
     DUPLICATE_QUESTION_BUTTON: '[data-action="mod_kahoodle-duplicate-question"]',
-    PREVIEW_QUESTION_BUTTON: '[data-action="mod_kahoodle-preview-question"]',
     SORTABLE_QUESTIONS_LIST: '[data-region="mod_kahoodle-questions"] tbody',
 };
-
-// Cache for preview questions data, keyed by roundId.
-let previewCache = {};
-
-// Preview state.
-let previewPlayerState = null;
-let previewStages = [];
-let previewIndex = 0;
 
 /**
  * Initialize the questions page
@@ -96,23 +86,12 @@ export const init = (roundId, questionTypes, isFullyEditable) => {
                 await duplicateQuestion(roundQuestionId, targetRoundId);
                 return;
             }
-
-            const previewButton = e.target.closest(SELECTORS.PREVIEW_QUESTION_BUTTON);
-            if (previewButton) {
-                e.preventDefault();
-                const previewRoundId = parseInt(previewButton.dataset.roundid, 10);
-                const roundQuestionId = parseInt(previewButton.dataset.roundquestionid, 10);
-                await openPreview(previewRoundId, roundQuestionId);
-            }
         });
 
-        // Listen for report reload events to clear the cache.
+        // Listen for report reload events to re-initialize sorting.
         const reportElement = questionsRegion.querySelector(reportSelectors.regions.report);
         if (reportElement) {
             reportElement.addEventListener(DynamicTable.Events.tableContentRefreshed, () => {
-                // Clear the preview cache when report reloads.
-                previewCache = {};
-                // Re-initialize sorting after reload (only if fully editable).
                 if (isFullyEditable) {
                     initSorting();
                 }
@@ -295,135 +274,4 @@ const reloadQuestionsTable = () => {
     if (reportElement) {
         dispatchEvent(reportEvents.tableReload, {preservePagination: true}, reportElement);
     }
-};
-
-/**
- * Process question data from web service for template use
- *
- * Decodes type-specific JSON data and adds typeis<type> boolean property.
- *
- * @param {Object} question Raw question data from web service
- * @param {Object} generalData General data to merge into question data
- * @returns {Object} Processed question data ready for template
- */
-const processQuestionData = (question, generalData) => {
-    // Decode the JSON-encoded type-specific data.
-    const typeData = JSON.parse(question.typedata || '{}');
-
-    // Store decoded type data under typedata to avoid naming conflicts.
-    const processed = {...generalData, ...question, typedata: typeData};
-
-    // Add typeis<type> boolean for Mustache conditional rendering.
-    // E.g., questiontype "multichoice" becomes typeismultichoice: true.
-    const typeName = question.questiontype;
-    processed['typeis' + typeName] = true;
-
-    return processed;
-};
-
-/**
- * Fetch preview questions from the web service
- *
- * @param {number} roundId The round ID
- * @returns {Promise<Array>} Array of question data
- */
-const fetchPreviewQuestions = async(roundId) => {
-    // Check cache first.
-    if (previewCache[roundId]) {
-        return previewCache[roundId];
-    }
-
-    const response = await fetchMany([{
-        methodname: 'mod_kahoodle_preview_questions',
-        args: {roundid: roundId},
-    }])[0];
-
-    // General data is everything in the reponse except questions (quiz name, number of questions, etc).
-    const generalData = {...response};
-    delete generalData.questionstages;
-
-    // Process each question to decode typedata and add isType boolean.
-    const processedQuestions = response.questionstages.map((q) => processQuestionData(q, generalData));
-
-    // Cache the processed result.
-    previewCache[roundId] = processedQuestions;
-    return processedQuestions;
-};
-
-/**
- * Open the preview overlay
- *
- * @param {number} roundId The round ID
- * @param {number} roundQuestionId The round question ID to start preview from
- */
-const openPreview = async(roundId, roundQuestionId) => {
-    try {
-        const questions = await fetchPreviewQuestions(roundId);
-
-        if (!questions || questions.length === 0) {
-            return;
-        }
-
-        // Find the index of the question to preview.
-        let startIndex = questions.findIndex(q => q.roundquestionid === roundQuestionId);
-        if (startIndex === -1) {
-            startIndex = 0;
-        }
-
-        previewStages = questions;
-        previewIndex = startIndex;
-
-        previewPlayerState = Player.create({
-            containerClass: 'mod_kahoodle-preview-container',
-            onNext: () => navigatePreview(1),
-            onBack: () => navigatePreview(-1),
-            onClose: () => closePreview(),
-        });
-
-        await showCurrentPreviewStage();
-    } catch (error) {
-        Notification.exception(error);
-    }
-};
-
-/**
- * Show the current preview stage
- */
-const showCurrentPreviewStage = async() => {
-    const question = previewStages[previewIndex];
-    if (!question || !previewPlayerState) {
-        return;
-    }
-
-    await Player.showStage(previewPlayerState, question.template, question, question.duration);
-};
-
-/**
- * Navigate to the previous or next question in preview
- *
- * @param {number} direction -1 for previous, 1 for next
- */
-const navigatePreview = async(direction) => {
-    const newIndex = previewIndex + direction;
-
-    // Check bounds.
-    if (newIndex < 0 || newIndex >= previewStages.length) {
-        return;
-    }
-
-    previewIndex = newIndex;
-    await showCurrentPreviewStage();
-};
-
-/**
- * Close the preview overlay
- */
-const closePreview = () => {
-    if (previewPlayerState) {
-        Player.close(previewPlayerState);
-        previewPlayerState = null;
-    }
-
-    previewStages = [];
-    previewIndex = 0;
 };

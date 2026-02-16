@@ -59,6 +59,7 @@ foreach (\mod_kahoodle\local\game\questions::get_question_types() as $questionty
 
 $isfullyeditable = $round->is_fully_editable();
 $PAGE->requires->js_call_amd('mod_kahoodle/questions', 'init', [$round->get_id(), $questiontypesjs, $isfullyeditable]);
+component_class_callback('\\tool_kahoodleplus\\main', 'questions_page_hook', []);
 
 echo $OUTPUT->header();
 

@@ -92,31 +92,3 @@ Feature: Managing rich text questions in Kahoodle
       | 1     | What is the capital of France? |
       | 2     | What is the capital of France? |
       | 3     | What is 5 + 5?                 |
-
-  Scenario: Rich text image is displayed on question stage but not on preview or results
-    Given the following "mod_kahoodle > questions" exist:
-      | kahoodle      | questiontext                                                                                                         | questionconfig         | attachimage |
-      | Test Kahoodle | <h3>What is the capital of France?</h3><p><img src="@@PLUGINFILE@@/testimage.png" alt="Test image" width="200"/></p> | London\n*Paris\nBerlin | 1           |
-    When I log in as "teacher1"
-    And I am on the "Test Kahoodle" "kahoodle activity" page
-    And I navigate to "Questions" in current page administration
-    And I click on "Actions" "link" in the "What is the capital of France?" "table_row"
-    And I choose "Preview question" in the open action menu
-    And I wait until ".mod_kahoodle-overlay [data-stage='preview']" "css_element" exists
-    # Preview stage shows compact text without embedded images.
-    Then I should see "What is the capital of France?" in the ".mod_kahoodle-overlay [data-stage='preview']" "css_element"
-    And ".mod_kahoodle-question img" "css_element" should not exist
-    # Advance to question stage: image is shown embedded in the rich text.
-    When I click on "[data-action='next']" "css_element"
-    And I wait until ".mod_kahoodle-overlay [data-stage='question']" "css_element" exists
-    Then I should see "What is the capital of France?" in the ".mod_kahoodle-overlay [data-stage='question']" "css_element"
-    And ".mod_kahoodle-question img" "css_element" should exist
-    # No separate image container in rich text mode (images are inline in the text).
-    And ".mod_kahoodle-image-container" "css_element" should not exist
-    And I should see "London" in the ".mod_kahoodle-overlay [data-stage='question']" "css_element"
-    And I should see "Paris" in the ".mod_kahoodle-overlay [data-stage='question']" "css_element"
-    # Advance to results stage: compact text, no embedded images.
-    When I click on "[data-action='next']" "css_element"
-    And I wait until ".mod_kahoodle-overlay [data-stage='results']" "css_element" exists
-    Then ".mod_kahoodle-question img" "css_element" should not exist
-    And I should see "Paris" in the ".mod_kahoodle-overlay [data-stage='results'] .mod_kahoodle-option-correct" "css_element"

@@ -25,7 +25,7 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │       ├── events.js         # PubSub event constants (ANSWER, REVEAL_RANK)
 │       ├── facilitator.js    # AMD module for facilitator game control
 │       ├── participant.js    # AMD module for participant interface
-│       └── questions.js      # AMD module for question management UI
+│       └── questions.js      # AMD module for question management (add/edit/delete/duplicate/sort)
 ├── backup/
 │   └── moodle2/              # Backup and restore functionality
 │       ├── backup_kahoodle_activity_task.class.php
@@ -1008,6 +1008,51 @@ The `mod_kahoodle_realtime_event_received()` function in `lib.php` handles all i
 - Touch-friendly interface for participants
 - Responsive layouts for various screen sizes
 - Consider mobile-first approach for participant view
+
+## Premium Plugin Integration (tool_kahoodleplus)
+
+Some features (e.g., question preview) are split into a separate premium plugin `tool_kahoodleplus` (`admin/tool/kahoodleplus`). The base `mod_kahoodle` plugin uses Moodle's `component_class_callback()` to conditionally invoke functionality from `tool_kahoodleplus` without creating a hard dependency. If `tool_kahoodleplus` is not installed, the callbacks return `null` and the features are silently unavailable.
+
+### Integration Pattern
+
+Use `component_class_callback()` to call methods on `\tool_kahoodleplus\main`. This function checks if the class exists before calling it — no `class_exists()` check needed.
+
+**Loading JS/page hooks** (in PHP pages like `questions.php`):
+```php
+// Calls \tool_kahoodleplus\main::questions_page_hook() if tool_kahoodleplus is installed.
+// The hook can load AMD modules, add page requirements, etc.
+component_class_callback('\\tool_kahoodleplus\\main', 'questions_page_hook', []);
+```
+
+**Conditionally showing report actions** (in system reports):
+```php
+// The action callback must return true to show the action.
+// component_class_callback returns null if class doesn't exist, which is falsy → action hidden.
+$this->add_action((new action(...))->add_callback(
+    fn() => component_class_callback('\\tool_kahoodleplus\\main', 'is_available', [])
+));
+```
+
+### Current Hook Points
+
+| Location | Hook | Purpose |
+|---|---|---|
+| `questions.php` | `questions_page_hook()` | Load AMD modules for question preview |
+| `reportbuilder/.../questions.php` | `is_available()` | Show/hide preview action in questions report |
+
+### tool_kahoodleplus Assets
+
+Features that have been moved to `tool_kahoodleplus`:
+- `admin/tool/kahoodleplus/amd/src/questions_preview.js` — question preview overlay (imports `mod_kahoodle/player`)
+- `admin/tool/kahoodleplus/tests/behat/question_preview.feature` — behat tests for question preview (including rich text preview)
+
+### Adding New Hook Points
+
+When moving functionality from `mod_kahoodle` to `tool_kahoodleplus`:
+1. Add a `component_class_callback()` call in `mod_kahoodle` at the point where the feature is needed
+2. Implement the corresponding static method in `\tool_kahoodleplus\main`
+3. Move JS/PHP files to `admin/tool/kahoodleplus/` and update AMD module paths accordingly
+4. Cross-plugin imports (e.g., `import * as Player from 'mod_kahoodle/player'`) work fine in Moodle AMD
 
 ## Development Workflow
 
