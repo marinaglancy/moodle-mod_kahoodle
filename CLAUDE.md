@@ -1374,6 +1374,3 @@ vendor/bin/phpunit --filter questions_test
 
 **To Do:**
 - Additional question types
-- Not covered with automated tests:
-    * ? add question web service - errors adding questions, WS returning warnings
-    * ? adding and editing questions with images (behat)

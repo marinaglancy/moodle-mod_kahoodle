@@ -149,19 +149,28 @@ function kahoodle_pluginfile($course, $cm, $context, $filearea, $args, $forcedow
 
     require_course_login($course, true, $cm);
 
-    // Check the file area.
-    $allowedareas = [
-        \mod_kahoodle\constants::FILEAREA_QUESTION_IMAGE,
-        \mod_kahoodle\constants::FILEAREA_AVATAR,
-    ];
-    if (!in_array($filearea, $allowedareas)) {
-        // The intro file area is handled automatically.
+    // Permission checks for each file area.
+    if ($filearea === \mod_kahoodle\constants::FILEAREA_QUESTION_IMAGE) {
+        // Question images: visible to anyone who can facilitate, manage questions or view results.
+        $caps = ['mod/kahoodle:facilitate', 'mod/kahoodle:manage_questions', 'mod/kahoodle:viewresults'];
+        if (!has_any_capability($caps, $context)) {
+            return;
+        }
+    } else if ($filearea === \mod_kahoodle\constants::FILEAREA_AVATAR) {
+        // Avatars: visible to anyone who can facilitate or view results, or the participant's own avatar.
+        $caps = ['mod/kahoodle:facilitate', 'mod/kahoodle:viewresults'];
+        if (!has_any_capability($caps, $context)) {
+            $participantid = (int)$args[0];
+            $roundid = 0;
+            $statistics = \mod_kahoodle\local\entities\statistics::create_for_participant_id($participantid, $roundid);
+            $round = $statistics->get_all_rounds()[$roundid] ?? null;
+            if ($round?->is_participant()?->get_id() !== $participantid) {
+                return;
+            }
+        }
+    } else {
         return;
     }
-
-    // TODO implement permission checks:
-    // - question image - capability to facilitate, manage questions or view results
-    // - avatar - it is either own avatar or capability to facilitate or view results
 
     // The item ID is the question version ID (for question images) or participant ID (for avatars).
     $itemid = array_shift($args);
