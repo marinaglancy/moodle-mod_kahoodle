@@ -168,7 +168,7 @@ class all_rounds_participants extends system_report {
      */
     protected function add_columns(): void {
         $columns = [
-            'round:namelinked',
+            'round:name',
             'participant:participant',
             'user:fullnamewithpicturelink',
             'participant:rank',
@@ -180,6 +180,21 @@ class all_rounds_participants extends system_report {
             $columns = array_diff($columns, ['user:fullnamewithpicturelink']);
         }
         $this->add_columns_from_entities($columns);
+
+        // When plus is available, make round name a link to the per-round participants report.
+        if (component_class_callback('\\tool_kahoodleplus\\main', 'is_available', [])) {
+            $this->get_column('round:name')
+                ->set_callback(static function (?string $value, \stdClass $row): string {
+                    if (empty($row->id)) {
+                        return '';
+                    }
+                    $url = new moodle_url('/mod/kahoodle/results.php', [
+                        'roundid' => $row->id,
+                        'view' => 'participants',
+                    ]);
+                    return \html_writer::link($url, format_string($value ?? '', true));
+                });
+        }
     }
 
     /**
@@ -207,13 +222,13 @@ class all_rounds_participants extends system_report {
      * @return void
      */
     protected function add_actions(): void {
-        // View answers action.
-        $this->add_action(new action(
+        // View answers action (requires tool_kahoodleplus).
+        $this->add_action((new action(
             new moodle_url('/mod/kahoodle/results.php', ['view' => 'details', 'participantid' => ':participantid']),
             new pix_icon('i/preview', ''),
             [],
             false,
             new lang_string('viewanswers', 'mod_kahoodle')
-        ));
+        ))->add_callback(fn() => component_class_callback('\\tool_kahoodleplus\\main', 'is_available', [])));
     }
 }

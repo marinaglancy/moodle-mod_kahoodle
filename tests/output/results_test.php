@@ -126,10 +126,12 @@ final class results_test extends \advanced_testcase {
     }
 
     /**
-     * Test results output with a completed (archived) round with participants.
+     * Test results output with a completed (archived) round with participants (without plus).
      */
     public function test_completed_round(): void {
+        global $CFG;
         $this->resetAfterTest();
+        $CFG->disablekahoodleplus = 1;
         ['statistics' => $statistics, 'cm' => $cm, 'teacher' => $teacher, 'student' => $student] = $this->setup_kahoodle();
         $output = $this->setup_page($cm);
 
@@ -160,6 +162,43 @@ final class results_test extends \advanced_testcase {
         $this->assertGreaterThanOrEqual(1, $rounddata->participantcount);
         $this->assertIsNumeric($rounddata->averagescore);
         $this->assertIsInt($rounddata->maxscore);
+        // Without plus, per-round report URLs are not set.
+        $this->assertObjectNotHasProperty('participantsurl', $rounddata);
+        $this->assertObjectNotHasProperty('statisticsurl', $rounddata);
+    }
+
+    /**
+     * Test results output with a completed round with tool_kahoodleplus enabled.
+     */
+    public function test_completed_round_with_plus(): void {
+        if (!\core_component::get_component_directory('tool_kahoodleplus')) {
+            $this->markTestSkipped('tool_kahoodleplus is not installed');
+        }
+        $this->resetAfterTest();
+        ['statistics' => $statistics, 'cm' => $cm, 'teacher' => $teacher, 'student' => $student] = $this->setup_kahoodle();
+        $output = $this->setup_page($cm);
+
+        $this->setUser($teacher);
+
+        /** @var \mod_kahoodle_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
+
+        // Add a participant to the round.
+        $round = $statistics->get_last_round();
+        $generator->create_participant([
+            'roundid' => $round->get_id(),
+            'userid' => $student->id,
+            'displayname' => 'Player One',
+            'totalscore' => 500,
+        ]);
+
+        // Set round to archived.
+        $this->set_round_stage($round, constants::STAGE_ARCHIVED);
+
+        $resultsoutput = new results($statistics);
+        $result = $resultsoutput->export_for_template($output);
+
+        $rounddata = $result->rounds[0];
         $this->assertNotEmpty($rounddata->participantsurl);
         $this->assertNotEmpty($rounddata->statisticsurl);
     }
@@ -186,9 +225,49 @@ final class results_test extends \advanced_testcase {
     }
 
     /**
-     * Test that allrounds buttons are shown when there are multiple archived rounds.
+     * Test allrounds buttons with multiple archived rounds (without plus).
      */
     public function test_allrounds_buttons_multiple(): void {
+        global $CFG;
+        $this->resetAfterTest();
+        $CFG->disablekahoodleplus = 1;
+        ['statistics' => $statistics, 'cm' => $cm, 'teacher' => $teacher] = $this->setup_kahoodle();
+        $output = $this->setup_page($cm);
+
+        $this->setUser($teacher);
+
+        /** @var \mod_kahoodle_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
+
+        // Set first round to archived.
+        $this->set_round_stage($statistics->get_last_round(), constants::STAGE_ARCHIVED);
+
+        // Create a second archived round.
+        $generator->create_round([
+            'kahoodleid' => $statistics->get_kahoodleid(),
+            'currentstage' => constants::STAGE_ARCHIVED,
+            'timestarted' => time() - 7200,
+            'timecompleted' => time() - 3600,
+            'stagestarttime' => time() - 3600,
+        ]);
+
+        $statistics = statistics::create_from_kahoodle_id(0, $statistics->get_kahoodle(), $cm);
+        $resultsoutput = new results($statistics);
+        $result = $resultsoutput->export_for_template($output);
+
+        $this->assertTrue($result->showallroundsbuttons);
+        $this->assertNotEmpty($result->allparticipantsurl);
+        // Without plus, allstatisticsurl is not set.
+        $this->assertObjectNotHasProperty('allstatisticsurl', $result);
+    }
+
+    /**
+     * Test allrounds buttons with multiple archived rounds and tool_kahoodleplus enabled.
+     */
+    public function test_allrounds_buttons_multiple_with_plus(): void {
+        if (!\core_component::get_component_directory('tool_kahoodleplus')) {
+            $this->markTestSkipped('tool_kahoodleplus is not installed');
+        }
         $this->resetAfterTest();
         ['statistics' => $statistics, 'cm' => $cm, 'teacher' => $teacher] = $this->setup_kahoodle();
         $output = $this->setup_page($cm);
@@ -220,11 +299,13 @@ final class results_test extends \advanced_testcase {
     }
 
     /**
-     * Test that allrounds buttons are not shown when there is only one archived round.
+     * Test that allrounds buttons are shown with a single archived round (without plus).
      */
     public function test_allrounds_buttons_single(): void {
+        global $CFG;
         $this->resetAfterTest();
-        ['statistics' => $statistics, 'cm' => $cm, 'teacher' => $teacher, 'student' => $student] = $this->setup_kahoodle();
+        $CFG->disablekahoodleplus = 1;
+        ['statistics' => $statistics, 'cm' => $cm, 'teacher' => $teacher] = $this->setup_kahoodle();
         $output = $this->setup_page($cm);
 
         $this->setUser($teacher);
@@ -235,6 +316,32 @@ final class results_test extends \advanced_testcase {
         $resultsoutput = new results($statistics);
         $result = $resultsoutput->export_for_template($output);
 
+        // Without plus, allrounds buttons are shown even with 1 completed round.
+        $this->assertTrue($result->showallroundsbuttons);
+        $this->assertNotEmpty($result->allparticipantsurl);
+        $this->assertObjectNotHasProperty('allstatisticsurl', $result);
+    }
+
+    /**
+     * Test that allrounds buttons are not shown with a single archived round (with plus).
+     */
+    public function test_allrounds_buttons_single_with_plus(): void {
+        if (!\core_component::get_component_directory('tool_kahoodleplus')) {
+            $this->markTestSkipped('tool_kahoodleplus is not installed');
+        }
+        $this->resetAfterTest();
+        ['statistics' => $statistics, 'cm' => $cm, 'teacher' => $teacher] = $this->setup_kahoodle();
+        $output = $this->setup_page($cm);
+
+        $this->setUser($teacher);
+
+        // Set the round to archived (only one round).
+        $this->set_round_stage($statistics->get_last_round(), constants::STAGE_ARCHIVED);
+
+        $resultsoutput = new results($statistics);
+        $result = $resultsoutput->export_for_template($output);
+
+        // With plus, allrounds buttons are not shown with only 1 completed round.
         $this->assertFalse($result->showallroundsbuttons);
     }
 }

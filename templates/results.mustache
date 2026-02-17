@@ -64,9 +64,16 @@
         <a href="{{allparticipantsurl}}" class="btn btn-outline-primary me-2">
             {{#str}}allroundsparticipants, mod_kahoodle{{/str}}
         </a>
+        {{#allstatisticsurl}}
         <a href="{{allstatisticsurl}}" class="btn btn-outline-secondary">
             {{#str}}allroundsstatistics, mod_kahoodle{{/str}}
         </a>
+        {{/allstatisticsurl}}
+        {{^allstatisticsurl}}
+        <button class="btn btn-outline-secondary" disabled>
+            {{#str}}allroundsstatistics, mod_kahoodle{{/str}}
+        </button>
+        {{/allstatisticsurl}}
     </div>
     {{/showallroundsbuttons}}
     <div class="row">
@@ -107,12 +114,26 @@
                 </div>
                 {{#showfullstats}}
                 <div class="card-footer">
+                    {{#participantsurl}}
                     <a href="{{participantsurl}}" class="btn btn-sm btn-outline-primary me-2">
                         {{#str}}results_viewparticipants, mod_kahoodle{{/str}}
                     </a>
+                    {{/participantsurl}}
+                    {{^participantsurl}}
+                    <button class="btn btn-sm btn-outline-primary me-2" disabled>
+                        {{#str}}results_viewparticipants, mod_kahoodle{{/str}}
+                    </button>
+                    {{/participantsurl}}
+                    {{#statisticsurl}}
                     <a href="{{statisticsurl}}" class="btn btn-sm btn-outline-secondary me-2">
                         {{#str}}results_viewstatistics, mod_kahoodle{{/str}}
                     </a>
+                    {{/statisticsurl}}
+                    {{^statisticsurl}}
+                    <button class="btn btn-sm btn-outline-secondary me-2" disabled>
+                        {{#str}}results_viewstatistics, mod_kahoodle{{/str}}
+                    </button>
+                    {{/statisticsurl}}
                     {{#editquestionsurl}}
                     <a href="{{editquestionsurl}}" class="btn btn-sm btn-outline-secondary">
                         {{#str}}managequestions, mod_kahoodle{{/str}}

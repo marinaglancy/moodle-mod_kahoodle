@@ -23,9 +23,7 @@ use core_reportbuilder\local\filters\text;
 use core_reportbuilder\local\filters\select;
 use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
-use html_writer;
 use lang_string;
-use moodle_url;
 
 /**
  * Round entity for report builder
@@ -97,25 +95,6 @@ class round extends base {
             ->set_is_sortable(true)
             ->add_callback(static function (?string $value, \stdClass $row): string {
                 return empty($row->id) ? '' : format_string($value ?? '', true);
-            });
-
-        // Round name with link to participants.
-        $columns[] = (new column(
-            'namelinked',
-            new lang_string('round', 'mod_kahoodle'),
-            $this->get_entity_name()
-        ))
-            ->add_joins($this->get_joins())
-            ->set_type(column::TYPE_TEXT)
-            ->add_field("{$roundalias}.name")
-            ->add_field("{$roundalias}.id")
-            ->set_is_sortable(true, ["{$roundalias}.name"])
-            ->add_callback(static function (?string $value, \stdClass $row): string {
-                $url = new moodle_url('/mod/kahoodle/results.php', [
-                    'roundid' => $row->id,
-                    'view' => 'participants',
-                ]);
-                return empty($row->id) ? '' : html_writer::link($url, format_string($value ?? '', true));
             });
 
         return $columns;

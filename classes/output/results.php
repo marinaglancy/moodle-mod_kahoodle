@@ -53,6 +53,7 @@ class results implements renderable, templatable {
 
         $context = $this->statistics->get_context();
         $canmanagequestions = has_capability('mod/kahoodle:manage_questions', $context);
+        $plusavailable = (bool)component_class_callback('\\tool_kahoodleplus\\main', 'is_available', []);
 
         $data = new stdClass();
         $data->rounds = [];
@@ -116,15 +117,17 @@ class results implements renderable, templatable {
                 // Placeholder for completed count (to be implemented later).
                 $rounddata->completedcount = 0;
 
-                // Links (non-functional for now, will be implemented later).
-                $rounddata->participantsurl = (new moodle_url(
-                    '/mod/kahoodle/results.php',
-                    ['roundid' => $round->get_id(), 'view' => 'participants']
-                ))->out(false);
-                $rounddata->statisticsurl = (new moodle_url(
-                    '/mod/kahoodle/results.php',
-                    ['roundid' => $round->get_id(), 'view' => 'statistics']
-                ))->out(false);
+                // Per-round report links are only available with tool_kahoodleplus.
+                if ($plusavailable) {
+                    $rounddata->participantsurl = (new moodle_url(
+                        '/mod/kahoodle/results.php',
+                        ['roundid' => $round->get_id(), 'view' => 'participants']
+                    ))->out(false);
+                    $rounddata->statisticsurl = (new moodle_url(
+                        '/mod/kahoodle/results.php',
+                        ['roundid' => $round->get_id(), 'view' => 'statistics']
+                    ))->out(false);
+                }
             }
 
             // Edit questions link for users with manage_questions capability.
@@ -143,18 +146,23 @@ class results implements renderable, templatable {
             return $count + ($round->showfullstats ? 1 : 0);
         }, 0);
 
-        // Show "all rounds" buttons if there are more than 1 completed round.
-        $data->showallroundsbuttons = ($completedroundscount > 1);
+        // Show "all rounds" buttons:
+        // - With plus: when there are 2+ completed rounds (all reports available).
+        // - Without plus: when there is at least 1 completed round (only allparticipants is available).
+        $data->showallroundsbuttons = $completedroundscount > 1
+            || ($completedroundscount == 1 && !$plusavailable);
         if ($data->showallroundsbuttons) {
             $cmid = $this->statistics->get_cm()->id;
             $data->allparticipantsurl = (new moodle_url(
                 '/mod/kahoodle/results.php',
                 ['id' => $cmid, 'view' => 'allparticipants']
             ))->out(false);
-            $data->allstatisticsurl = (new moodle_url(
-                '/mod/kahoodle/results.php',
-                ['id' => $cmid, 'view' => 'allstatistics']
-            ))->out(false);
+            if ($plusavailable) {
+                $data->allstatisticsurl = (new moodle_url(
+                    '/mod/kahoodle/results.php',
+                    ['id' => $cmid, 'view' => 'allstatistics']
+                ))->out(false);
+            }
         }
 
         return $data;

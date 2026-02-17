@@ -602,7 +602,6 @@ Provides columns and filters for displaying round information.
 
 **Columns:**
 - `name`: Round name (plain text, falls back to "Round N" if empty)
-- `namelinked`: Round name with link to participants view
 
 **Filters:** `name`
 
@@ -649,7 +648,7 @@ Provides columns and filters for displaying round information.
 - Shows participants from all completed rounds (revision or archived) for a kahoodle activity
 - Main table: `kahoodle`, with joins to rounds then participants
 - Uses round entity for round name column and filter
-- Columns: round:namelinked, participant:participant, user:fullnamewithpicturelink, rank, score, correctanswers, questionsanswered
+- Columns: round:name (linked to per-round participants when plus available), participant:participant, user:fullnamewithpicturelink, rank, score, correctanswers, questionsanswered
 - In anonymous mode: user entity, user column, and user filter are excluded
 - Filters: round:name, displayname, user:userselect, rank, score
 - Actions: View answers (links to participant details)
