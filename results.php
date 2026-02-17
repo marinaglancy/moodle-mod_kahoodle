@@ -64,130 +64,15 @@ $PAGE->activityheader->disable();
 
 echo $OUTPUT->header();
 
-// Handle different views.
-if (!empty($participantid) && $view === 'details') {
-    // Show participant answers report.
-    /** @var \mod_kahoodle\reportbuilder\local\systemreports\participant_answers $report */
-    $report = \core_reportbuilder\system_report_factory::create(
-        \mod_kahoodle\reportbuilder\local\systemreports\participant_answers::class,
-        $PAGE->context,
-        'mod_kahoodle',
-        '',
-        0,
-        ['participantid' => $participantid]
-    );
-
-    // Get participant data for header.
-    $participant = $report->get_participant();
-
-    // Back button to participants list.
-    $backurl = new moodle_url('/mod/kahoodle/results.php', ['roundid' => $round->get_id(), 'view' => 'participants']);
-    echo html_writer::div(
-        html_writer::link($backurl, get_string('back') . ': ' . $round->get_display_name(), ['class' => 'btn btn-secondary mb-3']),
-        'mb-3'
-    );
-
-    // Participant info header.
-    echo html_writer::start_div('participant-details-header d-flex align-items-center mb-4 p-3 bg-light rounded');
-
-    // Participant avatar and display name.
-    $avatarurl = $participant->get_avatar_url();
-    $class = (int)($CFG->branch) >= 500 ? 'me-3' : 'mr-3';
-    echo html_writer::img($avatarurl->out(false), '', ['class' => 'rounded-circle ' . $class, 'width' => 64, 'height' => 64]);
-    echo html_writer::start_div('participant-info');
-    echo html_writer::tag('h4', s($participant->get_display_name()), ['class' => 'mb-1']);
-
-    // User info (if available).
-    if ($participant->get_user_id()) {
-        $user = $participant->get_user_record();
-        $profileurl = new moodle_url('/user/profile.php', ['id' => $user->id]);
-        $class = (int)($CFG->branch) >= 500 ? 'me-1' : 'mr-1';
-        $userpic = $OUTPUT->user_picture($user, ['size' => 24, 'link' => false, 'class' => $class]);
-        echo html_writer::div(
-            html_writer::link($profileurl, $userpic . fullname($user)),
-            'text-muted small'
-        );
-    }
-    echo html_writer::end_div();
-
-    // Total score.
-    $class = (int)($CFG->branch) >= 500 ? 'ms-auto' : 'ml-auto';
-    echo html_writer::div(
-        html_writer::tag('span', get_string('score', 'mod_kahoodle') . ': ', ['class' => 'text-muted']) .
-        html_writer::tag('strong', number_format($participant->get_total_score())),
-        $class . ' h5 mb-0'
-    );
-
-    echo html_writer::end_div();
-
-    // Heading.
-    echo $OUTPUT->heading(get_string('participantanswers', 'mod_kahoodle'), 3);
-
-    echo $report->output();
-} else if (!empty($roundid) && $view === 'participants') {
-    // Show participants report for this round.
-
-    // Back button.
-    $backurl = new moodle_url('/mod/kahoodle/results.php', ['id' => $cm->id]);
-    echo html_writer::div(
-        html_writer::link($backurl, get_string('back'), ['class' => 'btn btn-secondary mb-3']),
-        'mb-3'
-    );
-
-    // Round name as heading.
-    echo $OUTPUT->heading($round->get_display_name() . ' - ' . get_string('participants', 'mod_kahoodle'), 3);
-
-    $report = \core_reportbuilder\system_report_factory::create(
-        \mod_kahoodle\reportbuilder\local\systemreports\participants::class,
-        $PAGE->context,
-        'mod_kahoodle',
-        '',
-        0,
-        ['roundid' => $round->get_id()]
-    );
-
-    echo $report->output();
-} else if (!empty($roundid) && $view === 'statistics') {
-    // Show statistics report for this round.
-
-    // Back button.
-    $backurl = new moodle_url('/mod/kahoodle/results.php', ['id' => $cm->id]);
-    echo html_writer::div(
-        html_writer::link($backurl, get_string('back'), ['class' => 'btn btn-secondary mb-3']),
-        'mb-3'
-    );
-
-    // Round name as heading.
-    echo $OUTPUT->heading($round->get_display_name() . ' - ' . get_string('statistics', 'mod_kahoodle'), 3);
-
-    // Show total participants count.
-    $participantscount = $round->get_participants_count();
-    echo html_writer::div(
-        get_string('totalparticipants', 'mod_kahoodle') . ': ' . $participantscount,
-        'text-muted mb-3'
-    );
-
-    // Play all button.
-    $PAGE->requires->js_call_amd('mod_kahoodle/playback', 'init');
-    echo html_writer::div(
-        html_writer::link('#', get_string('playbackall', 'mod_kahoodle'), [
-            'class' => 'btn btn-primary mb-3',
-            'data-action' => 'mod_kahoodle-playback-all',
-            'data-roundid' => $round->get_id(),
-        ]),
-        'mb-3'
-    );
-
-    $report = \core_reportbuilder\system_report_factory::create(
-        \mod_kahoodle\reportbuilder\local\systemreports\statistics::class,
-        $PAGE->context,
-        'mod_kahoodle',
-        '',
-        0,
-        ['roundid' => $round->get_id()]
-    );
-
-    echo $report->output();
+// Handle different views. Some views are provided by tool_kahoodleplus.
+$rendered = component_class_callback(
+    '\\tool_kahoodleplus\\main',
+    'results_page_hook',
+    [$view, $round ?? $statistics, $participantid]
+);
+// phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
+if ($rendered) {
+    // Rendered by tool_kahoodleplus.
 } else if ($view === 'allparticipants') {
     // Show participants report for all rounds.
 
@@ -203,40 +88,6 @@ if (!empty($participantid) && $view === 'details') {
 
     $report = \core_reportbuilder\system_report_factory::create(
         \mod_kahoodle\reportbuilder\local\systemreports\all_rounds_participants::class,
-        $PAGE->context,
-        'mod_kahoodle',
-        '',
-        0,
-        ['kahoodleid' => $PAGE->activityrecord->id]
-    );
-
-    echo $report->output();
-} else if ($view === 'allstatistics') {
-    // Show statistics report for all rounds.
-
-    // Back button.
-    $backurl = new moodle_url('/mod/kahoodle/results.php', ['id' => $cm->id]);
-    echo html_writer::div(
-        html_writer::link($backurl, get_string('back'), ['class' => 'btn btn-secondary mb-3']),
-        'mb-3'
-    );
-
-    // Heading.
-    echo $OUTPUT->heading(get_string('allroundsstatistics', 'mod_kahoodle'), 3);
-
-    // Play all button.
-    $PAGE->requires->js_call_amd('mod_kahoodle/playback', 'init');
-    echo html_writer::div(
-        html_writer::link('#', get_string('playbackall', 'mod_kahoodle'), [
-            'class' => 'btn btn-primary mb-3',
-            'data-action' => 'mod_kahoodle-playback-all',
-            'data-kahoodleid' => $PAGE->activityrecord->id,
-        ]),
-        'mb-3'
-    );
-
-    $report = \core_reportbuilder\system_report_factory::create(
-        \mod_kahoodle\reportbuilder\local\systemreports\all_rounds_statistics::class,
         $PAGE->context,
         'mod_kahoodle',
         '',
