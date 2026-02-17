@@ -107,8 +107,10 @@
                         <dt class="col-6">{{#str}}results_maxscore, mod_kahoodle{{/str}}</dt>
                         <dd class="col-6" data-field="maxscore">{{{maxscore}}}</dd>
 
+                        {{#hascompletion}}
                         <dt class="col-6">{{#str}}results_completed, mod_kahoodle{{/str}}</dt>
                         <dd class="col-6" data-field="completed">{{{completedcount}}}</dd>
+                        {{/hascompletion}}
                         {{/showfullstats}}
                     </dl>
                 </div>

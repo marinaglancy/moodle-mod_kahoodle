@@ -114,7 +114,8 @@ class results implements renderable, templatable {
                 $rounddata->averagescore = round((float)$stats->averagescore);
                 $rounddata->maxscore = (int)$stats->maxscore;
 
-                // Placeholder for completed count (to be implemented later).
+                // TODO Placeholder for completed count (to be implemented later).
+                $rounddata->hascompletion = false;
                 $rounddata->completedcount = 0;
 
                 // Per-round report links are only available with tool_kahoodleplus.

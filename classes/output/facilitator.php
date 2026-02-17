@@ -242,12 +242,10 @@ class facilitator implements \renderable, \templatable {
         $templatedata = self::get_leaderboard_data($this->round->get_leaders(), true);
         $templatedata['isrevision'] = true;
 
-        // TODO if there was more than 30 seconds since the beginning of the revision stage,
-        // skip the podium display.
-
-        // Prepare data for the podium.
+        // If too much time has elapsed since revision started, skip the podium animation.
         $podiumranks = $this->round->get_podium_ranks();
-        if (!$this->round->is_podium_shown()) {
+        $elapsed = $this->round->get_current_stage_elapsed_time() ?? 0;
+        if (!$this->round->is_podium_shown() || $elapsed > constants::MAX_RANK_REVEAL_DELAY) {
             // Not enough participants for podium.
             $templatedata['skippodium'] = true;
             return $templatedata;

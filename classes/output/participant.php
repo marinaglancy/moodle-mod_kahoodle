@@ -219,7 +219,7 @@ class participant implements \renderable, \templatable {
      */
     protected function get_revision_data(): array {
         $elapsed = $this->round->get_current_stage_elapsed_time();
-        $podiumduration = 60; // It is actually less but this is a fallback if reveal events do not work for some reason.
+        $podiumduration = constants::MAX_RANK_REVEAL_DELAY;
         $autoreveal = ($elapsed > $podiumduration || !$this->round->is_podium_shown()) ? 0 : ($podiumduration - $elapsed);
         return $this->rank->get_data_for_revision() + [
             'autorevealin' => $autoreveal,

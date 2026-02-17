@@ -971,6 +971,10 @@ class round {
      * @return bool
      */
     public function is_podium_shown(): bool {
+        // Config used in behat tests to skip the podium animation and show leaderboard directly.
+        if (get_config('mod_kahoodle', 'hide_podium')) {
+            return false;
+        }
         $podiumranks = $this->get_podium_ranks();
         return count($podiumranks) > 1;
     }

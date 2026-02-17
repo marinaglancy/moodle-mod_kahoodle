@@ -6,6 +6,7 @@ Feature: Facilitator game control
   Background:
     Given the following config values are set as admin:
       | requesttimeout | 2 | realtimeplugin_phppoll |
+      | hide_podium    | 1 | mod_kahoodle           |
     And the following "users" exist:
       | username | firstname | lastname | email                |
       | teacher1 | Terry     | Teacher  | teacher1@example.com |
@@ -198,9 +199,10 @@ Feature: Facilitator game control
     When I log in as "teacher1"
     And I am on the "Test Kahoodle" "kahoodle activity" page
     And I wait until ".mod_kahoodle-overlay [data-stage='revision']" "css_element" exists
-    # TODO podium animation prevents checking leaderboard atm
-    # And I should see "Sam" in the ".mod_kahoodle-overlay" "css_element"
-    And ".mod_kahoodle-overlay [data-stage='revision']" "css_element" should exist
+    # Podium is hidden via hide_podium config, so the leaderboard is shown directly.
+    Then I should see "Sam" in the ".mod_kahoodle-overlay [data-stage='revision'] .mod_kahoodle-leaderboard-row:nth-child(1)" "css_element"
+    And I should see "900" in the ".mod_kahoodle-overlay [data-stage='revision'] .mod_kahoodle-leaderboard-row:nth-child(1)" "css_element"
+    And I should see "Alex" in the ".mod_kahoodle-overlay [data-stage='revision'] .mod_kahoodle-leaderboard-row:nth-child(2)" "css_element"
     And I should see "Finish activity" in the ".mod_kahoodle-overlay" "css_element"
     # Make sure all php polling requests are finished before the end of the test
     When the kahoodle "Test Kahoodle" round stage is "archived"

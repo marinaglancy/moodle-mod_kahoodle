@@ -147,6 +147,7 @@ class provider implements
                        p.finalrank,
                        p.timecreated AS participanttimecreated,
                        r.name AS roundname,
+                       r.timestarted AS roundtimestarted,
                        cm.id AS cmid
                   FROM {context} ctx
                   JOIN {course_modules} cm ON cm.id = ctx.instanceid AND ctx.contextlevel = :contextlevel
@@ -184,7 +185,7 @@ class provider implements
             );
 
             $participation = [
-                'round' => $record->roundname, // TODO we do not export round name to participants, but instead date/time.
+                'round' => $record->roundtimestarted ? transform::datetime($record->roundtimestarted) : $record->roundname,
                 'displayname' => $record->displayname,
                 'totalscore' => $record->totalscore,
                 'finalrank' => $record->finalrank,

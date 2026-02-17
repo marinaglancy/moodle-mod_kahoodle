@@ -336,7 +336,6 @@ class questions {
 
             if ($usedinotherrounds > 0) {
                 // Create a new version.
-                // TODO do we really need the 'version' field? What is it used for? Consider removing it.
                 $lastversion = (int)$DB->get_field_sql(
                     'SELECT MAX(version) AS version FROM {kahoodle_question_versions} WHERE questionid = ?',
                     [$questionid]

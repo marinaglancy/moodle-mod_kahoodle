@@ -42,6 +42,9 @@ class constants {
     /** @var int Default revision duration in seconds (5 minutes) */
     public const DEFAULT_REVISION_DURATION = 300;
 
+    /** @var int Maximum delay in seconds before rank reveal animation is skipped */
+    public const MAX_RANK_REVEAL_DELAY = 60;
+
     /** @var int Default maximum points for fastest correct answer */
     public const DEFAULT_MAX_POINTS = 1000;
 
