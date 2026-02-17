@@ -44,6 +44,7 @@ const SELECTORS = {
     // Lobby-specific selectors for partial updates.
     LOBBY_PARTICIPANTS_LIST: '.mod_kahoodle-participants-list',
     LOBBY_COUNT_NUMBER: '.mod_kahoodle-count-number',
+    LOBBY_MAIN: '.mod_kahoodle-lobby-main',
 };
 
 // Current game state.
@@ -282,6 +283,21 @@ const updateLobbyPartial = async(template, templatedata) => {
 
     // Update count.
     currentCountNumber.textContent = newCountNumber.textContent;
+
+    // Sync lobby size class.
+    const currentMain = container.querySelector(SELECTORS.LOBBY_MAIN);
+    const newMain = tempContainer.querySelector(SELECTORS.LOBBY_MAIN);
+    if (currentMain && newMain) {
+        const sizeRe = /mod_kahoodle-lobby-size-\w+/;
+        const newSize = newMain.className.match(sizeRe)?.[0];
+        const curSize = currentMain.className.match(sizeRe)?.[0];
+        if (newSize && newSize !== curSize) {
+            if (curSize) {
+                currentMain.classList.remove(curSize);
+            }
+            currentMain.classList.add(newSize);
+        }
+    }
 
     return true;
 };

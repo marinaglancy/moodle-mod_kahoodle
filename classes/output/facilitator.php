@@ -174,11 +174,19 @@ class facilitator implements \renderable, \templatable {
         $qrcode = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" . urlencode($url);
         // TODO use core_qrcode class to generate QR code, save it in filestorage and serve from there.
 
+        $lobbysize = match (true) {
+            $participantcount <= constants::LOBBYSIZE_XL_MAX => 'xl',
+            $participantcount <= constants::LOBBYSIZE_L_MAX => 'l',
+            $participantcount <= constants::LOBBYSIZE_M_MAX => 'm',
+            default => 's',
+        };
+
         return [
             'participantcount' => $participantcount,
             'participants' => $participantdata,
             'qrcodeurl' => $qrcode,
             'joincode' => '', // TODO when join codes are implemented.
+            'lobbysize' => $lobbysize,
         ];
     }
 

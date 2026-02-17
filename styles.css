@@ -683,7 +683,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(4px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 50px;
@@ -708,8 +708,63 @@
 .mod_kahoodle-participant-name {
     color: var(--mod_kahoodle-light);
     font-size: 0.95rem;
-    font-weight: 500;
+    font-weight: 900;
     white-space: nowrap;
+}
+
+/* Lobby participant size variants (base styles above are size "s") */
+.mod_kahoodle-lobby-size-m .mod_kahoodle-participants-list {
+    gap: 0.85rem;
+}
+
+.mod_kahoodle-lobby-size-m .mod_kahoodle-participant {
+    gap: 0.55rem;
+    padding: 0.45rem 1.1rem 0.45rem 0.45rem;
+}
+
+.mod_kahoodle-lobby-size-m .mod_kahoodle-participant-avatar {
+    width: 50px;
+    height: 50px;
+}
+
+.mod_kahoodle-lobby-size-m .mod_kahoodle-participant-name {
+    font-size: 1.15rem;
+}
+
+.mod_kahoodle-lobby-size-l .mod_kahoodle-participants-list {
+    gap: 1rem;
+}
+
+.mod_kahoodle-lobby-size-l .mod_kahoodle-participant {
+    gap: 0.6rem;
+    padding: 0.5rem 1.25rem 0.5rem 0.5rem;
+}
+
+.mod_kahoodle-lobby-size-l .mod_kahoodle-participant-avatar {
+    width: 80px;
+    height: 80px;
+}
+
+.mod_kahoodle-lobby-size-l .mod_kahoodle-participant-name {
+    font-size: 1.5rem;
+}
+
+.mod_kahoodle-lobby-size-xl .mod_kahoodle-participants-list {
+    gap: 1.25rem;
+}
+
+.mod_kahoodle-lobby-size-xl .mod_kahoodle-participant {
+    gap: 0.75rem;
+    padding: 0.6rem 1.5rem 0.6rem 0.6rem;
+}
+
+.mod_kahoodle-lobby-size-xl .mod_kahoodle-participant-avatar {
+    width: 100px;
+    height: 100px;
+}
+
+.mod_kahoodle-lobby-size-xl .mod_kahoodle-participant-name {
+    font-size: 2rem;
 }
 
 /* QR Code area */

@@ -32,18 +32,24 @@
     Example context (json):
     {
         "quiztitle": "Geography & World Facts Quiz",
+        "lobbysize": "l",
         "participantcount": 5,
         "participants": [
-            {"participantid": 1, "displayname": "John Doe", "avatarurl": "/user/pix.php/1/f2.jpg"},
-            {"participantid": 2, "displayname": "Jane Smith", "avatarurl": "/user/pix.php/2/f2.jpg"},
-            {"participantid": 3, "displayname": "Alice Johnson", "avatarurl": "/user/pix.php/3/f2.jpg"},
-            {"participantid": 4, "displayname": "Bob Brown", "avatarurl": "/user/pix.php/4/f2.jpg"},
-            {"participantid": 5, "displayname": "Charlie Davis", "avatarurl": "/user/pix.php/5/f2.jpg"},
-            {"participantid": 6, "displayname": "Diana Evans", "avatarurl": "/user/pix.php/6/f2.jpg"},
-            {"participantid": 7, "displayname": "Frank Green", "avatarurl": "/user/pix.php/7/f2.jpg"},
-            {"participantid": 8, "displayname": "Grace Harris", "avatarurl": "/user/pix.php/8/f2.jpg"},
-            {"participantid": 9, "displayname": "Henry Lee", "avatarurl": "/user/pix.php/9/f2.jpg"},
-            {"participantid": 10, "displayname": "Ivy Martin", "avatarurl": "/user/pix.php/10/f2.jpg"}
+            {"participantid": 1, "displayname": "John Doe", "avatarurl": "/user/pix.php/1/f1.jpg"},
+            {"participantid": 2, "displayname": "Jane Smith", "avatarurl": "/user/pix.php/2/f1.jpg"},
+            {"participantid": 3, "displayname": "Alice Johnson", "avatarurl": "/user/pix.php/3/f1.jpg"},
+            {"participantid": 4, "displayname": "Bob Brown", "avatarurl": "/user/pix.php/4/f1.jpg"},
+            {"participantid": 5, "displayname": "Charlie Davis", "avatarurl": "/user/pix.php/5/f1.jpg"},
+            {"participantid": 6, "displayname": "Diana Evans", "avatarurl": "/user/pix.php/6/f1.jpg"},
+            {"participantid": 7, "displayname": "Frank Green", "avatarurl": "/user/pix.php/7/f1.jpg"},
+            {"participantid": 8, "displayname": "Grace Harris", "avatarurl": "/user/pix.php/8/f1.jpg"},
+            {"participantid": 9, "displayname": "Henry Lee", "avatarurl": "/user/pix.php/9/f1.jpg"},
+            {"participantid": 10, "displayname": "Ivy Martin", "avatarurl": "/user/pix.php/10/f1.jpg"},
+            {"participantid": 6, "displayname": "Diana Evans", "avatarurl": "/user/pix.php/6/f1.jpg"},
+            {"participantid": 7, "displayname": "Frank Green", "avatarurl": "/user/pix.php/7/f1.jpg"},
+            {"participantid": 8, "displayname": "Grace Harris", "avatarurl": "/user/pix.php/8/f1.jpg"},
+            {"participantid": 9, "displayname": "Henry Lee", "avatarurl": "/user/pix.php/9/f1.jpg"},
+            {"participantid": 10, "displayname": "Ivy Martin", "avatarurl": "/user/pix.php/10/f1.jpg"}
         ],
         "cancontrol": true,
         "backgroundurl": "/mod/kahoodle/pix/classroom-bg.jpg",
@@ -60,7 +66,7 @@
     </header>
 
     {{! Main content: Participants and QR code }}
-    <main class="mod_kahoodle-lobby-main" data-stage="lobby">
+    <main class="mod_kahoodle-lobby-main mod_kahoodle-lobby-size-{{lobbysize}}" data-stage="lobby">
 
         {{! Participants area (left side) }}
         <div class="mod_kahoodle-participants-area">

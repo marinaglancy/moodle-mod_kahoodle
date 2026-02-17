@@ -133,4 +133,12 @@ class constants {
 
     /** @var array Symbols used for multichoice options */
     public const MULTICHOICE_SYMBOLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+    // Lobby participant display size thresholds.
+    /** @var int Maximum participant count for XL lobby size */
+    public const LOBBYSIZE_XL_MAX = 5;
+    /** @var int Maximum participant count for L lobby size */
+    public const LOBBYSIZE_L_MAX = 15;
+    /** @var int Maximum participant count for M lobby size */
+    public const LOBBYSIZE_M_MAX = 30;
 }

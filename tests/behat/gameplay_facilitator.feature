@@ -51,6 +51,71 @@ Feature: Facilitator game control
     When the kahoodle "Test Kahoodle" round stage is "archived"
     And I wait until "The activity has finished." "text" exists
 
+  Scenario: Teacher starts game and sees lobby for many participants
+    And the following "activities" exist:
+      | activity | name         | course | idnumber  | identitymode |
+      | kahoodle | Big Kahoodle | C1     | kahoodle2 | 3            |
+    And the following "mod_kahoodle > questions" exist:
+      | kahoodle     | questiontext                   | questionconfig         | attachimage |
+      | Big Kahoodle | What is the capital of France? | London\n*Paris\nBerlin | 1           |
+      | Big Kahoodle | What is 2 + 2?                 | 3\n*4\n5               |             |
+    When I log in as "teacher1"
+    And I am on the "Big Kahoodle" "kahoodle activity" page
+    And I follow "Allow participants to join"
+    And I wait until ".mod_kahoodle-overlay" "css_element" exists
+    # Lobby overlay shows quiz title in header and QR code for joining.
+    Then I should see "Big Kahoodle" in the ".mod_kahoodle-game-title" "css_element"
+    And "[data-stage='lobby']" "css_element" should exist
+    And ".mod_kahoodle-qr-code" "css_element" should exist
+    # Initially 0 participants — lobby size is XL.
+    Then ".mod_kahoodle-lobby-size-xl" "css_element" should exist
+    # Add participants 1-5 — still XL.
+    When "student1" joins the kahoodle "Big Kahoodle" as "Player01"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player02"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player03"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player04"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player05"
+    Then ".mod_kahoodle-lobby-size-xl" "css_element" should exist
+    # 6th participant crosses into L.
+    When "student1" joins the kahoodle "Big Kahoodle" as "Player06"
+    Then ".mod_kahoodle-lobby-size-l" "css_element" should exist
+    # Add participants 7-15 — still L.
+    When "student1" joins the kahoodle "Big Kahoodle" as "Player07"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player08"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player09"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player10"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player11"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player12"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player13"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player14"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player15"
+    Then ".mod_kahoodle-lobby-size-l" "css_element" should exist
+    # 16th participant crosses into M.
+    When "student1" joins the kahoodle "Big Kahoodle" as "Player16"
+    Then ".mod_kahoodle-lobby-size-m" "css_element" should exist
+    # Add participants 17-30 — still M.
+    When "student1" joins the kahoodle "Big Kahoodle" as "Player17"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player18"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player19"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player20"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player21"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player22"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player23"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player24"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player25"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player26"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player27"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player28"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player29"
+    And "student1" joins the kahoodle "Big Kahoodle" as "Player30"
+    Then ".mod_kahoodle-lobby-size-m" "css_element" should exist
+    # 31st participant crosses into S.
+    When "student1" joins the kahoodle "Big Kahoodle" as "Player31"
+    Then ".mod_kahoodle-lobby-size-s" "css_element" should exist
+    # Make sure all php polling requests are finished before the end of the test.
+    When the kahoodle "Big Kahoodle" round stage is "archived"
+    And I wait until "The activity has finished." "text" exists
+
   Scenario: Teacher advances through question 1 stages using next button
     Given the kahoodle "Test Kahoodle" round stage is "lobby"
     And the following "mod_kahoodle > participants" exist:

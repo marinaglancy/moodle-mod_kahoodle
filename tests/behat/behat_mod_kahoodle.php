@@ -112,21 +112,44 @@ class behat_mod_kahoodle extends behat_base {
      * then restores the original user. This triggers the realtime notification so the
      * facilitator overlay updates with the new participant.
      *
+     * An optional "as <alias>" suffix sets the display name. When the kahoodle identity
+     * mode is required alias or anonymous, the alias is mandatory.
+     *
+     * In anonymous mode a random sesskey is assigned before joining so the same user
+     * can participate multiple times (each call produces a unique participant code).
+     *
      * @When /^"(?P<username_string>(?:[^"]|\\")*)" joins the kahoodle "(?P<activityname_string>(?:[^"]|\\")*)"$/
+     * @When /^"(?P<username_string>(?:[^"]|\\")*)" joins the kahoodle "(?P<activityname_string>(?:[^"]|\\")*)" as "(?P<alias_string>(?:[^"]|\\")*)"$/
      * @param string $username The username of the user to join
      * @param string $activityname The kahoodle activity name
+     * @param string|null $alias Optional display name / alias
      */
-    public function user_joins_the_kahoodle(string $username, string $activityname): void {
+    public function user_joins_the_kahoodle(string $username, string $activityname, ?string $alias = null): void {
         global $DB, $USER;
 
         $kahoodle = $DB->get_record('kahoodle', ['name' => $activityname], '*', MUST_EXIST);
+        $identitymode = (int)$kahoodle->identitymode;
+
+        // Require alias for required-alias and anonymous modes.
+        if ($alias === null && in_array($identitymode, [constants::IDENTITYMODE_ALIAS, constants::IDENTITYMODE_ANONYMOUS])) {
+            throw new \Exception(
+                "Alias is required when joining kahoodle '$activityname' " .
+                "(identity mode: $identitymode). Use: \"$username\" joins the kahoodle \"$activityname\" as \"<alias>\""
+            );
+        }
+
         $round = questions::get_last_round($kahoodle->id);
 
         $user = $DB->get_record('user', ['username' => $username], '*', MUST_EXIST);
         $originaluser = $USER;
         $USER = $user;
 
-        participants::join_round($round);
+        // In anonymous mode, assign a random sesskey so the same user can join multiple times.
+        if ($identitymode === constants::IDENTITYMODE_ANONYMOUS) {
+            $_SESSION['USER']->sesskey = random_string(10);
+        }
+
+        participants::join_round($round, $alias);
 
         $USER = $originaluser;
     }
