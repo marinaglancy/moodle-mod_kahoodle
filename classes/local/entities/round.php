@@ -718,11 +718,6 @@ class round {
         // Clear ranking cache.
         $this->questionrankings = [];
 
-        // Update question statistics cache if we changed question.
-        if ($oldstage->get_stage_name() === constants::STAGE_QUESTION && $oldstage->get_round_question()) {
-            $oldstage->get_round_question()->update_statistics();
-        }
-
         // Update final ranks when entering revision stage.
         if (
             $newstage->get_stage_name() === constants::STAGE_REVISION
@@ -1087,7 +1082,6 @@ class round {
             foreach (constants::FIELDS_ROUND_QUESTION as $field) {
                 $newquestion->$field = $question->$field;
             }
-            // Don't copy statistics fields (totalresponses, answerdistribution).
             $newquestion->timecreated = $time;
             $newquestion->timemodified = $time;
 

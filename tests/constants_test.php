@@ -54,7 +54,7 @@ final class constants_test extends \advanced_testcase {
 
     /**
      * Test that FIELDS_ROUND_QUESTION matches kahoodle_round_questions table columns
-     * minus primary/foreign keys, sortorder, timestamps, and stats.
+     * minus primary/foreign keys, sortorder, and timestamps.
      */
     public function test_fields_round_question(): void {
         global $DB;
@@ -62,11 +62,10 @@ final class constants_test extends \advanced_testcase {
         $columns = array_keys($DB->get_columns('kahoodle_round_questions'));
 
         // Excluded: primary key (id), foreign keys (roundid, questionversionid), sortorder,
-        // timestamps (timecreated, timemodified), stats (totalresponses, answerdistribution).
+        // timestamps (timecreated, timemodified).
         $excluded = [
             'id', 'roundid', 'questionversionid', 'sortorder',
             'timecreated', 'timemodified',
-            'totalresponses', 'answerdistribution',
         ];
         $expected = array_values(array_diff($columns, $excluded));
 
@@ -79,7 +78,7 @@ final class constants_test extends \advanced_testcase {
             $expected,
             $actual,
             'FIELDS_ROUND_QUESTION does not match kahoodle_round_questions table columns ' .
-            '(minus id, roundid, questionversionid, sortorder, timecreated, timemodified, totalresponses, answerdistribution)'
+            '(minus id, roundid, questionversionid, sortorder, timecreated, timemodified)'
         );
     }
 }

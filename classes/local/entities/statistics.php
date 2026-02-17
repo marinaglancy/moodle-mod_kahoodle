@@ -205,7 +205,6 @@ class statistics extends round {
         $fields = array_merge(
             ["null AS id", "null AS roundid", "qv.id AS questionversionid"],
             array_map(fn($field) => "rq.$field", constants::FIELDS_ROUND_QUESTION),
-            ["null AS totalresponses"], // TODO potentially calculate total responses.
             ["qv.questionid", "qv.version"],
             array_map(fn($field) => "qv.$field", constants::FIELDS_QUESTION_VERSION),
             ["q.kahoodleid", "q.questiontype"],

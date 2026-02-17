@@ -88,8 +88,6 @@
         <FIELD NAME="questionresultsduration" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Override default, NULL means use activity default"/>
         <FIELD NAME="maxpoints" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Override default, NULL means use activity default"/>
         <FIELD NAME="minpoints" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Override default, NULL means use activity default"/>
-        <FIELD NAME="totalresponses" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Total number of responses collected. NULL until question is completed and stats are collected"/>
-        <FIELD NAME="answerdistribution" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="JSON with answer distribution (e.g., how many chose each option). NULL until question is completed and stats are collected"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>

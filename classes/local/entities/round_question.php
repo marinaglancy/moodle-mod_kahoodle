@@ -53,7 +53,6 @@ class round_question {
         $fields = array_merge(
             ["rq.id", "rq.roundid", "rq.questionversionid", "rq.sortorder", "rq.timecreated", "rq.timemodified"],
             array_map(fn($field) => "rq.$field", constants::FIELDS_ROUND_QUESTION),
-            ['rq.totalresponses', 'rq.answerdistribution'], // Stats fields.
             ["qv.questionid", "qv.version"],
             array_map(fn($field) => "qv.$field", constants::FIELDS_QUESTION_VERSION),
             ["q.kahoodleid", "q.questiontype"],
@@ -105,8 +104,7 @@ class round_question {
      *
      * The record may contain fields from multiple tables (see get_fields_sql()):
      * - From kahoodle_round_questions: id, roundid, questionversionid, sortorder, timecreated, timemodified,
-     *   questionpreviewduration, questionduration, questionresultsduration, maxpoints, minpoints,
-     *   totalresponses, answerdistribution
+     *   questionpreviewduration, questionduration, questionresultsduration, maxpoints, minpoints
      * - From kahoodle_question_versions: questionid, version, questiontext, questionconfig
      * - From kahoodle_questions: kahoodleid, questiontype
      * - From kahoodle: questionformat
@@ -166,8 +164,6 @@ class round_question {
             'version' => 0,
             'kahoodleid' => $round->get_kahoodleid(),
             'questiontype' => $type->get_type(),
-            'totalresponses' => null,
-            'answerdistribution' => null,
             'questionformat' => $round->get_kahoodle()->questionformat,
         ];
         foreach (constants::FIELDS_ROUND_QUESTION as $field) {
@@ -401,14 +397,5 @@ class round_question {
      */
     public function get_max_points(): int {
         return $this->data->maxpoints ?? $this->get_round()->get_kahoodle()->maxpoints;
-    }
-
-    /**
-     * When question is finished, update stats fields - totalresponses, answerdistribution
-     *
-     * @return void
-     */
-    public function update_statistics(): void {
-        // TODO.
     }
 }

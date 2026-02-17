@@ -154,5 +154,23 @@ function xmldb_kahoodle_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026020700, 'kahoodle');
     }
 
+    if ($oldversion < 2026021700) {
+        // Remove unused statistics fields from kahoodle_round_questions.
+        $table = new xmldb_table('kahoodle_round_questions');
+
+        $field = new xmldb_field('totalresponses');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        $field = new xmldb_field('answerdistribution');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        // Kahoodle savepoint reached.
+        upgrade_mod_savepoint(true, 2026021700, 'kahoodle');
+    }
+
     return true;
 }

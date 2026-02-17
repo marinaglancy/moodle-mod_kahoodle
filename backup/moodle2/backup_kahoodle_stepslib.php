@@ -98,8 +98,6 @@ class backup_kahoodle_activity_structure_step extends backup_activity_structure_
             ],
             \mod_kahoodle\constants::FIELDS_ROUND_QUESTION,
             [
-                'totalresponses',
-                'answerdistribution',
                 'timecreated',
                 'timemodified',
             ]

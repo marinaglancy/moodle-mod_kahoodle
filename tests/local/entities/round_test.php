@@ -498,15 +498,6 @@ final class round_test extends \advanced_testcase {
         $DB->set_field('kahoodle_rounds', 'timestarted', time() - 3600, ['id' => $round->get_id()]);
         $DB->set_field('kahoodle_rounds', 'timecompleted', time() - 3000, ['id' => $round->get_id()]);
 
-        // Add statistics to original round questions (should not be copied).
-        $DB->execute(
-            "UPDATE {kahoodle_round_questions} SET totalresponses = 10, answerdistribution = ? WHERE roundid = ?",
-            ['{"A":5,"B":3,"C":2}', $round->get_id()]
-        );
-
-        // Reload round to get fresh data.
-        $round = round::create_from_id($round->get_id());
-
         // Duplicate the round.
         $newround = $round->duplicate();
 
@@ -535,11 +526,5 @@ final class round_test extends \advanced_testcase {
         $newq2 = array_shift($newquestions);
         $this->assertEquals(2, $newq2->sortorder);
         $this->assertEquals(2000, $newq2->maxpoints);
-
-        // Verify statistics were NOT copied.
-        $this->assertNull($newq1->totalresponses);
-        $this->assertNull($newq1->answerdistribution);
-        $this->assertNull($newq2->totalresponses);
-        $this->assertNull($newq2->answerdistribution);
     }
 }

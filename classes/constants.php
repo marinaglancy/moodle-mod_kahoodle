@@ -125,7 +125,7 @@ class constants {
         'questionconfig',
     ];
 
-    /** @var array Fields in the table kahoodle_round_questions, except for primary/foreign keys, sortorder, time stamps, stats */
+    /** @var array Fields in the table kahoodle_round_questions, except for primary/foreign keys, sortorder, time stamps */
     public const FIELDS_ROUND_QUESTION = [
         'questionpreviewduration',
         'questionduration',

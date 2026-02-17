@@ -155,7 +155,7 @@ class landing implements renderable, templatable {
                         $data->autoarchivenotice = get_string(
                             'landing_autoarchive_notice',
                             'mod_kahoodle',
-                            $remaining > 0 ? format_time($remaining) : ("0 ". get_string('secs'))
+                            $remaining > 0 ? format_time($remaining) : ("0 " . get_string('secs'))
                         );
                     }
                 }

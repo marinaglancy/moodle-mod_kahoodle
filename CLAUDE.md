@@ -897,8 +897,6 @@ Links questions to rounds with per-round overrides and statistics.
 - `questionresultsduration`: Override activity default (NULL = use default)
 - `maxpoints`: Override activity default (NULL = use default)
 - `minpoints`: Override activity default (NULL = use default)
-- `totalresponses`: Total responses collected (NULL until stats collected)
-- `answerdistribution`: JSON with answer distribution (NULL until stats collected)
 - `timecreated`, `timemodified`: Timestamps
 
 **Why per-round settings?** Facilitators can run "practice rounds" with more time or "speed rounds" with less time using the same questions.

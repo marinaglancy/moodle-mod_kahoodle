@@ -24,6 +24,8 @@ use mod_kahoodle\local\game\progress;
 use mod_kahoodle\local\game\realtime_channels;
 use mod_kahoodle\local\game\questions;
 
+// phpcs:disable moodle.Files.LineLength.TooLong
+
 /**
  * Behat step definitions for mod_kahoodle.
  *
