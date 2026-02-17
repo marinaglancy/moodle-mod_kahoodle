@@ -156,6 +156,18 @@ function kahoodle_pluginfile($course, $cm, $context, $filearea, $args, $forcedow
         if (!has_any_capability($caps, $context)) {
             return;
         }
+    } else if ($filearea === \mod_kahoodle\constants::FILEAREA_QRCODE) {
+        // QR codes: generated on the fly, visible to facilitators and results viewers.
+        $caps = ['mod/kahoodle:facilitate', 'mod/kahoodle:viewresults'];
+        if (!has_any_capability($caps, $context)) {
+            return;
+        }
+        $itemid = array_shift($args);
+        $round = \mod_kahoodle\local\entities\round::create_from_id((int)$itemid);
+        if ($round->get_context()->id == $context->id) {
+            $round->serve_qrcode();
+        }
+        return;
     } else if ($filearea === \mod_kahoodle\constants::FILEAREA_AVATAR) {
         // Avatars: visible to anyone who can facilitate or view results, or the participant's own avatar.
         $caps = ['mod/kahoodle:facilitate', 'mod/kahoodle:viewresults'];

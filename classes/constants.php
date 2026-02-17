@@ -82,6 +82,9 @@ class constants {
     /** @var string File area for participant avatars */
     public const FILEAREA_AVATAR = 'avatar';
 
+    /** @var string File area for dynamically generated QR codes */
+    public const FILEAREA_QRCODE = 'qrcode';
+
     // Round stages.
     /** @var string Round stage: preparation (before round starts) */
     public const STAGE_PREPARATION = 'preparation';

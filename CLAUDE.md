@@ -212,7 +212,7 @@ All plugin constants are defined in `classes/constants.php`:
 - **Text Limits**: `QUESTIONTEXT_MAXLENGTH` (300 characters for plain text mode)
 - **Round Stages**: `STAGE_PREPARATION`, `STAGE_LOBBY`, `STAGE_QUESTION_PREVIEW`, `STAGE_QUESTION`, `STAGE_QUESTION_RESULTS`, `STAGE_LEADERS`, `STAGE_REVISION`, `STAGE_ARCHIVED`
 - **Identity Mode**: `IDENTITYMODE_REALNAME` (0) real name, `IDENTITYMODE_OPTIONAL` (1) optional alias, `IDENTITYMODE_ALIAS` (2) required alias, `IDENTITYMODE_ANONYMOUS` (3) fully anonymous
-- **File Areas**: `FILEAREA_QUESTION_IMAGE` for question images, `FILEAREA_AVATAR` for participant avatars
+- **File Areas**: `FILEAREA_QUESTION_IMAGE` for question images, `FILEAREA_AVATAR` for participant avatars, `FILEAREA_QRCODE` for dynamically generated QR codes (served on the fly, not stored)
 - **Field Lists**: `FIELDS_QUESTION_VERSION` and `FIELDS_ROUND_QUESTION` for consistent field handling across entities and API methods
 
 ### Activity Model
@@ -314,6 +314,8 @@ Represents a game round with lazy-loaded cached access to related data.
 - `get_question_rankings(int $questionnumber): array` - Get rankings up to a specific question number
 - `get_leaders(int $questionnumber = 0, int $maxnumber = 5): array` - Get top participants with rank movement info (0 = use current stage)
 - `update_final_ranks(): void` - Update finalrank and totalscore for all participants (called on revision stage)
+- `get_qrcode_url(): moodle_url` - Get pluginfile URL for the round's QR code (generated on the fly)
+- `serve_qrcode(): void` - Generate and send QR code SVG using `core_qrcode` (called from `kahoodle_pluginfile`)
 
 #### round_question Entity (`round_question.php`)
 

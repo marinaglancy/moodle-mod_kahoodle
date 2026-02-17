@@ -169,7 +169,8 @@ final class facilitator_test extends \advanced_testcase {
         $this->assertArrayHasKey('participantcount', $td);
         $this->assertEquals(2, $td['participantcount']);
         $this->assertArrayHasKey('qrcodeurl', $td);
-        $this->assertNotEmpty($td['qrcodeurl']);
+        $this->assertStringContainsString('pluginfile.php', $td['qrcodeurl']);
+        $this->assertStringContainsString('qrcode.svg', $td['qrcodeurl']);
     }
 
     /**

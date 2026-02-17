@@ -228,6 +228,40 @@ class round {
     }
 
     /**
+     * Get the pluginfile URL for the QR code of this round
+     *
+     * The QR code is generated on the fly by {@see serve_qrcode()} when this URL is requested.
+     *
+     * @return \moodle_url
+     */
+    public function get_qrcode_url(): \moodle_url {
+        return \moodle_url::make_pluginfile_url(
+            $this->get_context()->id,
+            'mod_kahoodle',
+            constants::FILEAREA_QRCODE,
+            $this->get_id(),
+            '/',
+            'qrcode.svg'
+        );
+    }
+
+    /**
+     * Generate and serve a QR code SVG for this round
+     *
+     * Called from {@see kahoodle_pluginfile()} when the qrcode file area is requested.
+     * Generates the SVG on the fly using {@see \core_qrcode} and sends it to the browser.
+     *
+     * @return void
+     */
+    public function serve_qrcode(): void {
+        $url = $this->get_url()->out(false);
+        $qrcode = new \core_qrcode($url);
+        $svg = $qrcode->getBarcodeSVGcode(3, 3);
+
+        send_file($svg, 'qrcode.svg', DAYSECS, 0, true, false, 'image/svg+xml');
+    }
+
+    /**
      * Get the context module instance
      *
      * @return \context_module
