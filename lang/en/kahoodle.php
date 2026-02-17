@@ -105,6 +105,7 @@ $string['kahoodle:participate'] = 'Participate in a Kahoodle activity';
 $string['kahoodle:view'] = 'View Kahoodle';
 $string['kahoodle:viewresults'] = 'View Kahoodle results for all participants';
 $string['kahoodlesettings'] = 'Kahoodle settings';
+$string['landing_autoarchive_notice'] = 'This round will be automatically ended in {$a}.';
 $string['landing_facilitator_message'] = 'You are facilitating this activity. Open the facilitator view to control the game or end the round.';
 $string['landing_finished_message'] = 'The activity has finished.';
 $string['landing_participant_message'] = 'The game is on!';

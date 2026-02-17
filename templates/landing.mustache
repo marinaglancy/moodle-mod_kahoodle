@@ -28,6 +28,7 @@
     * showsectionheaders - bool - Show section headers (when user has both facilitate and participate capabilities)
     * showfacilitatorcontrols - bool - Show facilitator controls when game is in progress
     * finishurl - string - URL for the finish action
+    * autoarchivenotice - string - Notice about automatic archiving time
     * showparticipantcontrols - bool - Show participant controls when user is playing
     * leaveurl - string - URL for leave action
     * showjoinoption - bool - Show join as participant option
@@ -93,6 +94,9 @@
             <button type="button" class="btn btn-danger" data-action="finish-game" data-finishurl="{{finishurl}}">
                 {{#str}}end_round_for_everyone, mod_kahoodle{{/str}}
             </button>
+            {{#autoarchivenotice}}
+            <p class="text-muted mt-2 mb-0"><small>{{autoarchivenotice}}</small></p>
+            {{/autoarchivenotice}}
         </div>
     </div>
     {{/showfacilitatorcontrols}}

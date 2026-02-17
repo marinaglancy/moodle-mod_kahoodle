@@ -131,6 +131,34 @@ class round {
     }
 
     /**
+     * Get the estimated auto-archive time for this round
+     *
+     * Returns the earliest time at which the round will be automatically archived.
+     * This is the minimum of:
+     * - timestarted + MAX_ROUND_DURATION (overall round timeout)
+     * - stagestarttime + MAX_REVISION_DURATION (if currently in revision stage)
+     *
+     * @return int|null Timestamp, or null if round is not in progress
+     */
+    public function get_auto_archive_time(): ?int {
+        if (!$this->is_in_progress() || !$this->get_timestarted()) {
+            return null;
+        }
+
+        $autoarchive = $this->get_timestarted() + constants::MAX_ROUND_DURATION;
+
+        if (
+            $this->get_current_stage_name() === constants::STAGE_REVISION
+                && $this->data->stagestarttime
+        ) {
+            $revisiondeadline = (int)$this->data->stagestarttime + constants::MAX_REVISION_DURATION;
+            $autoarchive = min($autoarchive, $revisiondeadline);
+        }
+
+        return $autoarchive;
+    }
+
+    /**
      * Check if the round is fully editable
      *
      * A round is fully editable if it's in preparation stage and hasn't been started yet.
@@ -701,6 +729,11 @@ class round {
                 || $newstage->get_stage_name() === constants::STAGE_ARCHIVED
         ) {
             $this->update_final_ranks();
+        }
+
+        // Schedule auto-archive task when entering revision stage.
+        if ($newstage->get_stage_name() === constants::STAGE_REVISION) {
+            \mod_kahoodle\task\auto_archive_round::schedule($this);
         }
     }
 

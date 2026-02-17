@@ -149,6 +149,15 @@ class landing implements renderable, templatable {
                         '/mod/kahoodle/view.php',
                         ['id' => $this->cm->id, 'action' => 'finish', 'sesskey' => sesskey()]
                     ))->out(false);
+                    $autoarchivetime = $this->round->get_auto_archive_time();
+                    if ($autoarchivetime) {
+                        $remaining = $autoarchivetime - time();
+                        $data->autoarchivenotice = get_string(
+                            'landing_autoarchive_notice',
+                            'mod_kahoodle',
+                            $remaining > 0 ? format_time($remaining) : ("0 ". get_string('secs'))
+                        );
+                    }
                 }
                 if ($canparticipate && $cannotrejoin) {
                     // User participated before and cannot rejoin - show finished.

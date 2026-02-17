@@ -19,6 +19,7 @@ namespace mod_kahoodle\local\game;
 use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
 use mod_kahoodle\local\entities\round_stage;
+use mod_kahoodle\task\auto_archive_round;
 
 /**
  * Game progress manager for handling stage transitions and content generation
@@ -47,6 +48,9 @@ class progress {
 
         // Update round to the first stage (normally the lobby).
         $round->set_current_stage($firststage);
+
+        // Schedule auto-archive task for the maximum round duration.
+        auto_archive_round::schedule($round);
         // No notification to participants because nobody is listening yet.
     }
 

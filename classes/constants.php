@@ -42,6 +42,12 @@ class constants {
     /** @var int Default revision duration in seconds (5 minutes) */
     public const DEFAULT_REVISION_DURATION = 300;
 
+    /** @var int Maximum total round duration in seconds (3 hours) before auto-archiving */
+    public const MAX_ROUND_DURATION = 10800;
+
+    /** @var int Maximum revision stage duration in seconds (15 minutes) before auto-archiving */
+    public const MAX_REVISION_DURATION = 900;
+
     /** @var int Maximum delay in seconds before rank reveal animation is skipped */
     public const MAX_RANK_REVEAL_DELAY = 60;
 
