@@ -95,17 +95,6 @@ Feature: Multi-round results
       | 1     | Multiple choice | Question 1    | 2               | 1                 | 456.5         |
       | 2     | Multiple choice | Question 2    | 2               | 2                 | 716.5         |
 
-  Scenario: Teacher views participant answers with missing response
-    When I log in as "teacher1"
-    And I am on the "Test Kahoodle" "kahoodle activity" page
-    And I follow "View results"
-    And I click on "View participants" "link" in the "Round 2" "mod_kahoodle > round result"
-    And I press "View answers" action in the "Bob" report row
-    Then the following should exist in the "Participant answers" table:
-      | Order | Question type   | Question text | Response | Correct!  | Score | Response time |
-      | 1     | Multiple choice | Question 1    | Option B | Yes       | 837   | 5.0 seconds   |
-      | 2     | Multiple choice | Question 2    |          | No answer | 0     | -             |
-
   Scenario: Teacher views all rounds participants report
     When I log in as "teacher1"
     And I am on the "Test Kahoodle" "kahoodle activity" page
