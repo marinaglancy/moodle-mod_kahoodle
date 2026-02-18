@@ -39,7 +39,10 @@ if ($roundid) {
 } else if ($id) {
     $statistics = statistics::create_from_cm_id($id);
     $round = $statistics->get_last_round();
+} else {
+    throw new \moodle_exception('missingparam', '', '', 'id/roundid');
 }
+
 $cm = $statistics->get_cm();
 require_login($cm->course, true, $cm);
 require_capability('mod/kahoodle:manage_questions', $PAGE->context);

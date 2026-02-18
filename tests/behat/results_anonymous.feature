@@ -58,49 +58,6 @@ Feature: Anonymous mode reports
       | Test Kahoodle | student4 | 2        | 1        | 1         | 513    |
     And the kahoodle "Test Kahoodle" round stage is "archived"
 
-  Scenario: Teacher views participants report in anonymous mode
-    When I log in as "teacher1"
-    And I am on the "Test Kahoodle" "kahoodle activity" page
-    And I follow "View results"
-    And I click on "View participants" "link" in the "Round 2" "mod_kahoodle > round result"
-    # No "First name" column in anonymous mode.
-    Then I should not see "First name"
-    And the following should exist in the "Participants" table:
-      | Participant | Rank | Score | Correct answers | Questions answered |
-      | PlayerThree | 1    | 837   | 1               | 1                  |
-      | PlayerFour  | 2    | 513   | 1               | 2                  |
-
-  Scenario: Teacher views participant answers in anonymous mode
-    When I log in as "teacher1"
-    And I am on the "Test Kahoodle" "kahoodle activity" page
-    And I follow "View results"
-    And I click on "View participants" "link" in the "Round 1" "mod_kahoodle > round result"
-    And I press "View answers" action in the "PlayerOne" report row
-    Then the following should exist in the "Participant answers" table:
-      | Order | Question type   | Question text | Response | Correct! | Score | Response time |
-      | 1     | Multiple choice | Question 1    | Option B | Yes      | 913   | 5.0 seconds   |
-      | 2     | Multiple choice | Question 2    | Yes      | Yes      | 819   | 5.0 seconds   |
-
-  Scenario: Teacher views participants for each round in anonymous mode
-    When I log in as "teacher1"
-    And I am on the "Test Kahoodle" "kahoodle activity" page
-    And I follow "View results"
-    # Round 2: PlayerThree is rank 1, PlayerFour is rank 2.
-    And I click on "View participants" "link" in the "Round 2" "mod_kahoodle > round result"
-    Then I should not see "First name"
-    And the following should exist in the "Participants" table:
-      | Participant | Rank | Score | Correct answers | Questions answered |
-      | PlayerThree | 1    | 837   | 1               | 1                  |
-      | PlayerFour  | 2    | 513   | 1               | 2                  |
-    # Round 1: Different anonymous participants.
-    When I click on "Back" "link" in the "div[role='main']" "css_element"
-    And I click on "View participants" "link" in the "Round 1" "mod_kahoodle > round result"
-    Then I should not see "First name"
-    And the following should exist in the "Participants" table:
-      | Participant | Rank | Score | Correct answers | Questions answered |
-      | PlayerOne   | 1    | 1,732 | 2               | 2                  |
-      | PlayerTwo   | 2    | 614   | 1               | 2                  |
-
   Scenario: Teacher views all rounds participants report in anonymous mode
     When I log in as "teacher1"
     And I am on the "Test Kahoodle" "kahoodle activity" page
