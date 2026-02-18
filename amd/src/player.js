@@ -81,6 +81,7 @@ export const showStage = async(state, template, templatedata, duration) => {
     }
 
     // Render the template and execute embedded JS.
+    // Mdlcode-disable-next-line cannot-parse-template
     const {html, js} = await Templates.renderForPromise(template, templatedata);
     Templates.replaceNodeContents(state.overlayContainer, html, js);
 

@@ -73,19 +73,20 @@ Feature: Anonymous mode reports
       | Round 2 | PlayerFour  | 2    | 513   | 1               | 2                  |
 
   Scenario: Teacher views participants after changing to non-anonymous mode
+    Given the following config values are set as admin:
+      | disablekahoodleplus | 1 |
     When I log in as "teacher1"
     And I am on the "Test Kahoodle" "kahoodle activity editing" page
     And I set the field "Participant identity" to "Required alias"
     And I press "Save and return to course"
     And I am on the "Test Kahoodle" "kahoodle activity" page
     And I follow "View results"
-    And I click on "View participants" "link" in the "Round 1" "mod_kahoodle > round result"
+    And I follow "All rounds: Participants"
     # "First name" column is now present but empty since participants were anonymous.
-    Then I should see "First name"
-    And the following should exist in the "Participants" table:
-      | Participant | Rank | Score | Correct answers | Questions answered |
-      | PlayerOne   | 1    | 1,732 | 2               | 2                  |
-      | PlayerTwo   | 2    | 614   | 1               | 2                  |
+    Then the following should exist in the "All rounds participants" table:
+      | Round   | Participant | First name | Rank | Score | Correct answers | Questions answered |
+      | Round 1 | PlayerOne   |            | 1    | 1,732 | 2               | 2                  |
+      | Rounf 1 | PlayerTwo   |            | 2    | 614   | 1               | 2                  |
     # User real names should not appear since participants were created anonymously.
     And I should not see "Sam Student"
     And I should not see "Alex Adams"

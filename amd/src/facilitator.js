@@ -265,6 +265,7 @@ const updateLobbyPartial = async(template, templatedata) => {
     }
 
     // Render the full template to get the new HTML.
+    // Mdlcode-disable-next-line cannot-parse-template
     const html = await Templates.render(template, templatedata);
 
     // Parse the rendered HTML to extract the updated parts.
@@ -348,6 +349,7 @@ const showStage = async(stageData) => {
         } else {
             // Same stage re-render (e.g. reconnect): render without resetting autoplay.
             const container = Player.getContainer(playerState);
+            // Mdlcode-disable-next-line cannot-parse-template
             const {html, js} = await Templates.renderForPromise(stageData.template, templatedata);
             Templates.replaceNodeContents(container, html, js);
         }
