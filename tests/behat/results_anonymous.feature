@@ -86,7 +86,7 @@ Feature: Anonymous mode reports
     Then the following should exist in the "All rounds participants" table:
       | Round   | Participant | First name | Rank | Score | Correct answers | Questions answered |
       | Round 1 | PlayerOne   |            | 1    | 1,732 | 2               | 2                  |
-      | Rounf 1 | PlayerTwo   |            | 2    | 614   | 1               | 2                  |
+      | Round 1 | PlayerTwo   |            | 2    | 614   | 1               | 2                  |
     # User real names should not appear since participants were created anonymously.
     And I should not see "Sam Student"
     And I should not see "Alex Adams"

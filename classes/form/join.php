@@ -146,7 +146,6 @@ class join extends \moodleform {
             $mform->addGroup($group2, 'identity_alias_grp', '', ' ', false);
             $mform->setType('displayname', PARAM_TEXT);
             $mform->disabledIf('displayname', 'identitychoice', 'eq', 'realname');
-            $mform->addRule('displayname', get_string('maximumchars', '', $maxlen), 'maxlength', $maxlen, 'client');
         } else if ($identitymode === constants::IDENTITYMODE_REALNAME) {
             // REALNAME: show static "Join as" with profile picture and real name.
             $mform->addGroup(
@@ -230,6 +229,9 @@ class join extends \moodleform {
             $displayname = trim($data['displayname'] ?? '');
             if ($displayname === '') {
                 $errors['identity_alias_grp'] = get_string('required');
+            }
+            if (strlen($displayname) > $maxlen) {
+                $errors['identity_alias_grp'] = get_string('maximumchars', '', $maxlen);
             }
         }
 
