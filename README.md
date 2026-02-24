@@ -2,21 +2,24 @@
 
 Kahoodle is a Moodle activity module that enables real-time, interactive quiz sessions where all participants take a quiz simultaneously. Designed for engaging, game-like quiz experiences similar to popular classroom quiz platforms.
 
+Find out more on the [product page](https://lmscloud.io/plugins/mod_kahoodle) on LMSCloud.
+
 ## Features
 
 - **Real-time gameplay** - All participants answer questions simultaneously
 - **Live leaderboard** - Points based on correctness and response speed
 - **Multiple rounds** - Run multiple quiz sessions with the same questions
+- **Identity modes** - Participants can use real names, nicknames with avatars, or stay anonymous
 - **Question versioning** - Edit questions while preserving historical round data
 - **Mobile-friendly** - Responsive design for participant devices
 
 ## Screenshots
 
-<!-- Screenshot: Facilitator view showing lobby with participants -->
-![Facilitator Lobby](docs/screenshots/facilitator-lobby.png)
-
-<!-- Screenshot: Participant view answering a question -->
-![Participant Question](docs/screenshots/participant-question.png)
+<p align="center">
+<a href="https://lmscloud.io/plugins/mod_kahoodle" target="_blank" style="margin:0 10px"><img src="https://lmscloud.io/images/mod_kahoodle/1.png" alt="Facilitator Lobby" width="300"></a> <a href="https://lmscloud.io/plugins/mod_kahoodle" target="_blank" style="margin:0 10px"><img src="https://lmscloud.io/images/mod_kahoodle/3.png" alt="Participant Question" width="300"></a>
+<br>
+More screenshots on the <a href="https://lmscloud.io/plugins/mod_kahoodle" target="_blank">product page</a>.
+</p>
 
 ## Requirements
 
@@ -42,10 +45,7 @@ Kahoodle is a Moodle activity module that enables real-time, interactive quiz se
 ## Additional Features
 
 - **AI-powered content generation**: The plugin provides web services to create instances and add questions. Use with [Moodle MCP](https://lmscloud.io/products/moodle-mcp/) to quickly generate content using your preferred AI agent.
-- **WebSocket hosting**: An additional plugin for tool_realtime is available to connect to a WebSocket solution that can be hosted on LMSCloud or self-hosted.
-- **Quick access**: An additional plugin allows participants to join Kahoodle activities without needing a permanent account on the Moodle site.
-
-Contact [LMSCloud](https://lmscloud.io) for more details.
+- **WebSocket support**: tool_realtime includes a Centrifugo subplugin for WebSocket-based real-time communication.
 
 ## Acknowledgements
 
