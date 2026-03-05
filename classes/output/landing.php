@@ -101,6 +101,11 @@ class landing implements renderable, templatable {
         $canfacilitate = has_capability('mod/kahoodle:facilitate', $this->context);
         $data->showsectionheaders = $canfacilitate && $canparticipate;
 
+        // Warn teachers/managers when realtime plugin is not available.
+        if (!\tool_realtime\manager::is_enabled('mod_kahoodle') && ($canfacilitate || $canmanagequestions)) {
+            $data->realtimewarning = get_string('error_realtime_disabled_teacher', 'mod_kahoodle');
+        }
+
         // Determine which section to show based on stage and capabilities.
         if ($stage === constants::STAGE_PREPARATION) {
             // Round is in preparation stage.
@@ -185,6 +190,20 @@ class landing implements renderable, templatable {
                 ))->out(false);
                 $helpicon = new \help_icon('preparenewround', 'mod_kahoodle');
                 $data->newroundhelpicon = $helpicon->export_for_template($output);
+            }
+        }
+
+        // Fallback message when no section is shown.
+        $anysection = $data->showcontrolpreparation || $data->showfacilitatorcontrols
+            || $data->showparticipantcontrols || $data->showjoinoption
+            || $data->showwaitingtostart || $data->showfinished;
+        if (!$anysection && empty($data->realtimewarning)) {
+            if (!\tool_realtime\manager::is_enabled('mod_kahoodle')) {
+                $data->fallbackinfo = get_string('error_realtime_disabled', 'mod_kahoodle');
+            } else if (isguestuser()) {
+                $data->fallbackinfo = get_string('error_guest_no_access', 'mod_kahoodle');
+            } else {
+                $data->fallbackinfo = get_string('error_no_capabilities', 'mod_kahoodle');
             }
         }
 

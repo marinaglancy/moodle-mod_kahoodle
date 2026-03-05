@@ -51,6 +51,14 @@
     }
 }}
 <div class="mod-kahoodle-landing">
+    {{#realtimewarning}}
+    <div class="alert alert-danger" role="alert">{{realtimewarning}}</div>
+    {{/realtimewarning}}
+
+    {{#fallbackinfo}}
+    <div class="alert alert-info" role="alert">{{fallbackinfo}}</div>
+    {{/fallbackinfo}}
+
     {{#showcontrolpreparation}}
     <div class="card mb-3">
         <div class="card-body">

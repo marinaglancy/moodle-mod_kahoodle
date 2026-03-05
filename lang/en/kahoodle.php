@@ -60,11 +60,15 @@ $string['entity_roundquestion'] = 'Round question';
 $string['error_cannotchangeavatar'] = 'You cannot change your avatar at this time.';
 $string['error_connectionlost'] = 'The connection to the server was lost. Try refreshing the page to reconnect.';
 $string['error_connectionlost_title'] = 'Connection lost';
+$string['error_guest_no_access'] = 'You need to log in to participate in this activity.';
 $string['error_invalidavatarcandidate'] = 'Invalid avatar selection.';
 $string['error_maxpoints_less_than_minpoints'] = 'Maximum points must be greater than or equal to minimum points.';
+$string['error_no_capabilities'] = 'You do not have permission to participate in this activity.';
 $string['error_nonnegative'] = 'Value must be zero or positive.';
 $string['error_questiontext_h3_required'] = 'Question text must contain a heading in an &lt;h3&gt; tag.';
 $string['error_questiontext_invalidchars'] = 'Question text contains invalid characters.';
+$string['error_realtime_disabled'] = 'This activity is not available at the moment. Please try again later.';
+$string['error_realtime_disabled_teacher'] = 'The "Real time events" plugin is not available. It must be enabled and configured before starting a game.';
 $string['errorgeneral'] = '{$a}';
 $string['eventparticipantjoined'] = 'Participant joined';
 $string['eventparticipantleft'] = 'Participant left';
@@ -88,7 +92,9 @@ $string['identitymode_help'] = 'Controls how participants are identified during 
 * **Real name** - Participants always appear with their actual name and profile picture.
 * **Optional alias** - Participants may choose a custom display name and avatar. Their actual name and profile picture are used by default.
 * **Required alias** - Participants must enter a display name (not pre-filled) and are assigned a random avatar they may change. Teachers can still see the real identity in reports.
-* **Fully anonymous** - Participants are completely anonymous. No user identity is recorded or shown in reports.';
+* **Fully anonymous** - Participants are completely anonymous. No user identity is recorded or shown in reports.
+
+To allow guests to play the game, set identity mode to "Fully anonymous", allow guests in the "Real time events" plugin, allow guest access to the activity, and enable the **mod/kahoodle:participateguest** capability.';
 $string['identitymode_optional'] = 'Optional alias';
 $string['identitymode_realname'] = 'Real name';
 $string['incorrect'] = 'Incorrect';
