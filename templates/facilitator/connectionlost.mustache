@@ -1,0 +1,51 @@
+{{!
+    This file is part of mod_kahoodle plugin
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_kahoodle/facilitator/connectionlost
+
+    Shown to the facilitator when the realtime connection is lost.
+
+    Example context (json):
+    {}
+}}
+<div class="mod_kahoodle-overlay mod_kahoodle-overlay-solid">
+
+    <main class="mod_kahoodle-main" data-stage="connectionlost">
+        <div class="mod_kahoodle-participant-icon mod_kahoodle-result-connectionlost">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+        </div>
+        <div class="mod_kahoodle-participant-result-status">{{#str}}error_connectionlost_title, mod_kahoodle{{/str}}</div>
+        <div class="mod_kahoodle-participant-rank">{{#str}}error_connectionlost, mod_kahoodle{{/str}}</div>
+        <button class="mod_kahoodle-connectionlost-refresh" data-action="refresh">
+            {{#str}}refresh, mod_kahoodle{{/str}}
+        </button>
+    </main>
+
+    <footer class="mod_kahoodle-footer">
+        <div class="mod_kahoodle-controls">
+            <a href="#" class="mod_kahoodle-control-btn" data-action="close">
+                {{#pix}}i/window_close, core{{/pix}} {{#str}}close, mod_kahoodle{{/str}}
+            </a>
+        </div>
+    </footer>
+
+</div>

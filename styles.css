@@ -107,6 +107,13 @@
     justify-content: center;
 }
 
+/* Connection lost stage: center content */
+.mod_kahoodle-main[data-stage="connectionlost"] {
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
 /* Question text */
 .mod_kahoodle-question {
     text-align: center;
@@ -1444,6 +1451,24 @@
     background: linear-gradient(135deg, #4caf50, #388e3c);
     box-shadow: 0 8px 32px rgba(76, 175, 80, 0.4);
     color: white;
+}
+
+.mod_kahoodle-result-connectionlost {
+    background: linear-gradient(135deg, #78909c, #546e7a);
+    box-shadow: 0 8px 32px rgba(84, 110, 122, 0.4);
+    color: white;
+}
+
+.mod_kahoodle-connectionlost-refresh {
+    margin-top: 1rem;
+    padding: 0.75rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--mod_kahoodle-dark);
+    background: var(--mod_kahoodle-light);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
 }
 
 .mod_kahoodle-participant-result-score {

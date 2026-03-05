@@ -162,15 +162,39 @@ const handleRealtimeEvent = (eventData) => {
 /**
  * Handle connection lost events
  */
-const handleConnectionLost = () => {
+const handleConnectionLost = async() => {
     // Pause autoplay when connection is lost.
     if (playerState) {
         Player.pause(playerState);
     }
-    Notification.addNotification({
-        message: 'Connection lost. Please refresh the page.',
-        type: 'error',
-    });
+
+    try {
+        // Create player if it doesn't exist yet.
+        if (!playerState) {
+            playerState = Player.create({
+                containerClass: 'mod_kahoodle-game-container',
+                onNext: () => advanceToNextStage(),
+                onBack: null,
+                onClose: () => closeOverlay(),
+            });
+        }
+
+        // Render connection lost template into the player container.
+        const container = Player.getContainer(playerState);
+        const {html, js} = await Templates.renderForPromise('mod_kahoodle/facilitator/connectionlost', {});
+        Templates.replaceNodeContents(container, html, js);
+
+        // Handle refresh button click (player.js doesn't handle this action).
+        container.addEventListener('click', (e) => {
+            if (e.target.closest('[data-action="refresh"]')) {
+                e.preventDefault();
+                window.location.reload();
+            }
+        });
+    } catch (error) {
+        // Template rendering failed (e.g. network fully down) — reload directly.
+        window.location.reload();
+    }
 };
 
 /**

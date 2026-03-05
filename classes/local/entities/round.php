@@ -634,10 +634,14 @@ class round {
      * @return bool
      */
     public function can_participate(): bool {
-        return has_capability('mod/kahoodle:participate', $this->get_context()) ||
-            (isguestuser()
+        return
+            \tool_realtime\manager::is_enabled('mod_kahoodle') &&
+            (has_capability('mod/kahoodle:participate', $this->get_context()) ||
+                (isguestuser()
                 && has_capability('mod/kahoodle:participateguest', $this->get_context())
-                && (int)$this->get_kahoodle()->identitymode === constants::IDENTITYMODE_ANONYMOUS);
+                && (int)$this->get_kahoodle()->identitymode === constants::IDENTITYMODE_ANONYMOUS
+                && \tool_realtime\manager::get_plugin()?->allow_guests())
+            );
     }
 
     /**
@@ -655,7 +659,8 @@ class round {
             return false;
         }
 
-        return has_capability('mod/kahoodle:facilitate', $this->get_context());
+        return \tool_realtime\manager::is_enabled('mod_kahoodle') &&
+            has_capability('mod/kahoodle:facilitate', $this->get_context());
     }
 
     /**

@@ -33,12 +33,12 @@ import RealTimeEvents from 'tool_realtime/events';
 import * as RealTimeApi from 'tool_realtime/api';
 import Templates from 'core/templates';
 import Notification from 'core/notification';
-import {getString} from 'core/str';
 import KahoodleEvents from 'mod_kahoodle/events';
 
 const SELECTORS = {
     OVERLAY: '.mod_kahoodle-overlay',
     CONTROL_CLOSE: '[data-action="close"]',
+    CONTROL_REFRESH: '[data-action="refresh"]',
     // Landing page buttons.
     LANDING_RESUME: '[data-action="resume-participant"]',
     REVISION_CONTENT: '.mod_kahoodle-participant-revision-content',
@@ -195,13 +195,20 @@ const handleRealtimeEvent = (eventData) => {
 /**
  * Handle connection lost events
  */
-const handleConnectionLost = () => {
-    getString('error_connectionlost', 'kahoodle').then((message) => {
-        return Notification.addNotification({
-            message,
-            type: 'error',
-        });
-    }).catch(() => null);
+const handleConnectionLost = async() => {
+    try {
+        // Create the overlay container if it doesn't exist yet.
+        if (!participantState.overlayContainer) {
+            createOverlayContainer();
+        }
+
+        // Render the connection lost template into the overlay.
+        const {html, js} = await Templates.renderForPromise('mod_kahoodle/participant/connectionlost', {});
+        Templates.replaceNodeContents(participantState.overlayContainer, html, js);
+    } catch (error) {
+        // Template rendering failed (e.g. network fully down) — reload directly.
+        window.location.reload();
+    }
 };
 
 /**
@@ -317,6 +324,12 @@ const handleOverlayControls = (e) => {
     if (closeButton) {
         e.preventDefault();
         closeOverlay();
+    }
+
+    const refreshButton = e.target.closest(SELECTORS.CONTROL_REFRESH);
+    if (refreshButton) {
+        e.preventDefault();
+        window.location.reload();
     }
 };
 
