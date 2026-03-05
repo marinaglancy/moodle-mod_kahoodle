@@ -102,6 +102,7 @@ $string['kahoodle:addinstance'] = 'Add a new Kahoodle';
 $string['kahoodle:facilitate'] = 'Facilitate a round of Kahoodle, display the main screen';
 $string['kahoodle:manage_questions'] = 'Manage questions in Kahoodle';
 $string['kahoodle:participate'] = 'Participate in a Kahoodle activity';
+$string['kahoodle:participateguest'] = 'Participate in Kahoodle activity as a guest (technically a write capability)';
 $string['kahoodle:view'] = 'View Kahoodle';
 $string['kahoodle:viewresults'] = 'View Kahoodle results for all participants';
 $string['kahoodlesettings'] = 'Kahoodle settings';

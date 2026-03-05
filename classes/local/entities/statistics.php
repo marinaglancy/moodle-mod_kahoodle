@@ -136,7 +136,7 @@ class statistics extends round {
         if (
             $round->is_in_progress()
                 && $round->is_participant() === null
-                && has_capability('mod/kahoodle:participate', $this->get_context())
+                && $round->can_participate()
         ) {
             // The last round is in progress and the current user has capability but is not yet a participant.
             if ($this->kahoodle->allowrepeat || $this->kahoodle->identitymode === constants::IDENTITYMODE_ANONYMOUS) {

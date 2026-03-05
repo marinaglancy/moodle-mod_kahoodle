@@ -80,6 +80,13 @@ $capabilities = [
         ],
     ],
 
+    'mod/kahoodle:participateguest' => [
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [
+        ],
+    ],
+
     'mod/kahoodle:viewresults' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_MODULE,

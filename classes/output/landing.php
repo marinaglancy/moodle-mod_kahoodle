@@ -73,7 +73,7 @@ class landing implements renderable, templatable {
         // Get capabilities and participant status using round methods.
         $isfacilitator = $this->round->is_facilitator();
         $canmanagequestions = has_capability('mod/kahoodle:manage_questions', $this->context);
-        $canparticipate = has_capability('mod/kahoodle:participate', $this->context);
+        $canparticipate = $this->round->can_participate();
         $isparticipating = $this->round->is_participant() !== null;
 
         // Get round stage and question count.

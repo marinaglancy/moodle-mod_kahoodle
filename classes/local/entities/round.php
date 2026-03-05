@@ -606,7 +606,7 @@ class round {
         }
 
         // Check capability first.
-        if (!has_capability('mod/kahoodle:participate', $this->get_context())) {
+        if (!$this->can_participate()) {
             $this->currentuserparticipant = false;
             return null;
         }
@@ -626,6 +626,18 @@ class round {
 
         $this->currentuserparticipant = !empty($result) ? reset($result) : false;
         return $this->currentuserparticipant ?: null;
+    }
+
+    /**
+     * Check if the current user has the capability to participate in this round.
+     *
+     * @return bool
+     */
+    public function can_participate(): bool {
+        return has_capability('mod/kahoodle:participate', $this->get_context()) ||
+            (isguestuser()
+                && has_capability('mod/kahoodle:participateguest', $this->get_context())
+                && (int)$this->get_kahoodle()->identitymode === constants::IDENTITYMODE_ANONYMOUS);
     }
 
     /**
