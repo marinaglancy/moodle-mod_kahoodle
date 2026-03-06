@@ -166,7 +166,7 @@ Feature: Kahoodle lobby and join form
     Then "[data-region='avatar-picker']" "css_element" should be visible
     When I click on "[data-action='selectavatar']" "css_element"
     # After selecting an avatar, the edit button is removed.
-    Then "[data-action='editavatar']" "css_element" should not exist
+    And I wait until "[data-action='editavatar']" "css_element" does not exist
     # Make sure all php polling requests are finished before the end of the test
     When the kahoodle "Test Kahoodle" round stage is "archived"
     And I wait until "The activity has finished." "text" exists
@@ -197,7 +197,7 @@ Feature: Kahoodle lobby and join form
     # Select the 9th candidate.
     When I click on ".mod_kahoodle-avatar-picker-item:nth-child(9)" "css_element"
     # After selecting an avatar, the edit button is removed.
-    Then "[data-action='editavatar']" "css_element" should not exist
+    And I wait until "[data-action='editavatar']" "css_element" does not exist
     # Make sure all php polling requests are finished before the end of the test
     When the kahoodle "Test Kahoodle" round stage is "archived"
     And I wait until "The activity has finished." "text" exists
