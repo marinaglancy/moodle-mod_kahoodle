@@ -25,11 +25,11 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component    = 'mod_kahoodle';
-$plugin->release      = '1.0.0';
-$plugin->version      = 2026030400;
+$plugin->release      = '1.1.0';
+$plugin->version      = 2026030600;
 $plugin->requires     = 2024100700;
 $plugin->supported    = [405, 501];
 $plugin->maturity     = MATURITY_STABLE;
 $plugin->dependencies = [
-    'tool_realtime' => 2026021900,
+    'tool_realtime' => 2026030600,
 ];
