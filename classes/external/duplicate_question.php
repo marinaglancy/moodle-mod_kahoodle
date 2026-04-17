@@ -69,6 +69,10 @@ class duplicate_question extends external_api {
         $targetround = null;
         if ($targetroundid) {
             $targetround = round::create_from_id($targetroundid);
+            // Target can only be within the same module.
+            if ($targetround->get_context()->id != $context->id) {
+                throw new \dml_missing_record_exception('kahoodle_rounds', 'id = ?', [$targetroundid]);
+            }
         }
 
         // Duplicate the question.

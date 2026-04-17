@@ -576,6 +576,10 @@ class questions {
         global $DB;
 
         $round = $targetround ?? $roundquestion->get_round();
+        // Target can only be within the same module.
+        if ($targetround && $targetround->get_context()->id != $roundquestion->get_round()->get_context()->id) {
+            throw new \dml_missing_record_exception('kahoodle_rounds', 'id = ?', [$targetround->get_id()]);
+        }
         if (!$round->is_fully_editable()) {
             throw new \moodle_exception('noeditableround', 'mod_kahoodle');
         }
