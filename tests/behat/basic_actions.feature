@@ -139,6 +139,23 @@ Feature: Basic operations with module Kahoodle
     And I should see "Test module name"
 
   @javascript
+  Scenario: Course settings are editable when Kahoodle is the activity in a Single activity format course
+    # Regression test for https://github.com/marinaglancy/moodle-mod_kahoodle/issues/5
+    Given the following "courses" exist:
+      | fullname           | shortname | format         | activitytype |
+      | Single Kahoodle    | SAK       | singleactivity | kahoodle     |
+    Given the following "activities" exist:
+      | activity | name          | course | idnumber  | section |
+      | kahoodle | Test Kahoodle | SAK    | kahoodle1 | 0       |
+    And the following "course enrolments" exist:
+      | user     | course | role           |
+      | teacher1 | SAK    | editingteacher |
+    When I am on the "SAK" "course editing" page logged in as "teacher1"
+    Then I should see "Course full name"
+    And I should not see "has_capability"
+    And I should not see "Exception"
+
+  @javascript
   Scenario: Duplicating a Kahoodle activity preserves questions
     Given the following "activities" exist:
       | activity | name          | course | idnumber  | section |

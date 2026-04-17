@@ -91,10 +91,17 @@ function kahoodle_delete_instance($id) {
  * @param navigation_node $node The navigation node to extend
  */
 function kahoodle_extend_settings_navigation(settings_navigation $settingsnav, navigation_node $node) {
-    global $PAGE;
+    // Use the settings navigation's page rather than $PAGE: in Single activity format,
+    // secondary nav builds module nav on a separate moodle_page instance, so global
+    // $PAGE->cm is not populated. See MDL behaviour in secondary::load_single_activity_course_navigation.
+    $cm = $settingsnav->get_page()->cm ?? null;
+    if (empty($cm)) {
+        return;
+    }
+    $context = $cm->context ?? context_module::instance($cm->id);
 
-    if (has_capability('mod/kahoodle:manage_questions', $PAGE->cm->context)) {
-        $url = new moodle_url('/mod/kahoodle/questions.php', ['id' => $PAGE->cm->id]);
+    if (has_capability('mod/kahoodle:manage_questions', $context)) {
+        $url = new moodle_url('/mod/kahoodle/questions.php', ['id' => $cm->id]);
         $node->add(
             get_string('questions', 'mod_kahoodle'),
             $url,
@@ -105,8 +112,8 @@ function kahoodle_extend_settings_navigation(settings_navigation $settingsnav, n
         );
     }
 
-    if (has_capability('mod/kahoodle:viewresults', $PAGE->cm->context)) {
-        $url = new moodle_url('/mod/kahoodle/results.php', ['id' => $PAGE->cm->id]);
+    if (has_capability('mod/kahoodle:viewresults', $context)) {
+        $url = new moodle_url('/mod/kahoodle/results.php', ['id' => $cm->id]);
         $node->add(
             get_string('results', 'mod_kahoodle'),
             $url,
