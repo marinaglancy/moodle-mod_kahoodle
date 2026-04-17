@@ -159,6 +159,14 @@ class backup_kahoodle_activity_structure_step extends backup_activity_structure_
             $participant->set_source_table('kahoodle_participants', ['roundid' => backup::VAR_PARENTID], 'id ASC');
             $response->set_source_table('kahoodle_responses', ['participantid' => backup::VAR_PARENTID], 'id ASC');
         } else {
+            global $DB;
+
+            // MSSQL uses "SELECT TOP N" instead of "LIMIT N". Moodle supports MySQL,
+            // MariaDB, PostgreSQL and MSSQL; all except MSSQL accept LIMIT.
+            $ismssql = ($DB->get_dbfamily() === 'mssql');
+            $top = $ismssql ? 'TOP 1 ' : '';
+            $limit = $ismssql ? '' : ' LIMIT 1';
+
             // Without user data: backup only questions that belong to the last round,
             // with only their latest versions, and only the last round itself.
             $question->set_source_sql(
@@ -169,11 +177,11 @@ class backup_kahoodle_activity_structure_step extends backup_activity_structure_
                    JOIN {kahoodle_rounds} r ON r.id = rq.roundid
                   WHERE q.kahoodleid = ?
                     AND r.id = (
-                        SELECT r2.id FROM {kahoodle_rounds} r2
+                        SELECT {$top}r2.id FROM {kahoodle_rounds} r2
                          WHERE r2.kahoodleid = q.kahoodleid
                          ORDER BY CASE WHEN r2.currentstage = 'preparation' THEN 0 ELSE 1 END,
                                   r2.timecreated DESC, r2.id DESC
-                         LIMIT 1
+                         {$limit}
                     )
                   ORDER BY q.id ASC",
                 [backup::VAR_PARENTID]
@@ -191,12 +199,12 @@ class backup_kahoodle_activity_structure_step extends backup_activity_structure_
 
             // Only the last round.
             $round->set_source_sql(
-                "SELECT r.*
+                "SELECT {$top}r.*
                    FROM {kahoodle_rounds} r
                   WHERE r.kahoodleid = ?
                   ORDER BY CASE WHEN r.currentstage = 'preparation' THEN 0 ELSE 1 END,
                            r.timecreated DESC, r.id DESC
-                  LIMIT 1",
+                  {$limit}",
                 [backup::VAR_PARENTID]
             );
 

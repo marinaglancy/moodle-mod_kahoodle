@@ -104,7 +104,6 @@ class question extends dynamic_form {
             // Rich text mode - use editor.
             $mform->addElement('editor', 'questiontext_editor', get_string('questiontext', 'mod_kahoodle'), null, [
                 'maxfiles' => EDITOR_UNLIMITED_FILES,
-                'noclean' => true,
                 'context' => $round->get_context(),
             ]);
             $mform->setType('questiontext_editor', PARAM_RAW);
