@@ -35,7 +35,7 @@ final class instance_test extends \advanced_testcase {
      * @return void
      */
     public function test_create_delete_module(): void {
-        global $DB;
+        global $DB, $CFG;
         $this->resetAfterTest();
 
         // Disable recycle bin so we are testing module deletion and not backup.
@@ -63,8 +63,12 @@ final class instance_test extends \advanced_testcase {
         $this->assertEquals(constants::DEFAULT_MAX_POINTS, $record->maxpoints);
         $this->assertEquals(constants::DEFAULT_MIN_POINTS, $record->minpoints);
 
-        // Delete module.
-        course_delete_module($cm->id);
+        // Delete module. course_delete_module() is deprecated since Moodle 5.2 in favour of cmactions::delete().
+        if ($CFG->branch < 502) {
+            course_delete_module($cm->id);
+        } else {
+            (new \core_courseformat\local\cmactions($course))->delete($cm->id);
+        }
         $this->assertEquals(0, $DB->count_records('kahoodle', ['id' => $mod->id]));
         $this->assertEquals(0, $DB->count_records('course_modules', ['id' => $cm->id]));
     }
@@ -153,7 +157,7 @@ final class instance_test extends \advanced_testcase {
      * @return void
      */
     public function test_backup_restore(): void {
-        global $DB;
+        global $DB, $CFG;
         $this->resetAfterTest();
         $this->setAdminUser();
 
@@ -176,7 +180,12 @@ final class instance_test extends \advanced_testcase {
         $cm = get_coursemodule_from_instance('kahoodle', $mod->id);
 
         // Call duplicate_module - it will backup and restore this module.
-        $cmnew = duplicate_module($course, $cm);
+        // duplicate_module() is deprecated since Moodle 5.2 in favour of cmactions::duplicate().
+        if ($CFG->branch < 502) {
+            $cmnew = duplicate_module($course, $cm);
+        } else {
+            $cmnew = (new \core_courseformat\local\cmactions($course))->duplicate($cm->id);
+        }
 
         $this->assertNotNull($cmnew);
         $this->assertGreaterThan($cm->id, $cmnew->id);

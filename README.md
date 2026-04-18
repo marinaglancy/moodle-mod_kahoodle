@@ -1,3 +1,5 @@
+[![MDL Shield](https://img.shields.io/endpoint?url=https%3A%2F%2Fmdlshield.com%2Fapi%2Fbadge%2Fmod_kahoodle)](https://mdlshield.com/plugins/mod_kahoodle)
+
 # Kahoodle - Real-time Quiz Activity for Moodle
 
 Kahoodle is a Moodle activity module that enables real-time, interactive quiz sessions where all participants take a quiz simultaneously. Designed for engaging, game-like quiz experiences similar to popular classroom quiz platforms.

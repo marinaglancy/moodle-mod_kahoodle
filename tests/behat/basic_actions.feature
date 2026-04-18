@@ -106,7 +106,7 @@ Feature: Basic operations with module Kahoodle
     And I press "Save and display"
     And I navigate to "Settings" in current page administration
     Then the following fields match these values:
-      | Allow repeat participation          | 0       |
+      | Allow repeat participation          | 1       |
       | lobbyduration[number]               | 5       |
       | lobbyduration[timeunit]             | minutes |
       | Question preview duration, seconds  | 5       |

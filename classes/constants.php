@@ -25,7 +25,7 @@ namespace mod_kahoodle;
  */
 class constants {
     /** @var int Default value for allow repeat participation */
-    public const DEFAULT_ALLOW_REPEAT = 0;
+    public const DEFAULT_ALLOW_REPEAT = 1;
 
     /** @var int Default lobby duration in seconds (5 minutes) */
     public const DEFAULT_LOBBY_DURATION = 300;
