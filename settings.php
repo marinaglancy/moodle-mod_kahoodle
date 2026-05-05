@@ -32,6 +32,6 @@ if ($ADMIN->fulltree) {
         get_string('allavatars_desc', 'mod_kahoodle'),
         'allavatars',
         0,
-        ['maxfiles' => EDITOR_UNLIMITED_FILES, 'subdirs' => true]
+        ['maxfiles' => -1, 'subdirs' => true]
     ));
 }
