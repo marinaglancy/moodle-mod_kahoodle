@@ -1,0 +1,63 @@
+# camp listing manifest — descriptive content for your plugin's page.
+# Edit freely and commit; camp ingests this file at each tagged release.
+# Schema: https://camp-registry.org/schema/listing.schema.json
+name: Kahoodle - Real-time quiz game
+summary: A live quiz game for the classroom. All participants answer the same question at the same time and score points for correct and fast answers.
+category: Games
+description: |
+  Kahoodle is an activity module for live quiz sessions in which all participants take the quiz
+  at the same time, similar to popular classroom quiz platforms. The teacher shows the questions
+  on a shared screen, and participants answer on their own devices.
+
+  - **Real-time gameplay**: all participants answer the questions simultaneously.
+  - **Live leaderboard**: points are based on correctness and response speed.
+  - **Multiple rounds**: run several quiz sessions with the same questions.
+  - **Identity modes**: participants can use their real names, nicknames with avatars, or stay anonymous.
+  - **Question versioning**: edit questions while preserving the data of past rounds.
+  - **Mobile-friendly**: responsive design for participant devices.
+
+  ## How it works
+
+  1. Add a Kahoodle activity to your course and create the questions in the Questions tab.
+  2. Start a round and share your screen with the participants. The lobby displays a QR code
+     with the activity link.
+  3. Participants join with a display name and avatar.
+  4. Questions advance automatically, or you can pause and advance them manually.
+
+  ## Requirements
+
+  - Moodle 4.5 or higher.
+  - The [Real time events](https://github.com/marinaglancy/moodle-tool_realtime) plugin (tool_realtime)
+    for the real-time communication, using PHP polling or websockets.
+
+  The plugin also provides web services to create activities and add questions, so quizzes can be
+  generated with an AI agent, for example through [Moodle MCP](https://lmscloud.io/products/moodle-mcp/).
+
+  Kahoodle was originally developed during DevCamp at MoodleMoot DACH 2025.
+labels:
+  # Required disclosure labels — pick all that apply (RFC §4.7):
+  #   fully-free | freemium | paid-service | external-account
+  #   donation-supported | commercial-support-available
+  - fully-free
+screenshots:
+  - path: .camp/screenshots/lobby.png
+    caption: The lobby on the shared screen. Participants scan the QR code and join from their phones with a name and avatar.
+  - path: .camp/screenshots/question.png
+    caption: A question on the shared screen, while participants choose their answer on their phones.
+  - path: .camp/screenshots/answer-results.png
+    caption: How many participants picked each answer, and the points scored for a correct and fast answer.
+  - path: .camp/screenshots/leaderboard.png
+    caption: The leaderboard during the game. Each participant sees their place and the gap to the next player.
+  - path: .camp/screenshots/podium.png
+    caption: The top winners at the end of the round.
+  - path: .camp/screenshots/questions.png
+    caption: Managing the questions of a round, with the timing and score range of each question.
+  - path: .camp/screenshots/results.png
+    caption: Results of all rounds with the rank, score and correct answers of every participant.
+links:
+  docs: https://github.com/marinaglancy/moodle-mod_kahoodle#readme
+  issues: https://github.com/marinaglancy/moodle-mod_kahoodle/issues
+  changelog: https://github.com/marinaglancy/moodle-mod_kahoodle/blob/HEAD/CHANGELOG.md
+badges:
+  - endpoint: https://mdlshield.com/api/badge/mod_kahoodle
+    link: https://mdlshield.com/plugins/mod_kahoodle
