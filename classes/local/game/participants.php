@@ -55,7 +55,7 @@ class participants {
         if ($userealidentity) {
             $displayname = fullname($USER);
         } else {
-            $displayname = substr(trim($displayname), 0, constants::DISPLAYNAME_MAXLENGTH);
+            $displayname = \core_text::substr(trim($displayname ?? ''), 0, constants::DISPLAYNAME_MAXLENGTH);
         }
 
         // Create participant record.

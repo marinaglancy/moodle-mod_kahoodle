@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - The results chart could show a wrong number of answers for an option when a participant sent a modified answer (for example "01" instead of "1") - detected by https://mdlshield.com
+- Participants could not join with a nickname of 7 or more characters in CJK and other multibyte scripts; nicknames of only spaces are no longer accepted - detected by https://mdlshield.com
 
 ## [4.5.1] - 2026-05-05
 

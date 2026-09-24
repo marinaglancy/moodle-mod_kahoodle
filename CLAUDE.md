@@ -157,6 +157,8 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   ├── delete_question_test.php
 │   │   ├── duplicate_question_test.php
 │   │   └── playback_stages_test.php
+│   ├── form/
+│   │   └── join_test.php     # Join form validation (nickname required, length in characters)
 │   ├── generator/            # Test data generators
 │   │   ├── behat_mod_kahoodle_generator.php  # Behat generator (questions, participants, responses)
 │   │   └── lib.php                           # PHPUnit generator

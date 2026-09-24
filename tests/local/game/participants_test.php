@@ -68,6 +68,46 @@ final class participants_test extends \advanced_testcase {
     }
 
     /**
+     * Test join_round with nicknames in a multibyte script
+     */
+    public function test_join_round_multibyte_nickname(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', [
+            'course' => $course->id,
+            'identitymode' => constants::IDENTITYMODE_ALIAS,
+        ]);
+        $round = questions::get_last_round($kahoodle->id);
+
+        // A nickname of 7 CJK characters (21 bytes) is stored as is.
+        $user1 = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $this->setUser($user1);
+        participants::join_round($round, '東京タワー好き');
+        $params = ['roundid' => $round->get_id(), 'userid' => $user1->id];
+        $this->assertEquals('東京タワー好き', $DB->get_field('kahoodle_participants', 'displayname', $params));
+
+        // A nickname that is too long is cut to the maximum number of characters.
+        $user2 = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $this->setUser($user2);
+        participants::join_round($round, str_repeat('漢', constants::DISPLAYNAME_MAXLENGTH + 5));
+        $params = ['roundid' => $round->get_id(), 'userid' => $user2->id];
+        $this->assertEquals(
+            str_repeat('漢', constants::DISPLAYNAME_MAXLENGTH),
+            $DB->get_field('kahoodle_participants', 'displayname', $params)
+        );
+
+        // Without a nickname, the escaped full name is displayed.
+        $user3 = $this->getDataGenerator()->create_and_enrol($course, 'student', ['firstname' => 'Tom & Jerry']);
+        $this->setUser($user3);
+        participants::join_round($round, '   ');
+        $participant = $round->is_participant();
+        $this->assertEquals(s(fullname($user3)), $participant->get_display_name());
+        $this->assertStringContainsString('Tom &amp; Jerry', $participant->get_display_name());
+    }
+
+    /**
      * Test get_avatar_candidates returns candidates and respects the onlynew flag.
      */
     public function test_get_avatar_candidates(): void {

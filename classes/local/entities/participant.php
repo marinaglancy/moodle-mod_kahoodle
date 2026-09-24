@@ -172,7 +172,7 @@ class participant {
      * @return string
      */
     public function get_display_name(): string {
-        return s($this->participantdata->displayname) ?: fullname($this->userdata);
+        return s($this->participantdata->displayname) ?: s(fullname($this->userdata));
     }
 
     /**
