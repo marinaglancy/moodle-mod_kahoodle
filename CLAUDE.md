@@ -1132,7 +1132,8 @@ The plugin includes comprehensive PHPUnit test coverage:
 #### Backup/Restore Tests (`tests/backup_restore_test.php`)
 - Tests backup/restore with user data (all rounds, participants, responses preserved)
 - Tests backup/restore without user data (only last round and its questions)
-- Tests backup with user data, restore without (all rounds but no participants)
+- Tests backup with user data, restore without (only the round a backup without user data would include, its questions, no participants)
+- Tests rounds restored mid-game with user data get an auto-archive task
 - Tests question image files are backed up and restored
 - Tests participant avatar files are backed up and restored
 - Tests single round backup without user data
@@ -1363,7 +1364,8 @@ vendor/bin/phpunit --filter questions_test
 - Backup/restore with full support for questions, rounds, participants, responses, and files
   - Without user data: backs up only the last round and its questions (latest versions)
   - With user data: backs up all rounds, participants, responses, question images, and avatar files
-  - Backed up with user data but restored without: restores all rounds/questions but no participants
+  - Backed up with user data but restored without: restores only the round a backup without user data would include (in preparation, otherwise the newest) and its questions, no participants
+  - Rounds restored in the middle of a game (with user data) are archived automatically by the `auto_archive_round` task
 - Privacy API provider (metadata, export, delete for participants and responses)
 - Event logging for all major actions (10 events: view, question CRUD, round management, participants, responses)
 - Landing page with stage-based content display (view.php)

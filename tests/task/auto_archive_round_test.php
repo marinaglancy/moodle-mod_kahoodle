@@ -216,6 +216,33 @@ final class auto_archive_round_test extends \advanced_testcase {
     }
 
     /**
+     * Test that schedule queues a task to run as soon as possible when the auto-archive time has passed
+     */
+    public function test_schedule_queues_task_when_overdue(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $round = $this->create_started_round();
+        $DB->delete_records('task_adhoc', ['classname' => '\\' . auto_archive_round::class]);
+        $this->update_round_fields($round, ['timestarted' => time() - constants::MAX_ROUND_DURATION - 100]);
+        $round = round::create_from_id($round->get_id());
+
+        $now = time();
+        auto_archive_round::schedule($round);
+
+        $tasks = $DB->get_records('task_adhoc', ['classname' => '\\' . auto_archive_round::class]);
+        $this->assertCount(1, $tasks);
+        $task = reset($tasks);
+        $this->assertGreaterThanOrEqual($now, (int)$task->nextruntime);
+        $this->assertLessThanOrEqual(time(), (int)$task->nextruntime);
+
+        // Running the task archives the round.
+        $this->runAdhocTasks(auto_archive_round::class);
+        $round = round::create_from_id($round->get_id());
+        $this->assertEquals(constants::STAGE_ARCHIVED, $round->get_current_stage_name());
+    }
+
+    /**
      * Test that schedule does not queue a task when the round is in preparation
      */
     public function test_schedule_noop_for_preparation(): void {
