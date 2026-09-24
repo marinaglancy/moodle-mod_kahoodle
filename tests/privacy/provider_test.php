@@ -43,6 +43,17 @@ final class provider_test extends provider_testcase {
         $this->assertContains('kahoodle_participants', $itemtypes);
         $this->assertContains('kahoodle_responses', $itemtypes);
         $this->assertContains('core_files', $itemtypes);
+
+        // All personal data fields of the participants table are described.
+        $participants = array_values(array_filter(
+            $newcollection->get_collection(),
+            fn($item) => $item->get_name() === 'kahoodle_participants'
+        ))[0];
+        $fields = array_keys($participants->get_privacy_fields());
+        $this->assertEqualsCanonicalizing(
+            ['userid', 'participantcode', 'displayname', 'avatar', 'totalscore', 'finalrank', 'timecreated'],
+            $fields
+        );
     }
 
     /**
@@ -127,6 +138,7 @@ final class provider_test extends provider_testcase {
      * Test export of user data.
      */
     public function test_export_user_data(): void {
+        global $DB;
         $this->resetAfterTest();
 
         $course = $this->getDataGenerator()->create_course();
@@ -140,7 +152,17 @@ final class provider_test extends provider_testcase {
         $cm = get_coursemodule_from_instance('kahoodle', $kahoodle->id);
         $context = \context_module::instance($cm->id);
 
-        $this->create_participation($generator, $kahoodle->id, $user->id);
+        [, $participantid] = $this->create_participation($generator, $kahoodle->id, $user->id);
+
+        // Store an avatar for the participant, and for another user.
+        $DB->set_field('kahoodle_participants', 'avatar', 'avatar.png', ['id' => $participantid]);
+        $this->create_avatar_file($context, $participantid);
+        [, $otherparticipantid] = $this->create_participation(
+            $generator,
+            $kahoodle->id,
+            $this->getDataGenerator()->create_user()->id
+        );
+        $this->create_avatar_file($context, $otherparticipantid);
 
         // Export data.
         $this->export_context_data_for_user($user->id, $context, 'mod_kahoodle');
@@ -153,9 +175,17 @@ final class provider_test extends provider_testcase {
 
         $participation = $data->participations[0];
         $this->assertEquals('User ' . $user->id, $participation['displayname']);
+        $this->assertEquals('avatar.png', $participation['avatar']);
         $this->assertNotEmpty($participation['responses']);
         $this->assertCount(1, $participation['responses']);
         $this->assertEquals(100, $participation['responses'][0]['points']);
+
+        // Only the avatar of this user is exported.
+        $avatarspath = get_string('privacy:avatars', 'mod_kahoodle');
+        $files = $writer->get_files([$avatarspath, $participantid]);
+        $this->assertCount(1, $files);
+        $this->assertEquals('avatar.png', reset($files)->get_filename());
+        $this->assertEmpty($writer->get_files([$avatarspath, $otherparticipantid]));
     }
 
     /**
@@ -303,6 +333,23 @@ final class provider_test extends provider_testcase {
             [$context1->id, $context2->id],
             $contextlist->get_contextids()
         );
+    }
+
+    /**
+     * Helper: create an avatar file for a participant.
+     *
+     * @param \context_module $context
+     * @param int $participantid
+     */
+    private function create_avatar_file(\context_module $context, int $participantid): void {
+        get_file_storage()->create_file_from_string([
+            'contextid' => $context->id,
+            'component' => 'mod_kahoodle',
+            'filearea' => \mod_kahoodle\constants::FILEAREA_AVATAR,
+            'itemid' => $participantid,
+            'filepath' => '/',
+            'filename' => 'avatar.png',
+        ], 'avatar content');
     }
 
     /**

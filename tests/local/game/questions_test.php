@@ -482,6 +482,46 @@ final class questions_test extends \advanced_testcase {
     }
 
     /**
+     * Test delete_question of the last version marks the previous version as the last one
+     *
+     * @return void
+     */
+    public function test_delete_question_last_version(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
+        $roundquestion = $this->get_generator()
+            ->create_question(['kahoodleid' => $kahoodle->id, 'questiontext' => 'Original text']);
+        $questionid = $roundquestion->get_question_id();
+        $version1id = $roundquestion->get_data()->questionversionid;
+
+        // Start the round and prepare a new round with the same question.
+        $round = $roundquestion->get_round();
+        $DB->update_record('kahoodle_rounds', [
+            'id' => $round->get_id(),
+            'currentstage' => constants::STAGE_ARCHIVED,
+            'timecreated' => time() - 100,
+            'timestarted' => time() - 100,
+        ]);
+        $newround = questions::get_last_round($kahoodle->id)->duplicate();
+
+        // Edit the question in the new round, this creates version 2.
+        $newroundquestion = round_question::create_from_question_id($questionid, $newround);
+        questions::edit_question($newroundquestion, (object)['questiontext' => 'Updated text']);
+        $versions = $DB->get_records('kahoodle_question_versions', ['questionid' => $questionid], 'version', 'version, islast');
+        $this->assertEquals([1 => 0, 2 => 1], array_map(fn($v) => (int)$v->islast, $versions));
+
+        // Delete the question from the new round, version 2 is deleted and version 1 becomes the last one.
+        questions::delete_question(round_question::create_from_question_id($questionid, $newround));
+        $versions = $DB->get_records('kahoodle_question_versions', ['questionid' => $questionid]);
+        $this->assertEquals([$version1id], array_keys($versions));
+        $this->assertEquals(1, $versions[$version1id]->islast);
+        $this->assertEquals(0, $DB->count_records('kahoodle_round_questions', ['roundid' => $newround->get_id()]));
+    }
+
+    /**
      * Test duplicate_question within the same round
      *
      * @return void

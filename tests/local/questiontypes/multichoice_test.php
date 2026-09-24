@@ -188,6 +188,29 @@ final class multichoice_test extends \advanced_testcase {
     }
 
     /**
+     * Test export_template_data formats the option text
+     */
+    public function test_export_template_data_formats_text(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $rq = $this->create_question_with_config("Apple\n*Banana");
+
+        // The option text may contain HTML if it was not saved through the API (for example, restored from a backup).
+        $DB->set_field(
+            'kahoodle_question_versions',
+            'questionconfig',
+            "<b>Apple</b>\n*Banana & Cherry",
+            ['id' => $rq->get_data()->questionversionid]
+        );
+        $rq = round_question::create_from_round_question_id($rq->get_id());
+
+        $mc = new multichoice();
+        $result = $mc->export_template_data($rq, constants::STAGE_QUESTION);
+        $this->assertEquals('Apple', $result['options'][0]['text']);
+        $this->assertEquals('Banana &amp; Cherry', $result['options'][1]['text']);
+    }
+
+    /**
      * Test export_template_data for results stage
      */
     public function test_export_template_data_results_stage(): void {

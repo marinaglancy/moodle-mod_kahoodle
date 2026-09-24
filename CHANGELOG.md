@@ -7,11 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Support for Moodle 5.3
+
 ### Fixed
 - The results chart could show a wrong number of answers for an option when a participant sent a modified answer (for example "01" instead of "1") - detected by https://mdlshield.com
 - Participants could not join with a nickname of 7 or more characters in CJK and other multibyte scripts; nicknames of only spaces are no longer accepted - detected by https://mdlshield.com
 - Restoring a backup made with user data without including user data restored all rounds and their questions instead of only the last round - detected by https://mdlshield.com
 - Rounds restored in the middle of a game are now archived automatically
+- Deleting a question that had been edited after an earlier round could fail on SQL Server - detected by https://mdlshield.com
+- The privacy data export now includes the participants' avatar images - detected by https://mdlshield.com
 
 ## [4.5.1] - 2026-05-05
 

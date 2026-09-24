@@ -22,6 +22,12 @@ use mod_kahoodle\local\entities\round;
 /**
  * Class notifications
  *
+ * tool_realtime identifies a channel by a hash of its context, component, area and itemid combined
+ * with a random salt that is stored in the tool_realtime config and never sent to the browser.
+ * The hash is only output to the page when the channel is subscribed on the server, so users
+ * cannot work out the hashes of channels they were not subscribed to. The phppoll backend also
+ * stores the subscribed hashes in the user session and rejects poll requests for any other channel.
+ *
  * @package    mod_kahoodle
  * @copyright  Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

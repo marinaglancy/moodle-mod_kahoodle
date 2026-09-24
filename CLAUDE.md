@@ -1146,7 +1146,7 @@ The plugin includes comprehensive PHPUnit test coverage:
 - Tests metadata declaration (tables and subsystems)
 - Tests context discovery for users with participation data
 - Tests user enumeration within contexts
-- Tests user data export (participations with responses)
+- Tests user data export (participations with responses and avatar files)
 - Tests deletion for all users in context, single user, and multiple users
 - Tests multiple kahoodle instances return separate contexts
 

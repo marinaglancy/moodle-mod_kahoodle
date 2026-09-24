@@ -149,6 +149,7 @@ class multichoice extends base {
         }
 
         $letters = constants::MULTICHOICE_SYMBOLS;
+        $context = $roundquestion->guess_context();
 
         if ($stage == constants::STAGE_QUESTION_RESULTS) {
             $answerscount = $this->get_answers_count($roundquestion, $mockresults);
@@ -159,7 +160,7 @@ class multichoice extends base {
             $option = [
                 'optionnumber' => $index + 1,
                 'letter' => $letters[$index] ?? (string)($index + 1),
-                'text' => $answer['text'],
+                'text' => format_string($answer['text'], true, ['context' => $context]),
             ];
             if ($stage == constants::STAGE_QUESTION_RESULTS) {
                 $option['iscorrect'] = $answer['iscorrect'];

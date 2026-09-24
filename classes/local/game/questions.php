@@ -511,6 +511,8 @@ class questions {
             throw new \moodle_exception('noeditableround', 'mod_kahoodle');
         }
 
+        $transaction = $DB->start_delegated_transaction();
+
         // Always delete the link between the question and the editable round.
         $DB->delete_records('kahoodle_round_questions', ['id' => $roundquestion->get_id()]);
 
@@ -536,15 +538,21 @@ class questions {
                 $DB->delete_records('kahoodle_questions', ['id' => $questionid]);
             } else if ($waslastversion) {
                 // The deleted version was the last one. Update the new highest version to be the last.
-                $newlastversionid = $DB->get_field_sql(
-                    'SELECT id FROM {kahoodle_question_versions} WHERE questionid = ? ORDER BY version DESC LIMIT 1',
-                    [$questionid]
+                $versions = $DB->get_records(
+                    'kahoodle_question_versions',
+                    ['questionid' => $questionid],
+                    'version DESC',
+                    'id',
+                    0,
+                    1
                 );
-                if ($newlastversionid) {
-                    $DB->set_field('kahoodle_question_versions', 'islast', 1, ['id' => $newlastversionid]);
+                if ($versions) {
+                    $DB->set_field('kahoodle_question_versions', 'islast', 1, ['id' => reset($versions)->id]);
                 }
             }
         }
+
+        $transaction->allow_commit();
 
         $round->clear_questions_cache();
         $event = \mod_kahoodle\event\question_removed::create([
