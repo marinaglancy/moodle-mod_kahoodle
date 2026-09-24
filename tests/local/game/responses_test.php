@@ -225,6 +225,35 @@ final class responses_test extends \advanced_testcase {
     }
 
     /**
+     * Test that different spellings of the same option are stored and counted as the same answer.
+     */
+    public function test_record_answer_normalised(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        [$round, $participant, $sig] = $this->setup_round_at_question_stage();
+        $roundquestion = $round->get_current_stage()->get_round_question();
+
+        // Add a second participant.
+        $user2 = $this->getDataGenerator()->create_user();
+        $participant2id = $this->get_generator()->create_participant(['roundid' => $round->get_id(), 'userid' => $user2->id]);
+        $round->clear_participant_cache();
+        $participant2 = $round->get_participant_by_id($participant2id);
+
+        responses::record_answer($participant, '01', $sig);
+        responses::record_answer($participant2, '1 ', $sig);
+
+        // Both answers are stored as '1'.
+        $records = $DB->get_records('kahoodle_responses', ['roundquestionid' => $roundquestion->get_id()]);
+        $this->assertCount(2, $records);
+        $this->assertEquals(['1', '1'], array_values(array_column($records, 'response')));
+
+        // Each answer is counted once for the first option.
+        $data = $roundquestion->get_question_type()->export_template_data($roundquestion, constants::STAGE_QUESTION_RESULTS);
+        $this->assertEquals([2, 0, 0], array_column($data['options'], 'count'));
+    }
+
+    /**
      * Test recording an invalid option number is silently ignored.
      */
     public function test_record_answer_invalid_option(): void {

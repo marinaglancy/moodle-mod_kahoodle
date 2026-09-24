@@ -283,6 +283,45 @@ final class multichoice_test extends \advanced_testcase {
     }
 
     /**
+     * Test export_template_data for results stage adds up responses that spell the same option differently
+     */
+    public function test_export_template_data_results_counts(): void {
+        $this->resetAfterTest();
+        $rq = $this->create_question_with_config("Apple\n*Banana\nCherry");
+
+        // Responses saved before they were normalised may spell the same option differently.
+        foreach (['2', '02', '2 ', '1'] as $response) {
+            $user = $this->getDataGenerator()->create_user();
+            $participantid = $this->get_generator()->create_participant([
+                'roundid' => $rq->get_round()->get_id(),
+                'userid' => $user->id,
+            ]);
+            $this->get_generator()->create_response([
+                'participantid' => $participantid,
+                'roundquestionid' => $rq->get_id(),
+                'response' => $response,
+            ]);
+        }
+
+        $mc = new multichoice();
+        $result = $mc->export_template_data($rq, constants::STAGE_QUESTION_RESULTS);
+        $this->assertEquals([1, 3, 0], array_column($result['options'], 'count'));
+    }
+
+    /**
+     * Test normalise_response
+     */
+    public function test_normalise_response(): void {
+        $mc = new multichoice();
+        $this->assertSame('1', $mc->normalise_response('1'));
+        $this->assertSame('1', $mc->normalise_response('01'));
+        $this->assertSame('1', $mc->normalise_response('1 '));
+        $this->assertSame('1', $mc->normalise_response(' 1'));
+        $this->assertSame('1', $mc->normalise_response('1x'));
+        $this->assertSame('0', $mc->normalise_response('abc'));
+    }
+
+    /**
      * Test validate_answer with correct option
      */
     public function test_validate_answer_correct(): void {
