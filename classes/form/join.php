@@ -222,16 +222,22 @@ class join extends \moodleform {
         $identitymode = (int)($kahoodle->identitymode ?? constants::DEFAULT_IDENTITY_MODE);
         $maxlen = constants::DISPLAYNAME_MAXLENGTH;
 
-        if (
-            $identitymode === constants::IDENTITYMODE_OPTIONAL
-                && ($data['identitychoice'] ?? '') === 'alias'
-        ) {
+        if ($identitymode === constants::IDENTITYMODE_OPTIONAL) {
+            // The nickname is only used if the user chose to join with it.
+            $errorelement = ($data['identitychoice'] ?? '') === 'alias' ? 'identity_alias_grp' : null;
+        } else if ($identitymode === constants::IDENTITYMODE_REALNAME) {
+            $errorelement = null;
+        } else {
+            // Alias and anonymous modes always require a nickname.
+            $errorelement = 'displayname';
+        }
+
+        if ($errorelement !== null) {
             $displayname = trim($data['displayname'] ?? '');
             if ($displayname === '') {
-                $errors['identity_alias_grp'] = get_string('required');
-            }
-            if (strlen($displayname) > $maxlen) {
-                $errors['identity_alias_grp'] = get_string('maximumchars', '', $maxlen);
+                $errors[$errorelement] = get_string('required');
+            } else if (\core_text::strlen($displayname) > $maxlen) {
+                $errors[$errorelement] = get_string('maximumchars', '', $maxlen);
             }
         }
 

@@ -48,17 +48,19 @@ class auto_archive_round extends \core\task\adhoc_task {
     }
 
     /**
-     * Schedule this task to run after the given delay for the given round
+     * Schedule this task to run at the auto-archive time of the given round
+     *
+     * If this time has already passed (for example, the round was restored from a backup), the task runs as soon as possible.
      *
      * @param round $round
      */
     public static function schedule(round $round): void {
         global $USER;
         $autoarchivetime = $round->get_auto_archive_time();
-        if ($autoarchivetime !== null && $autoarchivetime > time()) {
+        if ($autoarchivetime !== null) {
             $task = new self();
             $task->set_custom_data((object)['roundid' => $round->get_id()]);
-            $task->set_next_run_time($autoarchivetime + 1);
+            $task->set_next_run_time(max($autoarchivetime + 1, time()));
             $task->set_userid($USER->id);
             \core\task\manager::queue_adhoc_task($task, true);
         }

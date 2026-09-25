@@ -157,6 +157,8 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   ├── delete_question_test.php
 │   │   ├── duplicate_question_test.php
 │   │   └── playback_stages_test.php
+│   ├── form/
+│   │   └── join_test.php     # Join form validation (nickname required, length in characters)
 │   ├── generator/            # Test data generators
 │   │   ├── behat_mod_kahoodle_generator.php  # Behat generator (questions, participants, responses)
 │   │   └── lib.php                           # PHPUnit generator
@@ -1130,7 +1132,8 @@ The plugin includes comprehensive PHPUnit test coverage:
 #### Backup/Restore Tests (`tests/backup_restore_test.php`)
 - Tests backup/restore with user data (all rounds, participants, responses preserved)
 - Tests backup/restore without user data (only last round and its questions)
-- Tests backup with user data, restore without (all rounds but no participants)
+- Tests backup with user data, restore without (only the round a backup without user data would include, its questions, no participants)
+- Tests rounds restored mid-game with user data get an auto-archive task
 - Tests question image files are backed up and restored
 - Tests participant avatar files are backed up and restored
 - Tests single round backup without user data
@@ -1143,7 +1146,7 @@ The plugin includes comprehensive PHPUnit test coverage:
 - Tests metadata declaration (tables and subsystems)
 - Tests context discovery for users with participation data
 - Tests user enumeration within contexts
-- Tests user data export (participations with responses)
+- Tests user data export (participations with responses and avatar files)
 - Tests deletion for all users in context, single user, and multiple users
 - Tests multiple kahoodle instances return separate contexts
 
@@ -1361,7 +1364,8 @@ vendor/bin/phpunit --filter questions_test
 - Backup/restore with full support for questions, rounds, participants, responses, and files
   - Without user data: backs up only the last round and its questions (latest versions)
   - With user data: backs up all rounds, participants, responses, question images, and avatar files
-  - Backed up with user data but restored without: restores all rounds/questions but no participants
+  - Backed up with user data but restored without: restores only the round a backup without user data would include (in preparation, otherwise the newest) and its questions, no participants
+  - Rounds restored in the middle of a game (with user data) are archived automatically by the `auto_archive_round` task
 - Privacy API provider (metadata, export, delete for participants and responses)
 - Event logging for all major actions (10 events: view, question CRUD, round management, participants, responses)
 - Landing page with stage-based content display (view.php)

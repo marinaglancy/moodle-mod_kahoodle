@@ -78,6 +78,7 @@ class responses {
 
         // Validate answer via question type - returns null if invalid.
         $questiontype = $roundquestion->get_question_type();
+        $response = $questiontype->normalise_response($response);
         $iscorrect = $questiontype->validate_answer($roundquestion, $response);
 
         if ($iscorrect === null) {

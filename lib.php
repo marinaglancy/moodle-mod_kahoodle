@@ -202,6 +202,14 @@ function kahoodle_pluginfile($course, $cm, $context, $filearea, $args, $forcedow
         return;
     }
 
+    if (
+        $filearea === \mod_kahoodle\constants::FILEAREA_QUESTION_IMAGE &&
+        !file_mimetype_in_typegroup($file->get_mimetype(), 'web_image')
+    ) {
+        // Files embedded in the rich text question can be of any type, never display them inline.
+        $forcedownload = true;
+    }
+
     send_stored_file($file, null, 0, $forcedownload, $options);
 }
 
@@ -246,13 +254,17 @@ function mod_kahoodle_inplace_editable(string $itemtype, int $itemid, string $ne
 /**
  * Callback for tool_realtime - handle events received from clients
  *
+ * tool_realtime calls this callback from admin/tool/realtime/push.php only after require_login()
+ * and require_sesskey(); it also rejects guests unless guest access is enabled in its settings.
+ * The payload is the JSON-decoded request parameter, passed without any cleaning.
+ *
  * @param mixed $payload The event payload
  * @return array Response data
  */
 function mod_kahoodle_realtime_event_received($payload): array {
     global $PAGE, $DB;
 
-    $action = $payload['action'] ?? '';
+    $action = (string)($payload['action'] ?? '');
     $roundid = clean_param($payload['roundid'] ?? 0, PARAM_INT);
     if (!$roundid) {
         return ['error' => 'Missing round ID'];

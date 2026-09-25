@@ -161,6 +161,69 @@ final class questions_test extends \advanced_testcase {
     }
 
     /**
+     * Question image in plain text format can only be a web image
+     *
+     * @return void
+     */
+    public function test_add_edit_question_image_type(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
+        $context = \context_module::instance($kahoodle->cmid);
+
+        $createdraft = function (string $filename): int {
+            global $USER;
+            $draftitemid = file_get_unused_draft_itemid();
+            get_file_storage()->create_file_from_string([
+                'contextid' => \context_user::instance($USER->id)->id,
+                'component' => 'user',
+                'filearea' => 'draft',
+                'itemid' => $draftitemid,
+                'filepath' => '/',
+                'filename' => $filename,
+            ], 'content');
+            return $draftitemid;
+        };
+
+        // The question data object is modified by add_question(), create a new one for every call.
+        $questiondata = fn(string $filename) => (object)[
+            'kahoodleid' => $kahoodle->id,
+            'questiontext' => 'What is 2+2?',
+            'questionconfig' => "3\n*4\n5",
+            'imagedraftitemid' => $createdraft($filename),
+        ];
+        try {
+            questions::add_question($questiondata('image.html'), null);
+            $this->fail('Exception expected');
+        } catch (\moodle_exception $e) {
+            $this->assertEquals('invalidfiletype', $e->errorcode);
+        }
+        $this->assertEquals(0, $DB->count_records('kahoodle_questions', ['kahoodleid' => $kahoodle->id]));
+
+        $roundquestion = questions::add_question($questiondata('image.png'), null);
+        $files = get_file_storage()->get_area_files(
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_QUESTION_IMAGE,
+            $roundquestion->get_data()->questionversionid,
+            'id',
+            false
+        );
+        $this->assertEquals(['image.png'], array_values(array_map(fn($f) => $f->get_filename(), $files)));
+
+        $roundquestion = round_question::create_from_round_question_id($roundquestion->get_id());
+        try {
+            questions::edit_question($roundquestion, (object)['imagedraftitemid' => $createdraft('page.html')]);
+            $this->fail('Exception expected');
+        } catch (\moodle_exception $e) {
+            $this->assertEquals('invalidfiletype', $e->errorcode);
+        }
+    }
+
+    /**
      * Test add_question throws exception when no editable round
      *
      * @return void
@@ -479,6 +542,46 @@ final class questions_test extends \advanced_testcase {
         // Link to new round should be deleted, but link to old round should remain.
         $this->assertEquals(0, $DB->count_records('kahoodle_round_questions', ['roundid' => $newroundid]));
         $this->assertEquals(1, $DB->count_records('kahoodle_round_questions', ['roundid' => $round->id]));
+    }
+
+    /**
+     * Test delete_question of the last version marks the previous version as the last one
+     *
+     * @return void
+     */
+    public function test_delete_question_last_version(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
+        $roundquestion = $this->get_generator()
+            ->create_question(['kahoodleid' => $kahoodle->id, 'questiontext' => 'Original text']);
+        $questionid = $roundquestion->get_question_id();
+        $version1id = $roundquestion->get_data()->questionversionid;
+
+        // Start the round and prepare a new round with the same question.
+        $round = $roundquestion->get_round();
+        $DB->update_record('kahoodle_rounds', [
+            'id' => $round->get_id(),
+            'currentstage' => constants::STAGE_ARCHIVED,
+            'timecreated' => time() - 100,
+            'timestarted' => time() - 100,
+        ]);
+        $newround = questions::get_last_round($kahoodle->id)->duplicate();
+
+        // Edit the question in the new round, this creates version 2.
+        $newroundquestion = round_question::create_from_question_id($questionid, $newround);
+        questions::edit_question($newroundquestion, (object)['questiontext' => 'Updated text']);
+        $versions = $DB->get_records('kahoodle_question_versions', ['questionid' => $questionid], 'version', 'version, islast');
+        $this->assertEquals([1 => 0, 2 => 1], array_map(fn($v) => (int)$v->islast, $versions));
+
+        // Delete the question from the new round, version 2 is deleted and version 1 becomes the last one.
+        questions::delete_question(round_question::create_from_question_id($questionid, $newround));
+        $versions = $DB->get_records('kahoodle_question_versions', ['questionid' => $questionid]);
+        $this->assertEquals([$version1id], array_keys($versions));
+        $this->assertEquals(1, $versions[$version1id]->islast);
+        $this->assertEquals(0, $DB->count_records('kahoodle_round_questions', ['roundid' => $newround->get_id()]));
     }
 
     /**

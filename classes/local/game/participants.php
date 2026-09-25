@@ -55,7 +55,7 @@ class participants {
         if ($userealidentity) {
             $displayname = fullname($USER);
         } else {
-            $displayname = substr(trim($displayname), 0, constants::DISPLAYNAME_MAXLENGTH);
+            $displayname = \core_text::substr(trim($displayname ?? ''), 0, constants::DISPLAYNAME_MAXLENGTH);
         }
 
         // Create participant record.
@@ -254,7 +254,7 @@ class participants {
             // No picture or URL is blocked for security reasons - do not attempt to download.
             return null;
         }
-        $response = download_file_content($url, null, null, true);
+        $response = download_file_content($url, null, null, true, 5, 3);
         if ($response->status == 200 && !empty($response->results)) {
             $mimetype = $response->headers['Content-Type'] ?? 'image/png';
             // Strip any charset or parameters from the Content-Type header.

@@ -35,16 +35,21 @@ class course_module_viewed extends \core\event\course_module_viewed {
     /**
      * Creates an instance of event
      *
+     * In the fully anonymous mode the event is anonymous, otherwise the order of the views in the logs
+     * (for example, right after joining) would reveal which participant is which user.
+     *
      * @param \stdClass $record
      * @param \cm_info|\stdClass $cm
      * @param \stdClass $course
      * @return course_module_viewed
      */
     public static function create_from_record($record, $cm, $course) {
+        $isanonymous = (int)($record->identitymode ?? 0) === \mod_kahoodle\constants::IDENTITYMODE_ANONYMOUS;
         /** @var course_module_viewed $event */
         $event = self::create([
             'objectid' => $record->id,
             'context' => \context_module::instance($cm->id),
+            'anonymous' => (int)$isanonymous,
         ]);
         $event->add_record_snapshot('course_modules', $cm);
         $event->add_record_snapshot('course', $course);

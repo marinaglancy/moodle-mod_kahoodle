@@ -68,14 +68,19 @@ class playback_stages extends external_api {
         if ($roundid) {
             // Single-round mode.
             $round = round::create_from_id($roundid);
+            $context = $round->get_context();
         } else {
-            // All-rounds mode.
-            $round = \mod_kahoodle\local\entities\statistics::create_from_kahoodle_id($kahoodleid);
+            // All-rounds mode. Check permissions before loading the rounds (it creates the first round if needed).
+            [, $cm] = get_course_and_cm_from_instance($kahoodleid, 'kahoodle');
+            $context = \context_module::instance($cm->id);
         }
 
-        $context = $round->get_context();
         self::validate_context($context);
         require_capability('mod/kahoodle:viewresults', $context);
+
+        if (!$roundid) {
+            $round = \mod_kahoodle\local\entities\statistics::create_from_kahoodle_id($kahoodleid, null, $cm);
+        }
 
         $PAGE->set_context($context);
         $renderer = $PAGE->get_renderer('core');

@@ -360,8 +360,8 @@ final class backup_restore_test extends advanced_testcase {
      * Test backup with user data but restore without user data.
      *
      * When backup includes all rounds (with user data) but restore strips user data,
-     * all rounds and their question configuration should still be restored,
-     * but no participants or responses.
+     * only the round that would be included in the backup without user data is restored
+     * (the round in preparation), and no participants or responses.
      */
     public function test_backup_with_userdata_restore_without(): void {
         global $DB;
@@ -427,10 +427,14 @@ final class backup_restore_test extends advanced_testcase {
         $newkahoodle = $DB->get_record('kahoodle', ['course' => $newcourseid]);
         $this->assertNotEmpty($newkahoodle);
 
-        // Both rounds should be in the backup (backed up with userdata),
-        // but on restore without userdata, both rounds are still restored (structure is preserved).
-        $newrounds = $DB->get_records('kahoodle_rounds', ['kahoodleid' => $newkahoodle->id], 'timecreated ASC');
-        $this->assertCount(2, $newrounds);
+        // Both rounds are in the backup (backed up with userdata), but only the round
+        // in preparation is restored without userdata.
+        $newrounds = $DB->get_records('kahoodle_rounds', ['kahoodleid' => $newkahoodle->id]);
+        $this->assertCount(1, $newrounds);
+        $newround = reset($newrounds);
+        $this->assertEquals('Prep Round', $newround->name);
+        $this->assertEquals(constants::STAGE_PREPARATION, $newround->currentstage);
+        $this->assertEquals(1, $DB->count_records('kahoodle_round_questions', ['roundid' => $newround->id]));
 
         // Questions should be restored.
         $newquestions = $DB->count_records('kahoodle_questions', ['kahoodleid' => $newkahoodle->id]);
@@ -444,6 +448,179 @@ final class backup_restore_test extends advanced_testcase {
             [$newkahoodle->id]
         );
         $this->assertEquals(0, $newparticipants);
+    }
+
+    /**
+     * Test backup with user data but restore without user data, when there is no round in preparation.
+     *
+     * The newest round (by the time created, not by id) is restored, together with its questions only.
+     */
+    public function test_backup_with_userdata_restore_without_newest_round(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        /** @var \mod_kahoodle_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
+        $kahoodle = $generator->create_instance(['course' => $course->id]);
+
+        // Three archived rounds, each with its own question. The round with the highest id is not the newest.
+        $now = time();
+        foreach (['Round A' => $now - 3000, 'Round B' => $now - 1000, 'Round C' => $now - 2000] as $name => $timecreated) {
+            $roundid = $generator->create_round(['kahoodleid' => $kahoodle->id, 'name' => $name]);
+            $generator->create_question(
+                ['kahoodleid' => $kahoodle->id, 'questiontext' => 'Question in ' . $name, 'attachimage' => true],
+                \mod_kahoodle\local\entities\round::create_from_id($roundid)
+            );
+            $DB->update_record('kahoodle_rounds', [
+                'id' => $roundid,
+                'currentstage' => constants::STAGE_ARCHIVED,
+                'timecreated' => $timecreated,
+                'timestarted' => $timecreated + 10,
+                'timecompleted' => $timecreated + 100,
+            ]);
+        }
+
+        $newcourseid = $this->backup_and_restore_mixed($course);
+        $newkahoodle = $DB->get_record('kahoodle', ['course' => $newcourseid]);
+        $newcontext = \context_module::instance(get_coursemodule_from_instance('kahoodle', $newkahoodle->id)->id);
+
+        // Only the newest round is restored, in preparation stage.
+        $newrounds = $DB->get_records('kahoodle_rounds', ['kahoodleid' => $newkahoodle->id]);
+        $this->assertCount(1, $newrounds);
+        $newround = reset($newrounds);
+        $this->assertEquals('Round B', $newround->name);
+        $this->assertEquals(constants::STAGE_PREPARATION, $newround->currentstage);
+
+        // Only the question of this round is restored, with its image.
+        $newversions = $DB->get_records_sql(
+            "SELECT qv.* FROM {kahoodle_question_versions} qv
+               JOIN {kahoodle_questions} q ON q.id = qv.questionid
+              WHERE q.kahoodleid = ?",
+            [$newkahoodle->id]
+        );
+        $this->assertCount(1, $newversions);
+        $newversion = reset($newversions);
+        $this->assertEquals('Question in Round B', $newversion->questiontext);
+        $this->assertEquals(1, $DB->count_records('kahoodle_questions', ['kahoodleid' => $newkahoodle->id]));
+        $roundquestions = $DB->get_records('kahoodle_round_questions', ['roundid' => $newround->id]);
+        $this->assertCount(1, $roundquestions);
+        $this->assertEquals($newversion->id, reset($roundquestions)->questionversionid);
+
+        $files = get_file_storage()->get_area_files(
+            $newcontext->id,
+            'mod_kahoodle',
+            constants::FILEAREA_QUESTION_IMAGE,
+            false,
+            'itemid, filepath, filename',
+            false
+        );
+        $this->assertCount(1, $files);
+        $this->assertEquals($newversion->id, reset($files)->get_itemid());
+    }
+
+    /**
+     * Test backup with user data but restore without user data, when a question was edited in an older round.
+     *
+     * Only the version used in the restored round is kept, and it becomes the last version.
+     */
+    public function test_backup_with_userdata_restore_without_question_versions(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        /** @var \mod_kahoodle_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
+        $kahoodle = $generator->create_instance(['course' => $course->id]);
+
+        $rq1 = $generator->create_question(['kahoodleid' => $kahoodle->id, 'questiontext' => 'Q1 original']);
+        $generator->create_question(['kahoodleid' => $kahoodle->id, 'questiontext' => 'Q2']);
+        $round1 = $rq1->get_round();
+        $DB->update_record('kahoodle_rounds', [
+            'id' => $round1->get_id(),
+            'currentstage' => constants::STAGE_ARCHIVED,
+            'timecreated' => time() - 1000,
+            'timestarted' => time() - 900,
+            'timecompleted' => time() - 800,
+        ]);
+
+        // The new round in preparation only has the first question.
+        $round2id = $generator->create_round(['kahoodleid' => $kahoodle->id, 'name' => 'Prep Round']);
+        $DB->insert_record('kahoodle_round_questions', [
+            'roundid' => $round2id,
+            'questionversionid' => $rq1->get_data()->questionversionid,
+            'sortorder' => 1,
+            'timecreated' => time(),
+        ]);
+
+        // Edit the first question in the archived round, this creates a new version that is not used in the new round.
+        \mod_kahoodle\local\game\questions::edit_question(
+            \mod_kahoodle\local\entities\round_question::create_from_round_question_id($rq1->get_id()),
+            (object)['questiontext' => 'Q1 edited']
+        );
+        $this->assertEquals(2, $DB->count_records('kahoodle_question_versions', ['questionid' => $rq1->get_question_id()]));
+
+        $newcourseid = $this->backup_and_restore_mixed($course);
+        $newkahoodle = $DB->get_record('kahoodle', ['course' => $newcourseid]);
+
+        $newrounds = $DB->get_records('kahoodle_rounds', ['kahoodleid' => $newkahoodle->id]);
+        $this->assertCount(1, $newrounds);
+        $this->assertEquals('Prep Round', reset($newrounds)->name);
+
+        // Only the version used in the restored round is kept, and it is the last version.
+        $newversions = $DB->get_records_sql(
+            "SELECT qv.* FROM {kahoodle_question_versions} qv
+               JOIN {kahoodle_questions} q ON q.id = qv.questionid
+              WHERE q.kahoodleid = ?",
+            [$newkahoodle->id]
+        );
+        $this->assertCount(1, $newversions);
+        $newversion = reset($newversions);
+        $this->assertEquals('Q1 original', $newversion->questiontext);
+        $this->assertEquals(1, $newversion->islast);
+        $this->assertEquals(1, $DB->count_records('kahoodle_questions', ['kahoodleid' => $newkahoodle->id]));
+    }
+
+    /**
+     * Test that a round restored in the middle of the game with user data is archived automatically.
+     */
+    public function test_backup_restore_with_userdata_round_in_progress(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        /** @var \mod_kahoodle_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
+        $kahoodle = $generator->create_instance(['course' => $course->id]);
+        $rq1 = $generator->create_question(['kahoodleid' => $kahoodle->id]);
+        $roundid = $rq1->get_round()->get_id();
+        $DB->update_record('kahoodle_rounds', [
+            'id' => $roundid,
+            'currentstage' => constants::STAGE_QUESTION,
+            'currentquestion' => 1,
+            'timestarted' => time() - constants::MAX_ROUND_DURATION - 100,
+            'stagestarttime' => time() - constants::MAX_ROUND_DURATION,
+        ]);
+
+        $newcourseid = $this->backup_and_restore($course, true);
+        $newkahoodle = $DB->get_record('kahoodle', ['course' => $newcourseid]);
+        $newround = $DB->get_record('kahoodle_rounds', ['kahoodleid' => $newkahoodle->id], '*', MUST_EXIST);
+        $this->assertEquals(constants::STAGE_QUESTION, $newround->currentstage);
+
+        // The auto-archive task is scheduled for the restored round and archives it.
+        $tasks = \core\task\manager::get_adhoc_tasks(\mod_kahoodle\task\auto_archive_round::class);
+        $this->assertCount(1, $tasks);
+        $this->assertEquals($newround->id, reset($tasks)->get_custom_data()->roundid);
+        $this->runAdhocTasks(\mod_kahoodle\task\auto_archive_round::class);
+
+        $this->assertEquals(
+            constants::STAGE_ARCHIVED,
+            $DB->get_field('kahoodle_rounds', 'currentstage', ['id' => $newround->id])
+        );
+        $this->assertEquals(constants::STAGE_QUESTION, $DB->get_field('kahoodle_rounds', 'currentstage', ['id' => $roundid]));
     }
 
     /**

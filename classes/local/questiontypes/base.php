@@ -181,6 +181,19 @@ abstract class base {
     ): array;
 
     /**
+     * Normalise a participant's answer before it is validated and stored
+     *
+     * Different spellings of the same answer must be stored the same way,
+     * otherwise they are counted as different answers in the results.
+     *
+     * @param string $response The participant's answer as it was sent from the browser
+     * @return string
+     */
+    public function normalise_response(string $response): string {
+        return $response;
+    }
+
+    /**
      * Validate a participant's answer
      *
      * @param round_question $roundquestion The question

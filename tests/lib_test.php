@@ -33,6 +33,7 @@ require_once($CFG->dirroot . '/mod/kahoodle/lib.php');
  * @covers     ::kahoodle_supports
  * @covers     ::kahoodle_delete_instance
  * @covers     ::mod_kahoodle_inplace_editable
+ * @covers     ::mod_kahoodle_realtime_event_received
  */
 final class lib_test extends \advanced_testcase {
     /**
@@ -198,5 +199,24 @@ final class lib_test extends \advanced_testcase {
         $this->expectException(\coding_exception::class);
         $this->expectExceptionMessage('Unknown item type');
         mod_kahoodle_inplace_editable('unknowntype', 1, 'value');
+    }
+
+    /**
+     * Test that the realtime callback does not match an action that is not a string.
+     */
+    public function test_realtime_event_received_action_not_string(): void {
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
+        $this->getDataGenerator()->get_plugin_generator('mod_kahoodle')->create_question(['kahoodleid' => $kahoodle->id]);
+        $round = local\game\questions::get_last_round($kahoodle->id);
+        local\game\progress::start_game($round);
+        $this->setUser($teacher);
+
+        // JSON "true" must not be treated as the "advance" action.
+        $result = mod_kahoodle_realtime_event_received(['action' => true, 'roundid' => $round->get_id()]);
+        $this->assertEquals(['error' => 'Invalid action'], $result);
     }
 }

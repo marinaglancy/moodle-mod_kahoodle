@@ -14,6 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+use mod_kahoodle\constants;
+use mod_kahoodle\local\entities\round;
+use mod_kahoodle\task\auto_archive_round;
+
 /**
  * Structure step to restore one Kahoodle activity
  *
@@ -22,8 +26,14 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class restore_kahoodle_activity_structure_step extends restore_activity_structure_step {
-    /** @var int|null The ID of the last round in the backup (highest timecreated or preparation stage). */
-    protected ?int $lastroundoldid = null;
+    /** @var int[] New IDs of all restored rounds */
+    protected array $restoredroundids = [];
+
+    /** @var array|null New ID and sort key of the round to keep when restoring without user data */
+    protected ?array $roundtokeep = null;
+
+    /** @var int[] New IDs of the restored rounds that were in progress when the backup was made */
+    protected array $roundsinprogress = [];
 
     /**
      * Structure step to restore one kahoodle activity
@@ -121,7 +131,8 @@ class restore_kahoodle_activity_structure_step extends restore_activity_structur
      * Process a round restore.
      *
      * When the backup was made with user data but we are restoring without user data,
-     * only restore the last round (the one that would have been backed up without user data).
+     * all rounds are restored here, and then {@see self::remove_extra_rounds()} deletes all of them
+     * except the one that would have been backed up without user data.
      *
      * @param array $data
      * @return void
@@ -131,18 +142,22 @@ class restore_kahoodle_activity_structure_step extends restore_activity_structur
 
         $data = (object)$data;
         $oldid = $data->id;
+        $userinfo = $this->get_setting_value('userinfo');
 
-        // Track the last round (first round processed is the one with highest priority
-        // based on the backup ordering).
-        if ($this->lastroundoldid === null) {
-            $this->lastroundoldid = $oldid;
-        }
+        // Rounds with a lower sort key come first, in the same order as in the backup without user data:
+        // the round in preparation first, then the newest one.
+        $sortkey = [
+            $data->currentstage === constants::STAGE_PREPARATION ? 0 : 1,
+            -(int)$data->timecreated,
+            -(int)$oldid,
+        ];
+        $inprogress = !in_array($data->currentstage, [constants::STAGE_PREPARATION, constants::STAGE_ARCHIVED], true);
 
         $data->kahoodleid = $this->get_new_parentid('kahoodle');
 
         // When restoring without user data, reset round to preparation stage.
-        if (!$this->get_setting_value('userinfo')) {
-            $data->currentstage = \mod_kahoodle\constants::STAGE_PREPARATION;
+        if (!$userinfo) {
+            $data->currentstage = constants::STAGE_PREPARATION;
             $data->currentquestion = null;
             $data->stagestarttime = null;
             $data->timestarted = null;
@@ -151,6 +166,14 @@ class restore_kahoodle_activity_structure_step extends restore_activity_structur
 
         $newitemid = $DB->insert_record('kahoodle_rounds', $data);
         $this->set_mapping('kahoodle_round', $oldid, $newitemid);
+
+        $this->restoredroundids[] = $newitemid;
+        if (!$userinfo && ($this->roundtokeep === null || $sortkey < $this->roundtokeep['sortkey'])) {
+            $this->roundtokeep = ['id' => $newitemid, 'sortkey' => $sortkey];
+        }
+        if ($userinfo && $inprogress) {
+            $this->roundsinprogress[] = $newitemid;
+        }
     }
 
     /**
@@ -218,5 +241,75 @@ class restore_kahoodle_activity_structure_step extends restore_activity_structur
         $this->add_related_files('mod_kahoodle', 'intro', null);
         $this->add_related_files('mod_kahoodle', 'questionimage', 'kahoodle_question_version');
         $this->add_related_files('mod_kahoodle', 'avatar', 'kahoodle_participant');
+
+        if (!$this->get_setting_value('userinfo')) {
+            $this->remove_extra_rounds();
+        }
+
+        // Nobody will finish the rounds that were in progress when the backup was made, archive them automatically.
+        foreach ($this->roundsinprogress as $roundid) {
+            auto_archive_round::schedule(round::create_from_id($roundid));
+        }
+    }
+
+    /**
+     * When a backup made with user data is restored without user data, delete the extra rounds
+     *
+     * Only keep the round that the backup without user data would include, and delete the questions
+     * and question versions that are not used in it.
+     */
+    protected function remove_extra_rounds(): void {
+        global $DB;
+
+        $roundids = array_diff($this->restoredroundids, [$this->roundtokeep['id'] ?? 0]);
+        if (!$roundids) {
+            return;
+        }
+        $DB->delete_records_list('kahoodle_round_questions', 'roundid', $roundids);
+        $DB->delete_records_list('kahoodle_rounds', 'id', $roundids);
+
+        // Delete question versions that are not used in the remaining round, and their images.
+        $kahoodleid = $this->get_new_parentid('kahoodle');
+        $versionids = $DB->get_fieldset_sql(
+            "SELECT qv.id
+               FROM {kahoodle_question_versions} qv
+               JOIN {kahoodle_questions} q ON q.id = qv.questionid
+          LEFT JOIN {kahoodle_round_questions} rq ON rq.questionversionid = qv.id
+              WHERE q.kahoodleid = ? AND rq.id IS NULL",
+            [$kahoodleid]
+        );
+        if ($versionids) {
+            $fs = get_file_storage();
+            foreach ($versionids as $versionid) {
+                $fs->delete_area_files(
+                    $this->task->get_contextid(),
+                    'mod_kahoodle',
+                    constants::FILEAREA_QUESTION_IMAGE,
+                    $versionid
+                );
+            }
+            $DB->delete_records_list('kahoodle_question_versions', 'id', $versionids);
+        }
+
+        // Delete questions without versions.
+        $questionids = $DB->get_fieldset_sql(
+            "SELECT q.id
+               FROM {kahoodle_questions} q
+          LEFT JOIN {kahoodle_question_versions} qv ON qv.questionid = q.id
+              WHERE q.kahoodleid = ? AND qv.id IS NULL",
+            [$kahoodleid]
+        );
+        if ($questionids) {
+            $DB->delete_records_list('kahoodle_questions', 'id', $questionids);
+        }
+
+        // Each remaining question now has one version, used in the remaining round, make sure it is marked as the last.
+        $DB->execute(
+            "UPDATE {kahoodle_question_versions}
+                SET islast = 1
+              WHERE islast = 0
+                AND questionid IN (SELECT id FROM {kahoodle_questions} WHERE kahoodleid = ?)",
+            [$kahoodleid]
+        );
     }
 }
