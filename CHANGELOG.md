@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rounds restored in the middle of a game are now archived automatically
 - Deleting a question that had been edited after an earlier round could fail on SQL Server - detected by https://mdlshield.com
 - The privacy data export now includes the participants' avatar images - detected by https://mdlshield.com
+- Joining a game could take minutes when the server with the users' profile pictures was slow or unreachable - detected by https://mdlshield.com
+- Links in question texts now point to the right place after a course is restored or copied - detected by https://mdlshield.com
 
 ## [4.5.1] - 2026-05-05
 

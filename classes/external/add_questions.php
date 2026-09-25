@@ -114,16 +114,13 @@ class add_questions extends external_api {
 
         foreach ($params['questions'] as $index => $questiondata) {
             try {
-                // Get the kahoodle instance to validate context.
-                $round = \mod_kahoodle\local\game\questions::get_last_round($questiondata['kahoodleid']);
-
-                $context = $round->get_context();
-
-                // Validate context.
+                // Validate context and check permissions before loading the round (it creates the first round if needed).
+                [, $cm] = get_course_and_cm_from_instance($questiondata['kahoodleid'], 'kahoodle');
+                $context = \context_module::instance($cm->id);
                 self::validate_context($context);
-
-                // Check permissions.
                 require_capability('mod/kahoodle:manage_questions', $context);
+
+                $round = \mod_kahoodle\local\game\questions::get_last_round($questiondata['kahoodleid']);
 
                 // Add the question (this will also handle file uploads).
                 $roundquestion = \mod_kahoodle\local\game\questions::add_question((object)$questiondata, $round);
