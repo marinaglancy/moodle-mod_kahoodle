@@ -67,6 +67,17 @@ final class events_test extends \advanced_testcase {
 
         $this->assertStringContainsString('viewed', $event->get_description());
         $this->assertInstanceOf(\moodle_url::class, $event->get_url());
+        $this->assertEquals(0, $event->anonymous);
+
+        // In the fully anonymous mode the event is anonymous.
+        $kahoodle = $this->getDataGenerator()->create_module(
+            'kahoodle',
+            ['course' => $course->id, 'identitymode' => constants::IDENTITYMODE_ANONYMOUS]
+        );
+        [, $cm] = get_course_and_cm_from_instance($kahoodle->id, 'kahoodle');
+        $event = event\course_module_viewed::create_from_record($kahoodle, $cm, $course);
+        $event->trigger();
+        $this->assertEquals(1, $event->anonymous);
     }
 
     /**
