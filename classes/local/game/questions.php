@@ -133,6 +133,25 @@ class questions {
     }
 
     /**
+     * Checks that the draft area for the question image (plain text format) only contains web images
+     *
+     * The file manager in the form only accepts web images but this is not enforced on the server.
+     *
+     * @param int $draftitemid
+     * @throws \moodle_exception
+     */
+    protected static function validate_question_image(int $draftitemid): void {
+        global $USER;
+        $usercontext = \context_user::instance($USER->id);
+        $files = get_file_storage()->get_area_files($usercontext->id, 'user', 'draft', $draftitemid, 'id', false);
+        foreach ($files as $file) {
+            if (!file_mimetype_in_typegroup($file->get_mimetype(), 'web_image')) {
+                throw new \moodle_exception('invalidfiletype', 'error', '', $file->get_filename());
+            }
+        }
+    }
+
+    /**
      * Add a new question to the editable round
      *
      * Creates a new question, its first version, and links it to the editable round.
@@ -166,6 +185,9 @@ class questions {
         $roundquestionobj = round_question::new_for_round_and_type($round, $questiondata->questiontype ?? null);
         $defaultdata = $roundquestionobj->get_data();
         $roundquestionobj->get_question_type()->sanitize_data($roundquestionobj, $questiondata);
+        if (!empty($questiondata->imagedraftitemid) && $defaultdata->questionformat != constants::QUESTIONFORMAT_RICHTEXT) {
+            self::validate_question_image((int)$questiondata->imagedraftitemid);
+        }
 
         $time = time();
 
@@ -294,6 +316,12 @@ class questions {
         $questionid = $roundquestion->get_data()->questionid;
         $round = $roundquestion->get_round();
         $roundquestion->get_question_type()->sanitize_data($roundquestion, $questiondata);
+        if (
+            !empty($questiondata->imagedraftitemid)
+            && $roundquestion->get_data()->questionformat != constants::QUESTIONFORMAT_RICHTEXT
+        ) {
+            self::validate_question_image((int)$questiondata->imagedraftitemid);
+        }
 
         $contentchanges = [];
         $content = [];

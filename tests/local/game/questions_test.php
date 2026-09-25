@@ -161,6 +161,69 @@ final class questions_test extends \advanced_testcase {
     }
 
     /**
+     * Question image in plain text format can only be a web image
+     *
+     * @return void
+     */
+    public function test_add_edit_question_image_type(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
+        $context = \context_module::instance($kahoodle->cmid);
+
+        $createdraft = function (string $filename): int {
+            global $USER;
+            $draftitemid = file_get_unused_draft_itemid();
+            get_file_storage()->create_file_from_string([
+                'contextid' => \context_user::instance($USER->id)->id,
+                'component' => 'user',
+                'filearea' => 'draft',
+                'itemid' => $draftitemid,
+                'filepath' => '/',
+                'filename' => $filename,
+            ], 'content');
+            return $draftitemid;
+        };
+
+        // The question data object is modified by add_question(), create a new one for every call.
+        $questiondata = fn(string $filename) => (object)[
+            'kahoodleid' => $kahoodle->id,
+            'questiontext' => 'What is 2+2?',
+            'questionconfig' => "3\n*4\n5",
+            'imagedraftitemid' => $createdraft($filename),
+        ];
+        try {
+            questions::add_question($questiondata('image.html'), null);
+            $this->fail('Exception expected');
+        } catch (\moodle_exception $e) {
+            $this->assertEquals('invalidfiletype', $e->errorcode);
+        }
+        $this->assertEquals(0, $DB->count_records('kahoodle_questions', ['kahoodleid' => $kahoodle->id]));
+
+        $roundquestion = questions::add_question($questiondata('image.png'), null);
+        $files = get_file_storage()->get_area_files(
+            $context->id,
+            'mod_kahoodle',
+            constants::FILEAREA_QUESTION_IMAGE,
+            $roundquestion->get_data()->questionversionid,
+            'id',
+            false
+        );
+        $this->assertEquals(['image.png'], array_values(array_map(fn($f) => $f->get_filename(), $files)));
+
+        $roundquestion = round_question::create_from_round_question_id($roundquestion->get_id());
+        try {
+            questions::edit_question($roundquestion, (object)['imagedraftitemid' => $createdraft('page.html')]);
+            $this->fail('Exception expected');
+        } catch (\moodle_exception $e) {
+            $this->assertEquals('invalidfiletype', $e->errorcode);
+        }
+    }
+
+    /**
      * Test add_question throws exception when no editable round
      *
      * @return void

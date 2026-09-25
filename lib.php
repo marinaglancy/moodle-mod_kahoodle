@@ -202,6 +202,14 @@ function kahoodle_pluginfile($course, $cm, $context, $filearea, $args, $forcedow
         return;
     }
 
+    if (
+        $filearea === \mod_kahoodle\constants::FILEAREA_QUESTION_IMAGE &&
+        !file_mimetype_in_typegroup($file->get_mimetype(), 'web_image')
+    ) {
+        // Files embedded in the rich text question can be of any type, never display them inline.
+        $forcedownload = true;
+    }
+
     send_stored_file($file, null, 0, $forcedownload, $options);
 }
 
