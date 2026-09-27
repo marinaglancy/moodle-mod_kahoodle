@@ -1362,7 +1362,7 @@ vendor/bin/phpunit --filter questions_test
 - Comprehensive test coverage (216 PHPUnit tests)
 - Test data generators
 - Backup/restore with full support for questions, rounds, participants, responses, and files
-  - Without user data: backs up only the last round and its questions (latest versions)
+  - Without user data: backs up only the last round, its questions and the question versions used in that round
   - With user data: backs up all rounds, participants, responses, question images, and avatar files
   - Backed up with user data but restored without: restores only the round a backup without user data would include (in preparation, otherwise the newest) and its questions, no participants
   - Rounds restored in the middle of a game (with user data) are archived automatically by the `auto_archive_round` task

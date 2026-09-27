@@ -190,6 +190,10 @@ class restore_kahoodle_activity_structure_step extends restore_activity_structur
 
         $data->roundid = $this->get_new_parentid('kahoodle_round');
         $data->questionversionid = $this->get_mappingid('kahoodle_question_version', $data->questionversionid);
+        if (!$data->questionversionid) {
+            // Backups without user data made by older versions of the plugin could miss the question version.
+            return;
+        }
 
         $newitemid = $DB->insert_record('kahoodle_round_questions', $data);
         $this->set_mapping('kahoodle_round_question', $oldid, $newitemid);
@@ -253,20 +257,19 @@ class restore_kahoodle_activity_structure_step extends restore_activity_structur
     }
 
     /**
-     * When a backup made with user data is restored without user data, delete the extra rounds
+     * When restoring without user data, delete the extra rounds and the unused questions
      *
-     * Only keep the round that the backup without user data would include, and delete the questions
-     * and question versions that are not used in it.
+     * If the backup was made with user data, only keep the round that the backup without user data would include.
+     * Delete the questions and question versions that are not used in the remaining round.
      */
     protected function remove_extra_rounds(): void {
         global $DB;
 
         $roundids = array_diff($this->restoredroundids, [$this->roundtokeep['id'] ?? 0]);
-        if (!$roundids) {
-            return;
+        if ($roundids) {
+            $DB->delete_records_list('kahoodle_round_questions', 'roundid', $roundids);
+            $DB->delete_records_list('kahoodle_rounds', 'id', $roundids);
         }
-        $DB->delete_records_list('kahoodle_round_questions', 'roundid', $roundids);
-        $DB->delete_records_list('kahoodle_rounds', 'id', $roundids);
 
         // Delete question versions that are not used in the remaining round, and their images.
         $kahoodleid = $this->get_new_parentid('kahoodle');

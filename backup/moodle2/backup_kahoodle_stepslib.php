@@ -187,12 +187,24 @@ class backup_kahoodle_activity_structure_step extends backup_activity_structure_
                 [backup::VAR_PARENTID]
             );
 
-            // Only the latest version of each question.
+            // Only the versions used in the last round (not necessarily the latest versions, the question
+            // could have been edited in another round after it was added to this one).
             $questionversion->set_source_sql(
                 "SELECT qv.*
                    FROM {kahoodle_question_versions} qv
+                   JOIN {kahoodle_questions} q ON q.id = qv.questionid
                   WHERE qv.questionid = ?
-                    AND qv.islast = 1
+                    AND EXISTS (
+                        SELECT 1 FROM {kahoodle_round_questions} rq
+                         WHERE rq.questionversionid = qv.id
+                           AND rq.roundid = (
+                               SELECT {$top}r2.id FROM {kahoodle_rounds} r2
+                                WHERE r2.kahoodleid = q.kahoodleid
+                                ORDER BY CASE WHEN r2.currentstage = 'preparation' THEN 0 ELSE 1 END,
+                                         r2.timecreated DESC, r2.id DESC
+                                {$limit}
+                           )
+                    )
                   ORDER BY qv.id ASC",
                 [backup::VAR_PARENTID]
             );

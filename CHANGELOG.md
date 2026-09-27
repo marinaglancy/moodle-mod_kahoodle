@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Question images can now only be web images, and other files embedded in rich text questions are downloaded instead of opened in the browser - detected by https://mdlshield.com
 - In the fully anonymous mode the activity views are logged as anonymous events, so the logs no longer reveal which participant is which user - detected by https://mdlshield.com
 - A round is now archived 15 minutes after the final leaderboard is shown, as intended, instead of 3 hours after the round started
+- A backup without user data could lose questions from the round if they had been edited in another round, and restore could create broken rounds
 
 ## [4.5.1] - 2026-05-05
 

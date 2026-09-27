@@ -521,11 +521,26 @@ final class backup_restore_test extends advanced_testcase {
     }
 
     /**
-     * Test backup with user data but restore without user data, when a question was edited in an older round.
+     * Data provider for {@see self::test_restore_without_userdata_question_versions()}
+     *
+     * @return array
+     */
+    public static function restore_without_userdata_provider(): array {
+        return [
+            'backup without user data' => [false],
+            'backup with user data, restore without' => [true],
+        ];
+    }
+
+    /**
+     * Test restore without user data, when a question was edited in an older round after it was added to the restored round.
      *
      * Only the version used in the restored round is kept, and it becomes the last version.
+     *
+     * @dataProvider restore_without_userdata_provider
+     * @param bool $mixed whether the backup is made with user data and restored without user data
      */
-    public function test_backup_with_userdata_restore_without_question_versions(): void {
+    public function test_restore_without_userdata_question_versions(bool $mixed): void {
         global $DB;
         $this->resetAfterTest();
         $this->setAdminUser();
@@ -562,7 +577,7 @@ final class backup_restore_test extends advanced_testcase {
         );
         $this->assertEquals(2, $DB->count_records('kahoodle_question_versions', ['questionid' => $rq1->get_question_id()]));
 
-        $newcourseid = $this->backup_and_restore_mixed($course);
+        $newcourseid = $mixed ? $this->backup_and_restore_mixed($course) : $this->backup_and_restore($course, false);
         $newkahoodle = $DB->get_record('kahoodle', ['course' => $newcourseid]);
 
         $newrounds = $DB->get_records('kahoodle_rounds', ['kahoodleid' => $newkahoodle->id]);
@@ -581,6 +596,10 @@ final class backup_restore_test extends advanced_testcase {
         $this->assertEquals('Q1 original', $newversion->questiontext);
         $this->assertEquals(1, $newversion->islast);
         $this->assertEquals(1, $DB->count_records('kahoodle_questions', ['kahoodleid' => $newkahoodle->id]));
+        $this->assertEquals(
+            [$newversion->id],
+            $DB->get_fieldset_select('kahoodle_round_questions', 'questionversionid', 'roundid = ?', [reset($newrounds)->id])
+        );
     }
 
     /**
