@@ -470,12 +470,17 @@ final class questions_test extends \advanced_testcase {
         $course = $this->getDataGenerator()->create_course();
         $kahoodle = $this->getDataGenerator()->create_module('kahoodle', ['course' => $course->id]);
         $roundquestion = $this->get_generator()
-            ->create_question(['kahoodleid' => $kahoodle->id]);
+            ->create_question(['kahoodleid' => $kahoodle->id, 'attachimage' => 1]);
         $questionid = $roundquestion->get_question_id();
+        $context = \context_module::instance($kahoodle->cmid);
+        $fs = get_file_storage();
+        $versionid = $roundquestion->get_data()->questionversionid;
+        $this->assertFalse($fs->is_area_empty($context->id, 'mod_kahoodle', constants::FILEAREA_QUESTION_IMAGE, $versionid));
 
         questions::delete_question($roundquestion);
 
-        // Question, version, and round link should all be deleted.
+        // Question, version, round link and the question image should all be deleted.
+        $this->assertTrue($fs->is_area_empty($context->id, 'mod_kahoodle', constants::FILEAREA_QUESTION_IMAGE, $versionid));
         $this->assertEquals(0, $DB->count_records('kahoodle_questions', ['id' => $questionid]));
         $this->assertEquals(0, $DB->count_records('kahoodle_question_versions', ['questionid' => $questionid]));
         $this->assertEquals(0, $DB->count_records(

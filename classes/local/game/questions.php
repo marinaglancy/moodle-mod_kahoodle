@@ -558,6 +558,12 @@ class questions {
             $questionid = $roundquestion->get_question_id();
 
             $DB->delete_records('kahoodle_question_versions', ['id' => $questionversionid]);
+            get_file_storage()->delete_area_files(
+                $round->get_context()->id,
+                'mod_kahoodle',
+                constants::FILEAREA_QUESTION_IMAGE,
+                $questionversionid
+            );
 
             // Check if this was the only version of the question.
             $remainingversions = $DB->count_records('kahoodle_question_versions', ['questionid' => $questionid]);
