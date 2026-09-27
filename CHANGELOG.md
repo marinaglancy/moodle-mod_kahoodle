@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Links in question texts now point to the right place after a course is restored or copied - detected by https://mdlshield.com
 - Question images can now only be web images, and other files embedded in rich text questions are downloaded instead of opened in the browser - detected by https://mdlshield.com
 - In the fully anonymous mode the activity views are logged as anonymous events, so the logs no longer reveal which participant is which user - detected by https://mdlshield.com
+- A round is now archived 15 minutes after the final leaderboard is shown, as intended, instead of 3 hours after the round started
 
 ## [4.5.1] - 2026-05-05
 

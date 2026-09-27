@@ -59,7 +59,8 @@ class auto_archive_round extends \core\task\adhoc_task {
         $autoarchivetime = $round->get_auto_archive_time();
         if ($autoarchivetime !== null) {
             $task = new self();
-            $task->set_custom_data((object)['roundid' => $round->get_id()]);
+            $isrevision = $round->get_current_stage_name() === \mod_kahoodle\constants::STAGE_REVISION;
+            $task->set_custom_data((object)['roundid' => $round->get_id(), 'isrevision' => $isrevision]);
             $task->set_next_run_time(max($autoarchivetime + 1, time()));
             $task->set_userid($USER->id);
             \core\task\manager::queue_adhoc_task($task, true);

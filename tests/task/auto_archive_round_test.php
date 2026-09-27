@@ -297,6 +297,40 @@ final class auto_archive_round_test extends \advanced_testcase {
     }
 
     /**
+     * Test that entering the revision stage schedules archiving at the revision deadline
+     *
+     * The task queued by start_game() for the overall deadline must not prevent it.
+     */
+    public function test_revision_schedules_task(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $round = $this->create_started_round();
+        for ($i = 0; $i < 20 && $round->get_current_stage_name() !== constants::STAGE_REVISION; $i++) {
+            progress::advance_to_next_stage($round, $round->get_current_stage()->get_stage_signature());
+        }
+        $round = round::create_from_id($round->get_id());
+        $this->assertEquals(constants::STAGE_REVISION, $round->get_current_stage_name());
+
+        $nextruntimes = $DB->get_fieldset_select(
+            'task_adhoc',
+            'nextruntime',
+            'classname = ?',
+            ['\\' . auto_archive_round::class]
+        );
+        sort($nextruntimes);
+        $this->assertEquals(
+            [
+                (int)$round->get_auto_archive_time() + 1,
+                $round->get_timestarted() + constants::MAX_ROUND_DURATION + 1,
+            ],
+            array_map('intval', $nextruntimes)
+        );
+        $this->assertLessThan($round->get_timestarted() + constants::MAX_ROUND_DURATION, $round->get_auto_archive_time());
+    }
+
+    /**
      * Test get_auto_archive_time returns null for preparation stage
      */
     public function test_get_auto_archive_time_preparation(): void {
