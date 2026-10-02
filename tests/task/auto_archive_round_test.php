@@ -216,6 +216,33 @@ final class auto_archive_round_test extends \advanced_testcase {
     }
 
     /**
+     * Test that schedule queues a task to run as soon as possible when the auto-archive time has passed
+     */
+    public function test_schedule_queues_task_when_overdue(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $round = $this->create_started_round();
+        $DB->delete_records('task_adhoc', ['classname' => '\\' . auto_archive_round::class]);
+        $this->update_round_fields($round, ['timestarted' => time() - constants::MAX_ROUND_DURATION - 100]);
+        $round = round::create_from_id($round->get_id());
+
+        $now = time();
+        auto_archive_round::schedule($round);
+
+        $tasks = $DB->get_records('task_adhoc', ['classname' => '\\' . auto_archive_round::class]);
+        $this->assertCount(1, $tasks);
+        $task = reset($tasks);
+        $this->assertGreaterThanOrEqual($now, (int)$task->nextruntime);
+        $this->assertLessThanOrEqual(time(), (int)$task->nextruntime);
+
+        // Running the task archives the round.
+        $this->runAdhocTasks(auto_archive_round::class);
+        $round = round::create_from_id($round->get_id());
+        $this->assertEquals(constants::STAGE_ARCHIVED, $round->get_current_stage_name());
+    }
+
+    /**
      * Test that schedule does not queue a task when the round is in preparation
      */
     public function test_schedule_noop_for_preparation(): void {
@@ -267,6 +294,40 @@ final class auto_archive_round_test extends \advanced_testcase {
         $task = reset($tasks);
         $data = json_decode($task->customdata);
         $this->assertEquals($round->get_id(), $data->roundid);
+    }
+
+    /**
+     * Test that entering the revision stage schedules archiving at the revision deadline
+     *
+     * The task queued by start_game() for the overall deadline must not prevent it.
+     */
+    public function test_revision_schedules_task(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $round = $this->create_started_round();
+        for ($i = 0; $i < 20 && $round->get_current_stage_name() !== constants::STAGE_REVISION; $i++) {
+            progress::advance_to_next_stage($round, $round->get_current_stage()->get_stage_signature());
+        }
+        $round = round::create_from_id($round->get_id());
+        $this->assertEquals(constants::STAGE_REVISION, $round->get_current_stage_name());
+
+        $nextruntimes = $DB->get_fieldset_select(
+            'task_adhoc',
+            'nextruntime',
+            'classname = ?',
+            ['\\' . auto_archive_round::class]
+        );
+        sort($nextruntimes);
+        $this->assertEquals(
+            [
+                (int)$round->get_auto_archive_time() + 1,
+                $round->get_timestarted() + constants::MAX_ROUND_DURATION + 1,
+            ],
+            array_map('intval', $nextruntimes)
+        );
+        $this->assertLessThan($round->get_timestarted() + constants::MAX_ROUND_DURATION, $round->get_auto_archive_time());
     }
 
     /**

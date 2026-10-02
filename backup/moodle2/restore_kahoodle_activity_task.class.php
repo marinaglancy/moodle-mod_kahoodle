@@ -49,6 +49,7 @@ class restore_kahoodle_activity_task extends restore_activity_task {
         $contents = [];
 
         $contents[] = new restore_decode_content('kahoodle', ['intro'], 'kahoodle');
+        $contents[] = new restore_decode_content('kahoodle_question_versions', ['questiontext'], 'kahoodle_question_version');
 
         return $contents;
     }

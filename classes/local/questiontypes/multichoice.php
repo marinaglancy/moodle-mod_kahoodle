@@ -149,6 +149,7 @@ class multichoice extends base {
         }
 
         $letters = constants::MULTICHOICE_SYMBOLS;
+        $context = $roundquestion->guess_context();
 
         if ($stage == constants::STAGE_QUESTION_RESULTS) {
             $answerscount = $this->get_answers_count($roundquestion, $mockresults);
@@ -159,7 +160,7 @@ class multichoice extends base {
             $option = [
                 'optionnumber' => $index + 1,
                 'letter' => $letters[$index] ?? (string)($index + 1),
-                'text' => $answer['text'],
+                'text' => format_string($answer['text'], true, ['context' => $context]),
             ];
             if ($stage == constants::STAGE_QUESTION_RESULTS) {
                 $option['iscorrect'] = $answer['iscorrect'];
@@ -302,11 +303,22 @@ class multichoice extends base {
         foreach ($records as $record) {
             $index = (int)$record->response - 1;
             if (isset($answerscount[$index])) {
-                $answerscount[$index] = (int)$record->cnt;
+                // Add up, because responses saved before they were normalised may spell the same option differently.
+                $answerscount[$index] += (int)$record->cnt;
             }
         }
 
         return $answerscount;
+    }
+
+    /**
+     * Normalise a participant's answer, for example "01" or "1 " become "1"
+     *
+     * @param string $response The option number (1-based) as a string
+     * @return string
+     */
+    public function normalise_response(string $response): string {
+        return (string)(int)$response;
     }
 
     /**

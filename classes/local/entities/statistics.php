@@ -139,7 +139,7 @@ class statistics extends round {
                 && $round->can_participate()
         ) {
             // The last round is in progress and the current user has capability but is not yet a participant.
-            if ($this->kahoodle->allowrepeat || $this->kahoodle->identitymode === constants::IDENTITYMODE_ANONYMOUS) {
+            if ($this->kahoodle->allowrepeat || (int)$this->kahoodle->identitymode === constants::IDENTITYMODE_ANONYMOUS) {
                 return true;
             }
             // Otherwise user can only join if they have not participated before.

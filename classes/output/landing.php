@@ -95,7 +95,7 @@ class landing implements renderable, templatable {
         $pastparticipations = $canparticipate ? $this->statistics->get_my_past_participations() : [];
         $haspastparticipation = !empty($pastparticipations);
         $cannotrejoin = $haspastparticipation && !$this->kahoodle->allowrepeat
-            && $this->kahoodle->identitymode !== constants::IDENTITYMODE_ANONYMOUS;
+            && (int)$this->kahoodle->identitymode !== constants::IDENTITYMODE_ANONYMOUS;
 
         // Show section headers when the user has both capabilities and may see multiple sections.
         $canfacilitate = has_capability('mod/kahoodle:facilitate', $this->context);

@@ -87,6 +87,23 @@ Feature: Events logging in Kahoodle
     Then I should see "Response submitted"
     And I should see "Sam Student"
 
+  Scenario Outline: Activity views are hidden from the teacher in the logs in the fully anonymous mode
+    Given the following "activities" exist:
+      | activity | name          | course | idnumber  | identitymode   |
+      | kahoodle | Test Kahoodle | C1     | kahoodle1 | <identitymode> |
+    And I am on the "Test Kahoodle" "kahoodle activity" page logged in as "student1"
+    When I log in as "teacher1"
+    And I am on "Course 1" course homepage
+    And I navigate to "Reports" in current page administration
+    And I click on "Logs" "link"
+    And I press "Get these logs"
+    Then I <shouldornot> see "Course module viewed"
+
+    Examples:
+      | identitymode | shouldornot |
+      | 0            | should      |
+      | 3            | should not  |
+
   Scenario: Anonymous kahoodle does not log response events before results stage
     Given the following "activities" exist:
       | activity | name          | course | idnumber  | identitymode |

@@ -24,6 +24,7 @@ use core_privacy\local\request\helper;
 use core_privacy\local\request\transform;
 use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
+use mod_kahoodle\constants;
 
 /**
  * Privacy provider for mod_kahoodle.
@@ -47,7 +48,9 @@ class provider implements
             'kahoodle_participants',
             [
                 'userid' => 'privacy:metadata:kahoodle_participants:userid',
+                'participantcode' => 'privacy:metadata:kahoodle_participants:participantcode',
                 'displayname' => 'privacy:metadata:kahoodle_participants:displayname',
+                'avatar' => 'privacy:metadata:kahoodle_participants:avatar',
                 'totalscore' => 'privacy:metadata:kahoodle_participants:totalscore',
                 'finalrank' => 'privacy:metadata:kahoodle_participants:finalrank',
                 'timecreated' => 'privacy:metadata:kahoodle_participants:timecreated',
@@ -143,6 +146,7 @@ class provider implements
 
         $sql = "SELECT p.id AS participantid,
                        p.displayname,
+                       p.avatar,
                        p.totalscore,
                        p.finalrank,
                        p.timecreated AS participanttimecreated,
@@ -187,6 +191,7 @@ class provider implements
             $participation = [
                 'round' => $record->roundtimestarted ? transform::datetime($record->roundtimestarted) : $record->roundname,
                 'displayname' => $record->displayname,
+                'avatar' => $record->avatar,
                 'totalscore' => $record->totalscore,
                 'finalrank' => $record->finalrank,
                 'timecreated' => transform::datetime($record->participanttimecreated),
@@ -205,6 +210,14 @@ class provider implements
 
             $participations[] = $participation;
             $lastcmid = $record->cmid;
+
+            // Export the avatar image stored for this participation.
+            writer::with_context(\context_module::instance($record->cmid))->export_area_files(
+                [get_string('privacy:avatars', 'mod_kahoodle'), $record->participantid],
+                'mod_kahoodle',
+                constants::FILEAREA_AVATAR,
+                $record->participantid
+            );
         }
         $records->close();
 

@@ -135,7 +135,7 @@ class question extends dynamic_form {
                 [
                     'subdirs' => false,
                     'maxfiles' => 1,
-                    'accepted_types' => ['image'],
+                    'accepted_types' => ['web_image'],
                 ]
             );
         }
@@ -401,7 +401,7 @@ class question extends dynamic_form {
                     'mod_kahoodle',
                     constants::FILEAREA_QUESTION_IMAGE,
                     $version->questionversionid,
-                    ['subdirs' => false, 'maxfiles' => 1, 'accepted_types' => ['image']]
+                    ['subdirs' => false, 'maxfiles' => 1, 'accepted_types' => ['web_image']]
                 );
                 $data['questionimage'] = $draftitemid;
             }
