@@ -1,9 +1,25 @@
-# Changeslog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Changed
+- **Breaking change: the web service functions are new.** Clients that call the old functions must move to the new ones:
+  - `mod_kahoodle_create_instance` is replaced by `mod_kahoodle_create_modules`, which creates several activities in one call and also sets the question format;
+  - `mod_kahoodle_add_questions` is replaced by `mod_kahoodle_create_questions`, which takes the course module id once and a position;
+  - `mod_kahoodle_delete_question` is replaced by `mod_kahoodle_delete_questions`;
+  - `mod_kahoodle_change_question_sortorder` is replaced by the `position` of `mod_kahoodle_update_question`.
+
+### Added
+- Web service functions to read and change activities and questions, and to read the results of rounds: `mod_kahoodle_pre_update`, `mod_kahoodle_update_module`, `mod_kahoodle_get_questions`, `mod_kahoodle_question_pre_update`, `mod_kahoodle_update_question`, `mod_kahoodle_prepare_round`, `mod_kahoodle_get_rounds` and `mod_kahoodle_get_round_results`
+- The functions work with the AI agent (tool_aiagent), which also gets a skill for writing Kahoodle questions
+
+### Fixed
+- An activity created through the web service with "available but not shown on the course page" got a wrong visibility value
 
 ## [4.5.2] - 2026-10-02
 

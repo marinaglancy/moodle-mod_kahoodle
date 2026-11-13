@@ -48,6 +48,17 @@ abstract class base {
     abstract public function get_display_name(): string;
 
     /**
+     * How the questionconfig of this type is written, for the descriptions of the web service functions
+     *
+     * One or two plain English sentences. Empty when the type needs no configuration.
+     *
+     * @return string
+     */
+    public function get_config_description(): string {
+        return '';
+    }
+
+    /**
      * Returns the name of the template for this question type and role/stage (either type-specific or basic)
      *
      * @param string $role Role of the user (facilitator/participant)

@@ -1,0 +1,18 @@
+{
+    "shortname": "mod_kahoodle_questions",
+    "name": "Kahoodle questions",
+    "description": "Writing and editing the questions of a Kahoodle live quiz game: questions that read well on a shared screen, answers, timing and points, and changing questions after a game was played.",
+    "instructions": "Kahoodle is a live quiz game. The facilitator shows each question on a shared screen, participants answer on their own devices, and a faster correct answer earns more points: maxpoints for the fastest, down to minpoints for the slowest.\n\nWriting questions that work in a live game:\n- Participants read the question on a projector in a few seconds, so keep it short and unambiguous, with exactly one correct answer.\n- Answers appear as coloured tiles; short answers read best. Two to four answers are usual, more slow the game down.\n- Vary the position of the correct answer, and avoid answers such as \"all of the above\".\n- Give a longer questionduration to a question that needs thinking or calculation, and a shorter one to a quick recall question. The activity defaults suit short questions.\n- In rich text format, put the question itself in the <h3> and anything extra, such as a code snippet or an image, below it.\n\nRounds: every game is a round, and the questions you edit are those of the activity's last round.\n- Before the round starts, questions can be added, removed, moved and changed freely.\n- Once it has started, a question can still be changed, which is how a typo is fixed, but not added, removed or moved. After the round has finished, mod_kahoodle_prepare_round starts a new round with the same questions; then they can be added, removed and moved again. Tell the user that this prepares the next game.\n- A question that participants have answered keeps its number of answers and its correct answer. To change those, add a new question and remove the old one in a round that has not started.\n- Earlier rounds keep the questions as they were played, so their results stay correct.\n\nResults: mod_kahoodle_get_rounds lists the games played, and mod_kahoodle_get_round_results gives the leaderboard of one of them.",
+    "mainfunctions": [
+        "mod_kahoodle_create_questions",
+        "mod_kahoodle_update_question"
+    ],
+    "otherfunctions": [
+        "mod_kahoodle_get_questions",
+        "mod_kahoodle_question_pre_update",
+        "mod_kahoodle_delete_questions",
+        "mod_kahoodle_prepare_round"
+    ],
+    "enabled": true,
+    "loadmode": "initial_or_dynamic"
+}

@@ -1,5 +1,5 @@
 <?php
-// This file is part of mod_kahoodle plugin
+// This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -16,69 +16,58 @@
 
 namespace mod_kahoodle\external;
 
+use core_external\external_api;
 use core_external\external_function_parameters;
 use core_external\external_single_structure;
-use core_external\external_api;
 use core_external\external_value;
-use mod_kahoodle\local\entities\round_question;
+use mod_kahoodle\constants;
 use mod_kahoodle\local\game\questions;
 
 /**
- * Implementation of web service mod_kahoodle_delete_question
+ * Implementation of web service mod_kahoodle_prepare_round
  *
  * @package    mod_kahoodle
  * @copyright  Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class delete_question extends external_api {
+class prepare_round extends external_api {
     /**
-     * Describes the parameters for mod_kahoodle_delete_question
+     * Describes the parameters for mod_kahoodle_prepare_round
      *
      * @return external_function_parameters
      */
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
-            'questionid' => new external_value(PARAM_INT, 'Question ID'),
+            'cmid' => new external_value(PARAM_INT, 'Course module id of the Kahoodle activity'),
         ]);
     }
 
     /**
-     * Implementation of web service mod_kahoodle_delete_question
+     * Prepare a new round with the questions of the last one, as the "Prepare new round" button does
      *
-     * @param int $questionid Question ID
+     * @param int $cmid
      * @return array
      */
-    public static function execute(int $questionid): array {
-        global $DB;
+    public static function execute(int $cmid): array {
+        ['cmid' => $cmid] = self::validate_parameters(self::execute_parameters(), ['cmid' => $cmid]);
+        [, $context, $kahoodle] = helper::validate_cm($cmid);
+        require_capability('mod/kahoodle:facilitate', $context);
 
-        // Parameter validation.
-        ['questionid' => $questionid] = self::validate_parameters(
-            self::execute_parameters(),
-            ['questionid' => $questionid]
-        );
-
-        // Get the question to find the kahoodleid.
-        $roundquestion = round_question::create_from_question_id($questionid);
-
-        // Get the course module and validate context.
-        $context = $roundquestion->get_round()->get_context();
-        self::validate_context($context);
-
-        // Check capability.
-        require_capability('mod/kahoodle:manage_questions', $context);
-
-        // Delete the question.
-        questions::delete_question($roundquestion);
-
-        return [];
+        $round = questions::get_last_round($kahoodle->id);
+        if ($round->get_current_stage_name() !== constants::STAGE_ARCHIVED) {
+            throw new \moodle_exception('cannotprepareround', 'mod_kahoodle');
+        }
+        return ['roundid' => $round->duplicate()->get_id()];
     }
 
     /**
-     * Describe the return structure for mod_kahoodle_delete_question
+     * Describe the return structure for mod_kahoodle_prepare_round
      *
      * @return external_single_structure
      */
     public static function execute_returns(): external_single_structure {
-        return new external_single_structure([]);
+        return new external_single_structure([
+            'roundid' => new external_value(PARAM_INT, 'Id of the new round'),
+        ]);
     }
 }

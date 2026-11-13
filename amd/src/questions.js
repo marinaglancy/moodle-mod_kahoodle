@@ -123,7 +123,7 @@ const initSorting = () => {
         if (!info.positionChanged) {
             return null;
         }
-        const roundquestionid = getRowOrder(info.element, 'roundquestionid');
+        const questionid = getRowOrder(info.element, 'questionid');
         const oldsortorder = getRowOrder(info.element);
         let newsortorder = getRowOrder(info.targetNextElement);
         if (isNaN(newsortorder)) {
@@ -135,12 +135,12 @@ const initSorting = () => {
         // Call web service to update sort order.
         try {
             await fetchMany([{
-                methodname: 'mod_kahoodle_change_question_sortorder',
+                methodname: 'mod_kahoodle_update_question',
                 args: {
-                    roundquestionid: roundquestionid,
-                    newsortorder: newsortorder,
+                    questionid: questionid,
+                    position: newsortorder,
                 },
-            }]);
+            }])[0];
             // Reload the questions table to reflect new order.
             reloadQuestionsTable();
         } catch (error) {
@@ -211,10 +211,13 @@ const deleteQuestion = async(questionId) => {
         await getString('cancel', 'core'),
         async() => {
             try {
-                await fetchMany([{
-                    methodname: 'mod_kahoodle_delete_question',
-                    args: {questionid: questionId},
+                const response = await fetchMany([{
+                    methodname: 'mod_kahoodle_delete_questions',
+                    args: {questionids: [questionId]},
                 }])[0];
+                if (response.warnings.length) {
+                    Notification.addNotification({message: response.warnings[0].message, type: 'error'});
+                }
                 reloadQuestionsTable();
             } catch (error) {
                 Notification.exception(error);

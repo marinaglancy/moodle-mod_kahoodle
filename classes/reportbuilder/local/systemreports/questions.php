@@ -165,6 +165,9 @@ class questions extends system_report {
         $isfullyeditable = $this->get_round()->is_fully_editable();
         foreach ($this->get_columns() as $column) {
             if ($column->get_unique_identifier() === 'round_question:sortorder') {
+                // A column callback gets only its own fields, so the question id is added to them.
+                $questionalias = $this->get_entity('question')->get_table_alias('kahoodle_questions');
+                $column->add_field("{$questionalias}.id", 'questionid');
                 $column->add_callback(static function ($value, \stdClass $row) use ($isfullyeditable): string {
                     global $OUTPUT;
                     $draghandle = '';
@@ -181,7 +184,7 @@ class questions extends system_report {
                     return html_writer::span(
                         $draghandle . $value,
                         '',
-                        ['data-sortorder' => $value, 'data-roundquestionid' => $row->id]
+                        ['data-sortorder' => $value, 'data-roundquestionid' => $row->id, 'data-questionid' => $row->questionid]
                     );
                 });
                 break;

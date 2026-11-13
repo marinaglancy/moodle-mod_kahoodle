@@ -39,6 +39,17 @@ class multichoice extends base {
     }
 
     /**
+     * How the questionconfig of this type is written, for the descriptions of the web service functions
+     *
+     * @return string
+     */
+    public function get_config_description(): string {
+        return 'the answers, one per line, 2 to 8 of them; put * before the one correct answer, ' .
+            'for example "Paris\n*Rome\nMadrid". Once participants have answered the question, ' .
+            'the number of answers and which one is correct cannot change.';
+    }
+
+    /**
      * Type-specific data sanitization
      *
      * @param round_question $roundquestion

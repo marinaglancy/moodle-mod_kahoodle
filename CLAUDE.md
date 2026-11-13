@@ -47,11 +47,11 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   ├── participant_joined.php
 │   │   ├── participant_left.php
 │   │   └── response_submitted.php
-│   ├── external/             # Web service definitions
-│   │   ├── add_questions.php # Batch question creation web service
-│   │   ├── change_question_sortorder.php # Question reordering web service
-│   │   ├── create_instance.php # Activity instance creation web service
-│   │   ├── delete_question.php # Question deletion web service
+│   ├── external/             # Web service definitions (see "Web Services" below)
+│   │   ├── helper.php        # Parameter definitions and checks shared by the functions
+│   │   ├── create_modules.php, pre_update.php, update_module.php # Activities
+│   │   ├── get_questions.php, question_pre_update.php, create_questions.php, update_question.php, delete_questions.php
+│   │   ├── prepare_round.php, get_rounds.php, get_round_results.php # Rounds and results
 │   │   ├── duplicate_question.php # Question duplication web service (supports optional targetroundid for cross-round duplication)
 │   │   ├── playback_stages.php # Playback stages web service (returns all stages with template data)
 │   │   └── preview_questions.php # Question preview web service
@@ -151,10 +151,7 @@ mod/kahoodle/                  (or public/mod/kahoodle/ for 5.1+)
 │   │   ├── gameplay_participant.feature # Participant gameplay flow (all stages)
 │   │   └── gameplay_facilitator.feature # Facilitator game control (all stages)
 │   ├── external/             # Web service tests
-│   │   ├── add_questions_test.php
-│   │   ├── change_question_sortorder_test.php
-│   │   ├── create_instance_test.php
-│   │   ├── delete_question_test.php
+│   │   ├── modules_test.php, questions_test.php, rounds_test.php
 │   │   ├── duplicate_question_test.php
 │   │   └── playback_stages_test.php
 │   ├── form/
@@ -672,48 +669,42 @@ Provides columns and filters for displaying round information.
 
 ### Web Services
 
-#### mod_kahoodle_add_questions
+The functions are written for any client: plain web services, MCP servers such as `webservice_mcp`, and the
+AI agent (`tool_aiagent`). They follow tool_aiagent's `AIAGENT_WS_GUIDE.md`, and Kahoodle is that guide's worked
+example, so keep the two in step.
 
-Batch question creation web service defined in `classes/external/add_questions.php`.
+| Function | Does | Capability |
+|---|---|---|
+| `mod_kahoodle_create_modules` | Creates several activities in a course | `mod/kahoodle:addinstance` |
+| `mod_kahoodle_pre_update` | Raw settings, named as `update_module` takes them | `moodle/course:manageactivities` |
+| `mod_kahoodle_update_module` | Changes one activity; only the given fields change | `moodle/course:manageactivities` |
+| `mod_kahoodle_get_questions` | Questions of the last round in order; details optional | `mod/kahoodle:manage_questions` |
+| `mod_kahoodle_question_pre_update` | Raw questions, named as `update_question` takes them | `mod/kahoodle:manage_questions` |
+| `mod_kahoodle_create_questions` | Adds questions to the last round, optionally at a position | `mod/kahoodle:manage_questions` |
+| `mod_kahoodle_update_question` | Changes one question, including its position | `mod/kahoodle:manage_questions` |
+| `mod_kahoodle_delete_questions` | Removes questions from the last round | `mod/kahoodle:manage_questions` |
+| `mod_kahoodle_prepare_round` | New round after the last one is archived, as the "Prepare new round" button | `mod/kahoodle:facilitate` |
+| `mod_kahoodle_get_rounds` | Rounds with status, dates and score totals | `mod/kahoodle:viewresults` |
+| `mod_kahoodle_get_round_results` | Leaderboard of one round, as the free all-rounds report shows it | `mod/kahoodle:viewresults` |
 
-**Parameters:**
-- Array of questions, each containing:
-  - `kahoodleid` (required): Activity instance ID
-  - `questiontext` (required): Question text
-  - `questiontype` (optional): Defaults to multichoice
-  - `questionconfig` (optional): Type-specific configuration (e.g., answer options for multichoice)
-  - `questionpreviewduration` (optional): Preview duration override
-  - `questionduration` (optional): Question duration override
-  - `questionresultsduration` (optional): Results duration override
-  - `maxpoints` (optional): Maximum points override
-  - `minpoints` (optional): Minimum points override
-  - `imagedraftitemid` (optional): Draft file area ID for images (used with plain text format)
+Rules that are easy to break:
 
-**Returns:**
-- `questionids`: Array of created question IDs with their input array indices
-- `warnings`: Array of errors for questions that failed to create
-
-**Features:**
-- Batch processing with individual error handling
-- Validates context and permissions for each question
-- Supports file uploads for question images
-- Returns partial success (some questions may succeed while others fail)
-
-#### mod_kahoodle_playback_stages
-
-Playback stages web service defined in `classes/external/playback_stages.php`.
-
-**Parameters:**
-- `roundid` (int, default 0): Round ID for single-round playback
-- `kahoodleid` (int, default 0): Kahoodle ID for all-rounds playback
-- Exactly one must be provided
-
-**Returns:**
-- `quiztitle`: Activity name
-- `totalquestions`: Number of questions
-- `stages`: Array of `{stagesignature, template, duration, templatedata}` where `templatedata` is JSON-encoded
-
-**Capability:** Requires `mod/kahoodle:viewresults` in the activity context.
+- **Questions are identified by `questionid` and the activity's last round** (`round_question::create_from_question_id()`).
+  Adding, removing and moving need that round in preparation; the error `noeditableround_ws` tells the caller to call
+  `mod_kahoodle_prepare_round` first. Changes work in any round, as in the UI, through `questions::edit_question()`.
+- **A top-level optional parameter is `VALUE_DEFAULT` with `null`, never `VALUE_OPTIONAL`.** Core drops a missing
+  `VALUE_OPTIONAL` key and passes the rest positionally (`external_api::call_external_function()`), which shifts every later
+  argument. Inside a structure `VALUE_OPTIONAL` is fine.
+- **`external_warnings` takes letters and digits only in `warningcode`**; `helper::warning()` strips the underscores of an
+  error code, otherwise the whole response fails validation.
+- **Per-question statistics and individual answers are tool_kahoodleplus features**, so the functions here return only what
+  the free results pages show.
+- **Each function carries a `tool_aiagent` key in `db/services.php`** (relevance, tags), read only by the AI agent. The
+  functions for the Kahoodle pages (`duplicate_question`, `preview_questions`, `playback_stages`) get a relevance below 5,
+  so the agent starts with them disabled.
+- **`skills/mod_kahoodle_questions.json`** is a skill the AI agent loads when it writes questions. Do not repeat in it what
+  the function and parameter descriptions already say.
+- `questionconfig` is described per installed question type by `questiontypes\base::get_config_description()`.
 
 ### Round-Based Gameplay
 
@@ -1151,12 +1142,10 @@ The plugin includes comprehensive PHPUnit test coverage:
 - Tests multiple kahoodle instances return separate contexts
 
 #### Web Service Tests (`tests/external/`)
-- `add_questions_test.php`: Tests for batch question creation (single/multiple, permissions, error handling, mixed success)
-- `delete_question_test.php`: Tests for question deletion (basic, permissions, sortorder fix)
+- `modules_test.php`, `questions_test.php`, `rounds_test.php`: the functions for the AI agent and other clients, called
+  through `external_api::call_external_function()` so that parameter order and return validation are tested too
 - `duplicate_question_test.php`: Tests for question duplication (same-round, cross-round with targetroundid, permissions)
 - `playback_stages_test.php`: Tests for playback stages (single-round and all-rounds modes)
-- `change_question_sortorder_test.php`: Tests for question reordering
-- `create_instance_test.php`: Tests for activity instance creation
 
 #### Game Logic Tests (`tests/local/game/`)
 - `progress_test.php`: Game progress and stage transition tests
