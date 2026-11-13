@@ -69,7 +69,7 @@ $functions = [
 
     'mod_kahoodle_question_pre_update' => [
         'classname' => mod_kahoodle\external\question_pre_update::class,
-        'description' => 'Read Kahoodle questions as they are stored, before changing them with ' .
+        'description' => 'Read (get) Kahoodle questions as they are stored, before changing them with ' .
             'mod_kahoodle_update_question.',
         'type' => 'read',
         'capabilities' => 'mod/kahoodle:manage_questions',
@@ -86,7 +86,8 @@ $functions = [
 
     'mod_kahoodle_update_question' => [
         'classname' => mod_kahoodle\external\update_question::class,
-        'description' => 'Edit (update, rewrite, fix, move, reorder) one question of a Kahoodle activity.',
+        'description' => 'Edit (update, rewrite, fix, move, reorder) one question of a Kahoodle activity. '
+            . 'Call mod_kahoodle_question_pre_update first.',
         'type' => 'write',
         'capabilities' => 'mod/kahoodle:manage_questions',
         'ajax' => true,
