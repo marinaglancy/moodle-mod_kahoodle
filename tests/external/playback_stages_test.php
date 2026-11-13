@@ -19,6 +19,7 @@ namespace mod_kahoodle\external;
 use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\external\playback_stages::class)]
 /**
  * Tests for playback_stages web service
  *

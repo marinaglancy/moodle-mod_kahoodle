@@ -100,8 +100,10 @@ class get_round_results extends external_api {
             'participants' => new external_multiple_structure(new external_single_structure([
                 'rank' => new external_value(PARAM_INT, 'Final rank, 0 while the round is not finished'),
                 'displayname' => new external_value(PARAM_TEXT, 'Name or alias shown on the leaderboard'),
-                'userfullname' => new external_value(PARAM_TEXT,
-                    'Full name of the user, empty when the activity is fully anonymous'),
+                'userfullname' => new external_value(
+                    PARAM_TEXT,
+                    'Full name of the user, empty when the activity is fully anonymous'
+                ),
                 'score' => new external_value(PARAM_INT, 'Total score'),
                 'correctanswers' => new external_value(PARAM_INT, 'Number of correct answers'),
                 'questionsanswered' => new external_value(PARAM_INT, 'Number of questions answered'),

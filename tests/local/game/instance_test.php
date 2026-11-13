@@ -18,6 +18,11 @@ namespace mod_kahoodle\local\game;
 
 use mod_kahoodle\constants;
 
+#[\PHPUnit\Framework\Attributes\CoversFunction('kahoodle_add_instance')]
+#[\PHPUnit\Framework\Attributes\CoversFunction('kahoodle_delete_instance')]
+#[\PHPUnit\Framework\Attributes\CoversFunction('kahoodle_update_instance')]
+#[\PHPUnit\Framework\Attributes\CoversClass(\backup_kahoodle_activity_structure_step::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\restore_kahoodle_activity_structure_step::class)]
 /**
  * Tests for Kahoodle
  *
@@ -25,13 +30,16 @@ use mod_kahoodle\constants;
  * @category   test
  * @copyright  Marina Glancy
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     ::kahoodle_add_instance
+ * @covers     ::kahoodle_delete_instance
+ * @covers     ::kahoodle_update_instance
+ * @covers     \backup_kahoodle_activity_structure_step
+ * @covers     \restore_kahoodle_activity_structure_step
  */
 final class instance_test extends \advanced_testcase {
     /**
      * Test create and delete module
      *
-     * @covers ::kahoodle_add_instance
-     * @covers ::kahoodle_delete_instance
      * @return void
      */
     public function test_create_delete_module(): void {
@@ -76,7 +84,6 @@ final class instance_test extends \advanced_testcase {
     /**
      * Test creating module with custom field values
      *
-     * @covers ::kahoodle_add_instance
      * @return void
      */
     public function test_create_with_custom_values(): void {
@@ -109,7 +116,6 @@ final class instance_test extends \advanced_testcase {
     /**
      * Test updating module instance
      *
-     * @covers ::kahoodle_update_instance
      * @return void
      */
     public function test_update_module(): void {
@@ -152,8 +158,6 @@ final class instance_test extends \advanced_testcase {
     /**
      * Test module backup and restore by duplicating it
      *
-     * @covers \backup_kahoodle_activity_structure_step
-     * @covers \restore_kahoodle_activity_structure_step
      * @return void
      */
     public function test_backup_restore(): void {

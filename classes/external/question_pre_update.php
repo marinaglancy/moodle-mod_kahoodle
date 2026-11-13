@@ -72,8 +72,14 @@ class question_pre_update extends external_api {
                 'questionconfig' => (string)$data->questionconfig,
                 'images' => array_values(array_map(fn($file) => [
                     'filename' => $file->get_filename(),
-                    'fileurl' => \moodle_url::make_pluginfile_url($context->id, 'mod_kahoodle',
-                        constants::FILEAREA_QUESTION_IMAGE, $data->questionversionid, '/', $file->get_filename())->out(false),
+                    'fileurl' => \moodle_url::make_pluginfile_url(
+                        $context->id,
+                        'mod_kahoodle',
+                        constants::FILEAREA_QUESTION_IMAGE,
+                        $data->questionversionid,
+                        '/',
+                        $file->get_filename()
+                    )->out(false),
                 ], $roundquestion->get_question_files())),
                 'hasresponses' => questions::question_has_responses($roundquestion->get_question_id()),
             ];
@@ -100,17 +106,23 @@ class question_pre_update extends external_api {
                 'questionid' => new external_value(PARAM_INT, 'Question id'),
                 'position' => new external_value(PARAM_INT, 'Position in the last round, 1-based'),
                 'questiontype' => new external_value(PARAM_ALPHANUMEXT, 'Question type'),
-                'questionformat' => new external_value(PARAM_INT,
-                    'Format of questiontext, from the activity: 0 = plain text, 1 = rich text (HTML)'),
-                'questiontext' => new external_value(PARAM_RAW,
-                    'Question text as stored, with @@PLUGINFILE@@ for embedded files'),
+                'questionformat' => new external_value(
+                    PARAM_INT,
+                    'Format of questiontext, from the activity: 0 = plain text, 1 = rich text (HTML)'
+                ),
+                'questiontext' => new external_value(
+                    PARAM_RAW,
+                    'Question text as stored, with @@PLUGINFILE@@ for embedded files'
+                ),
                 'questionconfig' => new external_value(PARAM_RAW, 'Type-specific configuration as stored'),
                 'images' => new external_multiple_structure(new external_single_structure([
                     'filename' => new external_value(PARAM_FILE, 'File name'),
                     'fileurl' => new external_value(PARAM_URL, 'File URL'),
                 ]), 'Images of the question'),
-                'hasresponses' => new external_value(PARAM_BOOL,
-                    'Whether participants have answered it in any round, which limits what can change'),
+                'hasresponses' => new external_value(
+                    PARAM_BOOL,
+                    'Whether participants have answered it in any round, which limits what can change'
+                ),
             ] + $overrides)),
         ]);
     }

@@ -19,6 +19,12 @@ namespace mod_kahoodle\external;
 use core_external\external_api;
 use mod_kahoodle\constants;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\external\create_questions::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\external\update_question::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\external\delete_questions::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\external\get_questions::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\external\question_pre_update::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\external\helper::class)]
 /**
  * Tests for the web service functions that read and change Kahoodle questions
  *
@@ -152,8 +158,10 @@ final class questions_test extends \advanced_testcase {
 
         // A zero override goes back to the activity default.
         self::call('mod_kahoodle_update_question', ['questionid' => $three, 'questionduration' => 0]);
-        $this->assertSame(0, self::call('mod_kahoodle_question_pre_update',
-            ['questionids' => [$three]])['questions'][0]['questionduration']);
+        $this->assertSame(0, self::call(
+            'mod_kahoodle_question_pre_update',
+            ['questionids' => [$three]]
+        )['questions'][0]['questionduration']);
     }
 
     /**
@@ -183,8 +191,10 @@ final class questions_test extends \advanced_testcase {
         } catch (\moodle_exception $e) {
             $this->assertSame('noeditableround_ws', $e->debuginfo);
         }
-        $this->assertSame('noeditableroundws',
-            self::call('mod_kahoodle_delete_questions', ['questionids' => [$two]])['warnings'][0]['warningcode']);
+        $this->assertSame(
+            'noeditableroundws',
+            self::call('mod_kahoodle_delete_questions', ['questionids' => [$two]])['warnings'][0]['warningcode']
+        );
         try {
             self::call('mod_kahoodle_update_question', ['questionid' => $two, 'position' => 1]);
             $this->fail('A question was moved in a finished round');
@@ -215,12 +225,14 @@ final class questions_test extends \advanced_testcase {
         $course = $DB->get_record('course', ['id' => $this->kahoodle->course]);
         $this->setUser($this->getDataGenerator()->create_and_enrol($course, 'student'));
 
-        foreach ([
+        foreach (
+            [
             ['mod_kahoodle_get_questions', ['cmid' => $this->kahoodle->cmid]],
             ['mod_kahoodle_question_pre_update', ['questionids' => [$one]]],
             ['mod_kahoodle_update_question', ['questionid' => $one, 'questiontext' => 'Mine?']],
             ['mod_kahoodle_create_questions', ['cmid' => $this->kahoodle->cmid, 'questions' => []]],
-        ] as [$name, $args]) {
+            ] as [$name, $args]
+        ) {
             try {
                 self::call($name, $args);
                 $this->fail("$name worked for a student");
@@ -228,7 +240,9 @@ final class questions_test extends \advanced_testcase {
                 $this->assertSame('nopermissions', $e->debuginfo, $name);
             }
         }
-        $this->assertSame('nopermissions',
-            self::call('mod_kahoodle_delete_questions', ['questionids' => [$one]])['warnings'][0]['warningcode']);
+        $this->assertSame(
+            'nopermissions',
+            self::call('mod_kahoodle_delete_questions', ['questionids' => [$one]])['warnings'][0]['warningcode']
+        );
     }
 }

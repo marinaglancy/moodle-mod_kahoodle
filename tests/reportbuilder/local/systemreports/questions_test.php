@@ -20,6 +20,10 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once(__DIR__ . '/helper.php');
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\reportbuilder\local\systemreports\questions::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\reportbuilder\local\entities\question::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\reportbuilder\local\entities\question_version::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\reportbuilder\local\entities\round_question::class)]
 /**
  * Tests for the questions system report
  *

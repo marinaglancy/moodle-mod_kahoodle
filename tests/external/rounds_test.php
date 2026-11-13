@@ -20,6 +20,9 @@ use core_external\external_api;
 use mod_kahoodle\constants;
 use mod_kahoodle\local\game\questions;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\external\prepare_round::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\external\get_rounds::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\external\get_round_results::class)]
 /**
  * Tests for the web service functions about Kahoodle rounds
  *
@@ -57,8 +60,10 @@ final class rounds_test extends \advanced_testcase {
     private function played_round(int $identitymode = constants::IDENTITYMODE_REALNAME): array {
         global $DB;
         $course = $this->getDataGenerator()->create_course();
-        $kahoodle = $this->getDataGenerator()->create_module('kahoodle',
-            ['course' => $course->id, 'identitymode' => $identitymode]);
+        $kahoodle = $this->getDataGenerator()->create_module(
+            'kahoodle',
+            ['course' => $course->id, 'identitymode' => $identitymode]
+        );
         /** @var \mod_kahoodle_generator $generator */
         $generator = $this->getDataGenerator()->get_plugin_generator('mod_kahoodle');
         $round = questions::get_last_round($kahoodle->id);
@@ -147,11 +152,13 @@ final class rounds_test extends \advanced_testcase {
         [$kahoodle, $roundid, $course] = $this->played_round();
         $this->setUser($this->getDataGenerator()->create_and_enrol($course, 'student'));
 
-        foreach ([
+        foreach (
+            [
             ['mod_kahoodle_get_rounds', ['cmid' => $kahoodle->cmid]],
             ['mod_kahoodle_get_round_results', ['roundid' => $roundid]],
             ['mod_kahoodle_prepare_round', ['cmid' => $kahoodle->cmid]],
-        ] as [$name, $args]) {
+            ] as [$name, $args]
+        ) {
             try {
                 self::call($name, $args);
                 $this->fail("$name worked for a student");

@@ -21,6 +21,8 @@ use mod_kahoodle\local\entities\participant;
 use mod_kahoodle\local\entities\round_question;
 use mod_kahoodle\local\game\questions;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\local\questiontypes\multichoice::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\local\questiontypes\base::class)]
 /**
  * Tests for multichoice question type and base class sanitization
  *

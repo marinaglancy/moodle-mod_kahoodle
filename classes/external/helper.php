@@ -140,16 +140,31 @@ class helper {
     public static function question_override_parameters(string $suffix, bool $toplevel): array {
         $required = $toplevel ? VALUE_DEFAULT : VALUE_OPTIONAL;
         return [
-            'questionpreviewduration' => new external_value(PARAM_INT,
-                'Seconds the question is shown before answers open. 0 uses the activity default.' . $suffix, $required),
-            'questionduration' => new external_value(PARAM_INT,
-                'Seconds participants have to answer. 0 uses the activity default.' . $suffix, $required),
-            'questionresultsduration' => new external_value(PARAM_INT,
-                'Seconds the results of the question are shown. 0 uses the activity default.' . $suffix, $required),
-            'maxpoints' => new external_value(PARAM_INT,
-                'Points for the fastest correct answer. 0 uses the activity default.' . $suffix, $required),
-            'minpoints' => new external_value(PARAM_INT,
-                'Points for the slowest correct answer. 0 uses the activity default.' . $suffix, $required),
+            'questionpreviewduration' => new external_value(
+                PARAM_INT,
+                'Seconds the question is shown before answers open. 0 uses the activity default.' . $suffix,
+                $required
+            ),
+            'questionduration' => new external_value(
+                PARAM_INT,
+                'Seconds participants have to answer. 0 uses the activity default.' . $suffix,
+                $required
+            ),
+            'questionresultsduration' => new external_value(
+                PARAM_INT,
+                'Seconds the results of the question are shown. 0 uses the activity default.' . $suffix,
+                $required
+            ),
+            'maxpoints' => new external_value(
+                PARAM_INT,
+                'Points for the fastest correct answer. 0 uses the activity default.' . $suffix,
+                $required
+            ),
+            'minpoints' => new external_value(
+                PARAM_INT,
+                'Points for the slowest correct answer. 0 uses the activity default.' . $suffix,
+                $required
+            ),
         ];
     }
 
@@ -180,35 +195,62 @@ class helper {
         $optional = VALUE_DEFAULT;
         $default = fn($value) => $forupdate ? null : $value;
         return [
-            'questionformat' => new external_value(PARAM_INT,
+            'questionformat' => new external_value(
+                PARAM_INT,
                 'How question text is written: 0 = plain text, at most ' . constants::QUESTIONTEXT_MAXLENGTH .
                 ' characters, with an optional image shown under it; 1 = rich text (HTML) with embedded images.',
-                $optional, $default(constants::QUESTIONFORMAT_PLAIN)),
-            'identitymode' => new external_value(PARAM_INT,
+                $optional,
+                $default(constants::QUESTIONFORMAT_PLAIN)
+            ),
+            'identitymode' => new external_value(
+                PARAM_INT,
                 'How participants appear on the leaderboard: 0 = real name, 1 = real name or an alias they choose, ' .
                 '2 = an alias they must choose, 3 = fully anonymous.',
-                $optional, $default(constants::DEFAULT_IDENTITY_MODE)),
-            'allowrepeat' => new external_value(PARAM_INT,
+                $optional,
+                $default(constants::DEFAULT_IDENTITY_MODE)
+            ),
+            'allowrepeat' => new external_value(
+                PARAM_INT,
                 'Whether a user may take part in more than one round: 1 = yes, 0 = no.',
-                $optional, $default(constants::DEFAULT_ALLOW_REPEAT)),
-            'lobbyduration' => new external_value(PARAM_INT,
+                $optional,
+                $default(constants::DEFAULT_ALLOW_REPEAT)
+            ),
+            'lobbyduration' => new external_value(
+                PARAM_INT,
                 'Seconds the lobby stays open for participants to join before the first question.',
-                $optional, $default(constants::DEFAULT_LOBBY_DURATION)),
-            'questionpreviewduration' => new external_value(PARAM_INT,
+                $optional,
+                $default(constants::DEFAULT_LOBBY_DURATION)
+            ),
+            'questionpreviewduration' => new external_value(
+                PARAM_INT,
                 'Default seconds a question is shown before answers open.',
-                $optional, $default(constants::DEFAULT_QUESTION_PREVIEW_DURATION)),
-            'questionduration' => new external_value(PARAM_INT,
+                $optional,
+                $default(constants::DEFAULT_QUESTION_PREVIEW_DURATION)
+            ),
+            'questionduration' => new external_value(
+                PARAM_INT,
                 'Default seconds participants have to answer a question.',
-                $optional, $default(constants::DEFAULT_QUESTION_DURATION)),
-            'questionresultsduration' => new external_value(PARAM_INT,
+                $optional,
+                $default(constants::DEFAULT_QUESTION_DURATION)
+            ),
+            'questionresultsduration' => new external_value(
+                PARAM_INT,
                 'Default seconds the results of a question are shown.',
-                $optional, $default(constants::DEFAULT_QUESTION_RESULTS_DURATION)),
-            'maxpoints' => new external_value(PARAM_INT,
+                $optional,
+                $default(constants::DEFAULT_QUESTION_RESULTS_DURATION)
+            ),
+            'maxpoints' => new external_value(
+                PARAM_INT,
                 'Default points for the fastest correct answer.',
-                $optional, $default(constants::DEFAULT_MAX_POINTS)),
-            'minpoints' => new external_value(PARAM_INT,
+                $optional,
+                $default(constants::DEFAULT_MAX_POINTS)
+            ),
+            'minpoints' => new external_value(
+                PARAM_INT,
                 'Default points for the slowest correct answer.',
-                $optional, $default(constants::DEFAULT_MIN_POINTS)),
+                $optional,
+                $default(constants::DEFAULT_MIN_POINTS)
+            ),
         ];
     }
 
@@ -222,28 +264,46 @@ class helper {
         $optional = VALUE_DEFAULT;
         $default = fn($value) => $forupdate ? null : $value;
         return [
-            'intro' => new external_value(PARAM_RAW,
+            'intro' => new external_value(
+                PARAM_RAW,
                 'Description of the activity (HTML). Files from introdraftitemid can be embedded as ' .
-                '@@PLUGINFILE@@/filename.ext.', $optional, $default('')),
-            'introformat' => new external_value(PARAM_INT,
+                '@@PLUGINFILE@@/filename.ext.',
+                $optional,
+                $default('')
+            ),
+            'introformat' => new external_value(
+                PARAM_INT,
                 'Format of intro: 1 = HTML, 0 = Moodle auto-format, 2 = plain text, 4 = Markdown.',
-                $optional, $default(FORMAT_HTML)),
-            'introdraftitemid' => new external_value(PARAM_INT,
+                $optional,
+                $default(FORMAT_HTML)
+            ),
+            'introdraftitemid' => new external_value(
+                PARAM_INT,
                 'Draft file area id with the files embedded in intro.' .
                 ($forupdate ? ' It replaces the files the description has now.' : ''),
-                $optional, $default(0)),
-            'visible' => new external_value(PARAM_INT,
+                $optional,
+                $default(0)
+            ),
+            'visible' => new external_value(
+                PARAM_INT,
                 'Availability: 1 = shown on the course page, 0 = hidden, ' .
                 '-1 = available but not shown on the course page (if the site allows it).',
-                $optional, $default(1)),
+                $optional,
+                $default(1)
+            ),
             'idnumber' => new external_value(PARAM_RAW, 'ID number of the activity.', $optional, $default('')),
-            'lang' => new external_value(PARAM_LANG,
+            'lang' => new external_value(
+                PARAM_LANG,
                 'Language to force for the activity, for example "de". Empty for no forced language.',
-                $optional, $default('')),
+                $optional,
+                $default('')
+            ),
             'tags' => new external_multiple_structure(
                 new external_value(PARAM_TAG, 'Tag name'),
                 'Tags of the activity.' . ($forupdate ? ' They replace the current tags.' : ''),
-                $optional, $default([]), $forupdate ? NULL_ALLOWED : NULL_NOT_ALLOWED
+                $optional,
+                $default([]),
+                $forupdate ? NULL_ALLOWED : NULL_NOT_ALLOWED
             ),
         ];
     }

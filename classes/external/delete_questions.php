@@ -82,8 +82,10 @@ class delete_questions extends external_api {
      */
     public static function execute_returns(): external_single_structure {
         return new external_single_structure([
-            'deleted' => new external_multiple_structure(new external_value(PARAM_INT, 'Question id'),
-                'The questions that were removed'),
+            'deleted' => new external_multiple_structure(
+                new external_value(PARAM_INT, 'Question id'),
+                'The questions that were removed'
+            ),
             'warnings' => new external_warnings(),
         ]);
     }

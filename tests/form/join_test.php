@@ -20,6 +20,7 @@ use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
 use mod_kahoodle\local\game\questions;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\form\join::class)]
 /**
  * Tests for the join form
  *
@@ -87,6 +88,7 @@ final class join_test extends \advanced_testcase {
         ];
     }
 
+    #[\PHPUnit\Framework\Attributes\DataProvider('validation_provider')]
     /**
      * Test server-side validation of the nickname
      *

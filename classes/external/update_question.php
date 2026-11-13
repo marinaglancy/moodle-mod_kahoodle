@@ -37,17 +37,30 @@ class update_question extends external_api {
      */
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
-            'questionid' => new external_value(PARAM_INT,
-                'Question id, from mod_kahoodle_get_questions. Pass only the fields that change; the others stay.'),
-            'questiontext' => new external_value(PARAM_RAW,
-                'New question text, in the same format as in mod_kahoodle_create_questions.', VALUE_DEFAULT, null),
+            'questionid' => new external_value(
+                PARAM_INT,
+                'Question id, from mod_kahoodle_get_questions. Pass only the fields that change; the others stay.'
+            ),
+            'questiontext' => new external_value(
+                PARAM_RAW,
+                'New question text, in the same format as in mod_kahoodle_create_questions.',
+                VALUE_DEFAULT,
+                null
+            ),
             'questionconfig' => new external_value(PARAM_RAW, helper::questionconfig_description(), VALUE_DEFAULT, null),
-            'imagedraftitemid' => new external_value(PARAM_INT,
-                'Draft file area id with the images that replace the current ones.', VALUE_DEFAULT, null),
+            'imagedraftitemid' => new external_value(
+                PARAM_INT,
+                'Draft file area id with the images that replace the current ones.',
+                VALUE_DEFAULT,
+                null
+            ),
         ] + helper::question_override_parameters(' Omit to keep the current value.', true) + [
-            'position' => new external_value(PARAM_INT,
+            'position' => new external_value(
+                PARAM_INT,
                 'New position (1-based) of the question in the round. Only before the round starts.',
-                VALUE_DEFAULT, null),
+                VALUE_DEFAULT,
+                null
+            ),
         ]);
     }
 

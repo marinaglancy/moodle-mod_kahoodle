@@ -20,6 +20,7 @@ use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
 use mod_kahoodle\local\entities\participant as participant_entity;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\output\participant::class)]
 /**
  * Tests for the participant output class
  *

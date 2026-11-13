@@ -19,6 +19,7 @@ namespace mod_kahoodle\local\entities;
 use mod_kahoodle\constants;
 use mod_kahoodle\local\game\questions;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\local\entities\round::class)]
 /**
  * Tests for round entity
  *
@@ -47,8 +48,6 @@ final class round_test extends \advanced_testcase {
 
     /**
      * Test get_rankings with no participants
-     *
-     * @covers \mod_kahoodle\local\entities\round::get_rankings
      */
     public function test_get_rankings_empty(): void {
         $this->resetAfterTest();
@@ -81,8 +80,6 @@ final class round_test extends \advanced_testcase {
 
     /**
      * Test get_rankings with single participant
-     *
-     * @covers \mod_kahoodle\local\entities\round::get_rankings
      */
     public function test_get_rankings_single_participant(): void {
         $this->resetAfterTest();
@@ -125,8 +122,6 @@ final class round_test extends \advanced_testcase {
 
     /**
      * Test get_rankings with distinct scores
-     *
-     * @covers \mod_kahoodle\local\entities\round::get_rankings
      */
     public function test_get_rankings_distinct_scores(): void {
         $this->resetAfterTest();
@@ -186,8 +181,6 @@ final class round_test extends \advanced_testcase {
 
     /**
      * Test get_rankings with tied scores
-     *
-     * @covers \mod_kahoodle\local\entities\round::get_rankings
      */
     public function test_get_rankings_tied_scores(): void {
         $this->resetAfterTest();
@@ -257,8 +250,6 @@ final class round_test extends \advanced_testcase {
 
     /**
      * Test get_rankings with all participants tied
-     *
-     * @covers \mod_kahoodle\local\entities\round::get_rankings
      */
     public function test_get_rankings_all_tied(): void {
         $this->resetAfterTest();
@@ -307,8 +298,6 @@ final class round_test extends \advanced_testcase {
 
     /**
      * Test get_rankings with zero scores
-     *
-     * @covers \mod_kahoodle\local\entities\round::get_rankings
      */
     public function test_get_rankings_zero_scores(): void {
         $this->resetAfterTest();
@@ -360,8 +349,6 @@ final class round_test extends \advanced_testcase {
 
     /**
      * Test that withprevscore is empty when previous score is 0
-     *
-     * @covers \mod_kahoodle\local\entities\round::get_rankings
      */
     public function test_get_rankings_withprevscore_empty_for_zero(): void {
         $this->resetAfterTest();
@@ -402,8 +389,6 @@ final class round_test extends \advanced_testcase {
 
     /**
      * Test get_prev_question_rankings returns different values than get_rankings
-     *
-     * @covers \mod_kahoodle\local\entities\round::get_prev_question_rankings
      */
     public function test_get_prev_question_rankings(): void {
         $this->resetAfterTest();
@@ -465,8 +450,6 @@ final class round_test extends \advanced_testcase {
 
     /**
      * Test round duplicate creates new round with copied questions
-     *
-     * @covers \mod_kahoodle\local\entities\round::duplicate
      */
     public function test_duplicate(): void {
         global $DB;

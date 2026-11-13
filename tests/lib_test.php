@@ -23,6 +23,10 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot . '/mod/kahoodle/lib.php');
 
+#[\PHPUnit\Framework\Attributes\CoversFunction('kahoodle_supports')]
+#[\PHPUnit\Framework\Attributes\CoversFunction('kahoodle_delete_instance')]
+#[\PHPUnit\Framework\Attributes\CoversFunction('mod_kahoodle_inplace_editable')]
+#[\PHPUnit\Framework\Attributes\CoversFunction('mod_kahoodle_realtime_event_received')]
 /**
  * Tests for Kahoodle lib.php callback functions
  *

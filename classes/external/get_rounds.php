@@ -97,9 +97,11 @@ class get_rounds extends external_api {
             'rounds' => new external_multiple_structure(new external_single_structure([
                 'roundid' => new external_value(PARAM_INT, 'Round id'),
                 'name' => new external_value(PARAM_TEXT, 'Round name'),
-                'status' => new external_value(PARAM_ALPHA,
+                'status' => new external_value(
+                    PARAM_ALPHA,
                     'preparation (not started, questions can be changed), inprogress, revision (finished, ' .
-                    'participants are reviewing their answers) or completed'),
+                    'participants are reviewing their answers) or completed'
+                ),
                 'timestarted' => new external_value(PARAM_INT, 'When the lobby opened, 0 if not started'),
                 'timecompleted' => new external_value(PARAM_INT, 'When the round finished, 0 if not finished'),
                 'questioncount' => new external_value(PARAM_INT, 'Number of questions'),

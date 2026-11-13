@@ -20,6 +20,7 @@ use mod_kahoodle\constants;
 use mod_kahoodle\local\game\questions;
 use mod_kahoodle\local\entities\round;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\local\game\progress::class)]
 /**
  * Tests for game progress manager
  *

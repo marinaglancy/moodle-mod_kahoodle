@@ -20,6 +20,7 @@ use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
 use mod_kahoodle\local\entities\round_question;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\output\roundquestion::class)]
 /**
  * Tests for the roundquestion output class
  *

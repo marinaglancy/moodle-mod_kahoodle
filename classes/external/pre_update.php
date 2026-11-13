@@ -92,14 +92,18 @@ class pre_update extends external_api {
             'name' => new external_value(PARAM_TEXT, 'Activity name'),
             'intro' => new external_value(PARAM_RAW, 'Description as stored, with @@PLUGINFILE@@ for embedded files'),
             'introformat' => new external_value(PARAM_INT, 'Format of intro'),
-            'visible' => new external_value(PARAM_INT,
-                '1 = shown on the course page, 0 = hidden, -1 = available but not shown on the course page'),
+            'visible' => new external_value(
+                PARAM_INT,
+                '1 = shown on the course page, 0 = hidden, -1 = available but not shown on the course page'
+            ),
             'idnumber' => new external_value(PARAM_RAW, 'ID number'),
             'lang' => new external_value(PARAM_RAW, 'Forced language, empty when none'),
             'tags' => new external_multiple_structure(new external_value(PARAM_TAG, 'Tag name'), 'Tags'),
             'questioncount' => new external_value(PARAM_INT, 'Number of questions in the last round'),
-            'lastroundeditable' => new external_value(PARAM_BOOL,
-                'Whether the last round has not started yet, so its questions can be added, removed and moved'),
+            'lastroundeditable' => new external_value(
+                PARAM_BOOL,
+                'Whether the last round has not started yet, so its questions can be added, removed and moved'
+            ),
         ] + $settings);
     }
 }

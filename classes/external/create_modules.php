@@ -41,8 +41,12 @@ class create_modules extends external_api {
             'courseid' => new external_value(PARAM_INT, 'Course id'),
             'modules' => new external_multiple_structure(
                 new external_single_structure([
-                    'section' => new external_value(PARAM_INT,
-                        'Section number in the course (0 is the top section).', VALUE_DEFAULT, 0),
+                    'section' => new external_value(
+                        PARAM_INT,
+                        'Section number in the course (0 is the top section).',
+                        VALUE_DEFAULT,
+                        0
+                    ),
                     'name' => new external_value(PARAM_TEXT, 'Activity name'),
                 ] + helper::common_parameters(false) + helper::settings_parameters(false)),
                 'Kahoodle activities to create. Add the questions afterwards with mod_kahoodle_create_questions.'

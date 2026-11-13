@@ -16,6 +16,7 @@
 
 namespace mod_kahoodle;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\constants::class)]
 /**
  * Tests for constants class field lists.
  *

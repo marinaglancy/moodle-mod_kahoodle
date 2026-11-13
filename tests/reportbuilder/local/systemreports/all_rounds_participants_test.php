@@ -20,6 +20,8 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once(__DIR__ . '/helper.php');
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\reportbuilder\local\systemreports\all_rounds_participants::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\reportbuilder\local\entities\round::class)]
 /**
  * Tests for the all rounds participants system report
  *

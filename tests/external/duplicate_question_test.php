@@ -19,6 +19,7 @@ namespace mod_kahoodle\external;
 use mod_kahoodle\constants;
 use mod_kahoodle\local\game\questions;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\external\duplicate_question::class)]
 /**
  * Tests for duplicate_question web service
  *

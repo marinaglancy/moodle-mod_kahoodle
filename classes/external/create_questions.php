@@ -43,24 +43,39 @@ class create_questions extends external_api {
             'cmid' => new external_value(PARAM_INT, 'Course module id of the Kahoodle activity'),
             'questions' => new external_multiple_structure(
                 new external_single_structure([
-                    'questiontype' => new external_value(PARAM_ALPHANUMEXT, helper::questiontype_description(),
-                        VALUE_OPTIONAL),
-                    'questiontext' => new external_value(PARAM_RAW,
+                    'questiontype' => new external_value(
+                        PARAM_ALPHANUMEXT,
+                        helper::questiontype_description(),
+                        VALUE_OPTIONAL
+                    ),
+                    'questiontext' => new external_value(
+                        PARAM_RAW,
                         'Question text. In plain text format (the activity\'s questionformat 0) it is at most ' .
                         constants::QUESTIONTEXT_MAXLENGTH . ' characters. In rich text format (1) it is HTML whose main ' .
                         'question is in an <h3> tag, and it can embed files from imagedraftitemid as ' .
-                        '@@PLUGINFILE@@/filename.ext.'),
-                    'questionconfig' => new external_value(PARAM_RAW, helper::questionconfig_description(),
-                        VALUE_OPTIONAL),
-                    'imagedraftitemid' => new external_value(PARAM_INT,
+                        '@@PLUGINFILE@@/filename.ext.'
+                    ),
+                    'questionconfig' => new external_value(
+                        PARAM_RAW,
+                        helper::questionconfig_description(),
+                        VALUE_OPTIONAL
+                    ),
+                    'imagedraftitemid' => new external_value(
+                        PARAM_INT,
                         'Draft file area id with images: in plain text format one image shown under the text, ' .
-                        'in rich text format the files embedded in questiontext.', VALUE_OPTIONAL),
+                        'in rich text format the files embedded in questiontext.',
+                        VALUE_OPTIONAL
+                    ),
                 ] + helper::question_override_parameters(' Omit to use the activity default.', false)),
                 'Questions to add, in order'
             ),
-            'position' => new external_value(PARAM_INT,
+            'position' => new external_value(
+                PARAM_INT,
                 'Position (1-based) of the first new question in the round; the others follow it. ' .
-                '0 adds them at the end.', VALUE_DEFAULT, 0),
+                '0 adds them at the end.',
+                VALUE_DEFAULT,
+                0
+            ),
         ]);
     }
 

@@ -21,6 +21,7 @@ use mod_kahoodle\local\entities\participant;
 use mod_kahoodle\local\entities\round;
 use mod_kahoodle\local\game\questions;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\local\game\responses::class)]
 /**
  * Tests for response management in Kahoodle rounds
  *

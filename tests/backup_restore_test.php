@@ -23,6 +23,9 @@ use backup_setting;
 use restore_controller;
 use restore_dbops;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\backup_kahoodle_activity_structure_step::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\restore_kahoodle_activity_structure_step::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\restore_kahoodle_activity_task::class)]
 /**
  * Backup and restore tests for mod_kahoodle.
  *
@@ -532,6 +535,7 @@ final class backup_restore_test extends advanced_testcase {
         ];
     }
 
+    #[\PHPUnit\Framework\Attributes\DataProvider('restore_without_userdata_provider')]
     /**
      * Test restore without user data, when a question was edited in an older round after it was added to the restored round.
      *

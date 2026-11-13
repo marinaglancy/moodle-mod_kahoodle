@@ -21,6 +21,7 @@ use mod_kahoodle\local\entities\round;
 use mod_kahoodle\local\game\progress;
 use mod_kahoodle\local\game\questions;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\task\auto_archive_round::class)]
 /**
  * Tests for the auto_archive_round ad-hoc task
  *

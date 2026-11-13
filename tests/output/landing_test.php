@@ -22,6 +22,7 @@ use mod_kahoodle\local\entities\round;
 use mod_kahoodle\local\entities\statistics;
 use mod_kahoodle\local\game\progress;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\output\landing::class)]
 /**
  * Tests for the landing output class
  *

@@ -24,6 +24,16 @@ use mod_kahoodle\local\game\progress;
 use mod_kahoodle\local\game\questions;
 use mod_kahoodle\local\game\responses;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\event\course_module_viewed::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\event\course_module_instance_list_viewed::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\event\question_created::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\event\question_updated::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\event\question_removed::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\event\round_created::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\event\round_updated::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\event\participant_joined::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\event\participant_left::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\event\response_submitted::class)]
 /**
  * Tests for all Kahoodle event classes
  *

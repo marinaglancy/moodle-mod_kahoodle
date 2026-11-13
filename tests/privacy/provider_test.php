@@ -23,6 +23,7 @@ use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
 use core_privacy\tests\provider_testcase;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\privacy\provider::class)]
 /**
  * Privacy provider tests for mod_kahoodle.
  *

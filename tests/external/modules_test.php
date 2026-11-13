@@ -19,6 +19,10 @@ namespace mod_kahoodle\external;
 use core_external\external_api;
 use mod_kahoodle\constants;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\external\create_modules::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\external\pre_update::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\external\update_module::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\external\helper::class)]
 /**
  * Tests for the web service functions that create, read and change Kahoodle activities
  *
@@ -168,8 +172,10 @@ final class modules_test extends \advanced_testcase {
 
         self::call('mod_kahoodle_update_module', ['cmid' => $cmid, 'intro' => '<p>New</p><img src="@@PLUGINFILE@@/pic.png">']);
 
-        $this->assertSame('<p>New</p><img src="@@PLUGINFILE@@/pic.png">',
-            self::call('mod_kahoodle_pre_update', ['cmid' => $cmid])['intro']);
+        $this->assertSame(
+            '<p>New</p><img src="@@PLUGINFILE@@/pic.png">',
+            self::call('mod_kahoodle_pre_update', ['cmid' => $cmid])['intro']
+        );
         $this->assertTrue(get_file_storage()->file_exists($context->id, 'mod_kahoodle', 'intro', 0, '/', 'pic.png'));
     }
 

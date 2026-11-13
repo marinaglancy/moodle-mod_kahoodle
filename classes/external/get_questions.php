@@ -41,9 +41,12 @@ class get_questions extends external_api {
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
             'cmid' => new external_value(PARAM_INT, 'Course module id of the Kahoodle activity'),
-            'includedetails' => new external_value(PARAM_BOOL,
+            'includedetails' => new external_value(
+                PARAM_BOOL,
                 'Also return each question\'s configuration (for example the answers), timing and points.',
-                VALUE_DEFAULT, false),
+                VALUE_DEFAULT,
+                false
+            ),
         ]);
     }
 
@@ -70,9 +73,11 @@ class get_questions extends external_api {
                 'questionid' => $roundquestion->get_question_id(),
                 'position' => (int)$data->sortorder,
                 'questiontype' => $data->questiontype,
-                'questiontext' => trim(html_to_text(format_text($data->questiontext,
+                'questiontext' => trim(html_to_text(format_text(
+                    $data->questiontext,
                     $data->questionformat == constants::QUESTIONFORMAT_RICHTEXT ? FORMAT_HTML : FORMAT_PLAIN,
-                    ['context' => $context, 'filter' => false]), 0, false)),
+                    ['context' => $context, 'filter' => false]
+                ), 0, false)),
             ];
             if ($includedetails) {
                 $question += [
@@ -107,24 +112,35 @@ class get_questions extends external_api {
             'cmid' => new external_value(PARAM_INT, 'Course module id'),
             'kahoodleid' => new external_value(PARAM_INT, 'Kahoodle instance id'),
             'roundid' => new external_value(PARAM_INT, 'Id of the last round, which these questions belong to'),
-            'roundeditable' => new external_value(PARAM_BOOL,
-                'Whether the round has not started, so questions can be added, removed and moved'),
+            'roundeditable' => new external_value(
+                PARAM_BOOL,
+                'Whether the round has not started, so questions can be added, removed and moved'
+            ),
             'questions' => new external_multiple_structure(new external_single_structure([
                 'questionid' => new external_value(PARAM_INT, 'Question id'),
                 'position' => new external_value(PARAM_INT, 'Position in the round, 1-based'),
                 'questiontype' => new external_value(PARAM_ALPHANUMEXT, 'Question type'),
                 'questiontext' => new external_value(PARAM_TEXT, 'Question text as plain text'),
                 'questionconfig' => new external_value(PARAM_RAW, 'Type-specific configuration', VALUE_OPTIONAL),
-                'questionpreviewduration' => new external_value(PARAM_INT,
-                    'Seconds the question is shown before answers open', VALUE_OPTIONAL),
+                'questionpreviewduration' => new external_value(
+                    PARAM_INT,
+                    'Seconds the question is shown before answers open',
+                    VALUE_OPTIONAL
+                ),
                 'questionduration' => new external_value(PARAM_INT, 'Seconds to answer', VALUE_OPTIONAL),
-                'questionresultsduration' => new external_value(PARAM_INT,
-                    'Seconds the results are shown', VALUE_OPTIONAL),
+                'questionresultsduration' => new external_value(
+                    PARAM_INT,
+                    'Seconds the results are shown',
+                    VALUE_OPTIONAL
+                ),
                 'maxpoints' => new external_value(PARAM_INT, 'Points for the fastest correct answer', VALUE_OPTIONAL),
                 'minpoints' => new external_value(PARAM_INT, 'Points for the slowest correct answer', VALUE_OPTIONAL),
                 'imagecount' => new external_value(PARAM_INT, 'Number of images of the question', VALUE_OPTIONAL),
-                'hasresponses' => new external_value(PARAM_BOOL,
-                    'Whether participants have answered it in any round', VALUE_OPTIONAL),
+                'hasresponses' => new external_value(
+                    PARAM_BOOL,
+                    'Whether participants have answered it in any round',
+                    VALUE_OPTIONAL
+                ),
             ]), 'Questions in the order they are played'),
         ]);
     }

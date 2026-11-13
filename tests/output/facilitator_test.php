@@ -19,6 +19,7 @@ namespace mod_kahoodle\output;
 use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\output\facilitator::class)]
 /**
  * Tests for the facilitator output class
  *

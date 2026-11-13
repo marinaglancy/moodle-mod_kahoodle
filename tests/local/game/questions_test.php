@@ -19,6 +19,7 @@ namespace mod_kahoodle\local\game;
 use mod_kahoodle\constants;
 use mod_kahoodle\local\entities\round_question;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\mod_kahoodle\local\game\questions::class)]
 /**
  * Tests for Kahoodle questions class
  *
