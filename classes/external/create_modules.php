@@ -64,6 +64,7 @@ class create_modules extends external_api {
     public static function execute(int $courseid, array $modules): array {
         global $CFG, $DB;
         require_once($CFG->dirroot . '/course/modlib.php');
+        require_once($CFG->libdir . '/gradelib.php');
 
         ['courseid' => $courseid, 'modules' => $modules] = self::validate_parameters(
             self::execute_parameters(),
@@ -81,6 +82,9 @@ class create_modules extends external_api {
                 $moduleinfo->name = $module['name'];
                 helper::apply_visibility($moduleinfo, $module['visible']);
                 $moduleinfo->cmidnumber = $module['idnumber'];
+                if (!grade_verify_idnumber($moduleinfo->cmidnumber, $course->id)) {
+                    throw new \moodle_exception('idnumbertaken', 'error');
+                }
                 $moduleinfo->lang = $module['lang'];
                 $moduleinfo->tags = $module['tags'];
                 $moduleinfo->introeditor = [

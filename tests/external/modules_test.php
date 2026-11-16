@@ -110,6 +110,36 @@ final class modules_test extends \advanced_testcase {
     }
 
     /**
+     * The ID number must be free in the course, as the module form checks, but an activity keeps its own
+     */
+    public function test_idnumber_must_be_unique(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $course = $this->getDataGenerator()->create_course();
+        $this->setUser($this->getDataGenerator()->create_and_enrol($course, 'editingteacher'));
+        $this->getDataGenerator()->create_module('assign', ['course' => $course->id, 'idnumber' => 'A1']);
+
+        $result = self::call('mod_kahoodle_create_modules', [
+            'courseid' => $course->id,
+            'modules' => [['name' => 'Taken', 'idnumber' => 'A1'], ['name' => 'Free', 'idnumber' => 'K1']],
+        ]);
+        $this->assertSame([1], array_column($result['modules'], 'index'));
+        $this->assertSame('idnumbertaken', $result['warnings'][0]['warningcode']);
+        $cmid = $result['modules'][0]['cmid'];
+
+        self::call('mod_kahoodle_update_module', ['cmid' => $cmid, 'idnumber' => 'K1', 'name' => 'Renamed']);
+        $this->assertSame('Renamed', $DB->get_field('kahoodle', 'name', ['id' => $result['modules'][0]['kahoodleid']]));
+
+        try {
+            self::call('mod_kahoodle_update_module', ['cmid' => $cmid, 'idnumber' => 'A1']);
+            $this->fail('An ID number in use must be refused.');
+        } catch (\moodle_exception $e) {
+            $this->assertStringContainsString('idnumbertaken', $e->debuginfo);
+        }
+        $this->assertSame('K1', $DB->get_field('course_modules', 'idnumber', ['id' => $cmid]));
+    }
+
+    /**
      * A student cannot create activities
      */
     public function test_create_modules_requires_capability(): void {

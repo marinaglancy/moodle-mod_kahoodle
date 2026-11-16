@@ -119,6 +119,9 @@ class update_module extends external_api {
         }
         if (array_key_exists('idnumber', $params)) {
             $data->cmidnumber = $params['idnumber'];
+            if (!grade_verify_idnumber($data->cmidnumber, $course->id, null, $cm)) {
+                throw new \moodle_exception('idnumbertaken', 'error');
+            }
         }
         if (array_key_exists('visible', $params)) {
             helper::apply_visibility($data, $params['visible']);
