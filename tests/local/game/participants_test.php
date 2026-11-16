@@ -342,7 +342,9 @@ final class participants_test extends \advanced_testcase {
         $pid = $generator->create_participant(['roundid' => $round->get_id(), 'userid' => $user->id]);
 
         // Mock the HTTP response so download_file_content succeeds.
-        $jpeg = file_get_contents($CFG->dirroot . '/lib/tests/fixtures/1.jpg');
+        ob_start();
+        imagejpeg(imagecreatetruecolor(2, 2));
+        $jpeg = ob_get_clean();
         \curl::mock_response($jpeg);
 
         $filename = participants::save_profile_picture_to_avatar($round, $pid);
