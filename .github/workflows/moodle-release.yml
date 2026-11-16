@@ -12,9 +12,67 @@ on:
         required: true
 
 jobs:
+  release-notes:
+    runs-on: ubuntu-latest
+    outputs:
+      notes: ${{ steps.extract.outputs.notes }}
+    steps:
+      - name: Check out the tag
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+
+      - name: Extract this version's section of the changelog
+        id: extract
+        shell: bash
+        env:
+          TAGNAME: ${{ inputs.tag || github.ref_name }}
+          LC_ALL: C.UTF-8
+        run: |
+          # The release notes are this version's section of the changelog only.
+          VERSION="${TAGNAME#v}"
+          FILE=$(find . -maxdepth 1 -type f \( -iname CHANGES.md -o -iname CHANGELOG.md \) -printf '%f\n' -quit)
+          if [[ -z "${FILE}" ]]; then
+            echo "::error::No CHANGES.md or CHANGELOG.md"
+            exit 1
+          fi
+          # The section starts at a heading with the version as one of its words ("## [1.2.3] - 2026-01-31",
+          # "## 1.2.3", "### v1.2.3", "## Version 1.2.3 (2026-01-31)") and ends at the next heading of
+          # the same or a higher level.
+          NOTES=$(awk -v version="${VERSION}" '
+            /^#+[ \t]/ {
+              level = match($0, /[^#]/) - 1
+              if (found && level <= foundlevel) exit
+              if (!found) {
+                n = split($0, words, /[^0-9A-Za-z._+-]+/)
+                for (i = 1; i <= n; i++) {
+                  word = words[i]; sub(/^[vV]/, "", word); sub(/\.+$/, "", word)
+                  if (word == version) { found = 1; foundlevel = level; next }
+                }
+              }
+            }
+            found' "${FILE}" | sed '/./,$!d')
+          if [[ -z "${NOTES}" ]]; then
+            echo "::error::${FILE} has no section for ${VERSION}"
+            exit 1
+          fi
+          # The Marketplace takes at most 10,000 characters.
+          if (( ${#NOTES} > 10000 )); then
+            echo "::warning::The ${VERSION} section of ${FILE} has ${#NOTES} characters; sending the first 9,997 and ..."
+            NOTES="${NOTES:0:9997}..."
+          fi
+          DELIMITER="notes-7f3c1e9a5b2d4086a1c3e5f7092b4d6e"
+          {
+            echo "notes<<${DELIMITER}"
+            echo "${NOTES}"
+            echo "${DELIMITER}"
+          } >> "$GITHUB_OUTPUT"
+
   release-to-marketplace:
+    needs: release-notes
     uses: moodlehq/moodle-plugin-release/.github/workflows/moodle-release.yml@main
     with:
       tag: ${{ inputs.tag }}
+      release_notes: ${{ needs.release-notes.outputs.notes }}
     secrets:
       MOODLE_MARKETPLACE_TOKEN: ${{ secrets.MOODLE_MARKETPLACE_TOKEN }}
