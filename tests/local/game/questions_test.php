@@ -627,6 +627,14 @@ final class questions_test extends \advanced_testcase {
         // The duplicate should be right after q1, pushing q2 to sortorder 3.
         $this->assertEquals(2, $DB->get_field('kahoodle_round_questions', 'sortorder', ['id' => $duplicate->get_id()]));
         $this->assertEquals(3, $DB->get_field('kahoodle_round_questions', 'sortorder', ['id' => $q2->get_id()]));
+
+        // A second duplicate of q1 also goes right after q1, before the first duplicate.
+        $duplicate2 = questions::duplicate_question($q1);
+        $rqs = $DB->get_records('kahoodle_round_questions', ['roundid' => $round->get_id()], 'sortorder ASC', 'id');
+        $this->assertEquals(
+            [$q1->get_id(), $duplicate2->get_id(), $duplicate->get_id(), $q2->get_id()],
+            array_keys($rqs)
+        );
     }
 
     /**
@@ -887,5 +895,14 @@ final class questions_test extends \advanced_testcase {
         $data = (object) ['questiontext' => ''];
         $errors = questions::validate_question_data($data, $rq);
         $this->assertArrayNotHasKey('questiontext', $errors);
+
+        // The limit counts characters, not bytes.
+        $data = (object) ['questiontext' => str_repeat('漢', constants::QUESTIONTEXT_MAXLENGTH)];
+        $errors = questions::validate_question_data($data, $rq);
+        $this->assertArrayNotHasKey('questiontext', $errors);
+
+        $data = (object) ['questiontext' => str_repeat('a', constants::QUESTIONTEXT_MAXLENGTH + 1)];
+        $errors = questions::validate_question_data($data, $rq);
+        $this->assertEquals(get_string('maximumchars', '', constants::QUESTIONTEXT_MAXLENGTH), $errors['questiontext']);
     }
 }

@@ -267,14 +267,14 @@ function mod_kahoodle_realtime_event_received($payload): array {
     $action = (string)($payload['action'] ?? '');
     $roundid = clean_param($payload['roundid'] ?? 0, PARAM_INT);
     if (!$roundid) {
-        return ['error' => 'Missing round ID'];
+        return ['error' => get_string('missingparam', 'error', 'roundid')];
     }
     // Get the round entity.
     $round = \mod_kahoodle\local\entities\round::create_from_id($roundid);
     $context = $round->get_context();
     \core_external\external_api::validate_context($context);
     if (!$round->is_in_progress()) {
-        return ['error' => 'Round is not in progress'];
+        return ['error' => get_string('error_roundnotinprogress', 'mod_kahoodle')];
     }
 
     if (in_array($action, ['advance', 'get_current', 'reveal_rank'])) {
@@ -309,7 +309,7 @@ function mod_kahoodle_realtime_event_received($payload): array {
 
         $participant = $round->is_participant();
         if (!$participant) {
-            return ['error' => 'Participant not found'];
+            return ['error' => get_string('error_notparticipant', 'mod_kahoodle')];
         }
 
         switch ($action) {
@@ -335,7 +335,7 @@ function mod_kahoodle_realtime_event_received($payload): array {
                 // Change the participant's avatar to one of the stored candidates.
                 $filename = clean_param($payload['filename'] ?? '', PARAM_FILE);
                 if (empty($filename)) {
-                    return ['error' => 'Missing filename'];
+                    return ['error' => get_string('missingparam', 'error', 'filename')];
                 }
                 $avatarurl = \mod_kahoodle\local\game\participants::change_avatar($participant, $filename);
                 // Notify facilitators so the lobby display refreshes with the new avatar.
@@ -344,5 +344,5 @@ function mod_kahoodle_realtime_event_received($payload): array {
         }
     }
 
-    return ['error' => 'Invalid action'];
+    return ['error' => get_string('invalidaction', 'error')];
 }

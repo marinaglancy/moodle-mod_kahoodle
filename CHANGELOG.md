@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The functions work with the AI agent (tool_aiagent), which also gets a skill for writing Kahoodle questions
 
 ### Fixed
+- Participants with a full name longer than 100 characters could not join a round that shows real names - detected by https://mdlshield.com
 - An activity created through the web service with "available but not shown on the course page" got a wrong visibility value
 
 ## [4.5.2] - 2026-10-02

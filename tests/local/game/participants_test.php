@@ -109,6 +109,34 @@ final class participants_test extends \advanced_testcase {
     }
 
     /**
+     * A user whose full name is longer than the displayname column can still join in the real name mode
+     */
+    public function test_join_round_long_real_name(): void {
+        global $DB;
+        $this->resetAfterTest();
+
+        $course = $this->getDataGenerator()->create_course();
+        $kahoodle = $this->getDataGenerator()->create_module('kahoodle', [
+            'course' => $course->id,
+            'identitymode' => constants::IDENTITYMODE_REALNAME,
+        ]);
+        $round = questions::get_last_round($kahoodle->id);
+        $user = $this->getDataGenerator()->create_and_enrol($course, 'student', [
+            'firstname' => str_repeat('名', 100),
+            'lastname' => str_repeat('姓', 100),
+        ]);
+        $this->setUser($user);
+
+        participants::join_round($round, null);
+
+        $params = ['roundid' => $round->get_id(), 'userid' => $user->id];
+        $this->assertEquals(
+            \core_text::substr(fullname($user), 0, 100),
+            $DB->get_field('kahoodle_participants', 'displayname', $params)
+        );
+    }
+
+    /**
      * Test get_avatar_candidates returns candidates and respects the onlynew flag.
      */
     public function test_get_avatar_candidates(): void {

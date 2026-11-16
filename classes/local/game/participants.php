@@ -53,7 +53,8 @@ class participants {
             || ($identitymode === constants::IDENTITYMODE_OPTIONAL
                 && ($displayname === null || trim($displayname) === ''));
         if ($userealidentity) {
-            $displayname = fullname($USER);
+            // The displayname column holds 100 characters.
+            $displayname = \core_text::substr(fullname($USER), 0, 100);
         } else {
             $displayname = \core_text::substr(trim($displayname ?? ''), 0, constants::DISPLAYNAME_MAXLENGTH);
         }

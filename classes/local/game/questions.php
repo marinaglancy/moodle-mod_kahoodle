@@ -739,6 +739,8 @@ class questions {
                 // Plain text: must equal its clean_param version.
                 if ($data->questiontext !== clean_param($data->questiontext, PARAM_TEXT)) {
                     $errors['questiontext'] = get_string('error_questiontext_invalidchars', 'mod_kahoodle');
+                } else if (\core_text::strlen($data->questiontext) > constants::QUESTIONTEXT_MAXLENGTH) {
+                    $errors['questiontext'] = get_string('maximumchars', '', constants::QUESTIONTEXT_MAXLENGTH);
                 }
             }
         }
@@ -792,7 +794,7 @@ class questions {
         $questions = $DB->get_records(
             'kahoodle_round_questions',
             ['roundid' => $roundid],
-            'sortorder ASC',
+            'sortorder ASC, id ASC',
             'id, sortorder'
         );
         $sortorder = 1;

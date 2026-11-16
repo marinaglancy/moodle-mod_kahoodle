@@ -221,6 +221,6 @@ final class lib_test extends \advanced_testcase {
 
         // JSON "true" must not be treated as the "advance" action.
         $result = mod_kahoodle_realtime_event_received(['action' => true, 'roundid' => $round->get_id()]);
-        $this->assertEquals(['error' => 'Invalid action'], $result);
+        $this->assertEquals(['error' => get_string('invalidaction', 'error')], $result);
     }
 }
