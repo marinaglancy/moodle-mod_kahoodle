@@ -25,8 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component    = 'mod_kahoodle';
-$plugin->release      = '4.5.2';
-$plugin->version      = 2026111200;
+$plugin->release      = '4.5.3';
+$plugin->version      = 2026111600;
 $plugin->requires     = 2024100700;
 $plugin->supported    = [405, 503];
 $plugin->maturity     = MATURITY_STABLE;
