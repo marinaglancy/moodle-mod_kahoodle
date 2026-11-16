@@ -354,6 +354,13 @@ final class rank_test extends \advanced_testcase {
                 'tiewithnames' => ['Bob', 'Charlie'],
                 'expected' => 'You finished in 1-3rd place tied with Bob and Charlie!',
             ],
+            'revision, tied with a name that needs escaping' => [
+                'score' => 500,
+                'minrank' => 1,
+                'maxrank' => 2,
+                'tiewithnames' => ['Tom & Jerry'],
+                'expected' => 'You finished in 1-2nd place tied with Tom &amp; Jerry!',
+            ],
             'revision, rank range with tie' => [
                 'score' => 200,
                 'minrank' => 4,

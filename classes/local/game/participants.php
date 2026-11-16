@@ -257,19 +257,19 @@ class participants {
         }
         $response = download_file_content($url, null, null, true, 5, 3);
         if ($response->status == 200 && !empty($response->results)) {
-            $mimetype = $response->headers['Content-Type'] ?? 'image/png';
-            // Strip any charset or parameters from the Content-Type header.
-            $mimetype = trim(explode(';', $mimetype)[0]);
-            $ext = match ($mimetype) {
+            $imageinfo = @getimagesizefromstring($response->results);
+            $ext = match ($imageinfo['mime'] ?? '') {
+                'image/png' => 'png',
                 'image/jpeg' => 'jpg',
                 'image/gif' => 'gif',
                 'image/webp' => 'webp',
-                'image/svg+xml' => 'svg',
-                default => 'png',
+                default => null,
             };
-            $filerecord['filename'] = "profile.$ext";
-            $fs->create_file_from_string($filerecord, $response->results);
-            return "profile.$ext";
+            if ($ext !== null) {
+                $filerecord['filename'] = "profile.$ext";
+                $fs->create_file_from_string($filerecord, $response->results);
+                return "profile.$ext";
+            }
         }
 
         return null;

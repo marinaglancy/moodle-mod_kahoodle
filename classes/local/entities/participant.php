@@ -169,10 +169,10 @@ class participant {
     /**
      * Get display name
      *
-     * @return string
+     * @return string Plain text, to be escaped on output
      */
     public function get_display_name(): string {
-        return s($this->participantdata->displayname) ?: s(fullname($this->userdata));
+        return (string)$this->participantdata->displayname ?: fullname($this->userdata);
     }
 
     /**

@@ -71,7 +71,7 @@ class get_round_results extends external_api {
             $user = $anonymous ? null : $participant->get_user_record();
             $participants[] = [
                 'rank' => (int)$participant->get_final_rank(),
-                'displayname' => html_entity_decode($participant->get_display_name(), ENT_QUOTES),
+                'displayname' => $participant->get_display_name(),
                 'userfullname' => $user ? fullname($user) : '',
                 'score' => $participant->get_total_score(),
                 'correctanswers' => (int)($answers[$participant->get_id()]->correct ?? 0),

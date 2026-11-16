@@ -71,7 +71,7 @@ final class rounds_test extends \advanced_testcase {
         $q2 = $generator->create_question(['kahoodleid' => $kahoodle->id], $round);
         $DB->update_record('kahoodle_rounds', (object)['id' => $round->get_id(), 'name' => 'Monday',
             'currentstage' => constants::STAGE_ARCHIVED, 'timestarted' => time() - 600, 'timecompleted' => time() - 60]);
-        foreach ([['Anna', 1800, 1, [1, 1]], ['Ben', 900, 2, [1, 0]], ['Cleo', 0, 3, [0]]] as [$name, $score, $rank, $answers]) {
+        foreach ([['Anna', 1800, 1, [1, 1]], ['B&B', 900, 2, [1, 0]], ['Cleo', 0, 3, [0]]] as [$name, $score, $rank, $answers]) {
             $user = $this->getDataGenerator()->create_and_enrol($course, 'student', ['firstname' => $name]);
             $participantid = $generator->create_participant(['roundid' => $round->get_id(), 'userid' => $user->id,
                 'displayname' => $name . ' alias', 'totalscore' => $score, 'finalrank' => $rank]);
@@ -125,7 +125,7 @@ final class rounds_test extends \advanced_testcase {
 
         $results = self::call('mod_kahoodle_get_round_results', ['roundid' => $roundid]);
         $this->assertSame('Monday', $results['name']);
-        $this->assertSame(['Anna alias', 'Ben alias', 'Cleo alias'], array_column($results['participants'], 'displayname'));
+        $this->assertSame(['Anna alias', 'B&B alias', 'Cleo alias'], array_column($results['participants'], 'displayname'));
         $this->assertSame([1, 2, 3], array_column($results['participants'], 'rank'));
         $this->assertSame([2, 1, 0], array_column($results['participants'], 'correctanswers'));
         $this->assertSame([2, 2, 1], array_column($results['participants'], 'questionsanswered'));

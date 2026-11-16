@@ -128,7 +128,7 @@ class participant extends base {
                     $displayname,
                     ['class' => 'rounded-circle ' . $class, 'width' => 35, 'height' => 35]
                 );
-                return $img . $displayname;
+                return $img . s($displayname);
             });
 
         // Rank column.

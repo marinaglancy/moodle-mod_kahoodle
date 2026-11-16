@@ -234,7 +234,7 @@ class rank {
      * Format list of names (for "tied with" and/or "behind" sentences)
      *
      * @param array $participants
-     * @return string
+     * @return string HTML, with the names escaped
      */
     protected function name_list(array $participants): string {
         if (count($participants) === 0) {
@@ -242,18 +242,18 @@ class rank {
         }
         $participants = array_values($participants);
         if (count($participants) === 1) {
-            return $participants[0]->get_display_name();
+            return s($participants[0]->get_display_name());
         }
         if (count($participants) === 2) {
             return get_string('twonames', 'mod_kahoodle', [
-                'one' => $participants[0]->get_display_name(),
-                'two' => $participants[1]->get_display_name(),
+                'one' => s($participants[0]->get_display_name()),
+                'two' => s($participants[1]->get_display_name()),
             ]);
         }
 
         $p = $participants[array_rand($participants)];
         return get_string('morethantwo', 'mod_kahoodle', [
-            'one' => $p->get_display_name(),
+            'one' => s($p->get_display_name()),
             'count' => count($participants) - 1,
         ]);
     }
